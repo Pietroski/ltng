@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package operations;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/transactions/operations;grpc_ops";
+
+import "common/search/pagination.proto";
+
+message Item {
+  bytes key = 1;
+  bytes value = 2;
+}
+
+message DatabaseMetaInfo {
+  string database_name = 1;
+}
+
+// GetRequest
+message GetRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  bytes key = 2;
+}
+// GetResponse
+message GetResponse {
+  bytes value = 1;
+}
+
+// SetRequest
+message SetRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  Item item = 2;
+}
+// SetResponse
+message SetResponse {}
+
+// DeleteRequest
+message DeleteRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  bytes key = 2;
+}
+// DeleteResponse
+message DeleteResponse {}
+
+// ListRequest
+message ListRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  common.search.Pagination pagination = 2;
+}
+// ListResponse
+message ListResponse {
+  repeated Item items = 1;
+}

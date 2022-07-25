@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package management;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/management;grpc_mngmt";
+
+import "google/protobuf/timestamp.proto";
+import "common/search/pagination.proto";
+
+message DBInfo {
+  string name = 1;
+  string path = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp last_opened_at = 4;
+}
+
+// CreateStoreRequest
+message CreateStoreRequest {
+  string name = 1;
+  string path = 2;
+}
+// CreateStoreResponse
+message CreateStoreResponse {
+  google.protobuf.Timestamp created_at = 1;
+  google.protobuf.Timestamp last_opened_at = 2;
+}
+
+// UpdateStoreRequest
+message UpdateStoreRequest {}
+// UpdateStoreResponse
+message UpdateStoreResponse {
+  google.protobuf.Timestamp created_at = 1;
+  google.protobuf.Timestamp last_opened_at = 2;
+}
+
+// DeleteStoreRequest
+message DeleteStoreRequest {
+  string name = 1;
+}
+// DeleteStoreResponse
+message DeleteStoreResponse {}
+
+// ListStoresRequest
+message ListStoresRequest {
+  common.search.Pagination pagination = 1;
+}
+// ListStoresResponse
+message ListStoresResponse {
+  repeated DBInfo dbs_infos = 1;
+}
+
+// GetStoreRequest
+message GetStoreRequest {
+  string name = 1;
+}
+// GetStoreResponse
+message GetStoreResponse {
+  DBInfo db_info = 1;
+}
+
+// RestartLightningNodeRequest
+message RestartLightningNodeRequest {}
+// RestartLightningNodeResponse
+message RestartLightningNodeResponse {}
+
+// ShutdownLightningNodeRequest
+message ShutdownLightningNodeRequest {}
+// ShutdownLightningNodeResponse
+message ShutdownLightningNodeResponse {}

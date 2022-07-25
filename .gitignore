@@ -1,0 +1,16 @@
+# IDE's configs
+.idea
+.vscode
+
+# bagder-db default local manager directory
+.db
+.DS_Store
+
+# credential files
+.netrc
+
+# env files
+.env
+.env.prod
+.env.stg
+.env.dev

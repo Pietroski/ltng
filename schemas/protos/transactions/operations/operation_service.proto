@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package operations;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/transactions/operations;grpc_ops";
+
+import "transactions/operations/operation_messages.proto";
+
+service Operation {
+  // Get
+  rpc Get(GetRequest) returns (GetResponse);
+  // Set
+  rpc Set(SetRequest) returns (SetResponse);
+  // Delete
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  // List
+  rpc List(ListRequest) returns (ListResponse);
+}
