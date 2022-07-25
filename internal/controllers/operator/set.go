@@ -5,7 +5,7 @@ import (
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	grpc_ops "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/transactions/operations"
+	grpc_ops "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/transactions/operations"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

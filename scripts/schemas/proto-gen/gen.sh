@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MOD_NAME=gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated
+MOD_NAME=gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated
 PROTO_PATH=schemas/protos
 OUTPUT_PATH=schemas/generated
 SWAGGER_PATH="$OUTPUT_PATH/swagger"

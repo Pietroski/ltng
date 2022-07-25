@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package operations;
-option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/transactions/operations;grpc_ops";
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/transactions/operations;grpc_ops";
 
 import "transactions/operations/operation_messages.proto";
 

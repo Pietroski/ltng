@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/internal/models/management"
+	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
 )
 
 // A Matcher is a representation of a class of values.

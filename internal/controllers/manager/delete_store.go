@@ -3,8 +3,8 @@ package badgerdb_manager_controller
 import (
 	"context"
 
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/internal/models/management"
-	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/management"
+	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

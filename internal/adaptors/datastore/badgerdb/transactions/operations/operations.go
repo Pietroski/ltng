@@ -2,9 +2,9 @@ package operations
 
 import (
 	"github.com/dgraph-io/badger/v3"
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/internal/adaptors/datastore/badgerdb/manager"
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/internal/models/management"
-	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/internal/models/operation"
+	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/manager"
+	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 )
 

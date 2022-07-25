@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package management;
-option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/schemas/generated/go/management;grpc_mngmt";
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management;grpc_mngmt";
 
 import "google/protobuf/timestamp.proto";
 import "common/search/pagination.proto";
