@@ -35,7 +35,7 @@ func TestBadgerDBManagerServiceController_CreateStore(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, mockedBinder, manager)
+			service := NewBadgerDBManagerServiceController(logger, mockedBinder, manager)
 
 			payload := &grpc_mngmt.CreateStoreRequest{
 				Name: "any-string",
@@ -70,7 +70,7 @@ func TestBadgerDBManagerServiceController_CreateStore(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			data := &management_models.DBInfo{
 				Name:         "any-string",
@@ -110,7 +110,7 @@ func TestBadgerDBManagerServiceController_CreateStore(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			data := &management_models.DBInfo{
 				Name:         "any-string",

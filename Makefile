@@ -17,12 +17,14 @@ env-check-ltng-db-node:
 -include ./build/Makefile
 
 -include ./tests/benchmark/lightning-db_vs_postgresql/Makefile
+-include ./tests/benchmark/lightning-db_vs_postgresql-indexing/Makefile
 
 ## generates mocks
 mock-generate:
 	go get -d github.com/golang/mock/mockgen
 	go mod download
 	go generate ./...
+	go mod tidy
 	go mod download
 
 go-build:
@@ -36,6 +38,9 @@ pprof-serve:
 	@go tool pprof -http=":7002" "http://localhost:7001/debug/pprof/$(TYPE)"
 
 ########################################################################################################################
+
+count-written-lines:
+	find . -type f \( -iname "*.go" ! -ipath "./vendor/*" ! -path "./schemas/*" ! -path "*/postgresql/*" ! -path "*/mocks/*" \) | xargs wc -l
 
 TAG := $(shell cat VERSION)
 tag:

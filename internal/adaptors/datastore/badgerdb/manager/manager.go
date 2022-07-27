@@ -24,6 +24,7 @@ var (
 	ErrUnimplemented = fmt.Errorf("unimplemented method")
 )
 
+// TODO: rename interface methods to shorter ones - leave long names and descriptions in the go docs.
 type (
 	Manager interface {
 		CreateOpenStoreAndLoadIntoMemory(
@@ -77,7 +78,8 @@ type (
 	}
 
 	BadgerLocalManager struct {
-		db            *badger.DB
+		db *badger.DB
+		//TODO: remove logger and instead user error wrapper for returning
 		logger        go_logger.Logger
 		serializer    go_serializer.Serializer
 		badgerMapping *sync.Map
@@ -383,6 +385,12 @@ func (m *BadgerLocalManager) listAllStoresMemoryInfoFromMemoryOrDisk(
 				continue
 			}
 
+			if memoryInfoItem, err := m.getStoreFromMemory(key); err == nil {
+				memoryInfoList = append(memoryInfoList, memoryInfoItem)
+
+				continue
+			}
+
 			db, err := m.openLoadAndReturn(&value)
 			if err != nil {
 				log.Printf("failed to open and load item - %v: %v", key, err)
@@ -483,6 +491,12 @@ func (m *BadgerLocalManager) ListStoreMemoryInfoFromMemoryOrDisk(
 				continue
 			}
 
+			if memoryInfoItem, err := m.getStoreFromMemory(key); err == nil {
+				memoryInfoList[idx] = memoryInfoItem
+
+				continue
+			}
+
 			db, err := m.openLoadAndReturn(&value)
 			if err != nil {
 				log.Printf("failed to open and load item - %v: %v", key, err)
@@ -522,9 +536,11 @@ func (m *BadgerLocalManager) persistInfo(
 		return fmt.Errorf("failed to persist info in db: %v", err)
 	}
 
-	err = m.openAndLoad(info)
+	if err = m.openAndLoad(info); err != nil {
+		return fmt.Errorf("failed to open and load info in memory: %v", err)
+	}
 
-	return err
+	return nil
 }
 
 // openAndLoad opens the db path, and then,

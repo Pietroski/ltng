@@ -148,8 +148,6 @@ gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.3 h1:w
 gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.3/go.mod h1:o1ShD2+AzKv77rRQIrYDS8INXzLskgkxUFbYNhnqy8Q=
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer v1.1.3 h1:Qnh+7fLCAwCuGMGkLMvF1S12YDriaSfmd7eS6f91Sz4=
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer v1.1.3/go.mod h1:Rm5VUG+x5FsZmZYQvZFLJQ4L/R0/6v6oEvls1u+hUIs=
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.1 h1:9lW106236uSNzWZA2k9e8A8ihDVoWC6okQLYUwPUQB0=
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.1/go.mod h1:UxYgV85YUdJrcYOZKfrtukCU/zfCFJk1seRJOPaZ/yE=
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.2 h1:jOVTUoprr0Uc64WFvA2QxNM2hDSTBkZVcEQSgkjWsb4=
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.2/go.mod h1:UxYgV85YUdJrcYOZKfrtukCU/zfCFJk1seRJOPaZ/yE=
 gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.3 h1:JUnYO2TQOni6fi7epBiTO9XPtCK3DwXM7hNmVdFhumk=

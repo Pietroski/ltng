@@ -104,6 +104,96 @@ func Test_Integration_Create_Load(t *testing.T) {
 			logger.Infof("cleaned up all successfully")
 		},
 	)
+
+	t.Run(
+		"",
+		func(t *testing.T) {
+			ctx, _ := context.WithCancel(context.Background())
+			logger := go_logger.FromCtx(ctx)
+
+			logger.Infof("opening badger local manager")
+			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			if err != nil {
+				logger.Errorf(
+					"failed to open badger local manager",
+					go_logger.Mapper("err", err.Error()),
+				)
+				require.NoError(t, err)
+			}
+
+			serializer := go_serializer.NewJsonSerializer()
+
+			m := manager.NewBadgerLocalManager(db, serializer, logger)
+			op := NewBadgerOperator(m, serializer)
+
+			logger.Debugf("creating store")
+			dbInfoOpTest := &management_models.DBInfo{
+				Name:         "operations-db-integration-test-b",
+				Path:         "operations-db-integration-test-b",
+				CreatedAt:    time.Now(),
+				LastOpenedAt: time.Now(),
+			}
+			if err := m.CreateOpenStoreAndLoadIntoMemory(dbInfoOpTest); err != nil {
+				logger.Errorf(
+					"error on creating operation test integration database",
+					go_logger.Field{
+						"error":                  err.Error(),
+						"db_info_operation_test": dbInfoOpTest,
+					},
+				)
+				require.NoError(t, err)
+			}
+			logger.Debugf("store created")
+
+			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
+			if err != nil {
+				logger.Errorf(
+					"error on retrieving memory info from given db name",
+					go_logger.Field{
+						"error":                  err.Error(),
+						"db_info_operation_test": dbInfoOpTest,
+					},
+				)
+				require.NoError(t, err)
+			}
+
+			storeKey := []byte("key-test-to-store")
+			storeValue := []byte("value test to store")
+			if err := op.Operate(dbMemoryInfo).Update(storeKey, storeValue); err != nil {
+				logger.Errorf(
+					"error on storing key value pair on given storage",
+					go_logger.Field{
+						"error": err.Error(),
+						"key":   storeKey,
+						"value": storeValue,
+					},
+				)
+				require.NoError(t, err)
+			}
+
+			retrievedValue, err := op.Operate(dbMemoryInfo).Load(storeKey)
+			if err != nil {
+				logger.Errorf(
+					"error on storing key value pair on given storage",
+					go_logger.Field{
+						"error": err.Error(),
+						"key":   storeKey,
+						"value": storeValue,
+					},
+				)
+				require.NoError(t, err)
+			}
+
+			t.Log("retrieved value ->", string(retrievedValue))
+
+			m.ShutdownStores()
+			m.Shutdown()
+
+			// TODO: list opened stores
+
+			logger.Infof("cleaned up all successfully")
+		},
+	)
 }
 
 func Test_Integration_Create_Load_Delete_Load(t *testing.T) {

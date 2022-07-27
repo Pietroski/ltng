@@ -12,11 +12,8 @@ import (
 type (
 	BadgerDBOperatorServiceController struct {
 		grpc_ops.UnimplementedOperationServer
-		logger go_logger.Logger
-		//serializer go_serializer.Serializer
-		//validator  go_validator.Validator
-		binder go_binder.Binder
-
+		logger   go_logger.Logger
+		binder   go_binder.Binder
 		manager  manager.Manager
 		operator operations.Operator
 	}
@@ -29,8 +26,8 @@ func NewBadgerDBOperatorServiceController(
 	operator operations.Operator,
 ) *BadgerDBOperatorServiceController {
 	return &BadgerDBOperatorServiceController{
-		logger: logger,
-		binder: binder,
+		logger:   logger,
+		binder:   binder,
 		manager:  manager,
 		operator: operator,
 	}

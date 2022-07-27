@@ -37,7 +37,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, mockedBinder, manager)
+			service := NewBadgerDBManagerServiceController(logger, mockedBinder, manager)
 
 			payload := &grpc_mngmt.ListStoresRequest{
 				Pagination: &grpc_pagination.Pagination{
@@ -75,7 +75,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, mockedBinder, manager)
+			service := NewBadgerDBManagerServiceController(logger, mockedBinder, manager)
 
 			size, page := 2, 2
 			payload := &grpc_mngmt.ListStoresRequest{
@@ -114,7 +114,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			var dbsInfos []*management_models.DBInfo
 			manager.
@@ -152,7 +152,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			size, page := 2, 2
 			var dbsInfos []*management_models.DBInfo
@@ -191,7 +191,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			dbsInfos := []*management_models.DBInfo{
 				{
@@ -260,7 +260,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			size, page := 2, 2
 			pageOffset := 2

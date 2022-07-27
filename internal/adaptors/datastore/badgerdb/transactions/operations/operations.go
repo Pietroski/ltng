@@ -106,6 +106,7 @@ func (o *BadgerOperator) Delete(key []byte) error {
 	return err
 }
 
+// ListAll lists all entries from the database info set on the Operate method.
 func (o *BadgerOperator) ListAll() (operation_models.OpList, error) {
 	var objectList operation_models.OpList
 	err := o.dbInfo.DB.View(func(txn *badger.Txn) error {
@@ -137,6 +138,7 @@ func (o *BadgerOperator) ListAll() (operation_models.OpList, error) {
 	return objectList, err
 }
 
+// ListPaginated lists paginated entries from the database info set on the Operate method.
 func (o *BadgerOperator) ListPaginated(
 	pagination *management_models.PaginationRequest,
 ) (operation_models.OpList, error) {

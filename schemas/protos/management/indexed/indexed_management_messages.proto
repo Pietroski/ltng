@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package indexed_management;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management/indexed/indexed_management;grpc_indexed_mngmt";
+
+import "common/search/pagination.proto";
+
+// CreateStoreRequest
+message CreateIndexedStoreRequest {
+  string name = 1;
+  string path = 2;
+}
+
+// GetStoreRequest
+message GetIndexedStoreRequest {
+  string name = 1;
+}
+
+// UpdateStoreRequest
+message UpdateIndexedStoreRequest {}
+
+// DeleteStoreRequest
+message DeleteIndexedStoreRequest {
+  string name = 1;
+}
+
+// ListStoresRequest
+message ListIndexedStoresRequest {
+  common.search.Pagination pagination = 1;
+}

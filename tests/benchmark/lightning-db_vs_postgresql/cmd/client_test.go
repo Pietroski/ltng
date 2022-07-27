@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"testing"
+	"time"
+
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
@@ -15,8 +18,6 @@ import (
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"testing"
-	"time"
 
 	sqlc_user_store "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/tests/benchmark/lightning-db_vs_postgresql/internal/adaptors/datastore/postgresql/user/sqlc"
 )
@@ -30,7 +31,6 @@ const (
 )
 
 func Test_LightningNode_ServerWithClientPre(t *testing.T) {
-	t.Skip()
 	ctx := context.Background()
 
 	opts := []grpc.DialOption{
@@ -508,6 +508,7 @@ func Test_Postgresql_ServerWithClientNoTimer(t *testing.T) {
 }
 
 func Test_Benchmark_LightningNode_ServerWithClient(t *testing.T) {
+	t.Skip()
 	limit := 1000
 	begin := time.Now()
 	for i := 0; i < limit; i++ {
@@ -518,6 +519,7 @@ func Test_Benchmark_LightningNode_ServerWithClient(t *testing.T) {
 }
 
 func Test_Benchmark_Postgresql_ServerWithClient(t *testing.T) {
+	t.Skip()
 	limit := 1000
 	begin := time.Now()
 	for i := 0; i < limit; i++ {

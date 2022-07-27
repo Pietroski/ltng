@@ -610,7 +610,6 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 			require.NoError(t, err)
 
 			logger.Debugf(
-
 				"paginated list",
 				go_logger.Field{
 					"list": list,

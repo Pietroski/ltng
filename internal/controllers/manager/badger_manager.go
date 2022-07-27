@@ -10,27 +10,19 @@ import (
 type (
 	BadgerDBManagerServiceController struct {
 		grpc_mngmt.UnimplementedManagementServer
-		logger go_logger.Logger
-		//serializer go_serializer.Serializer
-		//validator  go_validator.Validator
-		binder go_binder.Binder
-
+		logger  go_logger.Logger
+		binder  go_binder.Binder
 		manager manager.Manager
 	}
 )
 
-func NewBadgerDBServiceController(
+func NewBadgerDBManagerServiceController(
 	logger go_logger.Logger,
-//serializer go_serializer.Serializer,
-//validator go_validator.Validator,
 	binder go_binder.Binder,
-
 	manager manager.Manager,
 ) *BadgerDBManagerServiceController {
 	return &BadgerDBManagerServiceController{
-		logger: logger,
-		//serializer: serializer,
-		//validator:  validator,
+		logger:  logger,
 		binder:  binder,
 		manager: manager,
 	}

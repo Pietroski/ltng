@@ -15,35 +15,23 @@ type (
 	BadgerDBManagerServiceFactory struct {
 		listener net.Listener
 		server   *grpc.Server
-
-		logger go_logger.Logger
-		//serializer go_serializer.Serializer
-		//validator  go_validator.Validator
-		binder go_binder.Binder
-
-		manager manager.Manager
+		logger   go_logger.Logger
+		binder   go_binder.Binder
+		manager  manager.Manager
 	}
 )
 
 func NewBadgerDBManagerService(
 	listener net.Listener,
-
 	logger go_logger.Logger,
-	//serializer go_serializer.Serializer,
-	//validator go_validator.Validator,
 	binder go_binder.Binder,
-
 	manager manager.Manager,
 ) *BadgerDBManagerServiceFactory {
 	factory := &BadgerDBManagerServiceFactory{
 		listener: listener,
-
-		logger: logger,
-		//serializer: serializer,
-		//validator:  validator,
-		binder: binder,
-
-		manager: manager,
+		logger:   logger,
+		binder:   binder,
+		manager:  manager,
 	}
 	factory.handle()
 
@@ -56,12 +44,9 @@ func (s *BadgerDBManagerServiceFactory) handle() {
 
 	grpc_mngmt.RegisterManagementServer(
 		grpcServer,
-		badgerdb_manager_controller.NewBadgerDBServiceController(
+		badgerdb_manager_controller.NewBadgerDBManagerServiceController(
 			s.logger,
-			//s.serializer,
-			//s.validator,
 			s.binder,
-
 			s.manager,
 		),
 	)

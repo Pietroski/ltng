@@ -11,8 +11,10 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.7.5
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.3
+	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.2
 	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.0
 	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.3
+	gitlab.com/pietroski-software-company/tools/tracer/go-tracer v1.1.3
 	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.2
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.3
 	google.golang.org/grpc v1.47.0
@@ -37,8 +39,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.2 // indirect
-	gitlab.com/pietroski-software-company/tools/tracer/go-tracer v1.1.3 // indirect
 	go.opencensus.io v0.22.5 // indirect
 	golang.org/x/net v0.0.0-20220706163947-c90051bbdb60 // indirect
 	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect

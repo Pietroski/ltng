@@ -3,8 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	indexed_operations "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/transactions/operations/indexed"
+	badgerdb_indexed_manager_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/manager/indexed"
+	badgerdb_indexed_operator_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/operator/indexed"
 	"net"
 	"os"
+
+	indexed_manager "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/manager/indexed"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/pkg/tools/tracer"
 
 	"github.com/dgraph-io/badger/v3"
 
@@ -24,6 +30,8 @@ import (
 
 func main() {
 	ctx, cancelFn := context.WithCancel(context.Background())
+	tracer := go_tracer.NewCtxTracer()
+	ctx = tracer.Trace(ctx)
 
 	loggerPublishers := &go_logger.Publishers{}
 	loggerOpts := &go_logger.Opts{
@@ -31,6 +39,11 @@ func main() {
 		Publish: true,
 	}
 	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+	logger = logger.FromCtx(ctx)
+
+	serializer := go_serializer.NewJsonSerializer()
+	validator := go_validator.NewStructValidator()
+	binder := go_binder.NewStructBinder(serializer, validator)
 
 	cfg := &ltng_node_config.Config{}
 	err := go_env_extractor.LoadEnvs(cfg)
@@ -54,13 +67,9 @@ func main() {
 		return
 	}
 
-	serializer := go_serializer.NewJsonSerializer()
-	validator := go_validator.NewStructValidator()
-	binder := go_binder.NewStructBinder(serializer, validator)
-
 	logger.Debugf("starting badger instances")
-	m := manager.NewBadgerLocalManager(db, serializer, logger)
-	if err = m.Start(); err != nil {
+	mngr := manager.NewBadgerLocalManager(db, serializer, logger)
+	if err = mngr.Start(); err != nil {
 		logger.Errorf(
 			"failed to start badger instances",
 			go_logger.Mapper("err", err.Error()),
@@ -69,9 +78,9 @@ func main() {
 		return
 	}
 
-	op := operations.NewBadgerOperator(
-		m, serializer,
-	)
+	idxMngr := indexed_manager.NewBadgerLocalIndexerManager(db, mngr, serializer)
+	oprt := operations.NewBadgerOperator(mngr, serializer)
+	idxOprt := indexed_operations.NewBadgerIndexedOperator(mngr, idxMngr, oprt, serializer)
 
 	managerListener, err := net.Listen(
 		cfg.LTNGNode.LTNGManager.Network,
@@ -86,7 +95,7 @@ func main() {
 		return
 	}
 	mngrsvr := badgerdb_manager_factory.NewBadgerDBManagerService(
-		managerListener, logger, binder, m,
+		managerListener, logger, binder, mngr,
 	)
 
 	operatorListener, err := net.Listen(
@@ -102,14 +111,48 @@ func main() {
 		return
 	}
 	opsvr := badgerdb_operator_factory.NewBadgerDBOperatorService(
-		operatorListener, logger, binder, m, op,
+		operatorListener, logger, binder, mngr, oprt,
+	)
+
+	indexedManagerListener, err := net.Listen(
+		cfg.LTNGNode.LTNGIndexedManager.Network,
+		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGIndexedManager.Address),
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed to create net listener",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+	idxmngrsvr := badgerdb_indexed_manager_factory.NewBadgerDBIndexedManagerService(
+		indexedManagerListener, logger, binder, idxMngr,
+	)
+
+	indexedOperatorListener, err := net.Listen(
+		cfg.LTNGNode.LTNGIndexedOperator.Network,
+		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGIndexedOperator.Address),
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed to create net listener",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+	idxopsvr := badgerdb_indexed_operator_factory.NewBadgerDBIndexedOperatorService(
+		indexedOperatorListener, logger, binder, idxMngr, idxOprt,
 	)
 
 	h := transporthandler.NewHandler(
 		ctx, cancelFn, os.Exit, nil, logger, &transporthandler.Opts{Debug: true},
 	)
 	h.StartServers(map[string]handlers_model.Server{
-		"badger-lightning-node-manager":  mngrsvr,
-		"badger-lightning-node-operator": opsvr,
+		"badger-lightning-node-manager":          mngrsvr,
+		"badger-lightning-node-operator":         opsvr,
+		"badger-lightning-node-indexed-manager":  idxmngrsvr,
+		"badger-lightning-node-indexed-operator": idxopsvr,
 	})
 }

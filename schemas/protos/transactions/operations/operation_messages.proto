@@ -5,6 +5,8 @@ option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightnin
 
 import "common/search/pagination.proto";
 
+// ################################################################################################################## \\
+
 message Item {
   bytes key = 1;
   bytes value = 2;
@@ -13,6 +15,8 @@ message Item {
 message DatabaseMetaInfo {
   string database_name = 1;
 }
+
+// ################################################################################################################## \\
 
 // GetRequest
 message GetRequest {
@@ -49,3 +53,5 @@ message ListRequest {
 message ListResponse {
   repeated Item items = 1;
 }
+
+// ################################################################################################################## \\

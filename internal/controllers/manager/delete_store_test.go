@@ -34,7 +34,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, mockedBinder, manager)
+			service := NewBadgerDBManagerServiceController(logger, mockedBinder, manager)
 
 			dbName := "any-string"
 			payload := &grpc_mngmt.DeleteStoreRequest{
@@ -69,7 +69,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			dbName := "any-string"
 			manager.
@@ -103,7 +103,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			manager := mock_manager.NewMockManager(ctrl)
-			service := NewBadgerDBServiceController(logger, binder, manager)
+			service := NewBadgerDBManagerServiceController(logger, binder, manager)
 
 			dbName := "any-string"
 			manager.
