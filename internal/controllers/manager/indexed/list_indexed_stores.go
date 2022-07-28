@@ -13,7 +13,7 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 )
 
-func (c *BadgerDBIndexedManagerServiceController) ListStores(
+func (c *BadgerDBIndexedManagerServiceController) ListIndexedStores(
 	ctx context.Context,
 	req *grpc_indexed_mngmnt.ListIndexedStoresRequest,
 ) (*grpc_mngmt.ListStoresResponse, error) {

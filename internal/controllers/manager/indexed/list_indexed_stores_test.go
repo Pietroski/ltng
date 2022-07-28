@@ -52,7 +52,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				ShouldBind(gomock.Eq(payload.Pagination), gomock.Eq(&r)).
 				Times(1).
 				Return(fmt.Errorf("any-error"))
-			respList, err := service.ListStores(ctx, payload)
+			respList, err := service.ListIndexedStores(ctx, payload)
 			require.Error(t, err)
 			require.NotNil(t, respList)
 			require.Nil(t, respList.DbsInfos)
@@ -91,7 +91,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				ShouldBind(gomock.Eq(payload.Pagination), gomock.Eq(&r)).
 				Times(1).
 				Return(fmt.Errorf("any-error"))
-			respList, err := service.ListStores(ctx, payload)
+			respList, err := service.ListIndexedStores(ctx, payload)
 			require.Error(t, err)
 			require.NotNil(t, respList)
 			require.Nil(t, respList.DbsInfos)
@@ -129,7 +129,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 					PageSize: 0,
 				},
 			}
-			respList, err := service.ListStores(ctx, payload)
+			respList, err := service.ListIndexedStores(ctx, payload)
 			require.Error(t, err)
 			require.NotNil(t, respList)
 			require.Nil(t, respList.DbsInfos)
@@ -168,7 +168,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 					PageSize: uint32(size),
 				},
 			}
-			respList, err := service.ListStores(ctx, payload)
+			respList, err := service.ListIndexedStores(ctx, payload)
 			require.Error(t, err)
 			require.NotNil(t, respList)
 			require.Nil(t, respList.DbsInfos)
@@ -231,7 +231,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 					PageSize: 0,
 				},
 			}
-			respList, err := service.ListStores(ctx, payload)
+			respList, err := service.ListIndexedStores(ctx, payload)
 			require.NoError(t, err)
 			require.NotNil(t, respList)
 			require.NotNil(t, respList.DbsInfos)
@@ -302,7 +302,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 					PageSize: uint32(size),
 				},
 			}
-			respList, err := service.ListStores(ctx, payload)
+			respList, err := service.ListIndexedStores(ctx, payload)
 			require.NoError(t, err)
 			require.NotNil(t, respList)
 			require.NotNil(t, respList.DbsInfos)

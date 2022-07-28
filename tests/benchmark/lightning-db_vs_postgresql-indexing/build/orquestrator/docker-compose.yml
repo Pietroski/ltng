@@ -13,11 +13,15 @@ services:
       - postgresql-benchmark-test-db:/var/lib/postgresql/data
 
   lightning-db-node:
-    image: pietroski/lightning-db-node:v0.0.1
+    image: pietroski/lightning-db-node:v0.0.5
     restart: always
+    env_file:
+      - ../../benchmark.ltng.db.vs.psql.indexed.env
     ports:
       - '50051:50051'
       - '50052:50052'
+      - '50053:50053'
+      - '50054:50054'
       - '7001:7001'
     volumes:
       - lightning-db-node-benchmark-test-db:/var/lib/lightning-db-node/data

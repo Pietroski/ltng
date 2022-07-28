@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/pkg/tools/tracer"
 	"testing"
 	"time"
 
@@ -31,8 +32,8 @@ const (
 )
 
 func Test_LightningNode_ServerWithClientPre(t *testing.T) {
-	t.Skip()
 	ctx := context.Background()
+	ctx = go_tracer.NewCtxTracer().Trace(ctx)
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -144,6 +145,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	ctx = go_tracer.NewCtxTracer().Trace(ctx)
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -259,6 +261,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 
 func Test_Postgresql_ServerWithClient(t *testing.T) {
 	ctx := context.Background()
+	ctx = go_tracer.NewCtxTracer().Trace(ctx)
 
 	cfg := &ltng_node_config.Config{}
 	err := go_env_extractor.LoadEnvs(cfg)
@@ -326,6 +329,18 @@ func Test_Postgresql_ServerWithClient(t *testing.T) {
 	user, err = userStore.GetUser(ctx, payload.UserID)
 	require.Error(t, err)
 	require.Empty(t, user)
+}
+
+func Test_Timer_Comparison(t *testing.T) {
+	t.Run(
+		"lightning-db not indexed tables",
+		func(t *testing.T) {
+			t.Log("lightning-db")
+			Test_LightningNode_ServerWithClient(t)
+			t.Log("postgresql")
+			Test_Postgresql_ServerWithClient(t)
+		},
+	)
 }
 
 func Test_LightningNode_ServerWithClientNoTimer(t *testing.T) {
