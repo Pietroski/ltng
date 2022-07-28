@@ -25,8 +25,6 @@ import (
 )
 
 const (
-	managerServerAddr         = "localhost:50051"
-	operatorServerAddr        = "localhost:50052"
 	indexedManagerServerAddr  = "localhost:50053"
 	indexedOperatorServerAddr = "localhost:50054"
 
@@ -96,18 +94,20 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	valueToStore, err := serializer.Serialize(payload)
 	require.NoError(t, err)
 
+	indexedKey, err := serializer.Serialize(payload.Email)
+	require.NoError(t, err)
+
 	begin := time.Now()
 	_, err = indexedOperator.IndexedGet(ctx, &grpc_indexed_ops.GetIndexedRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item: &grpc_ops.Item{
-			Key:   nil,
-			Value: nil,
-		},
+		Item:             &grpc_ops.Item{},
 		Index: &grpc_indexed_ops.Index{
-			ShallIndex:      false,
-			ParentKey:       nil,
-			IndexKeys:       nil,
-			IndexProperties: nil,
+			ShallIndex: true,
+			ParentKey:  nil,
+			IndexKeys:  [][]byte{indexedKey},
+			IndexProperties: &grpc_indexed_ops.IndexProperties{
+				IndexSearchPattern: grpc_indexed_ops.IndexProperties_ONE,
+			},
 		},
 	})
 	end := time.Since(begin)
@@ -116,8 +116,6 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	//t.Log("Get response string ->", getResp.String())
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
-	indexedKey, err := serializer.Serialize(payload.Email)
-	require.NoError(t, err)
 	begin2 := time.Now()
 	_, err = indexedOperator.IndexedSet(ctx, &grpc_indexed_ops.SetIndexedRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
@@ -172,7 +170,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	begin5 := time.Now()
 	_, err = indexedOperator.IndexedDelete(ctx, &grpc_indexed_ops.DeleteIndexedRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ops.Item{},
+		Item: &grpc_ops.Item{
+			Key: keyToStore,
+		},
 		Index: &grpc_indexed_ops.Index{
 			ShallIndex: true,
 			ParentKey:  nil,
@@ -230,7 +230,7 @@ func Test_Postgresql_ServerWithClient(t *testing.T) {
 	}
 
 	begin := time.Now()
-	user, err := userStore.GetUser(ctx, payload.UserID)
+	user, err := userStore.GetUserByEmail(ctx, payload.Email)
 	end := time.Since(begin)
 	require.Error(t, err)
 	t.Log("get time ->", end.Microseconds())
@@ -245,7 +245,7 @@ func Test_Postgresql_ServerWithClient(t *testing.T) {
 	// t.Log(user)
 
 	begin1 := time.Now()
-	user, err = userStore.GetUser(ctx, payload.UserID)
+	user, err = userStore.GetUserByEmail(ctx, payload.Email)
 	end1 := time.Since(begin1)
 	require.NoError(t, err)
 	t.Log("get time ->", end1.Microseconds())

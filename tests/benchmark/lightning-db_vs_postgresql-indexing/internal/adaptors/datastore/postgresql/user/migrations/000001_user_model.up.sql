@@ -3,10 +3,10 @@
 CREATE TABLE IF NOT EXISTS users
 (
     row_id     BIGSERIAL,
-    user_id    uuid NOT NULL,
-    email      TEXT NOT NULL,
-    name       TEXT NOT NULL,
-    surname    TEXT NOT NULL,
+    user_id    uuid        NOT NULL,
+    email      TEXT UNIQUE NOT NULL,
+    name       TEXT        NOT NULL,
+    surname    TEXT        NOT NULL,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now(),
 

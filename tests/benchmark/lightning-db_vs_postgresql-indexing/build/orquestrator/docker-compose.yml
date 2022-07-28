@@ -13,7 +13,7 @@ services:
       - postgresql-benchmark-test-db:/var/lib/postgresql/data
 
   lightning-db-node:
-    image: pietroski/lightning-db-node:v0.0.5
+    image: pietroski/lightning-db-node:v0.0.7
     restart: always
     env_file:
       - ../../benchmark.ltng.db.vs.psql.indexed.env
