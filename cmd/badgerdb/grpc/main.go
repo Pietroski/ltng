@@ -6,11 +6,12 @@ import (
 	indexed_operations "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/transactions/operations/indexed"
 	badgerdb_indexed_manager_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/manager/indexed"
 	badgerdb_indexed_operator_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/operator/indexed"
+	"log"
 	"net"
 	"os"
 
 	indexed_manager "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/manager/indexed"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/pkg/tools/tracer"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	"github.com/dgraph-io/badger/v3"
 
@@ -31,7 +32,14 @@ import (
 func main() {
 	ctx, cancelFn := context.WithCancel(context.Background())
 	tracer := go_tracer.NewCtxTracer()
-	ctx = tracer.Trace(ctx)
+
+	var err error
+	ctx, err = tracer.Trace(ctx)
+	if err != nil {
+		log.Fatalf("failed to create trace id: %v", err)
+		os.Exit(1)
+		return
+	}
 
 	loggerPublishers := &go_logger.Publishers{}
 	loggerOpts := &go_logger.Opts{
@@ -46,7 +54,7 @@ func main() {
 	binder := go_binder.NewStructBinder(serializer, validator)
 
 	cfg := &ltng_node_config.Config{}
-	err := go_env_extractor.LoadEnvs(cfg)
+	err = go_env_extractor.LoadEnvs(cfg)
 	if err != nil {
 		logger.Errorf(
 			"failed to load ltng node configs",

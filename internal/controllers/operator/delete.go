@@ -17,7 +17,7 @@ func (c *BadgerDBOperatorServiceController) Delete(
 ) (*grpc_ops.DeleteResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.DatabaseMetaInfo.DatabaseName)
+	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.GetDatabaseMetaInfo().GetDatabaseName())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(
@@ -30,7 +30,7 @@ func (c *BadgerDBOperatorServiceController) Delete(
 		return &grpc_ops.DeleteResponse{}, err
 	}
 
-	err = c.operator.Operate(dbInfo).Delete(req.Key)
+	err = c.operator.Operate(dbInfo).Delete(req.GetKey())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(

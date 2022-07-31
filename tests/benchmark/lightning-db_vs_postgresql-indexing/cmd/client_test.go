@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/pkg/tools/tracer"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"testing"
 	"time"
 

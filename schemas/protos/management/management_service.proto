@@ -4,15 +4,9 @@ package management;
 option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management;grpc_mngmt";
 
 import "management/management_messages.proto";
-//import "google/api/annotations.proto";
 
 service Management {
-  rpc CreateStore(CreateStoreRequest) returns(CreateStoreResponse) {
-//    option (google.api.http) = {
-//      post: "/v1/manager/"
-//      body: "*"
-//    };
-  };
+  rpc CreateStore(CreateStoreRequest) returns(CreateStoreResponse);
   rpc UpdateStore(UpdateStoreRequest) returns(UpdateStoreResponse);
   rpc DeleteStore(DeleteStoreRequest) returns(DeleteStoreResponse);
   rpc ListStores(ListStoresRequest) returns(ListStoresResponse);

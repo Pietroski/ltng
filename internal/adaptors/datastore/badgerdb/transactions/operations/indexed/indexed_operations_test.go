@@ -16,7 +16,7 @@ import (
 	indexed_operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation/indexed"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/pkg/tools/tracer"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 )
 
 func Test_Shallow_Integration_CreateIndexed(t *testing.T) {
@@ -24,7 +24,8 @@ func Test_Shallow_Integration_CreateIndexed(t *testing.T) {
 		"create happy path call",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -162,7 +163,8 @@ func Test_Shallow_Integration_CreateIndexed(t *testing.T) {
 		"update happy path call",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -300,7 +302,8 @@ func Test_Shallow_Integration_CreateIndexed(t *testing.T) {
 		"create happy path call",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -368,7 +371,8 @@ func Test_Shallow_Integration_CreateIndexed(t *testing.T) {
 		"update happy path call",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -438,7 +442,8 @@ func Test_Shallow_Integration_Create_Load_Delete_Load_Indexed(t *testing.T) {
 		"happy path flow - deleting on cascade",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -562,7 +567,8 @@ func Test_Shallow_Integration_Create_Load_Delete_Load_Indexed(t *testing.T) {
 		"happy path flow - deleting index only",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -701,7 +707,8 @@ func Test_Shallow_Integration_Create_Load_Delete_Load_Indexed(t *testing.T) {
 		"happy path flow - deleting none",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -842,7 +849,8 @@ func Test_Shallow_Integration_Create_Load_Delete_Load_Indexed(t *testing.T) {
 		"happy path flow - deleting no index",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -949,7 +957,8 @@ func Test_Shallow_Integration_Create_Load(t *testing.T) {
 		"load AND computational",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -1023,7 +1032,8 @@ func Test_Shallow_Integration_Create_Load(t *testing.T) {
 		"load AND computational - fails",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -1113,7 +1123,8 @@ func Test_Shallow_Integration_Create_Load(t *testing.T) {
 		"load OR computational",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -1187,7 +1198,8 @@ func Test_Shallow_Integration_Create_Load(t *testing.T) {
 		"load OR computational - fails",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -1277,7 +1289,8 @@ func Test_Shallow_Integration_Create_Load(t *testing.T) {
 		"load OR computational - no index",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -1355,7 +1368,8 @@ func Test_Shallow_Integration_Create_List(t *testing.T) {
 		"list paginated",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
@@ -1435,7 +1449,8 @@ func Test_Shallow_Integration_Create_List(t *testing.T) {
 		"list paginated",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			ctx = go_tracer.NewCtxTracer().Trace(ctx)
+			ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+			require.NoError(t, err)
 			logger := go_logger.FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")

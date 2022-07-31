@@ -17,7 +17,7 @@ func (c *BadgerDBOperatorServiceController) Get(
 ) (*grpc_ops.GetResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.DatabaseMetaInfo.DatabaseName)
+	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.GetDatabaseMetaInfo().GetDatabaseName())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(
@@ -31,7 +31,7 @@ func (c *BadgerDBOperatorServiceController) Get(
 	}
 
 	var keyValue []byte
-	keyValue, err = c.operator.Operate(dbInfo).Load(req.Key)
+	keyValue, err = c.operator.Operate(dbInfo).Load(req.GetKey())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(

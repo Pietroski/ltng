@@ -21,7 +21,7 @@ for domain in "${proto_list[@]}"; do
         --go-grpc_out=:"$OUTPUT_PATH" \
         --go-grpc_opt=module="$MOD_NAME" \
         --grpc-gateway_out=:"$OUTPUT_PATH" \
-        --grpc-gateway_opt=module="$MOD_NAME"/ \
+        --grpc-gateway_opt=module="$MOD_NAME" \
         --openapiv2_out=:"$SWAGGER_PATH"
 done
 

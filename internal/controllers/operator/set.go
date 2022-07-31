@@ -16,7 +16,7 @@ func (c *BadgerDBOperatorServiceController) Set(
 ) (*grpc_ops.SetResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.DatabaseMetaInfo.DatabaseName)
+	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.GetDatabaseMetaInfo().GetDatabaseName())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(
@@ -29,7 +29,7 @@ func (c *BadgerDBOperatorServiceController) Set(
 		return &grpc_ops.SetResponse{}, err
 	}
 
-	err = c.operator.Operate(dbInfo).Update(req.Item.Key, req.Item.Value)
+	err = c.operator.Operate(dbInfo).Update(req.GetItem().GetKey(), req.GetItem().GetValue())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(

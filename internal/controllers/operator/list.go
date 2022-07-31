@@ -19,7 +19,7 @@ func (c *BadgerDBOperatorServiceController) List(
 	logger := c.logger.FromCtx(ctx)
 
 	var r management_models.PaginationRequest
-	if err := c.binder.ShouldBind(req.Pagination, &r); err != nil {
+	if err := c.binder.ShouldBind(req.GetPagination(), &r); err != nil {
 		err = status.Error(codes.InvalidArgument, err.Error())
 		logger.Errorf(
 			"error binding and/or validating payload data",
@@ -31,7 +31,7 @@ func (c *BadgerDBOperatorServiceController) List(
 		return &grpc_ops.ListResponse{}, err
 	}
 
-	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.DatabaseMetaInfo.DatabaseName)
+	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.GetDatabaseMetaInfo().GetDatabaseName())
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(
