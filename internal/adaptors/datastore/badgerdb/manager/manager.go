@@ -24,7 +24,6 @@ var (
 	ErrUnimplemented = fmt.Errorf("unimplemented method")
 )
 
-// TODO: rename interface methods to shorter ones - leave long names and descriptions in the go docs.
 type (
 	Manager interface {
 		CreateOpenStoreAndLoadIntoMemory(

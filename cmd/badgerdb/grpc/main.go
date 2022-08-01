@@ -44,7 +44,7 @@ func main() {
 	loggerPublishers := &go_logger.Publishers{}
 	loggerOpts := &go_logger.Opts{
 		Debug:   true,
-		Publish: true,
+		Publish: false,
 	}
 	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
 	logger = logger.FromCtx(ctx)
