@@ -23,7 +23,7 @@ env-check-ltng-db-node:
 mock-generate:
 	go get -d github.com/golang/mock/mockgen
 	go mod download
-	go generate ./...
+	go generate internal/...
 	go mod tidy
 	go mod download
 
