@@ -18,7 +18,7 @@ const (
 	bsSeparator = "&#-#&"
 )
 
-func (idxOps *BadgerIndexedOperator) getIndexedDDMemoryInfo(
+func (idxOps *BadgerIndexedOperator) getIndexedDBMemoryInfo(
 	ctx context.Context,
 ) (*management_models.DBMemoryInfo, error) {
 	indexedDBInfo :=
@@ -39,27 +39,31 @@ func (idxOps *BadgerIndexedOperator) createIndexRelation(
 	item *operation_models.OpItem,
 	index *indexed_operation_models.IdxOpsIndex,
 ) (err error) {
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
 
 	operator := idxOps.getIndexedOperator(indexedMemoryDBInfo)
 
-	for _, key := range index.IndexKeys {
-		if err = operator.Create(key, index.ParentKey); err != nil {
-			err = fmt.Errorf("failed to create index for given key: %v", err)
-			err = fmt.Errorf("%v - key: %v; parent key: %v", err, key, index.ParentKey)
-			return err
+	{ // index to main key pair
+		for _, key := range index.IndexKeys {
+			if err = operator.Create(key, index.ParentKey); err != nil {
+				err = fmt.Errorf("failed to create index for given key: %v", err)
+				err = fmt.Errorf("%v - key: %v; parent key: %v", err, key, index.ParentKey)
+				return err
+			}
 		}
 	}
 
-	indexKeys := bytes.Join(index.IndexKeys, []byte(bsSeparator))
-	err = operator.Create(index.ParentKey, indexKeys)
-	if err != nil {
-		err = fmt.Errorf("failed to create main INDEX key-value pair relation: %v", err)
-		err = fmt.Errorf("%v - key: %s; value: %s", err, item.Key, item.Value)
-		return err
+	{ // main key to index list
+		indexKeys := bytes.Join(index.IndexKeys, []byte(bsSeparator))
+		err = operator.Create(index.ParentKey, indexKeys)
+		if err != nil {
+			err = fmt.Errorf("failed to create main INDEX key-value pair relation: %v", err)
+			err = fmt.Errorf("%v - key: %s; value: %s", err, item.Key, item.Value)
+			return err
+		}
 	}
 
 	return err
@@ -69,31 +73,35 @@ func (idxOps *BadgerIndexedOperator) updateIndexRelation(
 	ctx context.Context,
 	index *indexed_operation_models.IdxOpsIndex,
 ) (err error) {
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
 
 	operator := idxOps.getIndexedOperator(indexedMemoryDBInfo)
 
-	for _, key := range index.IndexKeys {
-		if key == nil || len(key) == 0 {
-			continue
-		}
+	{ // index to main key pair
+		for _, key := range index.IndexKeys {
+			if key == nil || len(key) == 0 {
+				continue
+			}
 
-		if err = operator.Update(key, index.ParentKey); err != nil {
-			err = fmt.Errorf("failed to create index for given key: %v", err)
-			err = fmt.Errorf("%v - key: %v; parent key: %v", err, key, index.ParentKey)
-			return err
+			if err = operator.Update(key, index.ParentKey); err != nil {
+				err = fmt.Errorf("failed to create index for given key: %v", err)
+				err = fmt.Errorf("%v - key: %v; parent key: %v", err, key, index.ParentKey)
+				return err
+			}
 		}
 	}
 
-	indexKeys := bytes.Join(index.IndexKeys, []byte(bsSeparator))
-	err = operator.Update(index.ParentKey, indexKeys)
-	if err != nil {
-		err = fmt.Errorf("failed to update main INDEX key-value pair relation: %v", err)
-		err = fmt.Errorf("%v - key: %s; value: %s", err, index.ParentKey, indexKeys)
-		return err
+	{ // main key to index list
+		indexKeys := bytes.Join(index.IndexKeys, []byte(bsSeparator))
+		err = operator.Update(index.ParentKey, indexKeys)
+		if err != nil {
+			err = fmt.Errorf("failed to update main INDEX key-value pair relation: %v", err)
+			err = fmt.Errorf("%v - key: %s; value: %s", err, index.ParentKey, indexKeys)
+			return err
+		}
 	}
 
 	return err
@@ -103,7 +111,7 @@ func (idxOps *BadgerIndexedOperator) deleteCascade(
 	ctx context.Context,
 	item *operation_models.OpItem,
 ) error {
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
@@ -148,7 +156,7 @@ func (idxOps *BadgerIndexedOperator) deleteIdxOnly(
 		return fmt.Errorf("invalid index payload size for giving option: %v", err)
 	}
 
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
@@ -262,7 +270,7 @@ func (idxOps *BadgerIndexedOperator) computationalSearch(
 		operator operations.Operator,
 	) ([]byte, error),
 ) ([]byte, error) {
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
@@ -301,7 +309,7 @@ func (idxOps *BadgerIndexedOperator) straightSearch(
 		return []byte{}, fmt.Errorf("invalid index payload size for giving option: %v", err)
 	}
 
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get indexed memory info: %v", err)
 	}

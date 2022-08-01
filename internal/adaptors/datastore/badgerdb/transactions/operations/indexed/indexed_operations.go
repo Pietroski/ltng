@@ -194,7 +194,7 @@ func (idxOps *BadgerIndexedOperator) listAllIndexed(
 	ctx context.Context,
 	index *indexed_operation_models.IdxOpsIndex,
 ) (operation_models.OpList, error) {
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return operation_models.OpList{}, fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
@@ -234,7 +234,7 @@ func (idxOps *BadgerIndexedOperator) listPaginatedIndexed(
 	index *indexed_operation_models.IdxOpsIndex,
 	pagination *management_models.PaginationRequest,
 ) (operation_models.OpList, error) {
-	indexedMemoryDBInfo, err := idxOps.getIndexedDDMemoryInfo(ctx)
+	indexedMemoryDBInfo, err := idxOps.getIndexedDBMemoryInfo(ctx)
 	if err != nil {
 		return operation_models.OpList{}, fmt.Errorf("failed to get indexed memory info: %v", err)
 	}
