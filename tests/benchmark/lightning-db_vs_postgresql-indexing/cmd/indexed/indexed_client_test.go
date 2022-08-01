@@ -51,7 +51,8 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = go_tracer.NewCtxTracer().Trace(ctx)
+	ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+	require.NoError(t, err)
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -202,10 +203,11 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 
 func Test_Postgresql_ServerWithClient(t *testing.T) {
 	ctx := context.Background()
-	ctx = go_tracer.NewCtxTracer().Trace(ctx)
+	ctx, err := go_tracer.NewCtxTracer().Trace(ctx)
+	require.NoError(t, err)
 
 	cfg := &ltng_node_config.Config{}
-	err := go_env_extractor.LoadEnvs(cfg)
+	err = go_env_extractor.LoadEnvs(cfg)
 	require.NoError(t, err)
 
 	conn, err := sql.Open(cfg.PostgreSQL.DriverName, cfg.PostgreSQL.DataSourceName)

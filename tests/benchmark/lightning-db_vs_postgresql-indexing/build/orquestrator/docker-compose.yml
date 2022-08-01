@@ -13,7 +13,7 @@ services:
       - postgresql-benchmark-test-db:/var/lib/postgresql/data
 
   lightning-db-node:
-    image: pietroski/lightning-db-node:v0.0.7
+    image: pietroski/lightning-db-node:v0.0.8
     restart: always
     env_file:
       - ../../benchmark.ltng.db.vs.psql.indexed.env
@@ -22,7 +22,6 @@ services:
       - '50052:50052'
       - '50053:50053'
       - '50054:50054'
-      - '7001:7001'
     volumes:
       - lightning-db-node-benchmark-test-db:/var/lib/lightning-db-node/data
 

@@ -23,7 +23,7 @@ migrate-init-for:
 migrate:
 	@./tests/benchmark/lightning-db_vs_postgresql/scripts/migrations/postgresql/go-migrate/run/migrate.sh ${DOMAIN_NAME} ${DB_ENV_NAME} ${TYPE} ${OFFSET}
 
-migrate-all-up: export-envs
+migrate-all-up:
 	@./tests/benchmark/lightning-db_vs_postgresql/scripts/migrations/postgresql/go-migrate/run/types/up/migrate-all-up.sh ${DB_ENV_NAME}
 
 migrate-all-down:
@@ -44,6 +44,3 @@ docker-compose-up:
 
 docker-compose-down:
 	docker compose -f ./tests/benchmark/lightning-db_vs_postgresql/build/orquestrator/docker-compose.yml down
-
-#run-benchmark-ltng-db-vs-psql:
-#
