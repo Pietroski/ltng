@@ -3,10 +3,16 @@
 ##################################
 FROM golang:1.18.4-alpine3.16 as builder
 
-RUN apk update && apk upgrade && apk add git
+RUN apk update && apk upgrade && apk add git bash make build-base
 
-COPY build/docker/.netrc /root/.netrc
-RUN chmod 600 /root/.netrc
+ARG remote
+ARG api_remote
+ARG netrc_login
+ARG netrc_password
+
+RUN echo -e "machine $remote\nlogin $netrc_login\npassword $netrc_password" > /root/.netrc
+RUN echo -e "machine $api_remote\nlogin $netrc_login\npassword $netrc_password" >> /root/.netrc
+RUN chmod 640 /root/.netrc
 
 ENV GONOSUMDB=gitlab.com/pietroski-software-company
 ENV GONOPROXY=gitlab.com/pietroski-software-company

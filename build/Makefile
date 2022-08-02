@@ -27,4 +27,20 @@ update-docker-ltng-db-node-image:
 ## docker builds, tags and pushes lightning-db-node's image to docker docker hub
 ltng-docker-patch: build-ltng-db-node-image tagging-ltng-db-node-image update-docker-ltng-db-node-image
 
-########################################################################################################################
+#########################################################################################################################
+#
+#remote-build-ltng-db-node-image:
+#	build/docker/scripts/remote-build-ltng-db-node-image.sh $(REMOTE) $(API_REMOTE) $(NETRC_LOGIN) $(NETRC_PASSWORD)
+#
+### remote docker lightning-db-node's image build
+#remote-build-ltng-db-node-image:
+#	docker image build -t pietroski/lightning-db-node -f build/docker/remote/lightning-db-node.Dockerfile . # ../../../
+#
+### remote docker lightning-db-node's image build with no caching
+#remote-build-ltng-db-node-image-no-cache:
+#	docker image build --no-cache -t pietroski/lightning-db-node -f build/docker/remote/lightning-db-node.Dockerfile .
+#
+### docker builds, tags and pushes lightning-db-node's image to docker docker hub
+#remote-ltng-docker-patch: remote-build-ltng-db-node-image tagging-ltng-db-node-image update-docker-ltng-db-node-image
+#
+#########################################################################################################################
