@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package tests_integration_ltngdb_mock_server;
+option go_package = "gitlab.com/pietroski-software-company/peppa-feet/backend/authentication_api/tests/integration/lightning-db/mock-server/schemas/generated/go/mock-server;grpc_tests_integration_ltngdb_mock_server";
+
+service MockServer {
+  rpc ProxyListStores(ProxyListStoresRequest) returns (ProxyListStoresResponse);
+}

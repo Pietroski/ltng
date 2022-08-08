@@ -19,11 +19,13 @@ env-check-ltng-db-node:
 -include ./tests/benchmark/lightning-db_vs_postgresql/Makefile
 -include ./tests/benchmark/lightning-db_vs_postgresql-indexing/Makefile
 
+-include ./tests/integration/lightning-db/Makefile
+
 ## generates mocks
 mock-generate:
 	go get -d github.com/golang/mock/mockgen
 	go mod download
-	go generate internal/...
+	go generate ./...
 	go mod tidy
 	go mod download
 

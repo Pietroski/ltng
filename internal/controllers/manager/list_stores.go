@@ -2,7 +2,7 @@ package badgerdb_manager_controller
 
 import (
 	"context"
-
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
@@ -18,6 +18,19 @@ func (c *BadgerDBManagerServiceController) ListStores(
 	req *grpc_mngmt.ListStoresRequest,
 ) (*grpc_mngmt.ListStoresResponse, error) {
 	logger := c.logger.FromCtx(ctx)
+
+	{
+		logger.Debugf("inside list stores")
+
+		ctxT, ok := go_tracer.NewCtxTracer().GetTraceInfo(ctx)
+		logger.Debugf(
+			"tracing info inside list handler",
+			go_logger.Field{
+				"ok":   ok,
+				"ctxT": ctxT,
+			},
+		)
+	}
 
 	var r management_models.PaginationRequest
 	if err := c.binder.ShouldBind(req.Pagination, &r); err != nil {

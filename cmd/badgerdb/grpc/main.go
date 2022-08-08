@@ -103,7 +103,7 @@ func main() {
 		return
 	}
 	mngrsvr := badgerdb_manager_factory.NewBadgerDBManagerService(
-		managerListener, logger, binder, mngr,
+		managerListener, logger, tracer, binder, mngr,
 	)
 
 	operatorListener, err := net.Listen(

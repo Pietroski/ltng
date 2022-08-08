@@ -2,6 +2,7 @@ package badgerdb_indexed_manager_controller
 
 import (
 	"context"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,6 +19,19 @@ func (c *BadgerDBIndexedManagerServiceController) ListIndexedStores(
 	req *grpc_indexed_mngmnt.ListIndexedStoresRequest,
 ) (*grpc_mngmt.ListStoresResponse, error) {
 	logger := c.logger.FromCtx(ctx)
+
+	{
+		logger.Debugf("inside list indexed stores")
+
+		ctxT, ok := go_tracer.NewCtxTracer().GetTraceInfo(ctx)
+		logger.Debugf(
+			"tracing info inside create handler",
+			go_logger.Field{
+				"ok":   ok,
+				"ctxT": ctxT,
+			},
+		)
+	}
 
 	var r management_models.PaginationRequest
 	if err := c.binder.ShouldBind(req.Pagination, &r); err != nil {

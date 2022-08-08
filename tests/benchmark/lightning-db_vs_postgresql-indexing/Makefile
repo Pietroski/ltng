@@ -37,7 +37,7 @@ sqlc-gen-indexing:
 	go mod vendor
 
 docker-compose-up-indexing:
-	docker compose -f ./tests/benchmark/lightning-db_vs_postgresql-indexing/build/orquestrator/docker-compose.yml up -d
+	docker compose build -f ./tests/benchmark/lightning-db_vs_postgresql-indexing/build/orquestrator/docker-compose.yml up -d
 
 docker-compose-down-indexing:
 	docker compose -f ./tests/benchmark/lightning-db_vs_postgresql-indexing/build/orquestrator/docker-compose.yml down

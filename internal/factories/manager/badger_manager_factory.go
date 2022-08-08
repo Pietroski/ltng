@@ -1,6 +1,9 @@
 package badgerdb_manager_factory
 
 import (
+	"context"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
+	"google.golang.org/grpc/metadata"
 	"net"
 
 	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/manager"
@@ -16,6 +19,7 @@ type (
 		listener net.Listener
 		server   *grpc.Server
 		logger   go_logger.Logger
+		tracer   go_tracer.Tracer
 		binder   go_binder.Binder
 		manager  manager.Manager
 	}
@@ -24,12 +28,14 @@ type (
 func NewBadgerDBManagerService(
 	listener net.Listener,
 	logger go_logger.Logger,
+	tracer go_tracer.Tracer,
 	binder go_binder.Binder,
 	manager manager.Manager,
 ) *BadgerDBManagerServiceFactory {
 	factory := &BadgerDBManagerServiceFactory{
 		listener: listener,
 		logger:   logger,
+		tracer:   tracer,
 		binder:   binder,
 		manager:  manager,
 	}
@@ -39,7 +45,49 @@ func NewBadgerDBManagerService(
 }
 
 func (s *BadgerDBManagerServiceFactory) handle() {
-	var grpcOpts []grpc.ServerOption
+	//var grpcOpts []grpc.ServerOption
+	s.logger.Debugf("initialising manager server")
+
+	grpcOpts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			func(
+				ctx context.Context,
+				req interface{},
+				info *grpc.UnaryServerInfo,
+				handler grpc.UnaryHandler,
+			) (resp interface{}, err error) {
+				logger := s.logger.FromCtx(ctx)
+				logger.Debugf("inside server interceptor")
+
+				ctxT, ok := s.tracer.GetTraceInfo(ctx)
+				logger.Debugf(
+					"tracing info",
+					go_logger.Field{
+						"ok":   ok,
+						"ctxT": ctxT,
+					},
+				)
+				ctx, err = go_tracer.GRPCTraceMiddleware(ctx, metadata.FromIncomingContext)
+				if err != nil {
+					return ctx, err
+				}
+				ctxT, ok = s.tracer.GetTraceInfo(ctx)
+				logger.Debugf(
+					"tracing info",
+					go_logger.Field{
+						"ok":   ok,
+						"ctxT": ctxT,
+					},
+				)
+
+				// Calls the handler
+				h, err := handler(ctx, req)
+				return h, err
+			},
+		),
+	}
+
+	//var grpcOpts []grpc.ServerOption
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	grpc_mngmt.RegisterManagementServer(
