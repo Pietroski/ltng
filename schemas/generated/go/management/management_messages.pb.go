@@ -205,101 +205,6 @@ func (x *CreateStoreResponse) GetLastOpenedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// UpdateStoreRequest
-type UpdateStoreRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *UpdateStoreRequest) Reset() {
-	*x = UpdateStoreRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *UpdateStoreRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateStoreRequest) ProtoMessage() {}
-
-func (x *UpdateStoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateStoreRequest.ProtoReflect.Descriptor instead.
-func (*UpdateStoreRequest) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{3}
-}
-
-// UpdateStoreResponse
-type UpdateStoreResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	CreatedAt    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastOpenedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=last_opened_at,json=lastOpenedAt,proto3" json:"last_opened_at,omitempty"`
-}
-
-func (x *UpdateStoreResponse) Reset() {
-	*x = UpdateStoreResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *UpdateStoreResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateStoreResponse) ProtoMessage() {}
-
-func (x *UpdateStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateStoreResponse.ProtoReflect.Descriptor instead.
-func (*UpdateStoreResponse) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *UpdateStoreResponse) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *UpdateStoreResponse) GetLastOpenedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastOpenedAt
-	}
-	return nil
-}
-
 // DeleteStoreRequest
 type DeleteStoreRequest struct {
 	state         protoimpl.MessageState
@@ -312,7 +217,7 @@ type DeleteStoreRequest struct {
 func (x *DeleteStoreRequest) Reset() {
 	*x = DeleteStoreRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[5]
+		mi := &file_management_management_messages_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -325,7 +230,7 @@ func (x *DeleteStoreRequest) String() string {
 func (*DeleteStoreRequest) ProtoMessage() {}
 
 func (x *DeleteStoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[5]
+	mi := &file_management_management_messages_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -338,7 +243,7 @@ func (x *DeleteStoreRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteStoreRequest.ProtoReflect.Descriptor instead.
 func (*DeleteStoreRequest) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{5}
+	return file_management_management_messages_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DeleteStoreRequest) GetName() string {
@@ -358,7 +263,7 @@ type DeleteStoreResponse struct {
 func (x *DeleteStoreResponse) Reset() {
 	*x = DeleteStoreResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[6]
+		mi := &file_management_management_messages_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -371,7 +276,7 @@ func (x *DeleteStoreResponse) String() string {
 func (*DeleteStoreResponse) ProtoMessage() {}
 
 func (x *DeleteStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[6]
+	mi := &file_management_management_messages_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -384,7 +289,103 @@ func (x *DeleteStoreResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteStoreResponse.ProtoReflect.Descriptor instead.
 func (*DeleteStoreResponse) Descriptor() ([]byte, []int) {
+	return file_management_management_messages_proto_rawDescGZIP(), []int{4}
+}
+
+// GetStoreRequest
+type GetStoreRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *GetStoreRequest) Reset() {
+	*x = GetStoreRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_management_management_messages_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetStoreRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStoreRequest) ProtoMessage() {}
+
+func (x *GetStoreRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_management_management_messages_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStoreRequest.ProtoReflect.Descriptor instead.
+func (*GetStoreRequest) Descriptor() ([]byte, []int) {
+	return file_management_management_messages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetStoreRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// GetStoreResponse
+type GetStoreResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DbInfo *DBInfo `protobuf:"bytes,1,opt,name=db_info,json=dbInfo,proto3" json:"db_info,omitempty"`
+}
+
+func (x *GetStoreResponse) Reset() {
+	*x = GetStoreResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_management_management_messages_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetStoreResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStoreResponse) ProtoMessage() {}
+
+func (x *GetStoreResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_management_management_messages_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStoreResponse.ProtoReflect.Descriptor instead.
+func (*GetStoreResponse) Descriptor() ([]byte, []int) {
 	return file_management_management_messages_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetStoreResponse) GetDbInfo() *DBInfo {
+	if x != nil {
+		return x.DbInfo
+	}
+	return nil
 }
 
 // ListStoresRequest
@@ -483,102 +484,6 @@ func (x *ListStoresResponse) GetDbsInfos() []*DBInfo {
 	return nil
 }
 
-// GetStoreRequest
-type GetStoreRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (x *GetStoreRequest) Reset() {
-	*x = GetStoreRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetStoreRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetStoreRequest) ProtoMessage() {}
-
-func (x *GetStoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetStoreRequest.ProtoReflect.Descriptor instead.
-func (*GetStoreRequest) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *GetStoreRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-// GetStoreResponse
-type GetStoreResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	DbInfo *DBInfo `protobuf:"bytes,1,opt,name=db_info,json=dbInfo,proto3" json:"db_info,omitempty"`
-}
-
-func (x *GetStoreResponse) Reset() {
-	*x = GetStoreResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetStoreResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetStoreResponse) ProtoMessage() {}
-
-func (x *GetStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetStoreResponse.ProtoReflect.Descriptor instead.
-func (*GetStoreResponse) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *GetStoreResponse) GetDbInfo() *DBInfo {
-	if x != nil {
-		return x.DbInfo
-	}
-	return nil
-}
-
 // RestartLightningNodeRequest
 type RestartLightningNodeRequest struct {
 	state         protoimpl.MessageState
@@ -589,7 +494,7 @@ type RestartLightningNodeRequest struct {
 func (x *RestartLightningNodeRequest) Reset() {
 	*x = RestartLightningNodeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[11]
+		mi := &file_management_management_messages_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -602,7 +507,7 @@ func (x *RestartLightningNodeRequest) String() string {
 func (*RestartLightningNodeRequest) ProtoMessage() {}
 
 func (x *RestartLightningNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[11]
+	mi := &file_management_management_messages_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +520,7 @@ func (x *RestartLightningNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartLightningNodeRequest.ProtoReflect.Descriptor instead.
 func (*RestartLightningNodeRequest) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{11}
+	return file_management_management_messages_proto_rawDescGZIP(), []int{9}
 }
 
 // RestartLightningNodeResponse
@@ -628,7 +533,7 @@ type RestartLightningNodeResponse struct {
 func (x *RestartLightningNodeResponse) Reset() {
 	*x = RestartLightningNodeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[12]
+		mi := &file_management_management_messages_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -641,7 +546,7 @@ func (x *RestartLightningNodeResponse) String() string {
 func (*RestartLightningNodeResponse) ProtoMessage() {}
 
 func (x *RestartLightningNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[12]
+	mi := &file_management_management_messages_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -654,7 +559,7 @@ func (x *RestartLightningNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartLightningNodeResponse.ProtoReflect.Descriptor instead.
 func (*RestartLightningNodeResponse) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{12}
+	return file_management_management_messages_proto_rawDescGZIP(), []int{10}
 }
 
 // ShutdownLightningNodeRequest
@@ -667,7 +572,7 @@ type ShutdownLightningNodeRequest struct {
 func (x *ShutdownLightningNodeRequest) Reset() {
 	*x = ShutdownLightningNodeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[13]
+		mi := &file_management_management_messages_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -680,7 +585,7 @@ func (x *ShutdownLightningNodeRequest) String() string {
 func (*ShutdownLightningNodeRequest) ProtoMessage() {}
 
 func (x *ShutdownLightningNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[13]
+	mi := &file_management_management_messages_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -693,7 +598,7 @@ func (x *ShutdownLightningNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownLightningNodeRequest.ProtoReflect.Descriptor instead.
 func (*ShutdownLightningNodeRequest) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{13}
+	return file_management_management_messages_proto_rawDescGZIP(), []int{11}
 }
 
 // ShutdownLightningNodeResponse
@@ -706,7 +611,7 @@ type ShutdownLightningNodeResponse struct {
 func (x *ShutdownLightningNodeResponse) Reset() {
 	*x = ShutdownLightningNodeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_management_management_messages_proto_msgTypes[14]
+		mi := &file_management_management_messages_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -719,7 +624,7 @@ func (x *ShutdownLightningNodeResponse) String() string {
 func (*ShutdownLightningNodeResponse) ProtoMessage() {}
 
 func (x *ShutdownLightningNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_management_management_messages_proto_msgTypes[14]
+	mi := &file_management_management_messages_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -732,7 +637,7 @@ func (x *ShutdownLightningNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownLightningNodeResponse.ProtoReflect.Descriptor instead.
 func (*ShutdownLightningNodeResponse) Descriptor() ([]byte, []int) {
-	return file_management_management_messages_proto_rawDescGZIP(), []int{14}
+	return file_management_management_messages_proto_rawDescGZIP(), []int{12}
 }
 
 var File_management_management_messages_proto protoreflect.FileDescriptor
@@ -769,54 +674,44 @@ var file_management_management_messages_proto_rawDesc = []byte{
 	0x6e, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67,
 	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54,
 	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0c, 0x6c, 0x61, 0x73, 0x74, 0x4f, 0x70,
-	0x65, 0x6e, 0x65, 0x64, 0x41, 0x74, 0x22, 0x14, 0x0a, 0x12, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x92, 0x01, 0x0a,
-	0x13, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f,
-	0x61, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
-	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73,
-	0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12,
-	0x40, 0x0a, 0x0e, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x6f, 0x70, 0x65, 0x6e, 0x65, 0x64, 0x5f, 0x61,
-	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74,
-	0x61, 0x6d, 0x70, 0x52, 0x0c, 0x6c, 0x61, 0x73, 0x74, 0x4f, 0x70, 0x65, 0x6e, 0x65, 0x64, 0x41,
-	0x74, 0x22, 0x28, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x15, 0x0a, 0x13, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x4e, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f,
-	0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x2e, 0x50, 0x61, 0x67, 0x69,
-	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x22, 0x45, 0x0a, 0x12, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f, 0x0a, 0x09, 0x64, 0x62, 0x73, 0x5f,
-	0x69, 0x6e, 0x66, 0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x61,
-	0x6e, 0x61, 0x67, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x44, 0x42, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x08, 0x64, 0x62, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x73, 0x22, 0x25, 0x0a, 0x0f, 0x47, 0x65, 0x74,
+	0x65, 0x6e, 0x65, 0x64, 0x41, 0x74, 0x22, 0x28, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
 	0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04,
 	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x22, 0x3f, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x07, 0x64, 0x62, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x6d, 0x65,
-	0x6e, 0x74, 0x2e, 0x44, 0x42, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x06, 0x64, 0x62, 0x49, 0x6e, 0x66,
-	0x6f, 0x22, 0x1d, 0x0a, 0x1b, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74, 0x4c, 0x69, 0x67, 0x68,
-	0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x22, 0x1e, 0x0a, 0x1c, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74, 0x4c, 0x69, 0x67, 0x68, 0x74,
-	0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x1e, 0x0a, 0x1c, 0x53, 0x68, 0x75, 0x74, 0x64, 0x6f, 0x77, 0x6e, 0x4c, 0x69, 0x67, 0x68,
-	0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x22, 0x1f, 0x0a, 0x1d, 0x53, 0x68, 0x75, 0x74, 0x64, 0x6f, 0x77, 0x6e, 0x4c, 0x69, 0x67, 0x68,
-	0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x80, 0x01, 0x5a, 0x7e, 0x67, 0x69, 0x74, 0x6c, 0x61, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x70, 0x69, 0x65, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x69, 0x2d, 0x73, 0x6f, 0x66, 0x74, 0x77,
-	0x61, 0x72, 0x65, 0x2d, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x6e, 0x79, 0x2f, 0x6c, 0x69, 0x67, 0x68,
-	0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x64, 0x62, 0x2f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69,
-	0x6e, 0x67, 0x2d, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x67, 0x6f, 0x2d, 0x6c, 0x69, 0x67, 0x68, 0x74,
-	0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61,
-	0x73, 0x2f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x65, 0x64, 0x2f, 0x67, 0x6f, 0x2f, 0x6d,
-	0x61, 0x6e, 0x61, 0x67, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x3b, 0x67, 0x72, 0x70, 0x63, 0x5f, 0x6d,
-	0x6e, 0x67, 0x6d, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x15, 0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x25, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x53, 0x74,
+	0x6f, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x3f,
+	0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x2b, 0x0a, 0x07, 0x64, 0x62, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x6d, 0x65, 0x6e, 0x74,
+	0x2e, 0x44, 0x42, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x06, 0x64, 0x62, 0x49, 0x6e, 0x66, 0x6f, 0x22,
+	0x4e, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f,
+	0x6e, 0x2e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22,
+	0x45, 0x0a, 0x12, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f, 0x0a, 0x09, 0x64, 0x62, 0x73, 0x5f, 0x69, 0x6e, 0x66,
+	0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67,
+	0x65, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x44, 0x42, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x08, 0x64, 0x62,
+	0x73, 0x49, 0x6e, 0x66, 0x6f, 0x73, 0x22, 0x1d, 0x0a, 0x1b, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72,
+	0x74, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1e, 0x0a, 0x1c, 0x52, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74,
+	0x4c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x1e, 0x0a, 0x1c, 0x53, 0x68, 0x75, 0x74, 0x64, 0x6f, 0x77,
+	0x6e, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1f, 0x0a, 0x1d, 0x53, 0x68, 0x75, 0x74, 0x64, 0x6f, 0x77,
+	0x6e, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x80, 0x01, 0x5a, 0x7e, 0x67, 0x69, 0x74, 0x6c, 0x61,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x70, 0x69, 0x65, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x69, 0x2d,
+	0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x6e, 0x79,
+	0x2f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x64, 0x62, 0x2f, 0x6c, 0x69,
+	0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x67, 0x6f, 0x2d,
+	0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x73,
+	0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x65, 0x64,
+	0x2f, 0x67, 0x6f, 0x2f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x3b, 0x67,
+	0x72, 0x70, 0x63, 0x5f, 0x6d, 0x6e, 0x67, 0x6d, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -831,41 +726,37 @@ func file_management_management_messages_proto_rawDescGZIP() []byte {
 	return file_management_management_messages_proto_rawDescData
 }
 
-var file_management_management_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_management_management_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_management_management_messages_proto_goTypes = []interface{}{
 	(*DBInfo)(nil),                        // 0: management.DBInfo
 	(*CreateStoreRequest)(nil),            // 1: management.CreateStoreRequest
 	(*CreateStoreResponse)(nil),           // 2: management.CreateStoreResponse
-	(*UpdateStoreRequest)(nil),            // 3: management.UpdateStoreRequest
-	(*UpdateStoreResponse)(nil),           // 4: management.UpdateStoreResponse
-	(*DeleteStoreRequest)(nil),            // 5: management.DeleteStoreRequest
-	(*DeleteStoreResponse)(nil),           // 6: management.DeleteStoreResponse
+	(*DeleteStoreRequest)(nil),            // 3: management.DeleteStoreRequest
+	(*DeleteStoreResponse)(nil),           // 4: management.DeleteStoreResponse
+	(*GetStoreRequest)(nil),               // 5: management.GetStoreRequest
+	(*GetStoreResponse)(nil),              // 6: management.GetStoreResponse
 	(*ListStoresRequest)(nil),             // 7: management.ListStoresRequest
 	(*ListStoresResponse)(nil),            // 8: management.ListStoresResponse
-	(*GetStoreRequest)(nil),               // 9: management.GetStoreRequest
-	(*GetStoreResponse)(nil),              // 10: management.GetStoreResponse
-	(*RestartLightningNodeRequest)(nil),   // 11: management.RestartLightningNodeRequest
-	(*RestartLightningNodeResponse)(nil),  // 12: management.RestartLightningNodeResponse
-	(*ShutdownLightningNodeRequest)(nil),  // 13: management.ShutdownLightningNodeRequest
-	(*ShutdownLightningNodeResponse)(nil), // 14: management.ShutdownLightningNodeResponse
-	(*timestamppb.Timestamp)(nil),         // 15: google.protobuf.Timestamp
-	(*search.Pagination)(nil),             // 16: common.search.Pagination
+	(*RestartLightningNodeRequest)(nil),   // 9: management.RestartLightningNodeRequest
+	(*RestartLightningNodeResponse)(nil),  // 10: management.RestartLightningNodeResponse
+	(*ShutdownLightningNodeRequest)(nil),  // 11: management.ShutdownLightningNodeRequest
+	(*ShutdownLightningNodeResponse)(nil), // 12: management.ShutdownLightningNodeResponse
+	(*timestamppb.Timestamp)(nil),         // 13: google.protobuf.Timestamp
+	(*search.Pagination)(nil),             // 14: common.search.Pagination
 }
 var file_management_management_messages_proto_depIdxs = []int32{
-	15, // 0: management.DBInfo.created_at:type_name -> google.protobuf.Timestamp
-	15, // 1: management.DBInfo.last_opened_at:type_name -> google.protobuf.Timestamp
-	15, // 2: management.CreateStoreResponse.created_at:type_name -> google.protobuf.Timestamp
-	15, // 3: management.CreateStoreResponse.last_opened_at:type_name -> google.protobuf.Timestamp
-	15, // 4: management.UpdateStoreResponse.created_at:type_name -> google.protobuf.Timestamp
-	15, // 5: management.UpdateStoreResponse.last_opened_at:type_name -> google.protobuf.Timestamp
-	16, // 6: management.ListStoresRequest.pagination:type_name -> common.search.Pagination
-	0,  // 7: management.ListStoresResponse.dbs_infos:type_name -> management.DBInfo
-	0,  // 8: management.GetStoreResponse.db_info:type_name -> management.DBInfo
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	13, // 0: management.DBInfo.created_at:type_name -> google.protobuf.Timestamp
+	13, // 1: management.DBInfo.last_opened_at:type_name -> google.protobuf.Timestamp
+	13, // 2: management.CreateStoreResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 3: management.CreateStoreResponse.last_opened_at:type_name -> google.protobuf.Timestamp
+	0,  // 4: management.GetStoreResponse.db_info:type_name -> management.DBInfo
+	14, // 5: management.ListStoresRequest.pagination:type_name -> common.search.Pagination
+	0,  // 6: management.ListStoresResponse.dbs_infos:type_name -> management.DBInfo
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_management_management_messages_proto_init() }
@@ -911,30 +802,6 @@ func file_management_management_messages_proto_init() {
 			}
 		}
 		file_management_management_messages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateStoreRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_management_management_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateStoreResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_management_management_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteStoreRequest); i {
 			case 0:
 				return &v.state
@@ -946,8 +813,32 @@ func file_management_management_messages_proto_init() {
 				return nil
 			}
 		}
-		file_management_management_messages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_management_management_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteStoreResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_management_management_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetStoreRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_management_management_messages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetStoreResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -983,30 +874,6 @@ func file_management_management_messages_proto_init() {
 			}
 		}
 		file_management_management_messages_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetStoreRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_management_management_messages_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetStoreResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_management_management_messages_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RestartLightningNodeRequest); i {
 			case 0:
 				return &v.state
@@ -1018,7 +885,7 @@ func file_management_management_messages_proto_init() {
 				return nil
 			}
 		}
-		file_management_management_messages_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_management_management_messages_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RestartLightningNodeResponse); i {
 			case 0:
 				return &v.state
@@ -1030,7 +897,7 @@ func file_management_management_messages_proto_init() {
 				return nil
 			}
 		}
-		file_management_management_messages_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_management_management_messages_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ShutdownLightningNodeRequest); i {
 			case 0:
 				return &v.state
@@ -1042,7 +909,7 @@ func file_management_management_messages_proto_init() {
 				return nil
 			}
 		}
-		file_management_management_messages_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_management_management_messages_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ShutdownLightningNodeResponse); i {
 			case 0:
 				return &v.state
@@ -1061,7 +928,7 @@ func file_management_management_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_management_management_messages_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

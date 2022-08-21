@@ -3,11 +3,12 @@ package client_test
 import (
 	"context"
 	"encoding/json"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"log"
 	"os"
 	"testing"
+
+	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -64,15 +65,15 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	keyToStore := []byte("any-test-key")
 	valueToStore := []byte("any-test-value")
 
-	getResp, err := operator.Get(ctx, &grpc_ops.GetRequest{
+	getResp, err := operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.Error(t, err)
 	t.Log("Get response string ->", getResp.String())
 	t.Log("Get response ->", string(getResp.GetValue()))
 
-	setResp, err := operator.Set(ctx, &grpc_ops.SetRequest{
+	setResp, err := operator.Create(ctx, &grpc_ops.CreateRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
 		Item: &grpc_ops.Item{
 			Key:   keyToStore,
@@ -82,9 +83,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("Set response ->", setResp.String())
 
-	getResp, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	getResp, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	t.Log("Get response ->", string(getResp.GetValue()))
@@ -102,7 +103,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 
 	deleteResp, err := operator.Delete(ctx, &grpc_ops.DeleteRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	t.Log("Delete response ->", deleteResp.String())
@@ -194,68 +195,4 @@ func Test_LightningNode_ServerWithClient_TracingTest(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Log("stores ->", stores)
-
-	//operatorConn, err := grpc.Dial(operatorServerAddr, opts...)
-	//require.NoError(t, err)
-	//defer managerConn.Close()
-	//
-	//operator := grpc_ops.NewOperationClient(operatorConn)
-	//
-	//keyToStore := []byte("any-test-key")
-	//valueToStore := []byte("any-test-value")
-	//
-	//getResp, err := operator.Get(ctx, &grpc_ops.GetRequest{
-	//	DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-	//	Key:              keyToStore,
-	//})
-	//require.Error(t, err)
-	//t.Log("Get response string ->", getResp.String())
-	//t.Log("Get response ->", string(getResp.GetValue()))
-	//
-	//setResp, err := operator.Set(ctx, &grpc_ops.SetRequest{
-	//	DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-	//	Item: &grpc_ops.Item{
-	//		Key:   keyToStore,
-	//		Value: valueToStore,
-	//	},
-	//})
-	//require.NoError(t, err)
-	//t.Log("Set response ->", setResp.String())
-	//
-	//getResp, err = operator.Get(ctx, &grpc_ops.GetRequest{
-	//	DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-	//	Key:              keyToStore,
-	//})
-	//require.NoError(t, err)
-	//t.Log("Get response ->", string(getResp.GetValue()))
-	//
-	//listResp, err := operator.List(ctx, &grpc_ops.ListRequest{
-	//	DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-	//	Pagination: &grpc_pagination.Pagination{
-	//		PageId:   1,
-	//		PageSize: 5,
-	//	},
-	//})
-	//require.NoError(t, err)
-	//IndentedListResp, err := json.MarshalIndent(listResp.GetItems(), "", "  ")
-	//t.Log("List response ->", string(IndentedListResp))
-	//
-	//deleteResp, err := operator.Delete(ctx, &grpc_ops.DeleteRequest{
-	//	DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-	//	Key:              keyToStore,
-	//})
-	//require.NoError(t, err)
-	//t.Log("Delete response ->", deleteResp.String())
-	//
-	//listResp, err = operator.List(ctx, &grpc_ops.ListRequest{
-	//	DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-	//	Pagination: &grpc_pagination.Pagination{
-	//		PageId:   1,
-	//		PageSize: 5,
-	//	},
-	//})
-	//require.NoError(t, err)
-	//// require.Len(t, listResp.GetItems(), 5)
-	//IndentedListResp, err = json.MarshalIndent(listResp.GetItems(), "", "  ")
-	//t.Log("List response ->", string(IndentedListResp))
 }

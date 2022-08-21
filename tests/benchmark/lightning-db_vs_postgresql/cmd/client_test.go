@@ -68,15 +68,15 @@ func Test_LightningNode_ServerWithClientPre(t *testing.T) {
 	keyToStore := []byte("any-test-key")
 	valueToStore := []byte("any-test-value")
 
-	_, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	_, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.Error(t, err)
 	//t.Log("Get response string ->", getResp.String())
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
-	_, err = operator.Set(ctx, &grpc_ops.SetRequest{
+	_, err = operator.Create(ctx, &grpc_ops.CreateRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
 		Item: &grpc_ops.Item{
 			Key:   keyToStore,
@@ -86,9 +86,9 @@ func Test_LightningNode_ServerWithClientPre(t *testing.T) {
 	require.NoError(t, err)
 	//t.Log("Set response ->", setResp.String())
 
-	_, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	_, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	//t.Log("Get response ->", string(getResp.GetValue()))
@@ -106,7 +106,7 @@ func Test_LightningNode_ServerWithClientPre(t *testing.T) {
 
 	_, err = operator.Delete(ctx, &grpc_ops.DeleteRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	//t.Log("Delete response ->", deleteResp.String())
@@ -186,9 +186,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	require.NoError(t, err)
 
 	begin := time.Now()
-	_, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	_, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	end := time.Since(begin)
 	require.Error(t, err)
@@ -197,7 +197,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
 	begin2 := time.Now()
-	_, err = operator.Set(ctx, &grpc_ops.SetRequest{
+	_, err = operator.Create(ctx, &grpc_ops.CreateRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
 		Item: &grpc_ops.Item{
 			Key:   keyToStore,
@@ -210,9 +210,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	//t.Log("Set response ->", setResp.String())
 
 	begin3 := time.Now()
-	_, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	_, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	end3 := time.Since(begin3)
 	require.NoError(t, err)
@@ -236,7 +236,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	begin5 := time.Now()
 	_, err = operator.Delete(ctx, &grpc_ops.DeleteRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	end5 := time.Since(begin5)
 	require.NoError(t, err)
@@ -388,15 +388,15 @@ func Test_LightningNode_ServerWithClientNoTimer(t *testing.T) {
 	valueToStore, err := serializer.Serialize(payload)
 	require.NoError(t, err)
 
-	_, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	_, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.Error(t, err)
 	//t.Log("Get response string ->", getResp.String())
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
-	_, err = operator.Set(ctx, &grpc_ops.SetRequest{
+	_, err = operator.Create(ctx, &grpc_ops.CreateRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
 		Item: &grpc_ops.Item{
 			Key:   keyToStore,
@@ -406,9 +406,9 @@ func Test_LightningNode_ServerWithClientNoTimer(t *testing.T) {
 	require.NoError(t, err)
 	//t.Log("Set response ->", setResp.String())
 
-	_, err = operator.Get(ctx, &grpc_ops.GetRequest{
+	_, err = operator.Load(ctx, &grpc_ops.LoadRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	//t.Log("Get response ->", string(getResp.GetValue()))
@@ -426,7 +426,7 @@ func Test_LightningNode_ServerWithClientNoTimer(t *testing.T) {
 
 	_, err = operator.Delete(ctx, &grpc_ops.DeleteRequest{
 		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Key:              keyToStore,
+		Item:             &grpc_ops.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	//t.Log("Delete response ->", deleteResp.String())

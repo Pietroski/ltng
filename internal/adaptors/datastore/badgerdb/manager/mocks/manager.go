@@ -36,32 +36,32 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 	return m.recorder
 }
 
-// CreateOpenStoreAndLoadIntoMemory mocks base method.
-func (m *MockManager) CreateOpenStoreAndLoadIntoMemory(arg0 *management_models.DBInfo) error {
+// CreateStore mocks base method.
+func (m *MockManager) CreateStore(arg0 context.Context, arg1 *management_models.DBInfo) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOpenStoreAndLoadIntoMemory", arg0)
+	ret := m.ctrl.Call(m, "CreateStore", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateOpenStoreAndLoadIntoMemory indicates an expected call of CreateOpenStoreAndLoadIntoMemory.
-func (mr *MockManagerMockRecorder) CreateOpenStoreAndLoadIntoMemory(arg0 interface{}) *gomock.Call {
+// CreateStore indicates an expected call of CreateStore.
+func (mr *MockManagerMockRecorder) CreateStore(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOpenStoreAndLoadIntoMemory", reflect.TypeOf((*MockManager)(nil).CreateOpenStoreAndLoadIntoMemory), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateStore", reflect.TypeOf((*MockManager)(nil).CreateStore), arg0, arg1)
 }
 
-// DeleteFromMemoryAndDisk mocks base method.
-func (m *MockManager) DeleteFromMemoryAndDisk(arg0 context.Context, arg1 string) error {
+// DeleteStore mocks base method.
+func (m *MockManager) DeleteStore(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFromMemoryAndDisk", arg0, arg1)
+	ret := m.ctrl.Call(m, "DeleteStore", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteFromMemoryAndDisk indicates an expected call of DeleteFromMemoryAndDisk.
-func (mr *MockManagerMockRecorder) DeleteFromMemoryAndDisk(arg0, arg1 interface{}) *gomock.Call {
+// DeleteStore indicates an expected call of DeleteStore.
+func (mr *MockManagerMockRecorder) DeleteStore(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFromMemoryAndDisk", reflect.TypeOf((*MockManager)(nil).DeleteFromMemoryAndDisk), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteStore", reflect.TypeOf((*MockManager)(nil).DeleteStore), arg0, arg1)
 }
 
 // GetDBInfo mocks base method.
@@ -94,64 +94,34 @@ func (mr *MockManagerMockRecorder) GetDBMemoryInfo(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDBMemoryInfo", reflect.TypeOf((*MockManager)(nil).GetDBMemoryInfo), arg0, arg1)
 }
 
-// GetStoreInfoFromMemoryOrFromDisk mocks base method.
-func (m *MockManager) GetStoreInfoFromMemoryOrFromDisk(arg0 context.Context, arg1 string) (*management_models.DBInfo, error) {
+// ListStoreInfo mocks base method.
+func (m *MockManager) ListStoreInfo(arg0 context.Context, arg1, arg2 int) ([]*management_models.DBInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStoreInfoFromMemoryOrFromDisk", arg0, arg1)
-	ret0, _ := ret[0].(*management_models.DBInfo)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetStoreInfoFromMemoryOrFromDisk indicates an expected call of GetStoreInfoFromMemoryOrFromDisk.
-func (mr *MockManagerMockRecorder) GetStoreInfoFromMemoryOrFromDisk(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoreInfoFromMemoryOrFromDisk", reflect.TypeOf((*MockManager)(nil).GetStoreInfoFromMemoryOrFromDisk), arg0, arg1)
-}
-
-// GetStoreMemoryInfoFromMemoryOrDisk mocks base method.
-func (m *MockManager) GetStoreMemoryInfoFromMemoryOrDisk(arg0 context.Context, arg1 string) (*management_models.DBMemoryInfo, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStoreMemoryInfoFromMemoryOrDisk", arg0, arg1)
-	ret0, _ := ret[0].(*management_models.DBMemoryInfo)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetStoreMemoryInfoFromMemoryOrDisk indicates an expected call of GetStoreMemoryInfoFromMemoryOrDisk.
-func (mr *MockManagerMockRecorder) GetStoreMemoryInfoFromMemoryOrDisk(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoreMemoryInfoFromMemoryOrDisk", reflect.TypeOf((*MockManager)(nil).GetStoreMemoryInfoFromMemoryOrDisk), arg0, arg1)
-}
-
-// ListStoreInfoFromMemoryOrDisk mocks base method.
-func (m *MockManager) ListStoreInfoFromMemoryOrDisk(arg0 context.Context, arg1, arg2 int) ([]*management_models.DBInfo, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListStoreInfoFromMemoryOrDisk", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ListStoreInfo", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]*management_models.DBInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListStoreInfoFromMemoryOrDisk indicates an expected call of ListStoreInfoFromMemoryOrDisk.
-func (mr *MockManagerMockRecorder) ListStoreInfoFromMemoryOrDisk(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ListStoreInfo indicates an expected call of ListStoreInfo.
+func (mr *MockManagerMockRecorder) ListStoreInfo(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListStoreInfoFromMemoryOrDisk", reflect.TypeOf((*MockManager)(nil).ListStoreInfoFromMemoryOrDisk), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListStoreInfo", reflect.TypeOf((*MockManager)(nil).ListStoreInfo), arg0, arg1, arg2)
 }
 
-// ListStoreMemoryInfoFromMemoryOrDisk mocks base method.
-func (m *MockManager) ListStoreMemoryInfoFromMemoryOrDisk(arg0 context.Context, arg1, arg2 int) ([]*management_models.DBMemoryInfo, error) {
+// ListStoreMemoryInfo mocks base method.
+func (m *MockManager) ListStoreMemoryInfo(arg0 context.Context, arg1, arg2 int) ([]*management_models.DBMemoryInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListStoreMemoryInfoFromMemoryOrDisk", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ListStoreMemoryInfo", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]*management_models.DBMemoryInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListStoreMemoryInfoFromMemoryOrDisk indicates an expected call of ListStoreMemoryInfoFromMemoryOrDisk.
-func (mr *MockManagerMockRecorder) ListStoreMemoryInfoFromMemoryOrDisk(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ListStoreMemoryInfo indicates an expected call of ListStoreMemoryInfo.
+func (mr *MockManagerMockRecorder) ListStoreMemoryInfo(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListStoreMemoryInfoFromMemoryOrDisk", reflect.TypeOf((*MockManager)(nil).ListStoreMemoryInfoFromMemoryOrDisk), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListStoreMemoryInfo", reflect.TypeOf((*MockManager)(nil).ListStoreMemoryInfo), arg0, arg1, arg2)
 }
 
 // Paginate mocks base method.

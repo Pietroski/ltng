@@ -74,7 +74,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 			dbName := "any-string"
 			manager.
 				EXPECT().
-				DeleteFromMemoryAndDisk(ctx, dbName).
+				DeleteStore(ctx, dbName).
 				Times(1).
 				Return(fmt.Errorf("any-error"))
 			payload := &grpc_mngmt.DeleteStoreRequest{
@@ -108,7 +108,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 			dbName := "any-string"
 			manager.
 				EXPECT().
-				DeleteFromMemoryAndDisk(ctx, dbName).
+				DeleteStore(ctx, dbName).
 				Times(1).
 				Return(nil)
 			payload := &grpc_mngmt.DeleteStoreRequest{

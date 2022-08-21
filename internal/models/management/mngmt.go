@@ -71,7 +71,7 @@ type GetStoreRequest struct {
 	Name string `json:"name,omitempty" validation:"required"`
 }
 
-type PaginationRequest struct {
+type Pagination struct {
 	PageID   uint32 `json:"page_id,omitempty"`
 	PageSize uint32 `json:"page_size,omitempty"`
 }

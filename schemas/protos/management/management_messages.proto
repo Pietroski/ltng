@@ -24,29 +24,12 @@ message CreateStoreResponse {
   google.protobuf.Timestamp last_opened_at = 2;
 }
 
-// UpdateStoreRequest
-message UpdateStoreRequest {}
-// UpdateStoreResponse
-message UpdateStoreResponse {
-  google.protobuf.Timestamp created_at = 1;
-  google.protobuf.Timestamp last_opened_at = 2;
-}
-
 // DeleteStoreRequest
 message DeleteStoreRequest {
   string name = 1;
 }
 // DeleteStoreResponse
 message DeleteStoreResponse {}
-
-// ListStoresRequest
-message ListStoresRequest {
-  common.search.Pagination pagination = 1;
-}
-// ListStoresResponse
-message ListStoresResponse {
-  repeated DBInfo dbs_infos = 1;
-}
 
 // GetStoreRequest
 message GetStoreRequest {
@@ -55,6 +38,15 @@ message GetStoreRequest {
 // GetStoreResponse
 message GetStoreResponse {
   DBInfo db_info = 1;
+}
+
+// ListStoresRequest
+message ListStoresRequest {
+  common.search.Pagination pagination = 1;
+}
+// ListStoresResponse
+message ListStoresResponse {
+  repeated DBInfo dbs_infos = 1;
 }
 
 // RestartLightningNodeRequest

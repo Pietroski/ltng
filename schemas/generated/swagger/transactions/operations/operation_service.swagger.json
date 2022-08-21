@@ -17,6 +17,37 @@
   ],
   "paths": {},
   "definitions": {
+    "IndexPropertiesIndexDeletionBehaviour": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "CASCADE",
+        "INDEX_ONLY"
+      ],
+      "default": "NONE"
+    },
+    "IndexPropertiesIndexSearchPattern": {
+      "type": "string",
+      "enum": [
+        "ONE",
+        "AND_COMPUTATIONAL",
+        "OR_COMPUTATION",
+        "INDEXING_LIST"
+      ],
+      "default": "ONE"
+    },
+    "IndexPropertiesListSearchPattern": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "ALL"
+      ],
+      "default": "DEFAULT"
+    },
+    "operationsCreateResponse": {
+      "type": "object",
+      "title": "CreateResponse"
+    },
     "operationsDatabaseMetaInfo": {
       "type": "object",
       "properties": {
@@ -29,15 +60,41 @@
       "type": "object",
       "title": "DeleteResponse"
     },
-    "operationsGetResponse": {
+    "operationsIndexOpts": {
       "type": "object",
       "properties": {
-        "value": {
+        "hasIdx": {
+          "type": "boolean"
+        },
+        "parentKey": {
           "type": "string",
           "format": "byte"
+        },
+        "indexingKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "byte"
+          }
+        },
+        "indexingProperties": {
+          "$ref": "#/definitions/operationsIndexProperties"
         }
-      },
-      "title": "GetResponse"
+      }
+    },
+    "operationsIndexProperties": {
+      "type": "object",
+      "properties": {
+        "indexDeletionBehaviour": {
+          "$ref": "#/definitions/IndexPropertiesIndexDeletionBehaviour"
+        },
+        "indexSearchPattern": {
+          "$ref": "#/definitions/IndexPropertiesIndexSearchPattern"
+        },
+        "listSearchPattern": {
+          "$ref": "#/definitions/IndexPropertiesListSearchPattern"
+        }
+      }
     },
     "operationsItem": {
       "type": "object",
@@ -64,9 +121,43 @@
       },
       "title": "ListResponse"
     },
-    "operationsSetResponse": {
+    "operationsListValuesFromIndexingKeysResponse": {
       "type": "object",
-      "title": "SetResponse"
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/operationsItem"
+          }
+        }
+      },
+      "title": "ListValuesFromIndexingKeysResponse"
+    },
+    "operationsLoadResponse": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "title": "LoadResponse"
+    },
+    "operationsRetrialOpts": {
+      "type": "object",
+      "properties": {
+        "retrialOnError": {
+          "type": "boolean"
+        },
+        "retrialCount": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "operationsUpsertResponse": {
+      "type": "object",
+      "title": "UpsertResponse"
     },
     "protobufAny": {
       "type": "object",

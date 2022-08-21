@@ -1,4 +1,4 @@
-#
+# Makefile
 
 #include ./tests/benchmark/lightning-db_vs_postgresql/.env.benchmark.ltng.db.vs.psql
 #export

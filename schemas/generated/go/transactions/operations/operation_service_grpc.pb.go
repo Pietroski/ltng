@@ -22,14 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OperationClient interface {
-	// Get
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	// Set
-	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	// Create
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
+	// Upsert
+	Upsert(ctx context.Context, in *UpsertRequest, opts ...grpc.CallOption) (*UpsertResponse, error)
 	// Delete
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// Load
+	Load(ctx context.Context, in *LoadRequest, opts ...grpc.CallOption) (*LoadResponse, error)
 	// List
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// ListValuesFromIndexingKeys
+	ListValuesFromIndexingKeys(ctx context.Context, in *ListValuesFromIndexingKeysRequest, opts ...grpc.CallOption) (*ListValuesFromIndexingKeysResponse, error)
 }
 
 type operationClient struct {
@@ -40,18 +44,18 @@ func NewOperationClient(cc grpc.ClientConnInterface) OperationClient {
 	return &operationClient{cc}
 }
 
-func (c *operationClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/operations.Operation/Get", in, out, opts...)
+func (c *operationClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, "/operations.Operation/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *operationClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
-	out := new(SetResponse)
-	err := c.cc.Invoke(ctx, "/operations.Operation/Set", in, out, opts...)
+func (c *operationClient) Upsert(ctx context.Context, in *UpsertRequest, opts ...grpc.CallOption) (*UpsertResponse, error) {
+	out := new(UpsertResponse)
+	err := c.cc.Invoke(ctx, "/operations.Operation/Upsert", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +71,27 @@ func (c *operationClient) Delete(ctx context.Context, in *DeleteRequest, opts ..
 	return out, nil
 }
 
+func (c *operationClient) Load(ctx context.Context, in *LoadRequest, opts ...grpc.CallOption) (*LoadResponse, error) {
+	out := new(LoadResponse)
+	err := c.cc.Invoke(ctx, "/operations.Operation/Load", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *operationClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
 	out := new(ListResponse)
 	err := c.cc.Invoke(ctx, "/operations.Operation/List", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *operationClient) ListValuesFromIndexingKeys(ctx context.Context, in *ListValuesFromIndexingKeysRequest, opts ...grpc.CallOption) (*ListValuesFromIndexingKeysResponse, error) {
+	out := new(ListValuesFromIndexingKeysResponse)
+	err := c.cc.Invoke(ctx, "/operations.Operation/ListValuesFromIndexingKeys", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +102,18 @@ func (c *operationClient) List(ctx context.Context, in *ListRequest, opts ...grp
 // All implementations must embed UnimplementedOperationServer
 // for forward compatibility
 type OperationServer interface {
-	// Get
-	Get(context.Context, *GetRequest) (*GetResponse, error)
-	// Set
-	Set(context.Context, *SetRequest) (*SetResponse, error)
+	// Create
+	Create(context.Context, *CreateRequest) (*CreateResponse, error)
+	// Upsert
+	Upsert(context.Context, *UpsertRequest) (*UpsertResponse, error)
 	// Delete
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// Load
+	Load(context.Context, *LoadRequest) (*LoadResponse, error)
 	// List
 	List(context.Context, *ListRequest) (*ListResponse, error)
+	// ListValuesFromIndexingKeys
+	ListValuesFromIndexingKeys(context.Context, *ListValuesFromIndexingKeysRequest) (*ListValuesFromIndexingKeysResponse, error)
 	mustEmbedUnimplementedOperationServer()
 }
 
@@ -95,17 +121,23 @@ type OperationServer interface {
 type UnimplementedOperationServer struct {
 }
 
-func (UnimplementedOperationServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedOperationServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedOperationServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+func (UnimplementedOperationServer) Upsert(context.Context, *UpsertRequest) (*UpsertResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Upsert not implemented")
 }
 func (UnimplementedOperationServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
+func (UnimplementedOperationServer) Load(context.Context, *LoadRequest) (*LoadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Load not implemented")
+}
 func (UnimplementedOperationServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedOperationServer) ListValuesFromIndexingKeys(context.Context, *ListValuesFromIndexingKeysRequest) (*ListValuesFromIndexingKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListValuesFromIndexingKeys not implemented")
 }
 func (UnimplementedOperationServer) mustEmbedUnimplementedOperationServer() {}
 
@@ -120,38 +152,38 @@ func RegisterOperationServer(s grpc.ServiceRegistrar, srv OperationServer) {
 	s.RegisterService(&Operation_ServiceDesc, srv)
 }
 
-func _Operation_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+func _Operation_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OperationServer).Get(ctx, in)
+		return srv.(OperationServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/operations.Operation/Get",
+		FullMethod: "/operations.Operation/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OperationServer).Get(ctx, req.(*GetRequest))
+		return srv.(OperationServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Operation_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetRequest)
+func _Operation_Upsert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OperationServer).Set(ctx, in)
+		return srv.(OperationServer).Upsert(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/operations.Operation/Set",
+		FullMethod: "/operations.Operation/Upsert",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OperationServer).Set(ctx, req.(*SetRequest))
+		return srv.(OperationServer).Upsert(ctx, req.(*UpsertRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -174,6 +206,24 @@ func _Operation_Delete_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Operation_Load_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OperationServer).Load(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/operations.Operation/Load",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OperationServer).Load(ctx, req.(*LoadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Operation_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
@@ -192,6 +242,24 @@ func _Operation_List_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Operation_ListValuesFromIndexingKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListValuesFromIndexingKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OperationServer).ListValuesFromIndexingKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/operations.Operation/ListValuesFromIndexingKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OperationServer).ListValuesFromIndexingKeys(ctx, req.(*ListValuesFromIndexingKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Operation_ServiceDesc is the grpc.ServiceDesc for Operation service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,20 +268,28 @@ var Operation_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OperationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Operation_Get_Handler,
+			MethodName: "Create",
+			Handler:    _Operation_Create_Handler,
 		},
 		{
-			MethodName: "Set",
-			Handler:    _Operation_Set_Handler,
+			MethodName: "Upsert",
+			Handler:    _Operation_Upsert_Handler,
 		},
 		{
 			MethodName: "Delete",
 			Handler:    _Operation_Delete_Handler,
 		},
 		{
+			MethodName: "Load",
+			Handler:    _Operation_Load_Handler,
+		},
+		{
 			MethodName: "List",
 			Handler:    _Operation_List_Handler,
+		},
+		{
+			MethodName: "ListValuesFromIndexingKeys",
+			Handler:    _Operation_ListValuesFromIndexingKeys_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

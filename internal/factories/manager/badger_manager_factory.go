@@ -2,8 +2,8 @@ package badgerdb_manager_factory
 
 import (
 	"context"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
-	"google.golang.org/grpc/metadata"
+	"fmt"
+	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
 	"net"
 
 	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/manager"
@@ -11,6 +11,7 @@ import (
 	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"google.golang.org/grpc"
 )
 
@@ -56,31 +57,12 @@ func (s *BadgerDBManagerServiceFactory) handle() {
 				info *grpc.UnaryServerInfo,
 				handler grpc.UnaryHandler,
 			) (resp interface{}, err error) {
-				logger := s.logger.FromCtx(ctx)
-				logger.Debugf("inside server interceptor")
-
-				ctxT, ok := s.tracer.GetTraceInfo(ctx)
-				logger.Debugf(
-					"tracing info",
-					go_logger.Field{
-						"ok":   ok,
-						"ctxT": ctxT,
-					},
-				)
-				ctx, err = go_tracer.GRPCTraceMiddleware(ctx, metadata.FromIncomingContext)
+				ctx, err = go_tracer_middleware.GRPCServerTracer(ctx)
 				if err != nil {
-					return ctx, err
+					err = fmt.Errorf("error tracing incoming request: %v", err)
+					return nil, err
 				}
-				ctxT, ok = s.tracer.GetTraceInfo(ctx)
-				logger.Debugf(
-					"tracing info",
-					go_logger.Field{
-						"ok":   ok,
-						"ctxT": ctxT,
-					},
-				)
 
-				// Calls the handler
 				h, err := handler(ctx, req)
 				return h, err
 			},

@@ -45,7 +45,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 					PageSize: 0,
 				},
 			}
-			var r management_models.PaginationRequest
+			var r management_models.Pagination
 			mockedBinder.
 				EXPECT().
 				ShouldBind(gomock.Eq(payload.Pagination), gomock.Eq(&r)).
@@ -84,7 +84,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 					PageSize: uint32(size),
 				},
 			}
-			var r management_models.PaginationRequest
+			var r management_models.Pagination
 			mockedBinder.
 				EXPECT().
 				ShouldBind(gomock.Eq(payload.Pagination), gomock.Eq(&r)).
@@ -119,7 +119,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			var dbsInfos []*management_models.DBInfo
 			manager.
 				EXPECT().
-				ListStoreInfoFromMemoryOrDisk(ctx, gomock.Eq(0), gomock.Eq(0)).
+				ListStoreInfo(ctx, gomock.Eq(0), gomock.Eq(0)).
 				Times(1).
 				Return(dbsInfos, fmt.Errorf("any-error"))
 			payload := &grpc_mngmt.ListStoresRequest{
@@ -158,7 +158,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			var dbsInfos []*management_models.DBInfo
 			manager.
 				EXPECT().
-				ListStoreInfoFromMemoryOrDisk(ctx, gomock.Eq(size), gomock.Eq(page)).
+				ListStoreInfo(ctx, gomock.Eq(size), gomock.Eq(page)).
 				Times(1).
 				Return(dbsInfos, fmt.Errorf("any-error"))
 			payload := &grpc_mngmt.ListStoresRequest{
@@ -221,7 +221,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			}
 			manager.
 				EXPECT().
-				ListStoreInfoFromMemoryOrDisk(ctx, gomock.Eq(0), gomock.Eq(0)).
+				ListStoreInfo(ctx, gomock.Eq(0), gomock.Eq(0)).
 				Times(1).
 				Return(dbsInfos, nil)
 			payload := &grpc_mngmt.ListStoresRequest{
@@ -292,7 +292,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			}
 			manager.
 				EXPECT().
-				ListStoreInfoFromMemoryOrDisk(ctx, gomock.Eq(size), gomock.Eq(page)).
+				ListStoreInfo(ctx, gomock.Eq(size), gomock.Eq(page)).
 				Times(1).
 				Return(dbsInfos[pageOffset:], nil)
 			payload := &grpc_mngmt.ListStoresRequest{

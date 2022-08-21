@@ -80,7 +80,7 @@ func TestBadgerDBManagerServiceController_CreateStore(t *testing.T) {
 			}
 			manager.
 				EXPECT().
-				CreateOpenStoreAndLoadIntoMemory(EqDBInfo(data)).
+				CreateStore(gomock.Eq(ctx), EqDBInfo(data)).
 				Times(1).
 				Return(fmt.Errorf("any-error"))
 			payload := &grpc_mngmt.CreateStoreRequest{
@@ -120,7 +120,7 @@ func TestBadgerDBManagerServiceController_CreateStore(t *testing.T) {
 			}
 			manager.
 				EXPECT().
-				CreateOpenStoreAndLoadIntoMemory(EqDBInfo(data)).
+				CreateStore(ctx, EqDBInfo(data)).
 				Times(1).
 				Return(nil)
 			payload := &grpc_mngmt.CreateStoreRequest{

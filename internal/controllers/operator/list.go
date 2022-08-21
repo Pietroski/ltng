@@ -18,7 +18,7 @@ func (c *BadgerDBOperatorServiceController) List(
 ) (*grpc_ops.ListResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	var r management_models.PaginationRequest
+	var r management_models.Pagination
 	if err := c.binder.ShouldBind(req.GetPagination(), &r); err != nil {
 		err = status.Error(codes.InvalidArgument, err.Error())
 		logger.Errorf(
@@ -44,25 +44,20 @@ func (c *BadgerDBOperatorServiceController) List(
 		return &grpc_ops.ListResponse{}, err
 	}
 
-	var operationList operation_models.OpList
-	var ok bool
-	if ok, err = c.manager.ValidatePagination(int(r.PageSize), int(r.PageID)); !ok {
-		if err != nil {
-			err = status.Error(codes.InvalidArgument, err.Error())
-			logger.Errorf(
-				"invalid pagination",
-				go_logger.Field{
-					"error":   err.Error(),
-					"request": req,
-				},
-			)
-			return &grpc_ops.ListResponse{}, err
-		}
-
-		operationList, err = c.operator.Operate(dbInfo).ListAll()
-	} else if ok {
-		operationList, err = c.operator.Operate(dbInfo).ListPaginated(&r)
+	reqOpts := req.GetIndexOpts()
+	opts := &operation_models.IndexOpts{
+		HasIdx:       reqOpts.GetHasIdx(),
+		ParentKey:    reqOpts.GetParentKey(),
+		IndexingKeys: reqOpts.GetIndexingKeys(),
+		IndexProperties: operation_models.IndexProperties{
+			ListSearchPattern: operation_models.ListSearchPattern(
+				reqOpts.GetIndexingProperties().GetListSearchPattern(),
+			),
+		},
 	}
+
+	var operationList operation_models.Items
+	operationList, err = c.operator.Operate(dbInfo).List(opts, &r)
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(
@@ -83,7 +78,7 @@ func (c *BadgerDBOperatorServiceController) List(
 }
 
 func operationListRemapper(
-	operationList operation_models.OpList,
+	operationList operation_models.Items,
 ) []*grpc_ops.Item {
 	remappedOpsList := make([]*grpc_ops.Item, len(operationList))
 	for idx, item := range operationList {

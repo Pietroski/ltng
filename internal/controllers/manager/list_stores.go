@@ -2,6 +2,7 @@ package badgerdb_manager_controller
 
 import (
 	"context"
+
 	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -32,7 +33,7 @@ func (c *BadgerDBManagerServiceController) ListStores(
 		)
 	}
 
-	var r management_models.PaginationRequest
+	var r management_models.Pagination
 	if err := c.binder.ShouldBind(req.Pagination, &r); err != nil {
 		logger.Errorf(
 			"error binding data",
@@ -43,7 +44,7 @@ func (c *BadgerDBManagerServiceController) ListStores(
 		return &grpc_mngmt.ListStoresResponse{}, err
 	}
 
-	dbInfoList, err := c.manager.ListStoreInfoFromMemoryOrDisk(ctx, int(r.PageSize), int(r.PageID))
+	dbInfoList, err := c.manager.ListStoreInfo(ctx, int(r.PageSize), int(r.PageID))
 	if err != nil {
 		logger.Errorf(
 			"error creating or opening database",

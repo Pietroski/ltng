@@ -13,7 +13,7 @@ services:
       - postgresql-benchmark-test-db:/var/lib/postgresql/data
 
   lightning-db-node:
-    image: pietroski/lightning-db-node:v0.0.8
+    image: pietroski/lightning-db-node:v1.0.0
     restart: always
     ports:
       - '50051:50051'

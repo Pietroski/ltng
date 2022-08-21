@@ -51,7 +51,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
+			var pagination management_models.Pagination
 
 			// build stubs
 			mockBinder.
@@ -98,7 +98,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
+			var pagination management_models.Pagination
 			dbInfo := &management_models.DBMemoryInfo{}
 
 			// build stubs
@@ -152,14 +152,26 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
-			//dbPayload := &management_models.PaginationRequest{}
+			var pagination management_models.Pagination
+			//dbPayload := &management_models.Pagination{}
 			dbInfo := &management_models.DBMemoryInfo{
 				Name:         dbName,
 				Path:         manager.InternalLocalManagement + "/test" + dbName,
 				CreatedAt:    time.Time{},
 				LastOpenedAt: time.Time{},
 				DB:           nil,
+			}
+
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					ListSearchPattern: operation_models.ListSearchPattern(
+						reqOpts.GetIndexingProperties().GetListSearchPattern(),
+					),
+				},
 			}
 
 			// build stubs
@@ -175,11 +187,17 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				Times(1).
 				Return(dbInfo, nil)
 
-			mockManager.
+			mockOperator.
 				EXPECT().
-				ValidatePagination(int(pagination.PageSize), int(pagination.PageID)).
+				Operate(dbInfo).
 				Times(1).
-				Return(false, fmt.Errorf("any-error"))
+				Return(mockOperator)
+
+			mockOperator.
+				EXPECT().
+				List(opts, &pagination).
+				Times(1).
+				Return(operation_models.Items{}, fmt.Errorf("any-error"))
 
 			resp, err := operator.List(ctx, payload)
 			require.Error(t, err)
@@ -219,14 +237,26 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
-			//dbPayload := &management_models.PaginationRequest{}
+			var pagination management_models.Pagination
+			//dbPayload := &management_models.Pagination{}
 			dbInfo := &management_models.DBMemoryInfo{
 				Name:         dbName,
 				Path:         manager.InternalLocalManagement + "/test" + dbName,
 				CreatedAt:    time.Time{},
 				LastOpenedAt: time.Time{},
 				DB:           nil,
+			}
+
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					ListSearchPattern: operation_models.ListSearchPattern(
+						reqOpts.GetIndexingProperties().GetListSearchPattern(),
+					),
+				},
 			}
 
 			// build stubs
@@ -242,12 +272,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				Times(1).
 				Return(dbInfo, nil)
 
-			mockManager.
-				EXPECT().
-				ValidatePagination(int(pagination.PageSize), int(pagination.PageID)).
-				Times(1).
-				Return(false, nil)
-
 			mockOperator.
 				EXPECT().
 				Operate(dbInfo).
@@ -256,9 +280,9 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				ListAll().
+				List(opts, &pagination).
 				Times(1).
-				Return(operation_models.OpList{}, fmt.Errorf("any-error"))
+				Return(operation_models.Items{}, fmt.Errorf("any-error"))
 
 			resp, err := operator.List(ctx, payload)
 			require.Error(t, err)
@@ -298,13 +322,25 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
+			var pagination management_models.Pagination
 			dbInfo := &management_models.DBMemoryInfo{
 				Name:         dbName,
 				Path:         manager.InternalLocalManagement + "/test" + dbName,
 				CreatedAt:    time.Time{},
 				LastOpenedAt: time.Time{},
 				DB:           nil,
+			}
+
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					ListSearchPattern: operation_models.ListSearchPattern(
+						reqOpts.GetIndexingProperties().GetListSearchPattern(),
+					),
+				},
 			}
 
 			// build stubs
@@ -320,12 +356,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				Times(1).
 				Return(dbInfo, nil)
 
-			mockManager.
-				EXPECT().
-				ValidatePagination(int(pagination.PageSize), int(pagination.PageID)).
-				Times(1).
-				Return(true, nil)
-
 			mockOperator.
 				EXPECT().
 				Operate(dbInfo).
@@ -334,9 +364,9 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				ListPaginated(&pagination).
+				List(opts, &pagination).
 				Times(1).
-				Return(operation_models.OpList{}, fmt.Errorf("any-error"))
+				Return(operation_models.Items{}, fmt.Errorf("any-error"))
 
 			resp, err := operator.List(ctx, payload)
 			require.Error(t, err)
@@ -376,8 +406,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
-			//dbPayload := &management_models.PaginationRequest{}
+			var pagination management_models.Pagination
+			//dbPayload := &management_models.Pagination{}
 			dbInfo := &management_models.DBMemoryInfo{
 				Name:         dbName,
 				Path:         manager.InternalLocalManagement + "/test" + dbName,
@@ -385,7 +415,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				LastOpenedAt: time.Time{},
 				DB:           nil,
 			}
-			listValues := operation_models.OpList{
+			listValues := operation_models.Items{
 				{
 					Key:   []byte("key-1"),
 					Value: []byte("value-1"),
@@ -408,6 +438,18 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				},
 			}
 
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					ListSearchPattern: operation_models.ListSearchPattern(
+						reqOpts.GetIndexingProperties().GetListSearchPattern(),
+					),
+				},
+			}
+
 			// build stubs
 			mockBinder.
 				EXPECT().
@@ -421,12 +463,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				Times(1).
 				Return(dbInfo, nil)
 
-			mockManager.
-				EXPECT().
-				ValidatePagination(int(pagination.PageSize), int(pagination.PageID)).
-				Times(1).
-				Return(false, nil)
-
 			mockOperator.
 				EXPECT().
 				Operate(dbInfo).
@@ -435,7 +471,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				ListAll().
+				List(opts, &pagination).
 				Times(1).
 				Return(listValues, nil)
 
@@ -482,7 +518,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination management_models.PaginationRequest
+			var pagination management_models.Pagination
 			dbInfo := &management_models.DBMemoryInfo{
 				Name:         dbName,
 				Path:         manager.InternalLocalManagement + "/test" + dbName,
@@ -490,7 +526,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				LastOpenedAt: time.Time{},
 				DB:           nil,
 			}
-			listValues := operation_models.OpList{
+			listValues := operation_models.Items{
 				{
 					Key:   []byte("key-1"),
 					Value: []byte("value-1"),
@@ -514,6 +550,18 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			}
 			returnedList := listValues[2:4]
 
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					ListSearchPattern: operation_models.ListSearchPattern(
+						reqOpts.GetIndexingProperties().GetListSearchPattern(),
+					),
+				},
+			}
+
 			// build stubs
 			mockBinder.
 				EXPECT().
@@ -527,12 +575,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 				Times(1).
 				Return(dbInfo, nil)
 
-			mockManager.
-				EXPECT().
-				ValidatePagination(int(pagination.PageSize), int(pagination.PageID)).
-				Times(1).
-				Return(true, nil)
-
 			mockOperator.
 				EXPECT().
 				Operate(dbInfo).
@@ -541,7 +583,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				ListPaginated(&pagination).
+				List(opts, &pagination).
 				Times(1).
 				Return(listValues[2:4], nil)
 

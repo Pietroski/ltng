@@ -2,7 +2,6 @@ package badgerdb_manager_controller
 
 import (
 	"context"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"time"
 
 	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
@@ -19,28 +18,6 @@ func (c *BadgerDBManagerServiceController) CreateStore(
 	req *grpc_mngmt.CreateStoreRequest,
 ) (*grpc_mngmt.CreateStoreResponse, error) {
 	logger := c.logger.FromCtx(ctx)
-
-	{
-		logger.Debugf("inside create stores")
-		ctxT, ok := go_tracer.NewCtxTracer().GetTraceInfo(ctx)
-		logger.Debugf(
-			"tracing info inside create handler",
-			go_logger.Field{
-				"ok":   ok,
-				"ctxT": ctxT,
-			},
-		)
-
-		//{
-		//	var opts []grpc.DialOption
-		//	managerConn, _ := grpc.Dial(":50053", opts...)
-		//
-		//	manager := grpc_indexed_mngmt.NewIndexedManagementClient(managerConn)
-		//
-		//	manager.ListIndexedStores(ctx, &grpc_indexed_mngmt.ListIndexedStoresRequest{})
-		//	managerConn.Close()
-		//}
-	}
 
 	var r management_models.CreateStoreRequest
 	if err := c.binder.ShouldBind(req, &r); err != nil {
@@ -59,7 +36,7 @@ func (c *BadgerDBManagerServiceController) CreateStore(
 		CreatedAt:    time.Now(),
 		LastOpenedAt: time.Now(),
 	}
-	if err := c.manager.CreateOpenStoreAndLoadIntoMemory(payload); err != nil {
+	if err := c.manager.CreateStore(ctx, payload); err != nil {
 		logger.Errorf(
 			"error creating or opening database",
 			go_logger.Field{

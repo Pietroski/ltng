@@ -9,9 +9,7 @@ declare -a proto_list=(
     "common/search"
 
     "management"
-    "management/indexed"
     "transactions/operations"
-    "transactions/operations/indexed"
 )
 
 for domain in "${proto_list[@]}"; do
