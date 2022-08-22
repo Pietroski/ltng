@@ -52,6 +52,7 @@ var (
 	serializer       = go_serializer.NewJsonSerializer()
 
 	ltngKey, ltngValue []byte
+	ltngEmailIndexKey  []byte
 )
 
 func init() {
@@ -129,6 +130,11 @@ func init() {
 		defer ltngClient.Close()
 		log.Fatalf("failed to serialize ltng value: %v", err)
 	}
+	ltngEmailIndexKey, err = serializer.Serialize(payload.Email)
+	if err != nil {
+		defer ltngClient.Close()
+		log.Fatalf("failed to serialize ltng email index key: %v", err)
+	}
 }
 
 func Test_LightningNode_ServerWithClient(t *testing.T) {
@@ -156,6 +162,12 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 			Key:   ltngKey,
 			Value: ltngValue,
 		},
+		IndexOpts: &grpc_ops.IndexOpts{
+			HasIdx:       true,
+			ParentKey:    ltngKey,
+			IndexingKeys: [][]byte{ltngEmailIndexKey},
+		},
+		RetrialOpts: nil,
 	})
 	end2 := time.Since(begin2)
 	require.NoError(t, err)
@@ -170,6 +182,23 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	end3 := time.Since(begin3)
 	require.NoError(t, err)
 	t.Log("get time ->", end3.Microseconds())
+	//t.Log("Get response ->", string(getResp.GetValue()))
+
+	begin3a := time.Now()
+	_, err = ltngClient.Load(ctx, &grpc_ops.LoadRequest{
+		DatabaseMetaInfo: databaseMetaInfo,
+		Item:             &grpc_ops.Item{Key: ltngKey},
+		IndexOpts: &grpc_ops.IndexOpts{
+			HasIdx:       true,
+			IndexingKeys: [][]byte{ltngEmailIndexKey},
+			IndexingProperties: &grpc_ops.IndexProperties{
+				IndexSearchPattern: grpc_ops.IndexProperties_ONE,
+			},
+		},
+	})
+	end3a := time.Since(begin3a)
+	require.NoError(t, err)
+	t.Log("get time ->", end3a.Microseconds())
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
 	begin4 := time.Now()
@@ -195,6 +224,12 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 		&grpc_ops.DeleteRequest{
 			DatabaseMetaInfo: databaseMetaInfo,
 			Item:             &grpc_ops.Item{Key: ltngKey},
+			IndexOpts: &grpc_ops.IndexOpts{
+				HasIdx: true,
+				IndexingProperties: &grpc_ops.IndexProperties{
+					IndexDeletionBehaviour: grpc_ops.IndexProperties_CASCADE,
+				},
+			},
 		},
 	)
 	end5 := time.Since(begin5)

@@ -13,8 +13,13 @@ services:
       - postgresql-benchmark-test-db:/var/lib/postgresql/data
 
   lightning-db-node:
-    image: pietroski/lightning-db-node:v1.0.0
+    build:
+      context: ../../../../..
+      dockerfile: build/docker/lightning-db-node.Dockerfile
+    # image: pietroski/lightning-db-node:v1.0.0
     restart: always
+    env_file:
+      - ../../.benchmark.ltng.db.vs.psql.env
     ports:
       - '50051:50051'
       - '50052:50052'

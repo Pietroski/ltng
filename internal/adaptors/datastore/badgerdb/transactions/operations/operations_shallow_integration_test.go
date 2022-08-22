@@ -1162,7 +1162,6 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					require.NoError(t, err)
 					require.Len(t, listFromKeyValues, 3)
 					t.Log("retrieved value ->", listFromKeyValues)
-
 				}
 
 				// list items
@@ -1247,4 +1246,243 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 			logger.Infof("cleaned up all successfully")
 		},
 	)
+}
+
+func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
+	type TestStructure struct {
+		Field1PK     string `json:"field1PK"`
+		Field2       string `json:"field2"`
+		Filed3       string `json:"filed3"`
+		Field4IdxKey string `json:"field4IdxKey"`
+		Field5IdxKey string `json:"field5IdxKey"`
+	}
+
+	ts := TestStructure{
+		Field1PK:     go_random.RandomString(7),
+		Field2:       go_random.RandomString(7),
+		Filed3:       go_random.RandomString(7),
+		Field4IdxKey: go_random.RandomString(7),
+		Field5IdxKey: go_random.RandomString(7),
+	}
+
+	ctx, _ := context.WithCancel(context.Background())
+	logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+
+	logger.Infof("opening badger local manager")
+	db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+	require.NoError(t, err)
+
+	serializer := go_serializer.NewJsonSerializer()
+	chainedOperator := chainded_operator.NewChainOperator()
+	m := manager.NewBadgerLocalManager(db, serializer, logger)
+	op := NewBadgerOperator(m, serializer, chainedOperator)
+
+	logger.Debugf("starting manager")
+	err = m.Start()
+	require.NoError(t, err)
+	logger.Debugf("manager started")
+
+	logger.Debugf("creating store")
+	dbInfoOpTest := &management_models.DBInfo{
+		Name:         "operations-db-integration-test",
+		Path:         "operations-db-integration-test",
+		CreatedAt:    time.Now(),
+		LastOpenedAt: time.Now(),
+	}
+	err = m.CreateStore(ctx, dbInfoOpTest)
+	require.NoError(t, err)
+	logger.Debugf("store created")
+
+	dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
+	require.NoError(t, err)
+
+	storeKey, err := serializer.Serialize(ts.Field1PK)
+	require.NoError(t, err)
+	storeValue, err := serializer.Serialize(ts)
+	require.NoError(t, err)
+	field4IdxKeyKey, err := serializer.Serialize(ts.Field4IdxKey)
+	require.NoError(t, err)
+	field5IdxKeyKey, err := serializer.Serialize(ts.Field5IdxKey)
+	require.NoError(t, err)
+
+	t.Run(
+		"happy path",
+		func(t *testing.T) {
+			logger.Debugf("writing value")
+
+			// create with indexes
+			{
+				err = op.
+					Operate(dbMemoryInfo).
+					Create(
+						ctx,
+						&operation_models.Item{
+							Key:   storeKey,
+							Value: storeValue,
+						},
+						&operation_models.IndexOpts{
+							HasIdx:          true,
+							ParentKey:       storeKey,
+							IndexingKeys:    [][]byte{field4IdxKeyKey, field5IdxKeyKey},
+							IndexProperties: operation_models.IndexProperties{},
+						},
+						chainded_operator.DefaultRetrialOps,
+					)
+				require.NoError(t, err)
+				logger.Debugf("value written")
+			}
+
+			// load value
+			{
+				logger.Debugf("loading value")
+				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{},
+				)
+				require.NoError(t, err)
+				logger.Debugf("value loaded")
+				t.Log("retrieved value ->", string(retrievedValue))
+			}
+
+			// load from index - one | straight search
+			{
+				logger.Debugf("loading value from index")
+				retrievedValueFromIdx, err := op.Operate(dbMemoryInfo).Load(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    nil,
+						IndexingKeys: [][]byte{field4IdxKeyKey},
+						IndexProperties: operation_models.IndexProperties{
+							IndexSearchPattern: operation_models.One,
+						},
+					},
+				)
+				require.NoError(t, err)
+				logger.Debugf("value loaded")
+				t.Log("retrieved value ->", string(retrievedValueFromIdx))
+			}
+
+			// load from index - or computational
+			{
+				logger.Debugf("loading value from index - or computational")
+				retrievedValueFromIdxOr, err := op.Operate(dbMemoryInfo).Load(
+					ctx,
+					&operation_models.Item{},
+					&operation_models.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    nil,
+						IndexingKeys: [][]byte{field4IdxKeyKey, field5IdxKeyKey},
+						IndexProperties: operation_models.IndexProperties{
+							IndexSearchPattern: operation_models.OrComputational,
+						},
+					},
+				)
+				require.NoError(t, err)
+				logger.Debugf("value loaded")
+				t.Log("retrieved value ->", string(retrievedValueFromIdxOr))
+			}
+
+			// load from index - and computational
+			{
+				logger.Debugf("loading value from index - and computational")
+				retrievedValueFromIdxAnd, err := op.Operate(dbMemoryInfo).Load(
+					ctx,
+					&operation_models.Item{},
+					&operation_models.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    nil,
+						IndexingKeys: [][]byte{field4IdxKeyKey, field5IdxKeyKey},
+						IndexProperties: operation_models.IndexProperties{
+							IndexSearchPattern: operation_models.AndComputational,
+						},
+					},
+				)
+				require.NoError(t, err)
+				logger.Debugf("value loaded")
+				t.Log("retrieved value ->", string(retrievedValueFromIdxAnd))
+			}
+
+			// load from index - index only
+			{
+				logger.Debugf("loading value from index - and computational")
+				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
+					ctx,
+					&operation_models.Item{},
+					&operation_models.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    nil,
+						IndexingKeys: [][]byte{field5IdxKeyKey},
+						IndexProperties: operation_models.IndexProperties{
+							IndexSearchPattern: operation_models.IndexingList,
+						},
+					},
+				)
+				require.NoError(t, err)
+				logger.Debugf("value loaded")
+				t.Log("retrieved value ->", string(retrievedValue))
+			}
+
+			// Delete - cascade
+			{
+				logger.Debugf("deleting value")
+				err = op.
+					Operate(dbMemoryInfo).
+					Delete(
+						ctx,
+						&operation_models.Item{
+							Key:   storeKey,
+							Value: storeValue,
+						},
+						&operation_models.IndexOpts{
+							HasIdx: true,
+							IndexProperties: operation_models.IndexProperties{
+								IndexDeletionBehaviour: operation_models.Cascade,
+							},
+						},
+						chainded_operator.DefaultRetrialOps,
+					)
+				require.NoError(t, err)
+				logger.Debugf("value deleted")
+			}
+
+			// load to check
+			{
+				logger.Debugf("loading value")
+				_, err = op.Operate(dbMemoryInfo).Load(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{},
+				)
+				require.Error(t, err)
+				logger.Debugf("value loaded")
+			}
+		},
+	)
+
+	// delete store
+	{
+		logger.Debugf("deleting store")
+		err = m.DeleteStore(ctx, dbInfoOpTest.Name)
+		require.NoError(t, err)
+		logger.Debugf("store deleted")
+	}
+
+	logger.Debugf("shutting down stores")
+	m.ShutdownStores()
+	m.Shutdown()
+	logger.Debugf("stores shut down")
+
+	logger.Infof("cleaned up all successfully")
 }

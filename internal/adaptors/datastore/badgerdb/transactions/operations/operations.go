@@ -174,7 +174,7 @@ func (o *BadgerOperator) Create(
 		Action: &co.Action{
 			Act:         createIdxListFn,
 			RetrialOpts: retrialOpts,
-			Next:        nil,
+			Next:        createIdxsOps,
 		},
 		RollbackAction: &co.RollbackAction{
 			RollbackAct: deleteIdxListFn,
