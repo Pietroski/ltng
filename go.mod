@@ -1,6 +1,6 @@
 module gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
@@ -10,16 +10,18 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.7.5
-	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.3
-	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.2
-	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.1
-	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.3
-	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.0.2
-	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.3
-	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.3
-	google.golang.org/grpc v1.47.0
+	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.5
+	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.3
+	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.2
+	gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v0.0.3
+	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.3
+	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.4
+	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.2
+	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.5
+	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.7
+	google.golang.org/grpc v1.48.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
@@ -41,7 +43,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opencensus.io v0.22.5 // indirect
 	golang.org/x/net v0.0.0-20220706163947-c90051bbdb60 // indirect
-	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220707150051-590a5ac7bee1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

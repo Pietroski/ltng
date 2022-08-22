@@ -7,50 +7,112 @@ import "common/search/pagination.proto";
 
 // ################################################################################################################## \\
 
+message DatabaseMetaInfo {
+  string database_name = 1;
+}
+
 message Item {
   bytes key = 1;
   bytes value = 2;
 }
 
-message DatabaseMetaInfo {
-  string database_name = 1;
+message IndexOpts {
+  bool has_idx = 1;
+  bytes parent_key = 2;
+  repeated bytes indexing_keys = 3;
+  IndexProperties indexing_properties = 4;
+}
+
+message IndexProperties {
+  enum IndexDeletionBehaviour {
+    NONE = 0;
+    CASCADE = 1;
+    INDEX_ONLY = 2;
+  }
+
+  enum IndexSearchPattern {
+    ONE = 0;
+    AND_COMPUTATIONAL = 1;
+    OR_COMPUTATION = 2;
+    INDEXING_LIST = 3;
+  }
+
+  enum ListSearchPattern {
+    DEFAULT = 0;
+    ALL = 1;
+  }
+
+  IndexDeletionBehaviour index_deletion_behaviour = 1;
+  IndexSearchPattern     index_search_pattern = 2;
+  ListSearchPattern      list_search_pattern = 3;
+}
+
+message RetrialOpts {
+  bool retrial_on_error = 1;
+  int64 retrial_count = 2;
 }
 
 // ################################################################################################################## \\
 
-// GetRequest
-message GetRequest {
-  DatabaseMetaInfo database_meta_info = 1;
-  bytes key = 2;
-}
-// GetResponse
-message GetResponse {
-  bytes value = 1;
-}
-
-// SetRequest
-message SetRequest {
+// CreateRequest
+message CreateRequest {
   DatabaseMetaInfo database_meta_info = 1;
   Item item = 2;
+  IndexOpts index_opts = 3;
+  RetrialOpts retrial_opts = 4;
 }
-// SetResponse
-message SetResponse {}
+// CreateResponse
+message CreateResponse {}
+
+// UpsertRequest
+message UpsertRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  Item item = 2;
+  IndexOpts index_opts = 3;
+  RetrialOpts retrial_opts = 4;
+}
+// UpsertResponse
+message UpsertResponse {}
 
 // DeleteRequest
 message DeleteRequest {
   DatabaseMetaInfo database_meta_info = 1;
-  bytes key = 2;
+  Item item = 2;
+  IndexOpts index_opts = 3;
+  RetrialOpts retrial_opts = 4;
 }
 // DeleteResponse
 message DeleteResponse {}
 
+// LoadRequest
+message LoadRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  Item item = 2;
+  IndexOpts index_opts = 3;
+}
+// LoadResponse
+message LoadResponse {
+  bytes value = 1;
+}
+
 // ListRequest
 message ListRequest {
   DatabaseMetaInfo database_meta_info = 1;
-  common.search.Pagination pagination = 2;
+  IndexOpts index_opts = 2;
+  common.search.Pagination pagination = 3;
 }
 // ListResponse
 message ListResponse {
+  repeated Item items = 1;
+}
+
+// ListValuesFromIndexingKeysRequest
+message ListValuesFromIndexingKeysRequest {
+  DatabaseMetaInfo database_meta_info = 1;
+  IndexOpts index_opts = 2;
+}
+// ListValuesFromIndexingKeysResponse
+message ListValuesFromIndexingKeysResponse {
   repeated Item items = 1;
 }
 

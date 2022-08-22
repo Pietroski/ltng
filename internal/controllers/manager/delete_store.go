@@ -27,7 +27,7 @@ func (c *BadgerDBManagerServiceController) DeleteStore(
 		return &grpc_mngmt.DeleteStoreResponse{}, err
 	}
 
-	if err := c.manager.DeleteFromMemoryAndDisk(ctx, r.Name); err != nil {
+	if err := c.manager.DeleteStore(ctx, r.Name); err != nil {
 		logger.Errorf(
 			"error creating or opening database",
 			go_logger.Field{

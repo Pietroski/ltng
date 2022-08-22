@@ -1,6 +1,9 @@
 package badgerdb_operator_factory
 
 import (
+	"context"
+	"fmt"
+	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
 	"net"
 
 	"google.golang.org/grpc"
@@ -30,8 +33,8 @@ type (
 func NewBadgerDBOperatorService(
 	listener net.Listener,
 	logger go_logger.Logger,
-	//serializer go_serializer.Serializer,
-	//validator  go_validator.Validator,
+//serializer go_serializer.Serializer,
+//validator  go_validator.Validator,
 	binder go_binder.Binder,
 
 	manager manager.Manager,
@@ -51,7 +54,28 @@ func NewBadgerDBOperatorService(
 }
 
 func (s *BadgerDBServiceOperatorFactory) handle() {
-	var grpcOpts []grpc.ServerOption
+	//var grpcOpts []grpc.ServerOption
+
+	grpcOpts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			func(
+				ctx context.Context,
+				req interface{},
+				info *grpc.UnaryServerInfo,
+				handler grpc.UnaryHandler,
+			) (resp interface{}, err error) {
+				ctx, err = go_tracer_middleware.GRPCServerTracer(ctx)
+				if err != nil {
+					err = fmt.Errorf("error tracing incoming request: %v", err)
+					return nil, err
+				}
+
+				h, err := handler(ctx, req)
+				return h, err
+			},
+		),
+	}
+
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	grpc_ops.RegisterOperationServer(

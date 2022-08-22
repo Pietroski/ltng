@@ -83,20 +83,6 @@
       "type": "object",
       "title": "ShutdownLightningNodeResponse"
     },
-    "managementUpdateStoreResponse": {
-      "type": "object",
-      "properties": {
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "lastOpenedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "title": "UpdateStoreResponse"
-    },
     "protobufAny": {
       "type": "object",
       "properties": {

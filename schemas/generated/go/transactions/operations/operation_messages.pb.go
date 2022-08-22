@@ -21,6 +21,200 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type IndexProperties_IndexDeletionBehaviour int32
+
+const (
+	IndexProperties_NONE       IndexProperties_IndexDeletionBehaviour = 0
+	IndexProperties_CASCADE    IndexProperties_IndexDeletionBehaviour = 1
+	IndexProperties_INDEX_ONLY IndexProperties_IndexDeletionBehaviour = 2
+)
+
+// Enum value maps for IndexProperties_IndexDeletionBehaviour.
+var (
+	IndexProperties_IndexDeletionBehaviour_name = map[int32]string{
+		0: "NONE",
+		1: "CASCADE",
+		2: "INDEX_ONLY",
+	}
+	IndexProperties_IndexDeletionBehaviour_value = map[string]int32{
+		"NONE":       0,
+		"CASCADE":    1,
+		"INDEX_ONLY": 2,
+	}
+)
+
+func (x IndexProperties_IndexDeletionBehaviour) Enum() *IndexProperties_IndexDeletionBehaviour {
+	p := new(IndexProperties_IndexDeletionBehaviour)
+	*p = x
+	return p
+}
+
+func (x IndexProperties_IndexDeletionBehaviour) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (IndexProperties_IndexDeletionBehaviour) Descriptor() protoreflect.EnumDescriptor {
+	return file_transactions_operations_operation_messages_proto_enumTypes[0].Descriptor()
+}
+
+func (IndexProperties_IndexDeletionBehaviour) Type() protoreflect.EnumType {
+	return &file_transactions_operations_operation_messages_proto_enumTypes[0]
+}
+
+func (x IndexProperties_IndexDeletionBehaviour) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use IndexProperties_IndexDeletionBehaviour.Descriptor instead.
+func (IndexProperties_IndexDeletionBehaviour) EnumDescriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{3, 0}
+}
+
+type IndexProperties_IndexSearchPattern int32
+
+const (
+	IndexProperties_ONE               IndexProperties_IndexSearchPattern = 0
+	IndexProperties_AND_COMPUTATIONAL IndexProperties_IndexSearchPattern = 1
+	IndexProperties_OR_COMPUTATION    IndexProperties_IndexSearchPattern = 2
+	IndexProperties_INDEXING_LIST     IndexProperties_IndexSearchPattern = 3
+)
+
+// Enum value maps for IndexProperties_IndexSearchPattern.
+var (
+	IndexProperties_IndexSearchPattern_name = map[int32]string{
+		0: "ONE",
+		1: "AND_COMPUTATIONAL",
+		2: "OR_COMPUTATION",
+		3: "INDEXING_LIST",
+	}
+	IndexProperties_IndexSearchPattern_value = map[string]int32{
+		"ONE":               0,
+		"AND_COMPUTATIONAL": 1,
+		"OR_COMPUTATION":    2,
+		"INDEXING_LIST":     3,
+	}
+)
+
+func (x IndexProperties_IndexSearchPattern) Enum() *IndexProperties_IndexSearchPattern {
+	p := new(IndexProperties_IndexSearchPattern)
+	*p = x
+	return p
+}
+
+func (x IndexProperties_IndexSearchPattern) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (IndexProperties_IndexSearchPattern) Descriptor() protoreflect.EnumDescriptor {
+	return file_transactions_operations_operation_messages_proto_enumTypes[1].Descriptor()
+}
+
+func (IndexProperties_IndexSearchPattern) Type() protoreflect.EnumType {
+	return &file_transactions_operations_operation_messages_proto_enumTypes[1]
+}
+
+func (x IndexProperties_IndexSearchPattern) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use IndexProperties_IndexSearchPattern.Descriptor instead.
+func (IndexProperties_IndexSearchPattern) EnumDescriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{3, 1}
+}
+
+type IndexProperties_ListSearchPattern int32
+
+const (
+	IndexProperties_DEFAULT IndexProperties_ListSearchPattern = 0
+	IndexProperties_ALL     IndexProperties_ListSearchPattern = 1
+)
+
+// Enum value maps for IndexProperties_ListSearchPattern.
+var (
+	IndexProperties_ListSearchPattern_name = map[int32]string{
+		0: "DEFAULT",
+		1: "ALL",
+	}
+	IndexProperties_ListSearchPattern_value = map[string]int32{
+		"DEFAULT": 0,
+		"ALL":     1,
+	}
+)
+
+func (x IndexProperties_ListSearchPattern) Enum() *IndexProperties_ListSearchPattern {
+	p := new(IndexProperties_ListSearchPattern)
+	*p = x
+	return p
+}
+
+func (x IndexProperties_ListSearchPattern) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (IndexProperties_ListSearchPattern) Descriptor() protoreflect.EnumDescriptor {
+	return file_transactions_operations_operation_messages_proto_enumTypes[2].Descriptor()
+}
+
+func (IndexProperties_ListSearchPattern) Type() protoreflect.EnumType {
+	return &file_transactions_operations_operation_messages_proto_enumTypes[2]
+}
+
+func (x IndexProperties_ListSearchPattern) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use IndexProperties_ListSearchPattern.Descriptor instead.
+func (IndexProperties_ListSearchPattern) EnumDescriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{3, 2}
+}
+
+type DatabaseMetaInfo struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DatabaseName string `protobuf:"bytes,1,opt,name=database_name,json=databaseName,proto3" json:"database_name,omitempty"`
+}
+
+func (x *DatabaseMetaInfo) Reset() {
+	*x = DatabaseMetaInfo{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DatabaseMetaInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatabaseMetaInfo) ProtoMessage() {}
+
+func (x *DatabaseMetaInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatabaseMetaInfo.ProtoReflect.Descriptor instead.
+func (*DatabaseMetaInfo) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *DatabaseMetaInfo) GetDatabaseName() string {
+	if x != nil {
+		return x.DatabaseName
+	}
+	return ""
+}
+
 type Item struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -33,7 +227,7 @@ type Item struct {
 func (x *Item) Reset() {
 	*x = Item{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_transactions_operations_operation_messages_proto_msgTypes[0]
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -46,7 +240,7 @@ func (x *Item) String() string {
 func (*Item) ProtoMessage() {}
 
 func (x *Item) ProtoReflect() protoreflect.Message {
-	mi := &file_transactions_operations_operation_messages_proto_msgTypes[0]
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +253,7 @@ func (x *Item) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Item.ProtoReflect.Descriptor instead.
 func (*Item) Descriptor() ([]byte, []int) {
-	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{0}
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Item) GetKey() []byte {
@@ -76,65 +270,19 @@ func (x *Item) GetValue() []byte {
 	return nil
 }
 
-type DatabaseMetaInfo struct {
+type IndexOpts struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DatabaseName string `protobuf:"bytes,1,opt,name=database_name,json=databaseName,proto3" json:"database_name,omitempty"`
+	HasIdx             bool             `protobuf:"varint,1,opt,name=has_idx,json=hasIdx,proto3" json:"has_idx,omitempty"`
+	ParentKey          []byte           `protobuf:"bytes,2,opt,name=parent_key,json=parentKey,proto3" json:"parent_key,omitempty"`
+	IndexingKeys       [][]byte         `protobuf:"bytes,3,rep,name=indexing_keys,json=indexingKeys,proto3" json:"indexing_keys,omitempty"`
+	IndexingProperties *IndexProperties `protobuf:"bytes,4,opt,name=indexing_properties,json=indexingProperties,proto3" json:"indexing_properties,omitempty"`
 }
 
-func (x *DatabaseMetaInfo) Reset() {
-	*x = DatabaseMetaInfo{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_transactions_operations_operation_messages_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DatabaseMetaInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DatabaseMetaInfo) ProtoMessage() {}
-
-func (x *DatabaseMetaInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_transactions_operations_operation_messages_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DatabaseMetaInfo.ProtoReflect.Descriptor instead.
-func (*DatabaseMetaInfo) Descriptor() ([]byte, []int) {
-	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *DatabaseMetaInfo) GetDatabaseName() string {
-	if x != nil {
-		return x.DatabaseName
-	}
-	return ""
-}
-
-// GetRequest
-type GetRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
-	Key              []byte            `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-}
-
-func (x *GetRequest) Reset() {
-	*x = GetRequest{}
+func (x *IndexOpts) Reset() {
+	*x = IndexOpts{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_transactions_operations_operation_messages_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -142,13 +290,13 @@ func (x *GetRequest) Reset() {
 	}
 }
 
-func (x *GetRequest) String() string {
+func (x *IndexOpts) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetRequest) ProtoMessage() {}
+func (*IndexOpts) ProtoMessage() {}
 
-func (x *GetRequest) ProtoReflect() protoreflect.Message {
+func (x *IndexOpts) ProtoReflect() protoreflect.Message {
 	mi := &file_transactions_operations_operation_messages_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -160,36 +308,51 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
-func (*GetRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use IndexOpts.ProtoReflect.Descriptor instead.
+func (*IndexOpts) Descriptor() ([]byte, []int) {
 	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
+func (x *IndexOpts) GetHasIdx() bool {
 	if x != nil {
-		return x.DatabaseMetaInfo
+		return x.HasIdx
+	}
+	return false
+}
+
+func (x *IndexOpts) GetParentKey() []byte {
+	if x != nil {
+		return x.ParentKey
 	}
 	return nil
 }
 
-func (x *GetRequest) GetKey() []byte {
+func (x *IndexOpts) GetIndexingKeys() [][]byte {
 	if x != nil {
-		return x.Key
+		return x.IndexingKeys
 	}
 	return nil
 }
 
-// GetResponse
-type GetResponse struct {
+func (x *IndexOpts) GetIndexingProperties() *IndexProperties {
+	if x != nil {
+		return x.IndexingProperties
+	}
+	return nil
+}
+
+type IndexProperties struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Value []byte `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	IndexDeletionBehaviour IndexProperties_IndexDeletionBehaviour `protobuf:"varint,1,opt,name=index_deletion_behaviour,json=indexDeletionBehaviour,proto3,enum=operations.IndexProperties_IndexDeletionBehaviour" json:"index_deletion_behaviour,omitempty"`
+	IndexSearchPattern     IndexProperties_IndexSearchPattern     `protobuf:"varint,2,opt,name=index_search_pattern,json=indexSearchPattern,proto3,enum=operations.IndexProperties_IndexSearchPattern" json:"index_search_pattern,omitempty"`
+	ListSearchPattern      IndexProperties_ListSearchPattern      `protobuf:"varint,3,opt,name=list_search_pattern,json=listSearchPattern,proto3,enum=operations.IndexProperties_ListSearchPattern" json:"list_search_pattern,omitempty"`
 }
 
-func (x *GetResponse) Reset() {
-	*x = GetResponse{}
+func (x *IndexProperties) Reset() {
+	*x = IndexProperties{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_transactions_operations_operation_messages_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -197,13 +360,13 @@ func (x *GetResponse) Reset() {
 	}
 }
 
-func (x *GetResponse) String() string {
+func (x *IndexProperties) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetResponse) ProtoMessage() {}
+func (*IndexProperties) ProtoMessage() {}
 
-func (x *GetResponse) ProtoReflect() protoreflect.Message {
+func (x *IndexProperties) ProtoReflect() protoreflect.Message {
 	mi := &file_transactions_operations_operation_messages_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -215,30 +378,43 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
-func (*GetResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use IndexProperties.ProtoReflect.Descriptor instead.
+func (*IndexProperties) Descriptor() ([]byte, []int) {
 	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetResponse) GetValue() []byte {
+func (x *IndexProperties) GetIndexDeletionBehaviour() IndexProperties_IndexDeletionBehaviour {
 	if x != nil {
-		return x.Value
+		return x.IndexDeletionBehaviour
 	}
-	return nil
+	return IndexProperties_NONE
 }
 
-// SetRequest
-type SetRequest struct {
+func (x *IndexProperties) GetIndexSearchPattern() IndexProperties_IndexSearchPattern {
+	if x != nil {
+		return x.IndexSearchPattern
+	}
+	return IndexProperties_ONE
+}
+
+func (x *IndexProperties) GetListSearchPattern() IndexProperties_ListSearchPattern {
+	if x != nil {
+		return x.ListSearchPattern
+	}
+	return IndexProperties_DEFAULT
+}
+
+type RetrialOpts struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
-	Item             *Item             `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
+	RetrialOnError bool  `protobuf:"varint,1,opt,name=retrial_on_error,json=retrialOnError,proto3" json:"retrial_on_error,omitempty"`
+	RetrialCount   int64 `protobuf:"varint,2,opt,name=retrial_count,json=retrialCount,proto3" json:"retrial_count,omitempty"`
 }
 
-func (x *SetRequest) Reset() {
-	*x = SetRequest{}
+func (x *RetrialOpts) Reset() {
+	*x = RetrialOpts{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_transactions_operations_operation_messages_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -246,13 +422,13 @@ func (x *SetRequest) Reset() {
 	}
 }
 
-func (x *SetRequest) String() string {
+func (x *RetrialOpts) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetRequest) ProtoMessage() {}
+func (*RetrialOpts) ProtoMessage() {}
 
-func (x *SetRequest) ProtoReflect() protoreflect.Message {
+func (x *RetrialOpts) ProtoReflect() protoreflect.Message {
 	mi := &file_transactions_operations_operation_messages_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -264,34 +440,39 @@ func (x *SetRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetRequest.ProtoReflect.Descriptor instead.
-func (*SetRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use RetrialOpts.ProtoReflect.Descriptor instead.
+func (*RetrialOpts) Descriptor() ([]byte, []int) {
 	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *SetRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
+func (x *RetrialOpts) GetRetrialOnError() bool {
 	if x != nil {
-		return x.DatabaseMetaInfo
+		return x.RetrialOnError
 	}
-	return nil
+	return false
 }
 
-func (x *SetRequest) GetItem() *Item {
+func (x *RetrialOpts) GetRetrialCount() int64 {
 	if x != nil {
-		return x.Item
+		return x.RetrialCount
 	}
-	return nil
+	return 0
 }
 
-// SetResponse
-type SetResponse struct {
+// CreateRequest
+type CreateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
+	Item             *Item             `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
+	IndexOpts        *IndexOpts        `protobuf:"bytes,3,opt,name=index_opts,json=indexOpts,proto3" json:"index_opts,omitempty"`
+	RetrialOpts      *RetrialOpts      `protobuf:"bytes,4,opt,name=retrial_opts,json=retrialOpts,proto3" json:"retrial_opts,omitempty"`
 }
 
-func (x *SetResponse) Reset() {
-	*x = SetResponse{}
+func (x *CreateRequest) Reset() {
+	*x = CreateRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_transactions_operations_operation_messages_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -299,13 +480,13 @@ func (x *SetResponse) Reset() {
 	}
 }
 
-func (x *SetResponse) String() string {
+func (x *CreateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetResponse) ProtoMessage() {}
+func (*CreateRequest) ProtoMessage() {}
 
-func (x *SetResponse) ProtoReflect() protoreflect.Message {
+func (x *CreateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_transactions_operations_operation_messages_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -317,9 +498,187 @@ func (x *SetResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetResponse.ProtoReflect.Descriptor instead.
-func (*SetResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateRequest.ProtoReflect.Descriptor instead.
+func (*CreateRequest) Descriptor() ([]byte, []int) {
 	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CreateRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
+	if x != nil {
+		return x.DatabaseMetaInfo
+	}
+	return nil
+}
+
+func (x *CreateRequest) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+func (x *CreateRequest) GetIndexOpts() *IndexOpts {
+	if x != nil {
+		return x.IndexOpts
+	}
+	return nil
+}
+
+func (x *CreateRequest) GetRetrialOpts() *RetrialOpts {
+	if x != nil {
+		return x.RetrialOpts
+	}
+	return nil
+}
+
+// CreateResponse
+type CreateResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *CreateResponse) Reset() {
+	*x = CreateResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateResponse) ProtoMessage() {}
+
+func (x *CreateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateResponse.ProtoReflect.Descriptor instead.
+func (*CreateResponse) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{6}
+}
+
+// UpsertRequest
+type UpsertRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
+	Item             *Item             `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
+	IndexOpts        *IndexOpts        `protobuf:"bytes,3,opt,name=index_opts,json=indexOpts,proto3" json:"index_opts,omitempty"`
+	RetrialOpts      *RetrialOpts      `protobuf:"bytes,4,opt,name=retrial_opts,json=retrialOpts,proto3" json:"retrial_opts,omitempty"`
+}
+
+func (x *UpsertRequest) Reset() {
+	*x = UpsertRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpsertRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertRequest) ProtoMessage() {}
+
+func (x *UpsertRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertRequest.ProtoReflect.Descriptor instead.
+func (*UpsertRequest) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpsertRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
+	if x != nil {
+		return x.DatabaseMetaInfo
+	}
+	return nil
+}
+
+func (x *UpsertRequest) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+func (x *UpsertRequest) GetIndexOpts() *IndexOpts {
+	if x != nil {
+		return x.IndexOpts
+	}
+	return nil
+}
+
+func (x *UpsertRequest) GetRetrialOpts() *RetrialOpts {
+	if x != nil {
+		return x.RetrialOpts
+	}
+	return nil
+}
+
+// UpsertResponse
+type UpsertResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UpsertResponse) Reset() {
+	*x = UpsertResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpsertResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertResponse) ProtoMessage() {}
+
+func (x *UpsertResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertResponse.ProtoReflect.Descriptor instead.
+func (*UpsertResponse) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{8}
 }
 
 // DeleteRequest
@@ -329,13 +688,15 @@ type DeleteRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
-	Key              []byte            `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Item             *Item             `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
+	IndexOpts        *IndexOpts        `protobuf:"bytes,3,opt,name=index_opts,json=indexOpts,proto3" json:"index_opts,omitempty"`
+	RetrialOpts      *RetrialOpts      `protobuf:"bytes,4,opt,name=retrial_opts,json=retrialOpts,proto3" json:"retrial_opts,omitempty"`
 }
 
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_transactions_operations_operation_messages_proto_msgTypes[6]
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -348,7 +709,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transactions_operations_operation_messages_proto_msgTypes[6]
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +722,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{6}
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
@@ -371,9 +732,23 @@ func (x *DeleteRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
 	return nil
 }
 
-func (x *DeleteRequest) GetKey() []byte {
+func (x *DeleteRequest) GetItem() *Item {
 	if x != nil {
-		return x.Key
+		return x.Item
+	}
+	return nil
+}
+
+func (x *DeleteRequest) GetIndexOpts() *IndexOpts {
+	if x != nil {
+		return x.IndexOpts
+	}
+	return nil
+}
+
+func (x *DeleteRequest) GetRetrialOpts() *RetrialOpts {
+	if x != nil {
+		return x.RetrialOpts
 	}
 	return nil
 }
@@ -388,7 +763,7 @@ type DeleteResponse struct {
 func (x *DeleteResponse) Reset() {
 	*x = DeleteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_transactions_operations_operation_messages_proto_msgTypes[7]
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -401,7 +776,7 @@ func (x *DeleteResponse) String() string {
 func (*DeleteResponse) ProtoMessage() {}
 
 func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transactions_operations_operation_messages_proto_msgTypes[7]
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,7 +789,119 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{7}
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{10}
+}
+
+// LoadRequest
+type LoadRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
+	Item             *Item             `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
+	IndexOpts        *IndexOpts        `protobuf:"bytes,3,opt,name=index_opts,json=indexOpts,proto3" json:"index_opts,omitempty"`
+}
+
+func (x *LoadRequest) Reset() {
+	*x = LoadRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LoadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadRequest) ProtoMessage() {}
+
+func (x *LoadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoadRequest.ProtoReflect.Descriptor instead.
+func (*LoadRequest) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *LoadRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
+	if x != nil {
+		return x.DatabaseMetaInfo
+	}
+	return nil
+}
+
+func (x *LoadRequest) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+func (x *LoadRequest) GetIndexOpts() *IndexOpts {
+	if x != nil {
+		return x.IndexOpts
+	}
+	return nil
+}
+
+// LoadResponse
+type LoadResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Value []byte `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *LoadResponse) Reset() {
+	*x = LoadResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LoadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadResponse) ProtoMessage() {}
+
+func (x *LoadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoadResponse.ProtoReflect.Descriptor instead.
+func (*LoadResponse) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *LoadResponse) GetValue() []byte {
+	if x != nil {
+		return x.Value
+	}
+	return nil
 }
 
 // ListRequest
@@ -424,13 +911,14 @@ type ListRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	DatabaseMetaInfo *DatabaseMetaInfo  `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
-	Pagination       *search.Pagination `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	IndexOpts        *IndexOpts         `protobuf:"bytes,2,opt,name=index_opts,json=indexOpts,proto3" json:"index_opts,omitempty"`
+	Pagination       *search.Pagination `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (x *ListRequest) Reset() {
 	*x = ListRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_transactions_operations_operation_messages_proto_msgTypes[8]
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -443,7 +931,7 @@ func (x *ListRequest) String() string {
 func (*ListRequest) ProtoMessage() {}
 
 func (x *ListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transactions_operations_operation_messages_proto_msgTypes[8]
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -456,12 +944,19 @@ func (x *ListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
 func (*ListRequest) Descriptor() ([]byte, []int) {
-	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{8}
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
 	if x != nil {
 		return x.DatabaseMetaInfo
+	}
+	return nil
+}
+
+func (x *ListRequest) GetIndexOpts() *IndexOpts {
+	if x != nil {
+		return x.IndexOpts
 	}
 	return nil
 }
@@ -485,7 +980,7 @@ type ListResponse struct {
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_transactions_operations_operation_messages_proto_msgTypes[9]
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -498,7 +993,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transactions_operations_operation_messages_proto_msgTypes[9]
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,10 +1006,114 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{9}
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListResponse) GetItems() []*Item {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+// ListValuesFromIndexingKeysRequest
+type ListValuesFromIndexingKeysRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DatabaseMetaInfo *DatabaseMetaInfo `protobuf:"bytes,1,opt,name=database_meta_info,json=databaseMetaInfo,proto3" json:"database_meta_info,omitempty"`
+	IndexOpts        *IndexOpts        `protobuf:"bytes,2,opt,name=index_opts,json=indexOpts,proto3" json:"index_opts,omitempty"`
+}
+
+func (x *ListValuesFromIndexingKeysRequest) Reset() {
+	*x = ListValuesFromIndexingKeysRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListValuesFromIndexingKeysRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListValuesFromIndexingKeysRequest) ProtoMessage() {}
+
+func (x *ListValuesFromIndexingKeysRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListValuesFromIndexingKeysRequest.ProtoReflect.Descriptor instead.
+func (*ListValuesFromIndexingKeysRequest) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListValuesFromIndexingKeysRequest) GetDatabaseMetaInfo() *DatabaseMetaInfo {
+	if x != nil {
+		return x.DatabaseMetaInfo
+	}
+	return nil
+}
+
+func (x *ListValuesFromIndexingKeysRequest) GetIndexOpts() *IndexOpts {
+	if x != nil {
+		return x.IndexOpts
+	}
+	return nil
+}
+
+// ListValuesFromIndexingKeysResponse
+type ListValuesFromIndexingKeysResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Items []*Item `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+}
+
+func (x *ListValuesFromIndexingKeysResponse) Reset() {
+	*x = ListValuesFromIndexingKeysResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_transactions_operations_operation_messages_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListValuesFromIndexingKeysResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListValuesFromIndexingKeysResponse) ProtoMessage() {}
+
+func (x *ListValuesFromIndexingKeysResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transactions_operations_operation_messages_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListValuesFromIndexingKeysResponse.ProtoReflect.Descriptor instead.
+func (*ListValuesFromIndexingKeysResponse) Descriptor() ([]byte, []int) {
+	return file_transactions_operations_operation_messages_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListValuesFromIndexingKeysResponse) GetItems() []*Item {
 	if x != nil {
 		return x.Items
 	}
@@ -529,62 +1128,169 @@ var file_transactions_operations_operation_messages_proto_rawDesc = []byte{
 	0x69, 0x6f, 0x6e, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x12, 0x0a, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x1e,
 	0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x2f, 0x70, 0x61,
-	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x2e,
-	0x0a, 0x04, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
-	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x37,
+	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x37,
 	0x0a, 0x10, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e,
 	0x66, 0x6f, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x6e,
 	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x61, 0x74, 0x61, 0x62,
-	0x61, 0x73, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73,
-	0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44,
-	0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66,
-	0x6f, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03,
-	0x6b, 0x65, 0x79, 0x22, 0x23, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x7e, 0x0a, 0x0a, 0x53, 0x65, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61,
-	0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
-	0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f,
-	0x52, 0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e,
-	0x66, 0x6f, 0x12, 0x24, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x10, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x74,
-	0x65, 0x6d, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x0d, 0x0a, 0x0b, 0x53, 0x65, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x6d, 0x0a, 0x0d, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61,
-	0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e,
-	0x66, 0x6f, 0x52, 0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61,
-	0x49, 0x6e, 0x66, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x94, 0x01, 0x0a, 0x0b, 0x4c, 0x69, 0x73,
-	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61,
-	0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e,
-	0x66, 0x6f, 0x52, 0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61,
-	0x49, 0x6e, 0x66, 0x6f, 0x12, 0x39, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f,
-	0x6e, 0x2e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22,
-	0x36, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x26, 0x0a, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x10,
+	0x61, 0x73, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x2e, 0x0a, 0x04, 0x49, 0x74, 0x65, 0x6d, 0x12,
+	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65,
+	0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c,
+	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0xb6, 0x01, 0x0a, 0x09, 0x49, 0x6e, 0x64, 0x65,
+	0x78, 0x4f, 0x70, 0x74, 0x73, 0x12, 0x17, 0x0a, 0x07, 0x68, 0x61, 0x73, 0x5f, 0x69, 0x64, 0x78,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x68, 0x61, 0x73, 0x49, 0x64, 0x78, 0x12, 0x1d,
+	0x0a, 0x0a, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0c, 0x52, 0x09, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x4b, 0x65, 0x79, 0x12, 0x23, 0x0a,
+	0x0d, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x5f, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x03,
+	0x20, 0x03, 0x28, 0x0c, 0x52, 0x0c, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x4b, 0x65,
+	0x79, 0x73, 0x12, 0x4c, 0x0a, 0x13, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x5f, 0x70,
+	0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1b, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e, 0x64,
+	0x65, 0x78, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x52, 0x12, 0x69, 0x6e,
+	0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73,
+	0x22, 0x89, 0x04, 0x0a, 0x0f, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72,
+	0x74, 0x69, 0x65, 0x73, 0x12, 0x6c, 0x0a, 0x18, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x64, 0x65,
+	0x6c, 0x65, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x65, 0x68, 0x61, 0x76, 0x69, 0x6f, 0x75, 0x72,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x32, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74,
+	0x69, 0x65, 0x73, 0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x69, 0x6f,
+	0x6e, 0x42, 0x65, 0x68, 0x61, 0x76, 0x69, 0x6f, 0x75, 0x72, 0x52, 0x16, 0x69, 0x6e, 0x64, 0x65,
+	0x78, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x65, 0x68, 0x61, 0x76, 0x69, 0x6f,
+	0x75, 0x72, 0x12, 0x60, 0x0a, 0x14, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x73, 0x65, 0x61, 0x72,
+	0x63, 0x68, 0x5f, 0x70, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x2e, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e,
+	0x64, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x2e, 0x49, 0x6e,
+	0x64, 0x65, 0x78, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x50, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6e,
+	0x52, 0x12, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x50, 0x61, 0x74,
+	0x74, 0x65, 0x72, 0x6e, 0x12, 0x5d, 0x0a, 0x13, 0x6c, 0x69, 0x73, 0x74, 0x5f, 0x73, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x5f, 0x70, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0e, 0x32, 0x2d, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49,
+	0x6e, 0x64, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x2e, 0x4c,
+	0x69, 0x73, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x50, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6e,
+	0x52, 0x11, 0x6c, 0x69, 0x73, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x50, 0x61, 0x74, 0x74,
+	0x65, 0x72, 0x6e, 0x22, 0x3f, 0x0a, 0x16, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x69, 0x6f, 0x6e, 0x42, 0x65, 0x68, 0x61, 0x76, 0x69, 0x6f, 0x75, 0x72, 0x12, 0x08, 0x0a,
+	0x04, 0x4e, 0x4f, 0x4e, 0x45, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x43, 0x41, 0x53, 0x43, 0x41,
+	0x44, 0x45, 0x10, 0x01, 0x12, 0x0e, 0x0a, 0x0a, 0x49, 0x4e, 0x44, 0x45, 0x58, 0x5f, 0x4f, 0x4e,
+	0x4c, 0x59, 0x10, 0x02, 0x22, 0x5b, 0x0a, 0x12, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x53, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x50, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6e, 0x12, 0x07, 0x0a, 0x03, 0x4f, 0x4e,
+	0x45, 0x10, 0x00, 0x12, 0x15, 0x0a, 0x11, 0x41, 0x4e, 0x44, 0x5f, 0x43, 0x4f, 0x4d, 0x50, 0x55,
+	0x54, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x41, 0x4c, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x4f, 0x52,
+	0x5f, 0x43, 0x4f, 0x4d, 0x50, 0x55, 0x54, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x02, 0x12, 0x11,
+	0x0a, 0x0d, 0x49, 0x4e, 0x44, 0x45, 0x58, 0x49, 0x4e, 0x47, 0x5f, 0x4c, 0x49, 0x53, 0x54, 0x10,
+	0x03, 0x22, 0x29, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x50,
+	0x61, 0x74, 0x74, 0x65, 0x72, 0x6e, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x46, 0x41, 0x55, 0x4c,
+	0x54, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x41, 0x4c, 0x4c, 0x10, 0x01, 0x22, 0x5c, 0x0a, 0x0b,
+	0x52, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f, 0x70, 0x74, 0x73, 0x12, 0x28, 0x0a, 0x10, 0x72,
+	0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x6f, 0x6e, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0e, 0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f, 0x6e,
+	0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c,
+	0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x72, 0x65,
+	0x74, 0x72, 0x69, 0x61, 0x6c, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0xf3, 0x01, 0x0a, 0x0d, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12,
+	0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e,
+	0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65,
+	0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65,
+	0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x24, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x12, 0x34,
+	0x0a, 0x0a, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x6f, 0x70, 0x74, 0x73, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
+	0x49, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x52, 0x09, 0x69, 0x6e, 0x64, 0x65, 0x78,
+	0x4f, 0x70, 0x74, 0x73, 0x12, 0x3a, 0x0a, 0x0c, 0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f,
+	0x6f, 0x70, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6f, 0x70, 0x65,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x52, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f,
+	0x70, 0x74, 0x73, 0x52, 0x0b, 0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f, 0x70, 0x74, 0x73,
+	0x22, 0x10, 0x0a, 0x0e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0xf3, 0x01, 0x0a, 0x0d, 0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65,
+	0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44, 0x61,
+	0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x10,
+	0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f,
+	0x12, 0x24, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10,
 	0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x74, 0x65, 0x6d,
-	0x52, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x42, 0x8c, 0x01, 0x5a, 0x89, 0x01, 0x67, 0x69, 0x74,
-	0x6c, 0x61, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x70, 0x69, 0x65, 0x74, 0x72, 0x6f, 0x73, 0x6b,
-	0x69, 0x2d, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x63, 0x6f, 0x6d, 0x70, 0x61,
-	0x6e, 0x79, 0x2f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x64, 0x62, 0x2f,
-	0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x67,
-	0x6f, 0x2d, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6e, 0x6f, 0x64, 0x65,
-	0x2f, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74,
-	0x65, 0x64, 0x2f, 0x67, 0x6f, 0x2f, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f,
-	0x6e, 0x73, 0x2f, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x3b, 0x67, 0x72,
-	0x70, 0x63, 0x5f, 0x6f, 0x70, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x12, 0x34, 0x0a, 0x0a, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f,
+	0x6f, 0x70, 0x74, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6f, 0x70, 0x65,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74,
+	0x73, 0x52, 0x09, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x12, 0x3a, 0x0a, 0x0c,
+	0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x6f, 0x70, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
+	0x52, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f, 0x70, 0x74, 0x73, 0x52, 0x0b, 0x72, 0x65, 0x74,
+	0x72, 0x69, 0x61, 0x6c, 0x4f, 0x70, 0x74, 0x73, 0x22, 0x10, 0x0a, 0x0e, 0x55, 0x70, 0x73, 0x65,
+	0x72, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xf3, 0x01, 0x0a, 0x0d, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12,
+	0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e,
+	0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65,
+	0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65,
+	0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x24, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x12, 0x34,
+	0x0a, 0x0a, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x6f, 0x70, 0x74, 0x73, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
+	0x49, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x52, 0x09, 0x69, 0x6e, 0x64, 0x65, 0x78,
+	0x4f, 0x70, 0x74, 0x73, 0x12, 0x3a, 0x0a, 0x0c, 0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f,
+	0x6f, 0x70, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6f, 0x70, 0x65,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x52, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f,
+	0x70, 0x74, 0x73, 0x52, 0x0b, 0x72, 0x65, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x4f, 0x70, 0x74, 0x73,
+	0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0xb5, 0x01, 0x0a, 0x0b, 0x4c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d,
+	0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c,
+	0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44, 0x61, 0x74, 0x61,
+	0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x10, 0x64, 0x61,
+	0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x24,
+	0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6f,
+	0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x04,
+	0x69, 0x74, 0x65, 0x6d, 0x12, 0x34, 0x0a, 0x0a, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x6f, 0x70,
+	0x74, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x52,
+	0x09, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x22, 0x24, 0x0a, 0x0c, 0x4c, 0x6f,
+	0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x22, 0xca, 0x01, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x4a, 0x0a, 0x12, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74,
+	0x61, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f,
+	0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61,
+	0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x10, 0x64, 0x61, 0x74, 0x61,
+	0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x34, 0x0a, 0x0a,
+	0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x6f, 0x70, 0x74, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x15, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e,
+	0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x52, 0x09, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70,
+	0x74, 0x73, 0x12, 0x39, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e,
+	0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x36, 0x0a,
+	0x0c, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x26, 0x0a,
+	0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6f,
+	0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x05,
+	0x69, 0x74, 0x65, 0x6d, 0x73, 0x22, 0xa5, 0x01, 0x0a, 0x21, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61,
+	0x6c, 0x75, 0x65, 0x73, 0x46, 0x72, 0x6f, 0x6d, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67,
+	0x4b, 0x65, 0x79, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4a, 0x0a, 0x12, 0x64,
+	0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x5f, 0x69, 0x6e, 0x66,
+	0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x65, 0x74,
+	0x61, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x10, 0x64, 0x61, 0x74, 0x61, 0x62, 0x61, 0x73, 0x65, 0x4d,
+	0x65, 0x74, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x34, 0x0a, 0x0a, 0x69, 0x6e, 0x64, 0x65, 0x78,
+	0x5f, 0x6f, 0x70, 0x74, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6f, 0x70,
+	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70,
+	0x74, 0x73, 0x52, 0x09, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x4f, 0x70, 0x74, 0x73, 0x22, 0x4c, 0x0a,
+	0x22, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x46, 0x72, 0x6f, 0x6d, 0x49,
+	0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x4b, 0x65, 0x79, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x26, 0x0a, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
+	0x49, 0x74, 0x65, 0x6d, 0x52, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x42, 0x8c, 0x01, 0x5a, 0x89,
+	0x01, 0x67, 0x69, 0x74, 0x6c, 0x61, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x70, 0x69, 0x65, 0x74,
+	0x72, 0x6f, 0x73, 0x6b, 0x69, 0x2d, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x63,
+	0x6f, 0x6d, 0x70, 0x61, 0x6e, 0x79, 0x2f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67,
+	0x2d, 0x64, 0x62, 0x2f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6e, 0x6f,
+	0x64, 0x65, 0x2f, 0x67, 0x6f, 0x2d, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e, 0x69, 0x6e, 0x67, 0x2d,
+	0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x2f, 0x67, 0x65, 0x6e,
+	0x65, 0x72, 0x61, 0x74, 0x65, 0x64, 0x2f, 0x67, 0x6f, 0x2f, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x3b, 0x67, 0x72, 0x70, 0x63, 0x5f, 0x6f, 0x70, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -599,33 +1305,63 @@ func file_transactions_operations_operation_messages_proto_rawDescGZIP() []byte 
 	return file_transactions_operations_operation_messages_proto_rawDescData
 }
 
-var file_transactions_operations_operation_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_transactions_operations_operation_messages_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_transactions_operations_operation_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_transactions_operations_operation_messages_proto_goTypes = []interface{}{
-	(*Item)(nil),              // 0: operations.Item
-	(*DatabaseMetaInfo)(nil),  // 1: operations.DatabaseMetaInfo
-	(*GetRequest)(nil),        // 2: operations.GetRequest
-	(*GetResponse)(nil),       // 3: operations.GetResponse
-	(*SetRequest)(nil),        // 4: operations.SetRequest
-	(*SetResponse)(nil),       // 5: operations.SetResponse
-	(*DeleteRequest)(nil),     // 6: operations.DeleteRequest
-	(*DeleteResponse)(nil),    // 7: operations.DeleteResponse
-	(*ListRequest)(nil),       // 8: operations.ListRequest
-	(*ListResponse)(nil),      // 9: operations.ListResponse
-	(*search.Pagination)(nil), // 10: common.search.Pagination
+	(IndexProperties_IndexDeletionBehaviour)(0), // 0: operations.IndexProperties.IndexDeletionBehaviour
+	(IndexProperties_IndexSearchPattern)(0),     // 1: operations.IndexProperties.IndexSearchPattern
+	(IndexProperties_ListSearchPattern)(0),      // 2: operations.IndexProperties.ListSearchPattern
+	(*DatabaseMetaInfo)(nil),                    // 3: operations.DatabaseMetaInfo
+	(*Item)(nil),                                // 4: operations.Item
+	(*IndexOpts)(nil),                           // 5: operations.IndexOpts
+	(*IndexProperties)(nil),                     // 6: operations.IndexProperties
+	(*RetrialOpts)(nil),                         // 7: operations.RetrialOpts
+	(*CreateRequest)(nil),                       // 8: operations.CreateRequest
+	(*CreateResponse)(nil),                      // 9: operations.CreateResponse
+	(*UpsertRequest)(nil),                       // 10: operations.UpsertRequest
+	(*UpsertResponse)(nil),                      // 11: operations.UpsertResponse
+	(*DeleteRequest)(nil),                       // 12: operations.DeleteRequest
+	(*DeleteResponse)(nil),                      // 13: operations.DeleteResponse
+	(*LoadRequest)(nil),                         // 14: operations.LoadRequest
+	(*LoadResponse)(nil),                        // 15: operations.LoadResponse
+	(*ListRequest)(nil),                         // 16: operations.ListRequest
+	(*ListResponse)(nil),                        // 17: operations.ListResponse
+	(*ListValuesFromIndexingKeysRequest)(nil),   // 18: operations.ListValuesFromIndexingKeysRequest
+	(*ListValuesFromIndexingKeysResponse)(nil),  // 19: operations.ListValuesFromIndexingKeysResponse
+	(*search.Pagination)(nil),                   // 20: common.search.Pagination
 }
 var file_transactions_operations_operation_messages_proto_depIdxs = []int32{
-	1,  // 0: operations.GetRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
-	1,  // 1: operations.SetRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
-	0,  // 2: operations.SetRequest.item:type_name -> operations.Item
-	1,  // 3: operations.DeleteRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
-	1,  // 4: operations.ListRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
-	10, // 5: operations.ListRequest.pagination:type_name -> common.search.Pagination
-	0,  // 6: operations.ListResponse.items:type_name -> operations.Item
-	7,  // [7:7] is the sub-list for method output_type
-	7,  // [7:7] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	6,  // 0: operations.IndexOpts.indexing_properties:type_name -> operations.IndexProperties
+	0,  // 1: operations.IndexProperties.index_deletion_behaviour:type_name -> operations.IndexProperties.IndexDeletionBehaviour
+	1,  // 2: operations.IndexProperties.index_search_pattern:type_name -> operations.IndexProperties.IndexSearchPattern
+	2,  // 3: operations.IndexProperties.list_search_pattern:type_name -> operations.IndexProperties.ListSearchPattern
+	3,  // 4: operations.CreateRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
+	4,  // 5: operations.CreateRequest.item:type_name -> operations.Item
+	5,  // 6: operations.CreateRequest.index_opts:type_name -> operations.IndexOpts
+	7,  // 7: operations.CreateRequest.retrial_opts:type_name -> operations.RetrialOpts
+	3,  // 8: operations.UpsertRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
+	4,  // 9: operations.UpsertRequest.item:type_name -> operations.Item
+	5,  // 10: operations.UpsertRequest.index_opts:type_name -> operations.IndexOpts
+	7,  // 11: operations.UpsertRequest.retrial_opts:type_name -> operations.RetrialOpts
+	3,  // 12: operations.DeleteRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
+	4,  // 13: operations.DeleteRequest.item:type_name -> operations.Item
+	5,  // 14: operations.DeleteRequest.index_opts:type_name -> operations.IndexOpts
+	7,  // 15: operations.DeleteRequest.retrial_opts:type_name -> operations.RetrialOpts
+	3,  // 16: operations.LoadRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
+	4,  // 17: operations.LoadRequest.item:type_name -> operations.Item
+	5,  // 18: operations.LoadRequest.index_opts:type_name -> operations.IndexOpts
+	3,  // 19: operations.ListRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
+	5,  // 20: operations.ListRequest.index_opts:type_name -> operations.IndexOpts
+	20, // 21: operations.ListRequest.pagination:type_name -> common.search.Pagination
+	4,  // 22: operations.ListResponse.items:type_name -> operations.Item
+	3,  // 23: operations.ListValuesFromIndexingKeysRequest.database_meta_info:type_name -> operations.DatabaseMetaInfo
+	5,  // 24: operations.ListValuesFromIndexingKeysRequest.index_opts:type_name -> operations.IndexOpts
+	4,  // 25: operations.ListValuesFromIndexingKeysResponse.items:type_name -> operations.Item
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_transactions_operations_operation_messages_proto_init() }
@@ -635,18 +1371,6 @@ func file_transactions_operations_operation_messages_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_transactions_operations_operation_messages_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Item); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_transactions_operations_operation_messages_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DatabaseMetaInfo); i {
 			case 0:
 				return &v.state
@@ -658,8 +1382,20 @@ func file_transactions_operations_operation_messages_proto_init() {
 				return nil
 			}
 		}
+		file_transactions_operations_operation_messages_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Item); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_transactions_operations_operation_messages_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRequest); i {
+			switch v := v.(*IndexOpts); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -671,7 +1407,7 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetResponse); i {
+			switch v := v.(*IndexProperties); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -683,7 +1419,7 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetRequest); i {
+			switch v := v.(*RetrialOpts); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -695,7 +1431,7 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetResponse); i {
+			switch v := v.(*CreateRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -707,7 +1443,7 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRequest); i {
+			switch v := v.(*CreateResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -719,7 +1455,7 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteResponse); i {
+			switch v := v.(*UpsertRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -731,7 +1467,7 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListRequest); i {
+			switch v := v.(*UpsertResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -743,7 +1479,91 @@ func file_transactions_operations_operation_messages_proto_init() {
 			}
 		}
 		file_transactions_operations_operation_messages_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LoadRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LoadResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListValuesFromIndexingKeysRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_transactions_operations_operation_messages_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListValuesFromIndexingKeysResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -760,13 +1580,14 @@ func file_transactions_operations_operation_messages_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_transactions_operations_operation_messages_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   10,
+			NumEnums:      3,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_transactions_operations_operation_messages_proto_goTypes,
 		DependencyIndexes: file_transactions_operations_operation_messages_proto_depIdxs,
+		EnumInfos:         file_transactions_operations_operation_messages_proto_enumTypes,
 		MessageInfos:      file_transactions_operations_operation_messages_proto_msgTypes,
 	}.Build()
 	File_transactions_operations_operation_messages_proto = out.File

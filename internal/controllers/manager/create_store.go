@@ -36,7 +36,7 @@ func (c *BadgerDBManagerServiceController) CreateStore(
 		CreatedAt:    time.Now(),
 		LastOpenedAt: time.Now(),
 	}
-	if err := c.manager.CreateOpenStoreAndLoadIntoMemory(payload); err != nil {
+	if err := c.manager.CreateStore(ctx, payload); err != nil {
 		logger.Errorf(
 			"error creating or opening database",
 			go_logger.Field{

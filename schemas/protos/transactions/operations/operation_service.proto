@@ -6,12 +6,17 @@ option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightnin
 import "transactions/operations/operation_messages.proto";
 
 service Operation {
-  // Get
-  rpc Get(GetRequest) returns (GetResponse);
-  // Set
-  rpc Set(SetRequest) returns (SetResponse);
+  // Create
+  rpc Create(CreateRequest) returns (CreateResponse);
+  // Upsert
+  rpc Upsert(UpsertRequest) returns (UpsertResponse);
   // Delete
   rpc Delete(DeleteRequest) returns (DeleteResponse);
+  // Load
+  rpc Load(LoadRequest) returns (LoadResponse);
   // List
   rpc List(ListRequest) returns (ListResponse);
+  // ListValuesFromIndexingKeys
+  rpc ListValuesFromIndexingKeys(ListValuesFromIndexingKeysRequest)
+      returns (ListValuesFromIndexingKeysResponse);
 }

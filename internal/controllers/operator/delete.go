@@ -2,6 +2,8 @@ package badgerdb_operator_controller
 
 import (
 	"context"
+	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
+	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
@@ -30,7 +32,32 @@ func (c *BadgerDBOperatorServiceController) Delete(
 		return &grpc_ops.DeleteResponse{}, err
 	}
 
-	err = c.operator.Operate(dbInfo).Delete(req.GetKey())
+	reqItem := req.GetItem()
+	item := &operation_models.Item{
+		Key: reqItem.GetKey(),
+	}
+
+	reqOpts := req.GetIndexOpts()
+	opts := &operation_models.IndexOpts{
+		HasIdx:       reqOpts.GetHasIdx(),
+		ParentKey:    reqOpts.GetParentKey(),
+		IndexingKeys: reqOpts.GetIndexingKeys(),
+		IndexProperties: operation_models.IndexProperties{
+			IndexDeletionBehaviour: operation_models.IndexDeletionBehaviour(
+				reqOpts.GetIndexingProperties().GetIndexDeletionBehaviour(),
+			),
+		},
+	}
+
+	reqRetrialOpts := req.GetRetrialOpts()
+	retrialOpts := &chainded_operator.RetrialOpts{
+		RetrialOnErr: reqRetrialOpts.GetRetrialOnError(),
+		RetrialCount: int(reqRetrialOpts.GetRetrialCount()),
+	}
+
+	err = c.operator.Operate(dbInfo).Delete(
+		ctx, item, opts, retrialOpts,
+	)
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(

@@ -3,6 +3,8 @@ package badgerdb_operator_controller
 import (
 	"context"
 	"fmt"
+	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
+	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 	"testing"
 	"time"
 
@@ -39,9 +41,11 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.DeleteRequest{
-				Key: []byte("test-key"),
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
+				},
+				Item: &grpc_ops.Item{
+					Key: []byte("test-key"),
 				},
 			}
 
@@ -79,7 +83,7 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.DeleteRequest{
-				Key: []byte("test-key"),
+				Item: &grpc_ops.Item{Key: []byte("test-key")},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
 				},
@@ -90,6 +94,29 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 				CreatedAt:    time.Time{},
 				LastOpenedAt: time.Time{},
 				DB:           nil,
+			}
+
+			reqItem := payload.GetItem()
+			item := &operation_models.Item{
+				Key: reqItem.GetKey(),
+			}
+
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					IndexDeletionBehaviour: operation_models.IndexDeletionBehaviour(
+						reqOpts.GetIndexingProperties().GetIndexDeletionBehaviour(),
+					),
+				},
+			}
+
+			reqRetrialOpts := payload.GetRetrialOpts()
+			retrialOpts := &chainded_operator.RetrialOpts{
+				RetrialOnErr: reqRetrialOpts.GetRetrialOnError(),
+				RetrialCount: int(reqRetrialOpts.GetRetrialCount()),
 			}
 
 			// build stubs
@@ -107,7 +134,7 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				Delete(payload.Key).
+				Delete(ctx, item, opts, retrialOpts).
 				Times(1).
 				Return(fmt.Errorf("any-error"))
 
@@ -138,7 +165,7 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.DeleteRequest{
-				Key: []byte("test-key"),
+				Item: &grpc_ops.Item{Key: []byte("test-key")},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
 				},
@@ -149,6 +176,29 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 				CreatedAt:    time.Time{},
 				LastOpenedAt: time.Time{},
 				DB:           nil,
+			}
+
+			reqItem := payload.GetItem()
+			item := &operation_models.Item{
+				Key: reqItem.GetKey(),
+			}
+
+			reqOpts := payload.GetIndexOpts()
+			opts := &operation_models.IndexOpts{
+				HasIdx:       reqOpts.GetHasIdx(),
+				ParentKey:    reqOpts.GetParentKey(),
+				IndexingKeys: reqOpts.GetIndexingKeys(),
+				IndexProperties: operation_models.IndexProperties{
+					IndexDeletionBehaviour: operation_models.IndexDeletionBehaviour(
+						reqOpts.GetIndexingProperties().GetIndexDeletionBehaviour(),
+					),
+				},
+			}
+
+			reqRetrialOpts := payload.GetRetrialOpts()
+			retrialOpts := &chainded_operator.RetrialOpts{
+				RetrialOnErr: reqRetrialOpts.GetRetrialOnError(),
+				RetrialCount: int(reqRetrialOpts.GetRetrialCount()),
 			}
 
 			// build stubs
@@ -166,7 +216,7 @@ func TestBadgerDBServiceController_Delete(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				Delete(payload.Key).
+				Delete(ctx, item, opts, retrialOpts).
 				Times(1).
 				Return(nil)
 

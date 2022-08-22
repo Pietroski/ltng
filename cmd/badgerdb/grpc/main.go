@@ -3,15 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	indexed_operations "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/transactions/operations/indexed"
-	badgerdb_indexed_manager_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/manager/indexed"
-	badgerdb_indexed_operator_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/operator/indexed"
-	"log"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"net"
 	"os"
 
-	indexed_manager "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/manager/indexed"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
+	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 
 	"github.com/dgraph-io/badger/v3"
 
@@ -34,24 +30,17 @@ func main() {
 	tracer := go_tracer.NewCtxTracer()
 
 	var err error
-	ctx, err = tracer.Trace(ctx)
-	if err != nil {
-		log.Fatalf("failed to create trace id: %v", err)
-		os.Exit(1)
-		return
-	}
-
 	loggerPublishers := &go_logger.Publishers{}
 	loggerOpts := &go_logger.Opts{
 		Debug:   true,
 		Publish: false,
 	}
-	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
-	logger = logger.FromCtx(ctx)
+	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts).FromCtx(ctx)
 
 	serializer := go_serializer.NewJsonSerializer()
 	validator := go_validator.NewStructValidator()
 	binder := go_binder.NewStructBinder(serializer, validator)
+	chainedOperator := chainded_operator.NewChainOperator()
 
 	cfg := &ltng_node_config.Config{}
 	err = go_env_extractor.LoadEnvs(cfg)
@@ -86,9 +75,7 @@ func main() {
 		return
 	}
 
-	idxMngr := indexed_manager.NewBadgerLocalIndexerManager(db, mngr, serializer)
-	oprt := operations.NewBadgerOperator(mngr, serializer)
-	idxOprt := indexed_operations.NewBadgerIndexedOperator(mngr, idxMngr, oprt, serializer)
+	oprt := operations.NewBadgerOperator(mngr, serializer, chainedOperator)
 
 	managerListener, err := net.Listen(
 		cfg.LTNGNode.LTNGManager.Network,
@@ -103,7 +90,7 @@ func main() {
 		return
 	}
 	mngrsvr := badgerdb_manager_factory.NewBadgerDBManagerService(
-		managerListener, logger, binder, mngr,
+		managerListener, logger, tracer, binder, mngr,
 	)
 
 	operatorListener, err := net.Listen(
@@ -122,45 +109,11 @@ func main() {
 		operatorListener, logger, binder, mngr, oprt,
 	)
 
-	indexedManagerListener, err := net.Listen(
-		cfg.LTNGNode.LTNGIndexedManager.Network,
-		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGIndexedManager.Address),
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed to create net listener",
-			go_logger.Mapper("err", err.Error()),
-		)
-
-		return
-	}
-	idxmngrsvr := badgerdb_indexed_manager_factory.NewBadgerDBIndexedManagerService(
-		indexedManagerListener, logger, binder, idxMngr,
-	)
-
-	indexedOperatorListener, err := net.Listen(
-		cfg.LTNGNode.LTNGIndexedOperator.Network,
-		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGIndexedOperator.Address),
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed to create net listener",
-			go_logger.Mapper("err", err.Error()),
-		)
-
-		return
-	}
-	idxopsvr := badgerdb_indexed_operator_factory.NewBadgerDBIndexedOperatorService(
-		indexedOperatorListener, logger, binder, idxMngr, idxOprt,
-	)
-
 	h := transporthandler.NewHandler(
 		ctx, cancelFn, os.Exit, nil, logger, &transporthandler.Opts{Debug: true},
 	)
 	h.StartServers(map[string]handlers_model.Server{
-		"badger-lightning-node-manager":          mngrsvr,
-		"badger-lightning-node-operator":         opsvr,
-		"badger-lightning-node-indexed-manager":  idxmngrsvr,
-		"badger-lightning-node-indexed-operator": idxopsvr,
+		"badger-lightning-node-manager":  mngrsvr,
+		"badger-lightning-node-operator": opsvr,
 	})
 }

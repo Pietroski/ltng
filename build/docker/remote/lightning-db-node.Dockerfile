@@ -12,7 +12,7 @@ ARG netrc_password
 
 RUN echo -e "machine $remote\nlogin $netrc_login\npassword $netrc_password" > /root/.netrc
 RUN echo -e "machine $api_remote\nlogin $netrc_login\npassword $netrc_password" >> /root/.netrc
-RUN chmod 640 /root/.netrc
+RUN chmod 400 /root/.netrc
 
 ENV GONOSUMDB=gitlab.com/pietroski-software-company
 ENV GONOPROXY=gitlab.com/pietroski-software-company

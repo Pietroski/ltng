@@ -23,10 +23,9 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ManagementClient interface {
 	CreateStore(ctx context.Context, in *CreateStoreRequest, opts ...grpc.CallOption) (*CreateStoreResponse, error)
-	UpdateStore(ctx context.Context, in *UpdateStoreRequest, opts ...grpc.CallOption) (*UpdateStoreResponse, error)
 	DeleteStore(ctx context.Context, in *DeleteStoreRequest, opts ...grpc.CallOption) (*DeleteStoreResponse, error)
-	ListStores(ctx context.Context, in *ListStoresRequest, opts ...grpc.CallOption) (*ListStoresResponse, error)
 	GetStore(ctx context.Context, in *GetStoreRequest, opts ...grpc.CallOption) (*GetStoreResponse, error)
+	ListStores(ctx context.Context, in *ListStoresRequest, opts ...grpc.CallOption) (*ListStoresResponse, error)
 	RestartLightningNode(ctx context.Context, in *RestartLightningNodeRequest, opts ...grpc.CallOption) (*RestartLightningNodeResponse, error)
 	ShutdownLightningNode(ctx context.Context, in *ShutdownLightningNodeRequest, opts ...grpc.CallOption) (*ShutdownLightningNodeResponse, error)
 }
@@ -48,15 +47,6 @@ func (c *managementClient) CreateStore(ctx context.Context, in *CreateStoreReque
 	return out, nil
 }
 
-func (c *managementClient) UpdateStore(ctx context.Context, in *UpdateStoreRequest, opts ...grpc.CallOption) (*UpdateStoreResponse, error) {
-	out := new(UpdateStoreResponse)
-	err := c.cc.Invoke(ctx, "/management.Management/UpdateStore", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *managementClient) DeleteStore(ctx context.Context, in *DeleteStoreRequest, opts ...grpc.CallOption) (*DeleteStoreResponse, error) {
 	out := new(DeleteStoreResponse)
 	err := c.cc.Invoke(ctx, "/management.Management/DeleteStore", in, out, opts...)
@@ -66,18 +56,18 @@ func (c *managementClient) DeleteStore(ctx context.Context, in *DeleteStoreReque
 	return out, nil
 }
 
-func (c *managementClient) ListStores(ctx context.Context, in *ListStoresRequest, opts ...grpc.CallOption) (*ListStoresResponse, error) {
-	out := new(ListStoresResponse)
-	err := c.cc.Invoke(ctx, "/management.Management/ListStores", in, out, opts...)
+func (c *managementClient) GetStore(ctx context.Context, in *GetStoreRequest, opts ...grpc.CallOption) (*GetStoreResponse, error) {
+	out := new(GetStoreResponse)
+	err := c.cc.Invoke(ctx, "/management.Management/GetStore", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *managementClient) GetStore(ctx context.Context, in *GetStoreRequest, opts ...grpc.CallOption) (*GetStoreResponse, error) {
-	out := new(GetStoreResponse)
-	err := c.cc.Invoke(ctx, "/management.Management/GetStore", in, out, opts...)
+func (c *managementClient) ListStores(ctx context.Context, in *ListStoresRequest, opts ...grpc.CallOption) (*ListStoresResponse, error) {
+	out := new(ListStoresResponse)
+	err := c.cc.Invoke(ctx, "/management.Management/ListStores", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,10 +97,9 @@ func (c *managementClient) ShutdownLightningNode(ctx context.Context, in *Shutdo
 // for forward compatibility
 type ManagementServer interface {
 	CreateStore(context.Context, *CreateStoreRequest) (*CreateStoreResponse, error)
-	UpdateStore(context.Context, *UpdateStoreRequest) (*UpdateStoreResponse, error)
 	DeleteStore(context.Context, *DeleteStoreRequest) (*DeleteStoreResponse, error)
-	ListStores(context.Context, *ListStoresRequest) (*ListStoresResponse, error)
 	GetStore(context.Context, *GetStoreRequest) (*GetStoreResponse, error)
+	ListStores(context.Context, *ListStoresRequest) (*ListStoresResponse, error)
 	RestartLightningNode(context.Context, *RestartLightningNodeRequest) (*RestartLightningNodeResponse, error)
 	ShutdownLightningNode(context.Context, *ShutdownLightningNodeRequest) (*ShutdownLightningNodeResponse, error)
 	mustEmbedUnimplementedManagementServer()
@@ -123,17 +112,14 @@ type UnimplementedManagementServer struct {
 func (UnimplementedManagementServer) CreateStore(context.Context, *CreateStoreRequest) (*CreateStoreResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateStore not implemented")
 }
-func (UnimplementedManagementServer) UpdateStore(context.Context, *UpdateStoreRequest) (*UpdateStoreResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateStore not implemented")
-}
 func (UnimplementedManagementServer) DeleteStore(context.Context, *DeleteStoreRequest) (*DeleteStoreResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteStore not implemented")
 }
-func (UnimplementedManagementServer) ListStores(context.Context, *ListStoresRequest) (*ListStoresResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListStores not implemented")
-}
 func (UnimplementedManagementServer) GetStore(context.Context, *GetStoreRequest) (*GetStoreResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStore not implemented")
+}
+func (UnimplementedManagementServer) ListStores(context.Context, *ListStoresRequest) (*ListStoresResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListStores not implemented")
 }
 func (UnimplementedManagementServer) RestartLightningNode(context.Context, *RestartLightningNodeRequest) (*RestartLightningNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RestartLightningNode not implemented")
@@ -172,24 +158,6 @@ func _Management_CreateStore_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Management_UpdateStore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateStoreRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ManagementServer).UpdateStore(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/management.Management/UpdateStore",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ManagementServer).UpdateStore(ctx, req.(*UpdateStoreRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Management_DeleteStore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteStoreRequest)
 	if err := dec(in); err != nil {
@@ -208,24 +176,6 @@ func _Management_DeleteStore_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Management_ListStores_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListStoresRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ManagementServer).ListStores(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/management.Management/ListStores",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ManagementServer).ListStores(ctx, req.(*ListStoresRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Management_GetStore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetStoreRequest)
 	if err := dec(in); err != nil {
@@ -240,6 +190,24 @@ func _Management_GetStore_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ManagementServer).GetStore(ctx, req.(*GetStoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Management_ListStores_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStoresRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServer).ListStores(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/management.Management/ListStores",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServer).ListStores(ctx, req.(*ListStoresRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -292,20 +260,16 @@ var Management_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Management_CreateStore_Handler,
 		},
 		{
-			MethodName: "UpdateStore",
-			Handler:    _Management_UpdateStore_Handler,
-		},
-		{
 			MethodName: "DeleteStore",
 			Handler:    _Management_DeleteStore_Handler,
 		},
 		{
-			MethodName: "ListStores",
-			Handler:    _Management_ListStores_Handler,
-		},
-		{
 			MethodName: "GetStore",
 			Handler:    _Management_GetStore_Handler,
+		},
+		{
+			MethodName: "ListStores",
+			Handler:    _Management_ListStores_Handler,
 		},
 		{
 			MethodName: "RestartLightningNode",
