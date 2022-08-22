@@ -1,6 +1,6 @@
 module gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
