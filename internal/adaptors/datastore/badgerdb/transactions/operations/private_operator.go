@@ -63,7 +63,10 @@ func (o *BadgerOperator) delete(key []byte) error {
 func (o *BadgerOperator) listAll() (operation_models.Items, error) {
 	var objectList operation_models.Items
 	err := o.dbInfo.DB.View(func(txn *badger.Txn) error {
-		opts := badger.IteratorOptions{}
+		opts := badger.IteratorOptions{
+			PrefetchSize:   500,
+			PrefetchValues: true,
+		}
 
 		it := txn.NewIterator(opts)
 		defer it.Close()
@@ -100,8 +103,13 @@ func (o *BadgerOperator) listPaginated(
 
 	objectList := make(operation_models.Items, size)
 	err := o.dbInfo.DB.View(func(txn *badger.Txn) error {
-		opts := badger.IteratorOptions{}
-		opts.PrefetchSize = size * page
+		opts := badger.IteratorOptions{
+			PrefetchSize:   500,
+			PrefetchValues: true,
+		}
+		if size*page > opts.PrefetchSize {
+			opts.PrefetchSize = size * page
+		}
 
 		it := txn.NewIterator(opts)
 		defer it.Close()

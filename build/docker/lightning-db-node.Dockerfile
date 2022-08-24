@@ -27,6 +27,8 @@ go build -ldflags="-w -s" -o lightning-db-node cmd/badgerdb/grpc/main.go
 #-installsuffix 'static' \
 #-o lightning-db-node cmd/badgerdb/grpc/main.go
 
+# ENTRYPOINT ["./lightning-db-node"]
+
 ################################
 # STEP 2 build a smaller image #
 ################################

@@ -144,25 +144,6 @@ func Test_LightningNode_ServerWithClient_TracingTest(t *testing.T) {
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(
-			func(
-				ctx context.Context,
-				method string,
-				req, reply interface{},
-				cc *grpc.ClientConn,
-				invoker grpc.UnaryInvoker,
-				opts ...grpc.CallOption,
-			) (middlewareErr error) {
-				//ctx, middlewareErr = go_tracer.GRPCTraceMiddleware(ctx, metadata.FromIncomingContext)
-				//if middlewareErr != nil {
-				//	return middlewareErr
-				//}
-
-				logger.Debugf("inside client interceptor")
-
-				return invoker(ctx, method, req, reply, cc, opts...)
-			},
-		),
 	}
 
 	managerConn, err := grpc.Dial(managerServerAddr, opts...)

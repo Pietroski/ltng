@@ -3,11 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"net"
 	"os"
-
-	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 
 	"github.com/dgraph-io/badger/v3"
 
@@ -16,6 +13,7 @@ import (
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
 	badgerdb_manager_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/manager"
 	badgerdb_operator_factory "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/operator"
+	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
@@ -27,7 +25,6 @@ import (
 
 func main() {
 	ctx, cancelFn := context.WithCancel(context.Background())
-	tracer := go_tracer.NewCtxTracer()
 
 	var err error
 	loggerPublishers := &go_logger.Publishers{}
@@ -90,7 +87,7 @@ func main() {
 		return
 	}
 	mngrsvr := badgerdb_manager_factory.NewBadgerDBManagerService(
-		managerListener, logger, tracer, binder, mngr,
+		managerListener, logger, binder, mngr,
 	)
 
 	operatorListener, err := net.Listen(

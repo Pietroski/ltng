@@ -29,11 +29,18 @@ func (m *BadgerLocalManager) Paginate(
 	size, page int,
 ) *badger.Iterator {
 	it.Rewind()
-	for number := 1; number < page; number++ {
-		for i := 0; i < size; i++ {
-			if it.Valid() {
-				it.Next()
-			}
+	//for number := 1; number < page; number++ {
+	//	for i := 0; i < size; i++ {
+	//		if it.Valid() {
+	//			it.Next()
+	//		}
+	//	}
+	//}
+
+	limit := page * size
+	for idx := 1; idx < limit; idx++ {
+		if it.Valid() {
+			it.Next()
 		}
 	}
 
