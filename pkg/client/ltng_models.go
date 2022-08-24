@@ -1,4 +1,4 @@
-package client
+package ltng_client
 
 type (
 	Addresses struct {

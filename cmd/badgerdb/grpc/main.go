@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"net"
 	"os"
 
@@ -27,7 +26,6 @@ import (
 
 func main() {
 	ctx, cancelFn := context.WithCancel(context.Background())
-	tracer := go_tracer.NewCtxTracer()
 
 	var err error
 	loggerPublishers := &go_logger.Publishers{}
@@ -90,7 +88,7 @@ func main() {
 		return
 	}
 	mngrsvr := badgerdb_manager_factory.NewBadgerDBManagerService(
-		managerListener, logger, tracer, binder, mngr,
+		managerListener, logger, binder, mngr,
 	)
 
 	operatorListener, err := net.Listen(
