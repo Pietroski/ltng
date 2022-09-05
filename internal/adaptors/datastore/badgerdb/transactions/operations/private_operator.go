@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"fmt"
 	"github.com/dgraph-io/badger/v3"
 	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
 	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
@@ -12,6 +13,8 @@ func (o *BadgerOperator) create(key, value []byte) error {
 		_, err := txn.Get(key)
 		if err == badger.ErrKeyNotFound {
 			err = txn.Set(key, value)
+		} else if err == nil {
+			return fmt.Errorf(ErrKeyAlreadyExist)
 		}
 
 		return err

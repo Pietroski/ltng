@@ -12,6 +12,8 @@ import (
 
 const (
 	bsSeparator = "&#-#&"
+
+	ErrKeyAlreadyExist = "key already exist"
 )
 
 func (o *BadgerOperator) indexedStoreOperator(
@@ -421,8 +423,8 @@ func (o *BadgerOperator) computationalSearch(
 	ctx context.Context,
 	opts *operation_models.IndexOpts,
 	fn func(
-		indexedKeys [][]byte,
-	) ([]byte, error),
+	indexedKeys [][]byte,
+) ([]byte, error),
 ) ([]byte, error) {
 	objKey, err := fn(opts.IndexingKeys)
 	if err != nil {

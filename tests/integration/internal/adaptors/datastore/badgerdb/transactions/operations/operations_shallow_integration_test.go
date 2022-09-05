@@ -1094,8 +1094,8 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing default pagination values")
 					defaultPaginatedRetrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							ctx,
-							&operation_models.Item{},
+							//ctx,
+							//&operation_models.Item{},
 							&operation_models.IndexOpts{},
 							&management_models.Pagination{},
 						)
@@ -1109,8 +1109,8 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing all values")
 					retrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							ctx,
-							&operation_models.Item{},
+							//ctx,
+							//&operation_models.Item{},
 							&operation_models.IndexOpts{
 								IndexProperties: operation_models.IndexProperties{
 									ListSearchPattern: operation_models.All,
@@ -1128,8 +1128,8 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing values paginated")
 					paginatedRetrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							ctx,
-							&operation_models.Item{},
+							//ctx,
+							//&operation_models.Item{},
 							&operation_models.IndexOpts{
 								IndexProperties: operation_models.IndexProperties{
 									ListSearchPattern: operation_models.All,
@@ -1222,8 +1222,8 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing all values")
 					retrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							ctx,
-							&operation_models.Item{},
+							//ctx,
+							//&operation_models.Item{},
 							&operation_models.IndexOpts{
 								IndexProperties: operation_models.IndexProperties{
 									ListSearchPattern: operation_models.All,
