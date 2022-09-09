@@ -23,6 +23,18 @@ func (o *BadgerOperator) create(key, value []byte) error {
 	return err
 }
 
+// createWithTxn checks if the key exists, if not, it stores the item.
+func (o *BadgerOperator) createWithTxn(txn *badger.Txn, key, value []byte) error {
+	_, err := txn.Get(key)
+	if err == badger.ErrKeyNotFound {
+		err = txn.Set(key, value)
+	} else if err == nil {
+		return fmt.Errorf(ErrKeyAlreadyExist)
+	}
+
+	return err
+}
+
 // upsert updates or creates the key value no matter if the key already exists or not.
 func (o *BadgerOperator) upsert(key, value []byte) error {
 	err := o.dbInfo.DB.Update(func(txn *badger.Txn) error {
@@ -32,6 +44,11 @@ func (o *BadgerOperator) upsert(key, value []byte) error {
 	})
 
 	return err
+}
+
+// upsertWithTxn updates or creates the key value no matter if the key already exists or not.
+func (o *BadgerOperator) upsertWithTxn(txn *badger.Txn, key, value []byte) error {
+	return txn.Set(key, value)
 }
 
 // load checks the given key and returns the serialized item's value whether it exists.

@@ -112,33 +112,23 @@ func (o *BadgerOperator) Create(
 	opts *operation_models.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
-	op := o.operate(o.dbInfo)
+	txn := o.dbInfo.DB.NewTransaction(true)
 	var createFn = func() error {
-		return op.create(item.Key, item.Value)
+		return o.createWithTxn(txn, item.Key, item.Value)
 	}
-	var deleteFn = func() error {
-		return op.delete(item.Key)
-	}
-
-	idxListOp, err := o.indexedListStoreOperator(ctx)
-	if err != nil {
-		return err
-	}
-	var createIdxListFn = func() error {
-		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
-		return idxListOp.create(opts.ParentKey, idxList)
-	}
-	var deleteIdxListFn = func() error {
-		return idxListOp.delete(opts.ParentKey)
+	var createRollbackFn = func() error {
+		txn.Discard()
+		return nil
 	}
 
 	idxOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
 		return err
 	}
+	idxTxn := idxOp.dbInfo.DB.NewTransaction(true)
 	var createIdxsFn = func() (err error) {
 		for _, idx := range opts.IndexingKeys {
-			err = idxOp.create(idx, opts.ParentKey)
+			err = idxOp.createWithTxn(idxTxn, idx, opts.ParentKey)
 			if err != nil {
 				return
 			}
@@ -146,27 +136,79 @@ func (o *BadgerOperator) Create(
 
 		return
 	}
-	var deleteIdxsFn = func() (err error) {
+	var createIdxsRollbackFn = func() error {
+		idxTxn.Discard()
+		return nil
+	}
+	var deleteIdxsRollbackFn = func() error {
+		idxTxn.Discard()
 		for _, idx := range opts.IndexingKeys {
 			err = idxOp.delete(idx)
 			if err != nil {
-				return
+				continue
 			}
 		}
 
-		return
+		return nil
 	}
 
-	createIdxsOps := &co.Ops{
+	idxListOp, err := o.indexedListStoreOperator(ctx)
+	if err != nil {
+		return err
+	}
+	idxListTxn := idxListOp.dbInfo.DB.NewTransaction(true)
+	var createIdxListFn = func() error {
+		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
+		return idxListOp.createWithTxn(idxListTxn, opts.ParentKey, idxList)
+	}
+	var createIdxListRollbackFn = func() error {
+		idxListTxn.Discard()
+		return nil
+	}
+	var deleteIdxListRollbackFn = func() error {
+		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
+		idxListTxn.Discard()
+		return idxListOp.delete(idxList)
+	}
+
+	var commitStage = func() error {
+		if err = idxListTxn.Commit(); err != nil {
+			return err
+		}
+		if err = idxTxn.Commit(); err != nil {
+			return err
+		}
+		if err = txn.Commit(); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	commitStageOps := &co.Ops{
 		Action: &co.Action{
-			Act:         createIdxsFn,
+			Act:         commitStage,
 			RetrialOpts: retrialOpts,
 			Next:        nil,
 		},
 		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteIdxsFn,
+			RollbackAct: nil,
 			RetrialOpts: retrialOpts,
-			Next:        nil,
+			Next: &co.Ops{
+				Action: nil,
+				RollbackAction: &co.RollbackAction{
+					RollbackAct: deleteIdxListRollbackFn,
+					RetrialOpts: retrialOpts,
+					Next: &co.Ops{
+						Action: nil,
+						RollbackAction: &co.RollbackAction{
+							RollbackAct: deleteIdxsRollbackFn,
+							RetrialOpts: retrialOpts,
+							Next:        nil,
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -174,33 +216,68 @@ func (o *BadgerOperator) Create(
 		Action: &co.Action{
 			Act:         createIdxListFn,
 			RetrialOpts: retrialOpts,
-			Next:        createIdxsOps,
+			Next:        commitStageOps,
 		},
 		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteIdxListFn,
+			RollbackAct: createIdxListRollbackFn,
 			RetrialOpts: retrialOpts,
 			Next:        nil,
 		},
 	}
-	createIdxsOps.RollbackAction.Next = createIdxListOps
+
+	createIdxsOps := &co.Ops{
+		Action: &co.Action{
+			Act:         createIdxsFn,
+			RetrialOpts: retrialOpts,
+			Next:        createIdxListOps,
+		},
+		RollbackAction: &co.RollbackAction{
+			RollbackAct: createIdxsRollbackFn,
+			RetrialOpts: retrialOpts,
+			Next:        nil,
+		},
+	}
+	createIdxListOps.RollbackAction.Next = createIdxsOps
 
 	createOps := &co.Ops{
 		Action: &co.Action{
 			Act:         createFn,
 			RetrialOpts: retrialOpts,
-			Next:        createIdxListOps,
+			Next:        createIdxsOps,
 		},
 		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteFn,
+			RollbackAct: createRollbackFn,
 			RetrialOpts: retrialOpts,
 			Next:        nil,
 		},
 	}
-	createIdxListOps.RollbackAction.Next = createOps
+	createIdxsOps.RollbackAction.Next = createOps
 
 	if !opts.HasIdx {
-		createOps.Action.Next = nil
-		createOps.RollbackAction = nil
+		var commitCreateStage = func() error {
+			if err = txn.Commit(); err != nil {
+				return err
+			}
+
+			return nil
+		}
+		var commitCreateRollbackStage = func() error {
+			txn.Discard()
+			return nil
+		}
+
+		createOps.Action.Next = &co.Ops{
+			Action: &co.Action{
+				Act:         commitCreateStage,
+				RetrialOpts: retrialOpts,
+				Next:        nil,
+			},
+			RollbackAction: &co.RollbackAction{
+				RollbackAct: commitCreateRollbackStage,
+				RetrialOpts: retrialOpts,
+				Next:        nil,
+			},
+		}
 
 		return o.chainedOperator.Operate(createOps)
 	}

@@ -74,7 +74,6 @@ func (o *BadgerOperator) deleteCascade(
 		return err
 	}
 	idxTxn := idxOp.dbInfo.DB.NewTransaction(true)
-
 	var deleteIdxFn = func() error {
 		for _, idx := range idxs {
 			opsErr := idxTxn.Delete(idx)
@@ -423,8 +422,8 @@ func (o *BadgerOperator) computationalSearch(
 	ctx context.Context,
 	opts *operation_models.IndexOpts,
 	fn func(
-	indexedKeys [][]byte,
-) ([]byte, error),
+		indexedKeys [][]byte,
+	) ([]byte, error),
 ) ([]byte, error) {
 	objKey, err := fn(opts.IndexingKeys)
 	if err != nil {
