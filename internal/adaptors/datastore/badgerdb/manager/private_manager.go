@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+
+	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
 )
 
 // CreateOpenStoreAndLoadIntoMemory method checks if the give into key already exists in database,

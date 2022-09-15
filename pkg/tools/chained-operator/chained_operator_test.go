@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	chained_mock "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator/mocks"
-
 	"github.com/stretchr/testify/require"
+
+	chained_mock "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator/mocks"
 )
 
 func TestChainOperator_Operate(t *testing.T) {

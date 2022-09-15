@@ -2,7 +2,9 @@ package operations
 
 import (
 	"fmt"
+
 	"github.com/dgraph-io/badger/v3"
+
 	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
 	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
 )

@@ -3,11 +3,12 @@ package manager
 import (
 	"context"
 	"fmt"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"log"
 	"sync"
 	"testing"
 	"time"
+
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/require"
