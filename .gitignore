@@ -16,3 +16,6 @@
 .env.dev
 
 playground
+
+# profiling files
+*.pprof
