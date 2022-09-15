@@ -292,33 +292,23 @@ func (o *BadgerOperator) Upsert(
 	opts *operation_models.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
-	op := o.operate(o.dbInfo)
+	txn := o.dbInfo.DB.NewTransaction(true)
 	var upsertFn = func() error {
-		return op.upsert(item.Key, item.Value)
+		return o.upsertWithTxn(txn, item.Key, item.Value)
 	}
-	var deleteFn = func() error {
-		return op.delete(item.Key)
-	}
-
-	idxListOp, err := o.indexedListStoreOperator(ctx)
-	if err != nil {
+	var upsertRollbackFn = func() error {
+		txn.Discard()
 		return nil
-	}
-	var upsertIdxListFn = func() error {
-		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
-		return idxListOp.upsert(opts.ParentKey, idxList)
-	}
-	var deleteIdxListFn = func() error {
-		return idxListOp.delete(opts.ParentKey)
 	}
 
 	idxOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
-		return nil
+		return err
 	}
+	idxTxn := idxOp.dbInfo.DB.NewTransaction(true)
 	var upsertIdxsFn = func() (err error) {
 		for _, idx := range opts.IndexingKeys {
-			err = idxOp.upsert(idx, opts.ParentKey)
+			err = idxOp.upsertWithTxn(idxTxn, idx, opts.ParentKey)
 			if err != nil {
 				return
 			}
@@ -326,27 +316,79 @@ func (o *BadgerOperator) Upsert(
 
 		return
 	}
-	var deleteIdxsFn = func() (err error) {
+	var upsertIdxsRollbackFn = func() error {
+		idxTxn.Discard()
+		return nil
+	}
+	var deleteIdxsRollbackFn = func() error {
+		idxTxn.Discard()
 		for _, idx := range opts.IndexingKeys {
 			err = idxOp.delete(idx)
 			if err != nil {
-				return
+				continue
 			}
 		}
 
-		return
+		return nil
 	}
 
-	upsertIdxsOps := &co.Ops{
+	idxListOp, err := o.indexedListStoreOperator(ctx)
+	if err != nil {
+		return err
+	}
+	idxListTxn := idxListOp.dbInfo.DB.NewTransaction(true)
+	var upsertIdxListFn = func() error {
+		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
+		return idxListOp.upsertWithTxn(idxListTxn, opts.ParentKey, idxList)
+	}
+	var upsertIdxListRollbackFn = func() error {
+		idxListTxn.Discard()
+		return nil
+	}
+	var deleteIdxListRollbackFn = func() error {
+		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
+		idxListTxn.Discard()
+		return idxListOp.delete(idxList)
+	}
+
+	var commitStage = func() error {
+		if err = idxListTxn.Commit(); err != nil {
+			return err
+		}
+		if err = idxTxn.Commit(); err != nil {
+			return err
+		}
+		if err = txn.Commit(); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	commitStageOps := &co.Ops{
 		Action: &co.Action{
-			Act:         upsertIdxsFn,
+			Act:         commitStage,
 			RetrialOpts: retrialOpts,
 			Next:        nil,
 		},
 		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteIdxsFn,
+			RollbackAct: nil,
 			RetrialOpts: retrialOpts,
-			Next:        nil,
+			Next: &co.Ops{
+				Action: nil,
+				RollbackAction: &co.RollbackAction{
+					RollbackAct: deleteIdxListRollbackFn,
+					RetrialOpts: retrialOpts,
+					Next: &co.Ops{
+						Action: nil,
+						RollbackAction: &co.RollbackAction{
+							RollbackAct: deleteIdxsRollbackFn,
+							RetrialOpts: retrialOpts,
+							Next:        nil,
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -354,33 +396,68 @@ func (o *BadgerOperator) Upsert(
 		Action: &co.Action{
 			Act:         upsertIdxListFn,
 			RetrialOpts: retrialOpts,
-			Next:        upsertIdxsOps,
+			Next:        commitStageOps,
 		},
 		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteIdxListFn,
+			RollbackAct: upsertIdxListRollbackFn,
 			RetrialOpts: retrialOpts,
 			Next:        nil,
 		},
 	}
-	upsertIdxsOps.RollbackAction.Next = upsertIdxListOps
+
+	upsertIdxsOps := &co.Ops{
+		Action: &co.Action{
+			Act:         upsertIdxsFn,
+			RetrialOpts: retrialOpts,
+			Next:        upsertIdxListOps,
+		},
+		RollbackAction: &co.RollbackAction{
+			RollbackAct: upsertIdxsRollbackFn,
+			RetrialOpts: retrialOpts,
+			Next:        nil,
+		},
+	}
+	upsertIdxListOps.RollbackAction.Next = upsertIdxsOps
 
 	upsertOps := &co.Ops{
 		Action: &co.Action{
 			Act:         upsertFn,
 			RetrialOpts: retrialOpts,
-			Next:        upsertIdxListOps,
+			Next:        upsertIdxsOps,
 		},
 		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteFn,
+			RollbackAct: upsertRollbackFn,
 			RetrialOpts: retrialOpts,
 			Next:        nil,
 		},
 	}
-	upsertIdxListOps.RollbackAction.Next = upsertOps
+	upsertIdxsOps.RollbackAction.Next = upsertOps
 
 	if !opts.HasIdx {
-		upsertOps.Action.Next = nil
-		upsertOps.RollbackAction = nil
+		var commitCreateStage = func() error {
+			if err = txn.Commit(); err != nil {
+				return err
+			}
+
+			return nil
+		}
+		var commitCreateRollbackStage = func() error {
+			txn.Discard()
+			return nil
+		}
+
+		upsertOps.Action.Next = &co.Ops{
+			Action: &co.Action{
+				Act:         commitCreateStage,
+				RetrialOpts: retrialOpts,
+				Next:        nil,
+			},
+			RollbackAction: &co.RollbackAction{
+				RollbackAct: commitCreateRollbackStage,
+				RetrialOpts: retrialOpts,
+				Next:        nil,
+			},
+		}
 
 		return o.chainedOperator.Operate(upsertOps)
 	}

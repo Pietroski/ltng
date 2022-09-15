@@ -986,6 +986,126 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Infof("cleaned up all successfully")
 		},
 	)
+
+	t.Run(
+		"item already created",
+		func(t *testing.T) {
+			ctx, _ := context.WithCancel(context.Background())
+			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+
+			logger.Infof("opening badger local manager")
+			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			require.NoError(t, err)
+
+			serializer := go_serializer.NewJsonSerializer()
+			chainedOperator := chainded_operator.NewChainOperator()
+			m := manager.NewBadgerLocalManager(db, serializer, logger)
+			op := NewBadgerOperator(m, serializer, chainedOperator)
+
+			logger.Debugf("starting manager")
+			err = m.Start()
+			require.NoError(t, err)
+			logger.Debugf("manager started")
+
+			logger.Debugf("creating store")
+			dbInfoOpTest := &management_models.DBInfo{
+				Name:         "operations-db-integration-test",
+				Path:         "operations-db-integration-test",
+				CreatedAt:    time.Now(),
+				LastOpenedAt: time.Now(),
+			}
+			err = m.CreateStore(ctx, dbInfoOpTest)
+			require.NoError(t, err)
+			logger.Debugf("store created")
+
+			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
+			require.NoError(t, err)
+
+			storeKey := []byte("key-test-to-store")
+			storeValue := []byte("value test to store")
+			logger.Debugf("writing value")
+			err = op.
+				Operate(dbMemoryInfo).
+				Create(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{},
+					chainded_operator.DefaultRetrialOps,
+				)
+			require.NoError(t, err)
+			logger.Debugf("value written")
+
+			logger.Debugf("writing value")
+			err = op.
+				Operate(dbMemoryInfo).
+				Create(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{},
+					chainded_operator.DefaultRetrialOps,
+				)
+			require.Error(t, err)
+			logger.Debugf("value written")
+
+			logger.Debugf("loading value")
+			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
+				ctx,
+				&operation_models.Item{
+					Key:   storeKey,
+					Value: storeValue,
+				},
+				&operation_models.IndexOpts{},
+			)
+			require.NoError(t, err)
+			logger.Debugf("value loaded")
+			t.Log("retrieved value ->", string(retrievedValue))
+
+			logger.Debugf("deleting value")
+			err = op.
+				Operate(dbMemoryInfo).
+				Delete(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{},
+					chainded_operator.DefaultRetrialOps,
+				)
+			require.NoError(t, err)
+			logger.Debugf("value deleted")
+
+			logger.Debugf("loading value")
+			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
+				ctx,
+				&operation_models.Item{
+					Key:   storeKey,
+					Value: storeValue,
+				},
+				&operation_models.IndexOpts{},
+			)
+			require.Error(t, err)
+			logger.Debugf("value loaded")
+
+			logger.Debugf("deleting store")
+			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
+			require.NoError(t, err)
+			logger.Debugf("store deleted")
+
+			logger.Debugf("shutting down stores")
+			m.ShutdownStores()
+			m.Shutdown()
+			logger.Debugf("stores shut down")
+
+			logger.Infof("cleaned up all successfully")
+		},
+	)
 }
 
 func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
@@ -1331,6 +1451,60 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 				require.NoError(t, err)
 				logger.Debugf("value written")
 			}
+
+			t.Run(
+				"errors items already created",
+				func(t *testing.T) {
+					logger.Debugf("writing value")
+
+					// fail for main key
+					{
+						err = op.
+							Operate(dbMemoryInfo).
+							Create(
+								ctx,
+								&operation_models.Item{
+									Key:   storeKey,
+									Value: storeValue,
+								},
+								&operation_models.IndexOpts{
+									HasIdx:          true,
+									ParentKey:       storeKey,
+									IndexingKeys:    [][]byte{field4IdxKeyKey, field5IdxKeyKey},
+									IndexProperties: operation_models.IndexProperties{},
+								},
+								chainded_operator.DefaultRetrialOps,
+							)
+						require.Error(t, err)
+						logger.Debugf("value written")
+					}
+
+					newStoreKey, err := serializer.Serialize("new-main-key")
+					require.NoError(t, err)
+
+					// fail for index
+					{
+						err = op.
+							Operate(dbMemoryInfo).
+							Create(
+								ctx,
+								&operation_models.Item{
+									Key:   newStoreKey,
+									Value: storeValue,
+								},
+								&operation_models.IndexOpts{
+									HasIdx:          true,
+									ParentKey:       newStoreKey,
+									IndexingKeys:    [][]byte{field4IdxKeyKey, field5IdxKeyKey},
+									IndexProperties: operation_models.IndexProperties{},
+								},
+								chainded_operator.DefaultRetrialOps,
+							)
+						require.Error(t, err)
+						logger.Debugf("value written")
+					}
+				},
+			)
 
 			// load value
 			{
