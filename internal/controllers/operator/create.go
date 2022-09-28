@@ -57,7 +57,7 @@ func (c *BadgerDBOperatorServiceController) Create(
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		logger.Errorf(
-			"error operating on giving database - update",
+			"error operating on giving database - create",
 			go_logger.Field{
 				"error":   err.Error(),
 				"db_info": dbInfo,
