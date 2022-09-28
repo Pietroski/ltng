@@ -77,7 +77,7 @@ func main() {
 
 	managerListener, err := net.Listen(
 		cfg.LTNGNode.LTNGManager.Network,
-		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGManager.Address),
+		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGManager.Port),
 	)
 	if err != nil {
 		logger.Errorf(
@@ -93,7 +93,7 @@ func main() {
 
 	operatorListener, err := net.Listen(
 		cfg.LTNGNode.LTNGOperator.Network,
-		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGOperator.Address),
+		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGOperator.Port),
 	)
 	if err != nil {
 		logger.Errorf(

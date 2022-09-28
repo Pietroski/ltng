@@ -12,8 +12,6 @@ services:
     ports:
       - '50051:50051'
       - '50052:50052'
-      - '50053:50053'
-      - '50054:50054'
     volumes:
       - lightning-db-node-benchmark-test-db:/var/lib/lightning-db-node/data
 

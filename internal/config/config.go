@@ -12,11 +12,11 @@ type (
 
 	LTNGManager struct {
 		Network string `env-name:"LTNG_MANAGER_NETWORK" validation:"required"`
-		Address string `env-name:"LTNG_MANAGER_ADDRESS" validation:"required"`
+		Port    string `env-name:"LTNG_MANAGER_PORT" validation:"required"`
 	}
 
 	LTNGOperator struct {
 		Network string `env-name:"LTNG_OPERATOR_NETWORK" validation:"required"`
-		Address string `env-name:"LTNG_OPERATOR_ADDRESS" validation:"required"`
+		Port    string `env-name:"LTNG_OPERATOR_PORT" validation:"required"`
 	}
 )
