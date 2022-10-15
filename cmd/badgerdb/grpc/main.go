@@ -12,7 +12,6 @@ import (
 	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
-	handlers_model "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/handlers"
 	transporthandler "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
@@ -110,7 +109,7 @@ func main() {
 	h := transporthandler.NewHandler(
 		ctx, cancelFn, os.Exit, nil, logger, &transporthandler.Opts{Debug: true},
 	)
-	h.StartServers(map[string]handlers_model.Server{
+	h.StartServers(transporthandler.ServerMapping{
 		"badger-lightning-node-manager":  mngrsvr,
 		"badger-lightning-node-operator": opsvr,
 	})
