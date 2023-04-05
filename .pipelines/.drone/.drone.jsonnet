@@ -127,7 +127,7 @@ local whenCommitToMaster(step) = step {
 };
 
 local commitToMasterSteps(image, envs) = std.map(whenCommitToMaster, [
-unit_tests_suite("unit-tests-suite-master", image, envs),
+	unit_tests_suite("unit-tests-suite-master", image, envs),
 	integration_tests_suite("integration-tests-suite-master", image, envs),
 	gitlabPushStep(image, envs, [
     'unit-tests-suite-master',
