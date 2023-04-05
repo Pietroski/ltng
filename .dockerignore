@@ -16,10 +16,12 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-vendor/
+# vendor/
 .go
 
 *
+!tests/integration
+!build
 !build/docker/.netrc
 !go.mod
 !go.sum
@@ -27,5 +29,9 @@ vendor/
 !internal
 !pkg
 !schemas/generated
+!.pipelines
+!Makefile
+!vendor
 
 **/.db/**
+.db

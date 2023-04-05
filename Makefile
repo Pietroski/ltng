@@ -1,7 +1,20 @@
 # General scripts for the application
 
-include .env
-export
+-include ./scripts/docs/Makefile
+-include ./scripts/schemas/Makefile
+
+# Drone-ci makefile commands
+-include .pipelines/.drone/Makefile
+
+-include ./build/Makefile
+
+-include ./tests/benchmark/lightning-db_vs_postgresql/Makefile
+-include ./tests/benchmark/lightning-db_vs_postgresql-indexing/Makefile
+
+-include ./tests/integration/lightning-db/Makefile
+
+#include .env
+#export
 
 export-envs:
 	@export $(xargs <./.env)
@@ -11,23 +24,13 @@ env-check-ltng-db-node:
 	@echo ${LTNG_MANAGER_NETWORK}
 	@echo ${LTNG_MANAGER_ADDRESS}
 
--include ./scripts/docs/Makefile
--include ./scripts/schemas/Makefile
-
--include ./build/Makefile
-
--include ./tests/benchmark/lightning-db_vs_postgresql/Makefile
--include ./tests/benchmark/lightning-db_vs_postgresql-indexing/Makefile
-
--include ./tests/integration/lightning-db/Makefile
-
 ## generates mocks
 mock-generate:
 	go get -d github.com/golang/mock/mockgen
-	go mod download
+	go mod vendor
 	go generate ./...
 	go mod tidy
-	go mod download
+	go mod vendor
 
 go-build:
 	@go build -ldflags="-w -s" -o cmd/badgerdb/grpc/lightning-db-node cmd/badgerdb/grpc/main.go
@@ -42,7 +45,7 @@ pprof-serve:
 ########################################################################################################################
 
 count-written-lines:
-	find . -type f \( -iname "*.go" ! -ipath "./vendor/*" ! -path "./schemas/*" ! -path "*/postgresql/*" ! -path "*/mocks/*" \) | xargs wc -l
+	find . -type f \( -iname "*.go" ! -ipath "./vendor/*" ! -path "./schemas/*" ! -path "*/postgresql/*" ! -path "*/mocks/*" ! -path ".pipelines/*" \) | xargs wc -l
 
 TAG := $(shell cat VERSION)
 tag:

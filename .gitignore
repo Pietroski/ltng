@@ -15,7 +15,12 @@
 .env.stg
 .env.dev
 
+# playgroud directory
 playground
 
 # profiling files
 *.pprof
+
+# report files
+#drone-analysis
+#drone-analysis.json

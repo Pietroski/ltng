@@ -486,7 +486,7 @@ func (o *BadgerOperator) Delete(
 	case operation_models.None:
 		fallthrough
 	default:
-		return fmt.Errorf("delete was not call - invalid behaviour")
+		return fmt.Errorf("delete was not called - invalid behaviour")
 	}
 }
 

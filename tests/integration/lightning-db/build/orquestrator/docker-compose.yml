@@ -1,11 +1,10 @@
-version: '3.8'
+version: '3.9'
 services:
   lightning-db-node:
     container_name: 'test-integration-ltng-db-node'
     build:
       context: ../../../../..
       dockerfile: build/docker/lightning-db-node.Dockerfile
-    # image: # pietroski/lightning-db-node:v0.0.8
     restart: always
     env_file:
       - ../../.tests.integration.ltng.db.env

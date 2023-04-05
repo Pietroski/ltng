@@ -1,7 +1,7 @@
 ##################################
 # STEP 1 build executable binary #
 ##################################
-FROM golang:1.19.0-alpine3.16 as builder
+FROM golang:1.20.2-alpine3.17 as builder
 
 RUN apk update && apk upgrade && apk add git
 
@@ -13,15 +13,14 @@ ENV GONOPROXY=gitlab.com/pietroski-software-company
 ENV GOPRIVATE=gitlab.com/pietroski-software-company
 
 WORKDIR /cmd
-COPY go.mod go.sum ./
-RUN go mod download
 
 COPY . .
 
 RUN CGO_ENABLED=0 \
 GOOS=linux \
 GOARCH=amd64 \
-go build -ldflags="-w -s" -o lightning-db-node cmd/badgerdb/grpc/main.go
+GO111MODULE=on \
+go build -mod=vendor -ldflags="-w -s" -o lightning-db-node cmd/badgerdb/grpc/main.go
 
 #go build \
 #-installsuffix 'static' \

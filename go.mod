@@ -1,6 +1,6 @@
 module gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node
 
-go 1.19
+go 1.20
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
@@ -10,14 +10,14 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.7.5
-	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.7
-	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.6
-	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.3
-	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.3
-	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.6
-	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.3
-	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.7
-	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.10
+	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.13
+	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.14
+	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.5
+	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.7
+	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.11
+	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.21
+	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.9
+	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.16
 	google.golang.org/grpc v1.48.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
