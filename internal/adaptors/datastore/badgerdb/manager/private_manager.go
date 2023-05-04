@@ -20,14 +20,16 @@ func (m *BadgerLocalManager) createOpenStoreAndLoadIntoMemory(info *management_m
 		return err
 	}
 
-	err = m.db.Update(func(txn *badger.Txn) error {
-		_, err = txn.Get(sKey)
-		if err == badger.ErrKeyNotFound {
-			return m.persistInfo(txn, info, sKey)
-		}
+	err = m.db.Update(
+		func(txn *badger.Txn) error {
+			_, err = txn.Get(sKey)
+			if err == badger.ErrKeyNotFound {
+				return m.persistInfo(txn, info, sKey)
+			}
 
-		return err
-	})
+			return err
+		},
+	)
 
 	return err
 }
@@ -39,18 +41,20 @@ func (m *BadgerLocalManager) updateLastOpenedAt(info *management_models.DBInfo) 
 		return err
 	}
 
-	err = m.db.Update(func(txn *badger.Txn) error {
-		sValue, err := m.serializer.Serialize(info)
-		if err != nil {
-			return fmt.Errorf("failed to serialize info: %v", err)
-		}
+	err = m.db.Update(
+		func(txn *badger.Txn) error {
+			sValue, err := m.serializer.Serialize(info)
+			if err != nil {
+				return fmt.Errorf("failed to serialize info: %v", err)
+			}
 
-		if err = txn.Set(sKey, sValue); err != nil {
-			return fmt.Errorf("failed to persist info in db: %v", err)
-		}
+			if err = txn.Set(sKey, sValue); err != nil {
+				return fmt.Errorf("failed to persist info in db: %v", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	return err
 }
@@ -182,8 +186,9 @@ func (m *BadgerLocalManager) getStoreInfoFromMemoryOrFromDisk(
 ) (info *management_models.DBInfo, err error) {
 	logger := m.logger.FromCtx(ctx)
 
-	if info, err := m.getStoreFromMemory(name); err == nil {
-		return info.MemoryInfoToInfo(), err
+	memoryInfo, err := m.getStoreFromMemory(name)
+	if err == nil {
+		return memoryInfo.MemoryInfoToInfo(), err
 	}
 
 	logger.Warningf(
@@ -274,9 +279,11 @@ func (m *BadgerLocalManager) deleteFromMemoryAndDisk(
 	if err != nil {
 		return fmt.Errorf("error serializing name field - name: %v - err: %v", name, err)
 	}
-	err = m.db.Update(func(txn *badger.Txn) error {
-		return txn.Delete(serializedName)
-	})
+	err = m.db.Update(
+		func(txn *badger.Txn) error {
+			return txn.Delete(serializedName)
+		},
+	)
 
 	return err
 }
