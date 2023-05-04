@@ -9,12 +9,14 @@ import (
 	"unicode"
 
 	strings_parser "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/parsers/strings"
+	custom_validators "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators/custom"
 )
 
 const (
 	emailType    = "email"
 	passwordType = "password"
 	timeType     = "time"
+	uuidType     = "uuid"
 
 	ErrorInvalidFieldFormat = "error: %v field has invalid format: %v"
 	ErrorAfterTime          = "time %v should be after %v"
@@ -124,4 +126,10 @@ func checkTime(
 	}
 
 	return
+}
+
+func checkUUID(
+	fieldName string, fieldValue interface{},
+) (err error) {
+	return custom_validators.UUIDValidator(fieldName, fieldValue)
 }

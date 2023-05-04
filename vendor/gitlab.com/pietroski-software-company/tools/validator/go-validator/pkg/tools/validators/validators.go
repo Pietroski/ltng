@@ -33,6 +33,7 @@ type (
 		fieldName string,
 		fieldValue interface{},
 	) error
+	CustomValidatorMapping map[string]CustomValidator
 )
 
 func NewStructValidator() Validator {
@@ -220,6 +221,13 @@ func (v *validation) validationMapIterator(
 					return
 				}
 			}
+
+			// TODO: fix this as type validator
+			//if typeValName == uuidType {
+			//	if err = checkUUID(fieldName, fieldValue); err != nil {
+			//		return
+			//	}
+			//}
 		}
 	}
 

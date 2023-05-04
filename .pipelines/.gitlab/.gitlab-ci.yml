@@ -1,48 +1,48 @@
 # GitLab CI/CD
-
-image: golang:1.20.2-alpine3.17
-variables:
-  REMOTE: gitlab.com
-  API_REMOTE: api.gitlab.com
-
-.go-cache:
-  variables:
-    GOPATH: $CI_PROJECT_DIR/.go
-  before_script:
-    - mkdir -p $CI_PROJECT_DIR/.go/bin
-    - apk update && apk upgrade && apk add git bash make build-base
-    - echo -e "machine gitlab.com\nlogin gitlab-ci-token\npassword ${CI_JOB_TOKEN}" > ~/.netrc
-    - chmod 400 ~/.netrc
-    - go env -w GONOSUMDB=gitlab.com/pietroski-software-company
-    - go env -w GONOPROXY=gitlab.com/pietroski-software-company
-    - go env -w GOPRIVATE=gitlab.com/pietroski-software-company
-  cache:
-    paths:
-      - $CI_PROJECT_DIR/.go/pkg/mod
-      - $CI_PROJECT_DIR/.go/bin
-
-stages:
-  - test
-  - build
-  - deploy
-
-unity-tests:
-  stage: test
-  script:
-    - go test $(go list ./... | grep -v /tests/ | grep -v /tools/ | grep -v /schemas/)
-
-ltng-node-build:
-  stage: build
-  variables:
-    CGO_ENABLED: 0
-    GOOS: linux
-    GOARCH: amd64
-  script:
-    - go build -ldflags="-w -s" -o lightning-db-node cmd/badgerdb/grpc/main.go
-    - cp lightning-db-node .go/bin/lightning-db-node
-
-deploy-dev:
-  stage: deploy
-  script:
-    - echo "deploy dev environment"
-    - ls .go/bin
+#
+#image: golang:1.20.2-alpine3.17
+#variables:
+#  REMOTE: gitlab.com
+#  API_REMOTE: api.gitlab.com
+#
+#.go-cache:
+#  variables:
+#    GOPATH: $CI_PROJECT_DIR/.go
+#  before_script:
+#    - mkdir -p $CI_PROJECT_DIR/.go/bin
+#    - apk update && apk upgrade && apk add git bash make build-base
+#    - echo -e "machine gitlab.com\nlogin gitlab-ci-token\npassword ${CI_JOB_TOKEN}" > ~/.netrc
+#    - chmod 400 ~/.netrc
+#    - go env -w GONOSUMDB=gitlab.com/pietroski-software-company
+#    - go env -w GONOPROXY=gitlab.com/pietroski-software-company
+#    - go env -w GOPRIVATE=gitlab.com/pietroski-software-company
+#  cache:
+#    paths:
+#      - $CI_PROJECT_DIR/.go/pkg/mod
+#      - $CI_PROJECT_DIR/.go/bin
+#
+#stages:
+#  - test
+#  - build
+#  - deploy
+#
+#unity-tests:
+#  stage: test
+#  script:
+#    - go test $(go list ./... | grep -v /tests/ | grep -v /tools/ | grep -v /schemas/)
+#
+#ltng-node-build:
+#  stage: build
+#  variables:
+#    CGO_ENABLED: 0
+#    GOOS: linux
+#    GOARCH: amd64
+#  script:
+#    - go build -ldflags="-w -s" -o lightning-db-node cmd/badgerdb/grpc/main.go
+#    - cp lightning-db-node .go/bin/lightning-db-node
+#
+#deploy-dev:
+#  stage: deploy
+#  script:
+#    - echo "deploy dev environment"
+#    - ls .go/bin

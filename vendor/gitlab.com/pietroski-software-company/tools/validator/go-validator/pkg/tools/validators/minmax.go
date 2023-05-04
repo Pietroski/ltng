@@ -19,6 +19,11 @@ const (
 func minLength(fieldName string, fieldValue interface{}, strMinLength string) error {
 	ft := reflect.TypeOf(fieldValue).Kind()
 
+	if ft == reflect.Pointer {
+		fieldValue = reflect.ValueOf(fieldValue).Elem().Interface()
+		ft = reflect.TypeOf(fieldValue).Kind()
+	}
+
 	switch ft {
 	case
 		reflect.Float32,
@@ -72,6 +77,11 @@ func minLength(fieldName string, fieldValue interface{}, strMinLength string) er
 func maxLength(fieldName string, fieldValue interface{}, strMinLength string) error {
 	ft := reflect.TypeOf(fieldValue).Kind()
 
+	if ft == reflect.Pointer {
+		fieldValue = reflect.ValueOf(fieldValue).Elem().Interface()
+		ft = reflect.TypeOf(fieldValue).Kind()
+	}
+
 	switch ft {
 	case
 		reflect.Float32,
@@ -124,6 +134,11 @@ func maxLength(fieldName string, fieldValue interface{}, strMinLength string) er
 
 func eqLength(fieldName string, fieldValue interface{}, strLength string) error {
 	ft := reflect.TypeOf(fieldValue).Kind()
+
+	if ft == reflect.Pointer {
+		fieldValue = reflect.ValueOf(fieldValue).Elem().Interface()
+		ft = reflect.TypeOf(fieldValue).Kind()
+	}
 
 	switch ft {
 	case

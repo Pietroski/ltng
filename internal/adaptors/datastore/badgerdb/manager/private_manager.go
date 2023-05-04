@@ -196,7 +196,7 @@ func (m *BadgerLocalManager) getStoreInfoFromMemoryOrFromDisk(
 		go_logger.Mapper("err", err.Error()),
 	)
 	logger.Warningf("trying to get store from db")
-	if info, err := m.getStoreFromDB(name); err == nil {
+	if info, err = m.getStoreFromDB(name); err == nil {
 		return info, err
 	}
 
