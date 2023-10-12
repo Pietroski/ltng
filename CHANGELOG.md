@@ -1,7 +1,10 @@
 # CHANGELOG
 
 # [UNRELEASED]
- - [HEAD -> main, tag: v1.0.14, gitea/main] - chore: repo and docker version bump - synced
+ - [HEAD -> main] - chore: changelog
+ 
+# [v1.0.14, gitea/main]
+ - chore: repo and docker version bump - synced
  - chore: gitlab pipeline removed
  - chore: version bump
  - chore: upgraded deps
