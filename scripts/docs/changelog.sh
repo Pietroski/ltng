@@ -6,7 +6,7 @@ cat <<EOF >CHANGELOG.md
 # [UNRELEASED]
 EOF
 
-git --no-pager log --pretty=format:"%C(auto)%d - %s" | sed 's|(tag: \(.*\))|\n# [\1]\n|' | sed 's|(\(.*\))|- [\1]|' >>CHANGELOG.md
+git --no-pager log --pretty=format:"%C(auto)%d - %s" | sed 's|(tag: \(.*\))|\n# [\1]\n|' | sed 's|(\(.*\))|- [\1]|' | sed '/chore: changelog/d' | sed '/chore: version bump/d' >>CHANGELOG.md
 
 cat <<EOF >>CHANGELOG.md
 
