@@ -44,9 +44,59 @@ pprof-serve:
 
 ########################################################################################################################
 
-count-written-lines:
-	find . -type f \( -iname "*.go" ! -ipath "./vendor/*" ! -path "./schemas/*" ! -path "*/postgresql/*" ! -path "*/mocks/*" ! -path ".pipelines/*" \) | xargs wc -l
+pull-latest:
+	git pull gitea main
+
+add-all:
+	git add .
+
+commit-with:
+	git commit -m "$${m}"
+
+chore-version-bump:
+	git add .
+	git commit -m "chore: version bump"
 
 TAG := $(shell cat VERSION)
 tag:
 	git tag $(TAG)
+
+changelog:
+	@./scripts/docs/changelog.sh
+
+commit-changelog:
+	git add .
+	git commit -m "chore: changelog"
+
+gitea-push-main:
+	git push gitea main
+
+gitlab-push-main:
+	git push gitlab main
+
+push-main-all: gitea-push-main gitlab-push-main
+
+amend:
+	git commit --amend
+
+rebase-continue:
+	git rebase --continue
+
+trigger-pipeline:
+	git commit --amend
+	git push gitea main --force-with-lease
+
+gitea-push-tags:
+	git push gitea --tags
+
+gitlab-push-tags:
+	git push gitlab --tags
+
+push-tags: gitea-push-tags gitlab-push-tags
+
+########################################################################################################################
+
+count-written-lines:
+	./scripts/metrics/line-counter
+
+########################################################################################################################
