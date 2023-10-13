@@ -72,6 +72,6 @@ type GetStoreRequest struct {
 }
 
 type Pagination struct {
-	PageID   uint32 `json:"page_id,omitempty"`
-	PageSize uint32 `json:"page_size,omitempty"`
+	PageID   uint64 `json:"page_id,omitempty"`
+	PageSize uint64 `json:"page_size,omitempty"`
 }
