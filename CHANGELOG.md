@@ -1,7 +1,10 @@
 # CHANGELOG
 
 # [UNRELEASED]
- - [gitea/main] - fix: uint32 to uint64 in tests for the pagination
+ - chore: docker build version
+ 
+# [v1.0.16]
+ - fix: uint32 to uint64 in tests for the pagination
  
 # [v1.0.15]
  - refactor: pagination type & deps update
