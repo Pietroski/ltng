@@ -82,8 +82,8 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			size, page := 2, 2
 			payload := &grpc_mngmt.ListStoresRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 			}
 			var r management_models.Pagination
@@ -165,8 +165,8 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				Return(dbsInfos, fmt.Errorf("any-error"))
 			payload := &grpc_mngmt.ListStoresRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 			}
 			respList, err := service.ListStores(ctx, payload)
@@ -299,8 +299,8 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				Return(dbsInfos[pageOffset:], nil)
 			payload := &grpc_mngmt.ListStoresRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 			}
 			respList, err := service.ListStores(ctx, payload)

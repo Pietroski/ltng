@@ -235,7 +235,7 @@ message FieldDescriptorProto {
 
     // New in version 2.
     TYPE_BYTES = 12;
-    TYPE_UINT32 = 13;
+    TYPE_uint64 = 13;
     TYPE_ENUM = 14;
     TYPE_SFIXED32 = 15;
     TYPE_SFIXED64 = 16;

@@ -46,8 +46,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
@@ -93,8 +93,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
@@ -147,8 +147,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
@@ -232,8 +232,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
@@ -317,8 +317,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
@@ -401,8 +401,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,
@@ -513,8 +513,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			dbName := "operator-database-unit-test"
 			payload := &grpc_ops.ListRequest{
 				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint32(page),
-					PageSize: uint32(size),
+					PageId:   uint64(page),
+					PageSize: uint64(size),
 				},
 				DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{
 					DatabaseName: dbName,

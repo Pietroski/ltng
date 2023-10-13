@@ -73,9 +73,9 @@ var (
 	ltngEntries = make(LTNGEntries, population)
 	psqlEntries = make(PSQLEntries, population)
 
-	page_id = func() func() uint32 {
-		counter := uint32(0)
-		return func() uint32 {
+	page_id = func() func() uint64 {
+		counter := uint64(0)
+		return func() uint64 {
 			counter++
 			return counter
 		}
