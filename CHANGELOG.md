@@ -1,11 +1,12 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - [gitea/main] - fix: uint32 to uint64 in tests for the pagination
  
 # [v1.0.15]
  - refactor: pagination type & deps update
  
-# [v1.0.14, gitea/main]
+# [v1.0.14]
  - chore: repo and docker version bump - synced
  - chore: gitlab pipeline removed
  - chore: upgraded deps
