@@ -1,0 +1,77 @@
+# CHANGELOG
+
+# [UNRELEASED]
+ - [gitea/main] - fix: uint32 to uint64 in tests for the pagination
+ 
+# [v1.0.15]
+ - refactor: pagination type & deps update
+ 
+# [v1.0.14]
+ - chore: repo and docker version bump - synced
+ - chore: gitlab pipeline removed
+ - chore: upgraded deps
+ 
+# [v1.0.12]
+ - chore: docker version bump
+ 
+# [v1.0.11]
+ - fix: delete before create store does not panic anymore
+ 
+# [v1.0.10]
+ 
+# [v1.0.9, tag: v1.0.8, gitlab/main]
+ - chore: massive repo update
+ 
+# [v1.0.7]
+ - chore: deps updated
+ - feat: upsert controller implementation
+ - refactor: envs
+ 
+# [v1.0.4]
+ - refactor: imports
+ - refactor: config and env files
+ - refactor: create and upsert with transaction tests
+ 
+# [v1.0.3]
+ - refactor: create method
+ 
+# [v1.0.2]
+ - feat: key already exist error
+ 
+# [v1.0.1]
+ - Merge branch 'chore/gitlab-ci-dependency-caching' into 'main'
+ - refactor: smaller things
+ - Merge branch 'chore/gitlab-ci-dependency-caching' into 'main'
+ - chore: gitlab ci dependency caching
+ 
+# [v1.0.0]
+ - Merge branch 'new-lightning-proposal' into 'main'
+ - [gitlab/new-lightning-proposal, new-lightning-proposal] - feat: ltng client - integration tests and benchmarks
+ - feat: dockerignore config
+ - refactor: lightning-db major refactor
+ - temp: ltng checkpoint
+ - feat: adding pipelines
+ - fix: integration tests fixed
+ 
+# [v0.0.7]
+ - chore: version and docker version bump
+ - refactor: minor refactoring
+ - refactor: typo
+ 
+# [v0.0.6]
+ - refactor: mock revamp
+ 
+# [v0.0.5]
+ - chore: update protos, dependencies and version
+ 
+# [v0.0.4]
+ - chore: minor updates and version bump
+ 
+# [v0.0.3]
+ - test: indexing benchmark with postgres + method implementation correction
+ 
+# [v0.0.2]
+ - feat: indexing added
+ - chore: tagging
+ - refactor: go mod rename
+ - feat: lightning-db node

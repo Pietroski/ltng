@@ -193,12 +193,12 @@
       "type": "object",
       "properties": {
         "pageId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "pageSize": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         }
       }
     }
