@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.15]
  - refactor: pagination type & deps update
  
 # [v1.0.14, gitea/main]
