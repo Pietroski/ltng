@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.17]
  - chore: docker build version
  
 # [v1.0.16]
