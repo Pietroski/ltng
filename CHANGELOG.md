@@ -1,6 +1,7 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - refactor: pagination type & deps update
  
 # [v1.0.14, gitea/main]
  - chore: repo and docker version bump - synced
