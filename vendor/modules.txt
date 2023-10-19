@@ -119,7 +119,7 @@ gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mo
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-converter
 gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor
-# gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.10
+# gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/colours
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/prefix
@@ -137,7 +137,7 @@ gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/s
 # gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer
-# gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.11
+# gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.12
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/handlers
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/tracer

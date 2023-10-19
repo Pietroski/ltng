@@ -3,12 +3,12 @@ package go_logger
 import (
 	"context"
 	"fmt"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 	"log"
-	"runtime"
 	"strings"
 	"sync"
+
+	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	colour_models "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/colours"
 	prefix_models "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/prefix"
@@ -27,6 +27,12 @@ type (
 		Debugf(string, ...Field)
 
 		FromCtx(ctx context.Context) Logger
+
+		// TODO: logger extension proposal
+		//ErrorfFromCtx(context.Context, string, ...Field)
+		//WarningfFromCtx(context.Context, string, ...Field)
+		//InfofFromCtx(context.Context, string, ...Field)
+		//DebugfFromCtx(context.Context, string, ...Field)
 	}
 
 	GoLogger struct {
@@ -163,10 +169,10 @@ func (gl *GoLogger) fmtStr(
 func (gl *GoLogger) buildStr(
 	colouredStr, beautifiedField string,
 ) (str string, err error) {
-	var ctx context.Context
+	ctx := gl.getCtx()
 	isFromCtx := gl.fromCtx()
 	if isFromCtx {
-		ctx, str, err = gl.addTracing(gl.ctx, colouredStr, beautifiedField)
+		ctx, str, err = gl.addTracing(ctx, colouredStr, beautifiedField)
 	} else {
 		ctx, str, err = gl.addTracing(context.Background(), colouredStr, beautifiedField)
 	}
@@ -204,12 +210,12 @@ func (gl *GoLogger) addTracing(
 func (gl *GoLogger) beautifyPayload(payload interface{}) (str string, err error) {
 	beautifiedField, err := gl.beautifier.Beautify(payload, "", "  ")
 	if err != nil {
-		traceInfo, ok := gl.ctxTracer.GetTraceInfo(gl.ctx)
+		ctx := gl.getCtx()
+		traceInfo, ok := gl.ctxTracer.GetTraceInfo(ctx)
 		if !ok {
 			gl.Warningf("no previous trace detected; creating a trace")
 			var tracingErr error
-			var ctx context.Context
-			ctx, tracingErr = gl.ctxTracer.Trace(gl.ctx)
+			ctx, tracingErr = gl.ctxTracer.Trace(ctx)
 			if tracingErr != nil {
 				tracingErr = fmt.Errorf("error tracing: %v", err)
 				gl.Errorf(
@@ -222,7 +228,8 @@ func (gl *GoLogger) beautifyPayload(payload interface{}) (str string, err error)
 
 			gl.setCtx(ctx)
 
-			traceInfo, _ = gl.ctxTracer.GetTraceInfo(gl.ctx)
+			ctx = gl.getCtx()
+			traceInfo, _ = gl.ctxTracer.GetTraceInfo(ctx)
 		}
 
 		gl.Errorf(
@@ -280,16 +287,16 @@ func Splitter(str string) string {
 }
 
 func (gl *GoLogger) setCtx(ctx context.Context) {
-	for !gl.mtx.TryLock() {
-		runtime.Gosched()
-	}
-	//gl.mtx.Lock()
-	gl.ctx = ctx
-	gl.mtx.Unlock()
-
-	//gl.mtx.Lock()
+	//for !gl.mtx.TryLock() {
+	//	runtime.Gosched()
+	//}
+	////gl.mtx.Lock()
 	//gl.ctx = ctx
 	//gl.mtx.Unlock()
+
+	gl.mtx.Lock()
+	gl.ctx = ctx
+	gl.mtx.Unlock()
 }
 
 func (gl *GoLogger) fromCtx() bool {
@@ -298,4 +305,12 @@ func (gl *GoLogger) fromCtx() bool {
 	gl.mtx.RUnlock()
 
 	return isFromCtx
+}
+
+func (gl *GoLogger) getCtx() context.Context {
+	gl.mtx.RLock()
+	ctx := gl.ctx
+	gl.mtx.RUnlock()
+
+	return ctx
 }
