@@ -14,7 +14,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go test $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/)"
+        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -24,7 +24,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "unit-tests-suite-non-master",
       "when": {
         "branch": {
@@ -51,7 +51,8 @@
         "git config --global user.name \"ptk.swe\"",
         "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
-        "go test ./tests/integration/...",
+        "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
+        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
         "make docker-compose-down-tests-integration-ltng-db"
       ],
       "environment": {
@@ -62,7 +63,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "integration-tests-suite-non-master",
       "network_mode": "host",
       "privileged": true,
@@ -95,7 +96,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go test $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/)"
+        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -105,7 +106,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "unit-tests-suite-master",
       "when": {
         "branch": [
@@ -130,7 +131,8 @@
         "git config --global user.name \"ptk.swe\"",
         "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
-        "go test ./tests/integration/...",
+        "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
+        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
         "make docker-compose-down-tests-integration-ltng-db"
       ],
       "environment": {
@@ -141,7 +143,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "integration-tests-suite-master",
       "network_mode": "host",
       "privileged": true,
@@ -183,7 +185,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "gitlab-push",
       "when": {
         "branch": [
@@ -206,7 +208,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go test $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/)"
+        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -216,7 +218,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "unit-tests-suite-tagging",
       "when": {
         "branch": [
@@ -241,7 +243,8 @@
         "git config --global user.name \"ptk.swe\"",
         "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
-        "go test ./tests/integration/...",
+        "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
+        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
         "make docker-compose-down-tests-integration-ltng-db"
       ],
       "environment": {
@@ -252,7 +255,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "integration-tests-suite-tagging",
       "network_mode": "host",
       "privileged": true,
@@ -294,7 +297,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.1",
+      "image": "pietroski/alpine-docker-golang:v0.0.2",
       "name": "gitlab-tag",
       "when": {
         "branch": [

@@ -40,12 +40,6 @@ type (
 			item *operation_models.Item,
 			opts *operation_models.IndexOpts,
 		) ([]byte, error)
-		//SoftDelete(
-		//	ctx context.Context,
-		//	item *operation_models.Item,
-		//	opts *operation_models.IndexOpts,
-		//	retrialOpts *co.RetrialOpts,
-		//) error
 
 		List(
 			//ctx context.Context,

@@ -38,14 +38,14 @@ local dockerSocketVolume() = {
 };
 
 local unit_tests_cmd = [
-	"go test $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
+	"go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
 ];
 
 local integraiton_tests_cmd = [
 	"make docker-compose-up-tests-integration-ltng-db",
 	"go clean -testcache",
 	"export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-	"go test $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
+	"go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
 	"make docker-compose-down-tests-integration-ltng-db",
 ];
 
@@ -176,5 +176,5 @@ local Pipeline(name, image) = {
 };
 
 [
-  Pipeline("lightning-node-pipeline", "pietroski/alpine-docker-golang:v0.0.1"), // pietroski/alpine-docker-golang:v0.0.1 - golang:1.20.2-alpine3.17
+  Pipeline("lightning-node-pipeline", "pietroski/alpine-docker-golang:v0.0.2"), // pietroski/alpine-docker-golang:v0.0.1 - golang:1.21.3-alpine3.18
 ]
