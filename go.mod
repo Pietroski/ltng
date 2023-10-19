@@ -12,11 +12,11 @@ require (
 	github.com/stretchr/testify v1.8.4
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.18
 	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.16
-	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.10
+	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
 	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.12
 	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.18
 	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
-	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.11
+	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.12
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.22
 	google.golang.org/grpc v1.59.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
