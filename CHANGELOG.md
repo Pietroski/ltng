@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.20]
  - chore: docker version
  
 # [v1.0.19]
