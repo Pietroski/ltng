@@ -28,7 +28,7 @@ github.com/dustin/go-humanize
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
-# github.com/golang/glog v1.1.1
+# github.com/golang/glog v1.1.2
 ## explicit; go 1.19
 github.com/golang/glog
 github.com/golang/glog/internal/logsink
@@ -51,7 +51,7 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.4
 ## explicit
 github.com/golang/snappy
-# github.com/google/flatbuffers v23.3.3+incompatible
+# github.com/google/flatbuffers v23.5.26+incompatible
 ## explicit
 github.com/google/flatbuffers/go
 # github.com/google/uuid v1.3.1
@@ -72,7 +72,7 @@ github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/internal/genopenapi
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
-# github.com/klauspost/compress v1.16.5
+# github.com/klauspost/compress v1.17.1
 ## explicit; go 1.18
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
@@ -102,8 +102,8 @@ github.com/rakyll/statik/fs
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/vmihailenco/msgpack/v5 v5.3.5
-## explicit; go 1.11
+# github.com/vmihailenco/msgpack/v5 v5.4.0
+## explicit; go 1.19
 github.com/vmihailenco/msgpack/v5
 github.com/vmihailenco/msgpack/v5/msgpcode
 # github.com/vmihailenco/tagparser/v2 v2.0.0
@@ -111,41 +111,41 @@ github.com/vmihailenco/msgpack/v5/msgpcode
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
 github.com/vmihailenco/tagparser/v2/internal/parser
-# gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.16
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.18
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks
-# gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.15
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.16
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-converter
 gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor
-# gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.5
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.10
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/colours
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/prefix
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger/dyer
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger/encapsulator
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/publisher
-# gitlab.com/pietroski-software-company/tools/random/go-random v0.0.10
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/random/go-random v0.0.12
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random
-# gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.14
+# gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.18
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/builder/errors
 gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer
-# gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.21
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer
-# gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.9
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.11
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/handlers
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/tracer
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/profiler/pprof-server
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/tracer/stack
-# gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.20
-## explicit; go 1.20
+# gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.22
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/parsers/strings
 gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators
 gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators/custom
@@ -156,7 +156,7 @@ go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/net v0.15.0
+# golang.org/x/net v0.17.0
 ## explicit; go 1.17
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -164,7 +164,7 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.12.0
+# golang.org/x/sys v0.13.0
 ## explicit; go 1.17
 golang.org/x/sys/unix
 # golang.org/x/text v0.13.0
@@ -179,18 +179,18 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5
+# google.golang.org/genproto v0.0.0-20231016165738-49dd2c1f3d0b
 ## explicit; go 1.19
 google.golang.org/genproto/internal
-# google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
+# google.golang.org/genproto/googleapis/api v0.0.0-20231016165738-49dd2c1f3d0b
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/visibility
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.58.3
+# google.golang.org/grpc v1.59.0
 ## explicit; go 1.19
 google.golang.org/grpc
 google.golang.org/grpc/attributes
