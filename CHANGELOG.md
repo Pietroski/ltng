@@ -1,10 +1,12 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - chore: go deps bump
+ - chore: docker version bump
  
 # [v1.0.18]
  - chore: drone pipeline and validate, go version and deps bump, small adaptor refactor
- - [gitea/main] - refactor: badger v3 separated as adaptor
+ - refactor: badger v3 separated as adaptor
  
 # [v1.0.17]
  - chore: docker build version
