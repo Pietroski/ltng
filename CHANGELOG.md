@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.19]
  - chore: go deps bump
  - chore: docker version bump
  
