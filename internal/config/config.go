@@ -6,8 +6,13 @@ type (
 	}
 
 	LTNGNode struct {
+		LTNGEngine   *LTNGEngine   `validation:"required"`
 		LTNGManager  *LTNGManager  `validation:"required"`
 		LTNGOperator *LTNGOperator `validation:"required"`
+	}
+
+	LTNGEngine struct {
+		Engine string `env-name:"LTNG_ENGINE" validation:"required"`
 	}
 
 	LTNGManager struct {

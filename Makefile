@@ -38,6 +38,13 @@ go-build:
 run: export-envs
 	@go run cmd/badgerdb/grpc/main.go
 
+full-local-test:
+	make docker-compose-up-tests-integration-ltng-db
+	go clean -testcache
+	export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)
+	go test -race ./...
+	make docker-compose-down-tests-integration-ltng-db
+
 TYPE:=goroutine
 pprof-serve:
 	@go tool pprof -http=":7002" "http://localhost:7001/debug/pprof/$(TYPE)"

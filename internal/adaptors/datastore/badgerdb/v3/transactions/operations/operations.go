@@ -295,20 +295,77 @@ func (o *BadgerOperator) Upsert(
 		return nil
 	}
 
+	// TODO: Take all the indexes, traverse, compare, delete or/and add it
+	idxListOp, err := o.indexedListStoreOperator(ctx)
+	if err != nil {
+		return err
+	}
+	idxListTxn := idxListOp.dbInfo.DB.NewTransaction(true)
+
 	idxOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
 		return err
 	}
 	idxTxn := idxOp.dbInfo.DB.NewTransaction(true)
+
+	newIdxList := make([][]byte, 0)
 	var upsertIdxsFn = func() (err error) {
-		for _, idx := range opts.IndexingKeys {
-			err = idxOp.upsertWithTxn(idxTxn, idx, opts.ParentKey)
-			if err != nil {
-				return
+		indexListItem, err := idxListTxn.Get(opts.ParentKey)
+		if err != nil {
+			for _, idx := range opts.IndexingKeys {
+				err = idxOp.upsertWithTxn(idxTxn, idx, opts.ParentKey)
+				if err != nil {
+					return
+				}
+
+				newIdxList = append(newIdxList, idx)
+			}
+
+			return nil
+		}
+
+		var rawIndexList []byte
+		_, err = indexListItem.ValueCopy(rawIndexList)
+		if err != nil {
+			return
+		}
+
+		indexList := bytes.Split(rawIndexList, []byte(bsSeparator))
+		for _, optsIdxKey := range opts.IndexingKeys {
+			var isThereIdx bool
+			for _, idxKey := range indexList {
+				if bytes.Equal(optsIdxKey, idxKey) {
+					isThereIdx = true
+					newIdxList = append(newIdxList, optsIdxKey)
+				}
+			}
+
+			if !isThereIdx {
+				err = idxOp.upsertWithTxn(idxTxn, optsIdxKey, opts.ParentKey)
+				if err != nil {
+					return
+				}
 			}
 		}
 
-		return
+		for _, idxKey := range indexList {
+			var isThereIdx bool
+			for _, optsIdxKey := range opts.IndexingKeys {
+				if bytes.Equal(idxKey, optsIdxKey) {
+					isThereIdx = true
+					newIdxList = append(newIdxList, optsIdxKey)
+				}
+			}
+
+			if !isThereIdx {
+				err = idxTxn.Delete(idxKey)
+				if err != nil {
+					return
+				}
+			}
+		}
+
+		return nil
 	}
 	var upsertIdxsRollbackFn = func() error {
 		idxTxn.Discard()
@@ -326,13 +383,46 @@ func (o *BadgerOperator) Upsert(
 		return nil
 	}
 
-	idxListOp, err := o.indexedListStoreOperator(ctx)
-	if err != nil {
-		return err
-	}
-	idxListTxn := idxListOp.dbInfo.DB.NewTransaction(true)
+	// TODO: remove after test and validation
+	//idxOp, err := o.indexedStoreOperator(ctx)
+	//if err != nil {
+	//	return err
+	//}
+	//idxTxn := idxOp.dbInfo.DB.NewTransaction(true)
+	//var upsertIdxsFn = func() (err error) {
+	//	for _, idx := range opts.IndexingKeys {
+	//		err = idxOp.upsertWithTxn(idxTxn, idx, opts.ParentKey)
+	//		if err != nil {
+	//			return
+	//		}
+	//	}
+	//
+	//	return
+	//}
+	//var upsertIdxsRollbackFn = func() error {
+	//	idxTxn.Discard()
+	//	return nil
+	//}
+	//var deleteIdxsRollbackFn = func() error {
+	//	idxTxn.Discard()
+	//	for _, idx := range opts.IndexingKeys {
+	//		err = idxOp.delete(idx)
+	//		if err != nil {
+	//			continue
+	//		}
+	//	}
+	//
+	//	return nil
+	//}
+
+	// TODO: remove after test and validation
+	//idxListOp, err := o.indexedListStoreOperator(ctx)
+	//if err != nil {
+	//	return err
+	//}
+	//idxListTxn := idxListOp.dbInfo.DB.NewTransaction(true)
 	var upsertIdxListFn = func() error {
-		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
+		idxList := bytes.Join(newIdxList, []byte(bsSeparator)) // opts.IndexingKeys newIdxList
 		return idxListOp.upsertWithTxn(idxListTxn, opts.ParentKey, idxList)
 	}
 	var upsertIdxListRollbackFn = func() error {
@@ -340,7 +430,7 @@ func (o *BadgerOperator) Upsert(
 		return nil
 	}
 	var deleteIdxListRollbackFn = func() error {
-		idxList := bytes.Join(opts.IndexingKeys, []byte(bsSeparator))
+		idxList := bytes.Join(newIdxList, []byte(bsSeparator)) // opts.IndexingKeys newIdxList
 		idxListTxn.Discard()
 		return idxListOp.delete(idxList)
 	}

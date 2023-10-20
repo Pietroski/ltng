@@ -2,6 +2,10 @@
 
 # [UNRELEASED]
  
+# [v1.0.21]
+ - chore: docker build version bump
+ - [gitea/main] - refactor: repo and upsert operation behaviour
+ 
 # [v1.0.20]
  - chore: docker version
  
