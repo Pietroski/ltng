@@ -16,14 +16,14 @@ type (
 		grpc_ops.OperationClient
 		Close() error
 	}
-)
 
-type ltng struct {
-	grpc_mngmt.ManagementClient
-	grpc_ops.OperationClient
-	mmgrConn *grpc.ClientConn
-	oprtConn *grpc.ClientConn
-}
+	ltng struct {
+		grpc_mngmt.ManagementClient
+		grpc_ops.OperationClient
+		mmgrConn *grpc.ClientConn
+		oprtConn *grpc.ClientConn
+	}
+)
 
 func NewLTNGClient(
 	addresses *Addresses,
