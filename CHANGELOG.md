@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.22]
  - feat: default retrial options variable
  
 # [v1.0.21]
