@@ -14,7 +14,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "GOMAXPROCS=1 go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
+        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -52,7 +52,7 @@
         "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
         "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-        "GOMAXPROCS=1 go test -race ./tests/integration/...",
+        "go test -race ./tests/integration/...",
         "make docker-compose-down-tests-integration-ltng-db"
       ],
       "environment": {
@@ -96,7 +96,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "GOMAXPROCS=1 go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
+        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -132,7 +132,7 @@
         "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
         "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-        "GOMAXPROCS=1 go test -race ./tests/integration/...",
+        "go test -race ./tests/integration/...",
         "make docker-compose-down-tests-integration-ltng-db"
       ],
       "environment": {
@@ -208,7 +208,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "GOMAXPROCS=1 go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
+        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -244,7 +244,7 @@
         "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
         "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-        "GOMAXPROCS=1 go test -race ./tests/integration/...",
+        "go test -race ./tests/integration/...",
         "make docker-compose-down-tests-integration-ltng-db"
       ],
       "environment": {
