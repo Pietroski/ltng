@@ -28,6 +28,7 @@ message IndexProperties {
     NONE = 0;
     CASCADE = 1;
     INDEX_ONLY = 2;
+    CASCADE_BY_INDEX = 3;
   }
 
   enum IndexSearchPattern {

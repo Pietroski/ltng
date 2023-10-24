@@ -412,6 +412,168 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 	)
 
 	t.Run(
+		"happy path - delete cascade by index",
+		func(t *testing.T) {
+			ctx, _ := context.WithCancel(context.Background())
+			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+
+			logger.Infof("opening badger local manager")
+			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			require.NoError(t, err)
+
+			serializer := go_serializer.NewJsonSerializer()
+			chainedOperator := chainded_operator.NewChainOperator()
+			m := manager.NewBadgerLocalManager(db, serializer, logger)
+			op := NewBadgerOperator(m, serializer, chainedOperator)
+
+			logger.Debugf("starting manager")
+			err = m.Start()
+			require.NoError(t, err)
+			logger.Debugf("manager started")
+
+			logger.Debugf("creating store")
+			dbInfoOpTest := &management_models.DBInfo{
+				Name:         "operations-db-integration-test",
+				Path:         "operations-db-integration-test",
+				CreatedAt:    time.Now(),
+				LastOpenedAt: time.Now(),
+			}
+			err = m.CreateStore(ctx, dbInfoOpTest)
+			require.NoError(t, err)
+			logger.Debugf("store created")
+
+			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
+			require.NoError(t, err)
+
+			newUUID, err := uuid.NewRandom()
+			require.NoError(t, err)
+			type Person struct {
+				ID       uuid.UUID `json:"id"`
+				Name     string    `json:"name"`
+				Email    string    `json:"email"`
+				Username string    `json:"username"`
+			}
+			person := &Person{
+				ID:       newUUID,
+				Name:     go_random.RandomString(8),
+				Email:    go_random.RandomEmail(),
+				Username: go_random.RandomString(8),
+			}
+
+			key := newUUID
+			value := person
+			emailKey, err := serializer.Serialize(person.Email)
+			require.NoError(t, err)
+			usernameKey, err := serializer.Serialize(person.Username)
+			require.NoError(t, err)
+			storeKey, err := serializer.Serialize(key)
+			require.NoError(t, err)
+			storeValue, err := serializer.Serialize(value)
+			require.NoError(t, err)
+			logger.Debugf("writing value")
+			err = op.
+				Operate(dbMemoryInfo).
+				Create(
+					ctx,
+					&operation_models.Item{
+						Key:   storeKey,
+						Value: storeValue,
+					},
+					&operation_models.IndexOpts{
+						HasIdx:          true,
+						ParentKey:       storeKey,
+						IndexingKeys:    [][]byte{emailKey, usernameKey},
+						IndexProperties: operation_models.IndexProperties{},
+					},
+					chainded_operator.DefaultRetrialOps,
+				)
+			require.NoError(t, err)
+			logger.Debugf("value written")
+
+			logger.Debugf("loading value")
+			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
+				ctx,
+				&operation_models.Item{
+					Key:   storeKey,
+					Value: storeValue,
+				},
+				&operation_models.IndexOpts{},
+			)
+			require.NoError(t, err)
+			logger.Debugf("value loaded")
+			t.Log("retrieved value ->", string(retrievedValue))
+
+			logger.Debugf("loading value for indexed list")
+			indexedListName := dbMemoryInfo.Name + manager.IndexedListSuffixName
+			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
+			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
+				ctx,
+				&operation_models.Item{
+					Key: storeKey,
+				},
+				&operation_models.IndexOpts{},
+			)
+			require.NoError(t, err)
+			logger.Debugf("value loaded")
+			t.Log("retrieved value ->", string(retrievedValue))
+
+			logger.Debugf("deleting value")
+			err = op.
+				Operate(dbMemoryInfo).
+				Delete(
+					ctx,
+					&operation_models.Item{},
+					&operation_models.IndexOpts{
+						HasIdx: true,
+						IndexProperties: operation_models.IndexProperties{
+							IndexDeletionBehaviour: operation_models.CascadeByIdx,
+						},
+						IndexingKeys: [][]byte{emailKey},
+					},
+					chainded_operator.DefaultRetrialOps,
+				)
+			require.NoError(t, err)
+			logger.Debugf("value deleted")
+
+			logger.Debugf("loading value")
+			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
+				ctx,
+				&operation_models.Item{
+					Key: storeKey,
+				},
+				&operation_models.IndexOpts{},
+			)
+			require.Error(t, err)
+			logger.Debugf("value loaded")
+
+			logger.Debugf("loading value for indexed list")
+			indexedListName = dbMemoryInfo.Name + manager.IndexedListSuffixName
+			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
+			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
+				ctx,
+				&operation_models.Item{
+					Key: storeKey,
+				},
+				&operation_models.IndexOpts{},
+			)
+			require.Error(t, err)
+			logger.Debugf("value loaded")
+
+			logger.Debugf("deleting store")
+			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
+			require.NoError(t, err)
+			logger.Debugf("store deleted")
+
+			logger.Debugf("shutting down stores")
+			m.ShutdownStores()
+			m.Shutdown()
+			logger.Debugf("stores shut down")
+
+			logger.Infof("cleaned up all successfully")
+		},
+	)
+
+	t.Run(
 		"happy path - delete cascade - call with upsert",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())

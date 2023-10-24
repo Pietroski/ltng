@@ -44,6 +44,31 @@ func (o *BadgerOperator) indexedListStoreOperator(
 	return idxListOp, nil
 }
 
+func (o *BadgerOperator) deleteCascadeByIdx(
+	ctx context.Context,
+	item *operation_models.Item,
+	opts *operation_models.IndexOpts,
+	retrialOpts *co.RetrialOpts,
+) error {
+	if opts != nil && opts.HasIdx && len(opts.IndexingKeys) == 1 {
+		idxOp, err := o.indexedStoreOperator(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get indexed memory info on deleteCascadeByIdx: %v", err)
+		}
+
+		var objKey []byte
+		if objKey, err = idxOp.load(opts.IndexingKeys[0]); err != nil {
+			return fmt.Errorf(
+				"deleteCascadeByIdx - failed to load from key - %v: %v",
+				opts.IndexingKeys[0], err)
+		}
+
+		item.Key = objKey
+	}
+
+	return o.deleteCascade(ctx, item, opts, retrialOpts)
+}
+
 func (o *BadgerOperator) deleteCascade(
 	ctx context.Context,
 	item *operation_models.Item,

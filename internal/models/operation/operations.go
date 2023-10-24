@@ -35,6 +35,7 @@ const (
 	None IndexDeletionBehaviour = iota
 	Cascade
 	IndexOnly
+	CascadeByIdx
 )
 
 type IndexSearchPattern int
