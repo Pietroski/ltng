@@ -45,7 +45,7 @@ local integraiton_tests_cmd = [
 	"make docker-compose-up-tests-integration-ltng-db",
 	"go clean -testcache",
 	"export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-	"go test -race ./tests/integration/...",
+	"go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
 	"make docker-compose-down-tests-integration-ltng-db",
 ];
 
