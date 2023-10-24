@@ -2,6 +2,18 @@
 
 # [UNRELEASED]
  
+# [v1.0.26]
+ - chore: docker build version bump
+ - chore: drone pipeline and validate
+ 
+# [v1.0.25]
+ - chore: docker build version bump
+ - chore: drone pipeline and validate
+ 
+# [v1.0.24]
+ - chore: docker build version
+ - chore: drone pipeline & validation
+ 
 # [v1.0.23]
  - chore: docker build version bump
  - chore: docker file and build

@@ -32,6 +32,10 @@ func Test_Integration_CreateStore(t *testing.T) {
 
 			serializer := go_serializer.NewJsonSerializer()
 			badgerManager := manager.NewBadgerLocalManager(db, serializer, logger)
+			defer func() {
+				badgerManager.ShutdownStores()
+				badgerManager.Shutdown()
+			}()
 
 			err = badgerManager.Start()
 			require.NoError(t, err)
@@ -87,6 +91,10 @@ func Test_Integration_CreateStore(t *testing.T) {
 
 			serializer := go_serializer.NewJsonSerializer()
 			badgerManager := manager.NewBadgerLocalManager(db, serializer, logger)
+			defer func() {
+				badgerManager.ShutdownStores()
+				badgerManager.Shutdown()
+			}()
 
 			err = badgerManager.Start()
 			require.NoError(t, err)

@@ -42,7 +42,7 @@ full-local-test:
 	make docker-compose-up-tests-integration-ltng-db
 	go clean -testcache
 	export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)
-	GOMAXPROCS=1 go test -race ./...
+	go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)
 	make docker-compose-down-tests-integration-ltng-db
 
 TYPE:=goroutine
