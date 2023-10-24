@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.26]
  - chore: docker build version bump
  - chore: drone pipeline and validate
  
