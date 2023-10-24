@@ -2,6 +2,11 @@
 
 # [UNRELEASED]
  
+# [v1.0.23]
+ - chore: docker build version bump
+ - chore: docker file and build
+ - feat: delete on cascade by index
+ 
 # [v1.0.22]
  - feat: default retrial options variable
  

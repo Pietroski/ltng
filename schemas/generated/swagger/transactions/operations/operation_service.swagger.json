@@ -22,7 +22,8 @@
       "enum": [
         "NONE",
         "CASCADE",
-        "INDEX_ONLY"
+        "INDEX_ONLY",
+        "CASCADE_BY_INDEX"
       ],
       "default": "NONE"
     },

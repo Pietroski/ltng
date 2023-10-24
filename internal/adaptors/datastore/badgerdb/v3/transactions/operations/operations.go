@@ -565,8 +565,8 @@ func (o *BadgerOperator) Delete(
 		return o.deleteIdxOnly(ctx, item, opts, retrialOpts)
 	case operation_models.Cascade:
 		return o.deleteCascade(ctx, item, opts, retrialOpts)
-	// case operation_models.IndexOnCascade:
-	// return o.deleteByIndexOnCascade(ctx, item, opts, retrialOpts)
+	case operation_models.CascadeByIdx:
+		return o.deleteCascadeByIdx(ctx, item, opts, retrialOpts)
 	case operation_models.None:
 		fallthrough
 	default:
