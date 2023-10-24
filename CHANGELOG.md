@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - chore: docker build version
+ - chore: drone pipeline & validation
  
 # [v1.0.23]
  - chore: docker build version bump
