@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.27]
  - feat: mocked ltng client
  
 # [v1.0.26]
