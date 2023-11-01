@@ -2,6 +2,9 @@
 
 # [UNRELEASED]
  
+# [v1.0.27]
+ - feat: mocked ltng client
+ 
 # [v1.0.26]
  - chore: docker build version bump
  - chore: drone pipeline and validate
@@ -59,7 +62,7 @@
  
 # [v1.0.10]
  
-# [v1.0.9, tag: v1.0.8, gitlab/main]
+# [v1.0.9, tag: v1.0.8]
  - chore: massive repo update
  
 # [v1.0.7]
@@ -86,7 +89,7 @@
  
 # [v1.0.0]
  - Merge branch 'new-lightning-proposal' into 'main'
- - [gitlab/new-lightning-proposal, new-lightning-proposal] - feat: ltng client - integration tests and benchmarks
+ - feat: ltng client - integration tests and benchmarks
  - feat: dockerignore config
  - refactor: lightning-db major refactor
  - temp: ltng checkpoint
