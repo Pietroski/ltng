@@ -109,6 +109,11 @@ publish:
 	make changelog
 	make commit-changelog
 
+clean-mod-cache:
+	go clean -cache
+	go clean -modcache
+	go clean -testcache
+
 ########################################################################################################################
 
 count-written-lines:

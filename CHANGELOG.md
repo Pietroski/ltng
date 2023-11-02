@@ -2,6 +2,10 @@
 
 # [UNRELEASED]
  
+# [v1.0.28]
+ - chore: docker version bump
+ - chore: docker version bump
+ 
 # [v1.0.27]
  - feat: mocked ltng client
  
