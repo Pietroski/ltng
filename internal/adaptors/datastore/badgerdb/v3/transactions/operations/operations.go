@@ -325,7 +325,7 @@ func (o *BadgerOperator) Upsert(
 		}
 
 		var rawIndexList []byte
-		_, err = indexListItem.ValueCopy(rawIndexList)
+		rawIndexList, err = indexListItem.ValueCopy(nil)
 		if err != nil {
 			return
 		}
@@ -349,6 +349,10 @@ func (o *BadgerOperator) Upsert(
 		}
 
 		for _, idxKey := range indexList {
+			if idxKey == nil {
+				continue
+			}
+
 			var isThereIdx bool
 			for _, optsIdxKey := range opts.IndexingKeys {
 				if bytes.Equal(idxKey, optsIdxKey) {

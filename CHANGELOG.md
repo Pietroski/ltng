@@ -2,6 +2,10 @@
 
 # [UNRELEASED]
  
+# [v1.0.29]
+ - chore: docker version
+ - fix: upsert behaviour - rawIndexList, err = indexListItem.ValueCopy- [nil]
+ 
 # [v1.0.28]
  - chore: docker version bump
  - chore: docker version bump

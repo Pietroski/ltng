@@ -67,5 +67,5 @@ func (c *BadgerDBOperatorServiceController) Upsert(
 		return &grpc_ops.UpsertResponse{}, err
 	}
 
-	return &grpc_ops.UpsertResponse{}, err
+	return &grpc_ops.UpsertResponse{}, nil
 }
