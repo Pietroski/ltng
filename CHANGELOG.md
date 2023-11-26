@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.31]
  - chore: docker version bump
  - chore: docker version bump
  
