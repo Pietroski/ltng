@@ -2,6 +2,9 @@
 
 # [UNRELEASED]
  
+# [v1.0.30]
+ - [] - chore: go deps bump
+ 
 # [v1.0.29]
  - chore: docker version
  - fix: upsert behaviour - rawIndexList, err = indexListItem.ValueCopy- [nil]
