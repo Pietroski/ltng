@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.0.30]
  - [] - chore: go deps bump
  
 # [v1.0.29]
