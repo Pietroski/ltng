@@ -30,7 +30,7 @@ const (
 	maxEmailLength = 256
 
 	minPassLength = 8
-	maxPassLength = 32
+	maxPassLength = 256
 )
 
 var (

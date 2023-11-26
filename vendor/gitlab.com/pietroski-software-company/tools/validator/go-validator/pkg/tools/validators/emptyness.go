@@ -29,7 +29,9 @@ func checkRequirement(fieldName string, fieldValue interface{}) error {
 		reflect.Slice,
 		reflect.Array:
 		fv := reflect.ValueOf(fieldValue)
-		if fv.IsNil() {
+		if isNillable(ft) && fv.IsZero() {
+			return fmt.Errorf(ErrorRequiredField, fieldName)
+		} else if fv.IsZero() {
 			return fmt.Errorf(ErrorRequiredField, fieldName)
 		}
 		if fv.Len() == 0 {
@@ -131,4 +133,29 @@ func zeroTimeCheck(fieldName string, fieldValue interface{}) error {
 	}
 
 	return nil
+}
+
+func IsNillable[T any](t T) bool {
+	v := reflect.ValueOf(t)
+	kind := v.Kind()
+
+	// Must be one of these types to be nillable
+	return isNillable(kind)
+}
+
+func isNillable(kind reflect.Kind) bool {
+	// Must be one of these types to be nillable
+	return kind == reflect.Ptr ||
+		kind == reflect.Interface ||
+		kind == reflect.Slice ||
+		kind == reflect.Map ||
+		kind == reflect.Chan ||
+		kind == reflect.Func
+}
+
+func IsNil[T any](t T) bool {
+	v := reflect.ValueOf(t)
+	kind := v.Kind()
+	// Must be one of these types to be nillable
+	return isNillable(kind) && v.IsNil()
 }
