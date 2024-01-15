@@ -13,7 +13,7 @@ import (
 	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 )
 
 func Test_Integration_CreateStore(t *testing.T) {
@@ -27,11 +27,18 @@ func Test_Integration_CreateStore(t *testing.T) {
 
 			logger := go_logger.FromCtx(ctx)
 
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
-			badgerManager := manager.NewBadgerLocalManager(db, serializer, logger)
+
+			params := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			badgerManager, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(params)
+			require.NoError(t, err)
 			defer func() {
 				badgerManager.ShutdownStores()
 				badgerManager.Shutdown()
@@ -47,7 +54,7 @@ func Test_Integration_CreateStore(t *testing.T) {
 				go_logger.Field{"stores": stores},
 			)
 
-			info := &management_models.DBInfo{
+			info := &badgerdb_management_models_v3.DBInfo{
 				Name:         "integration-manager-test",
 				Path:         "integration-manager-test/path-1",
 				CreatedAt:    time.Now(),
@@ -86,11 +93,17 @@ func Test_Integration_CreateStore(t *testing.T) {
 
 			logger := go_logger.FromCtx(ctx)
 
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
-			badgerManager := manager.NewBadgerLocalManager(db, serializer, logger)
+			params := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			badgerManager, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(params)
+			require.NoError(t, err)
 			defer func() {
 				badgerManager.ShutdownStores()
 				badgerManager.Shutdown()
@@ -106,7 +119,7 @@ func Test_Integration_CreateStore(t *testing.T) {
 				go_logger.Field{"stores": stores},
 			)
 
-			info := &management_models.DBInfo{
+			info := &badgerdb_management_models_v3.DBInfo{
 				Name:         "integration-manager-test",
 				Path:         "integration-manager-test/path-1",
 				CreatedAt:    time.Now(),

@@ -1,4 +1,4 @@
-package manager
+package badgerdb_manager_adaptor_v3
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 	co "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 )
 
@@ -23,6 +23,8 @@ const (
 
 	IndexedListSuffixPath = "/indexed-list"
 	IndexedListSuffixName = "-indexed-list"
+
+	// TODO: Delete soft-delete stuff!!
 
 	SoftDeleteSuffixPath = "/soft-delete"
 	SoftDeleteSuffixName = "-soft-delete"
@@ -45,7 +47,7 @@ type (
 	Manager interface {
 		CreateStore(
 			ctx context.Context,
-			info *management_models.DBInfo,
+			info *badgerdb_management_models_v3.DBInfo,
 		) error
 		DeleteStore(
 			ctx context.Context,
@@ -55,20 +57,20 @@ type (
 		GetDBInfo(
 			ctx context.Context,
 			name string,
-		) (*management_models.DBInfo, error)
+		) (*badgerdb_management_models_v3.DBInfo, error)
 		GetDBMemoryInfo(
 			ctx context.Context,
 			name string,
-		) (*management_models.DBMemoryInfo, error)
+		) (*badgerdb_management_models_v3.DBMemoryInfo, error)
 
 		ListStoreInfo(
 			ctx context.Context,
 			size, page int,
-		) ([]*management_models.DBInfo, error)
+		) ([]*badgerdb_management_models_v3.DBInfo, error)
 		ListStoreMemoryInfo(
 			ctx context.Context,
 			size, page int,
-		) ([]*management_models.DBMemoryInfo, error)
+		) ([]*badgerdb_management_models_v3.DBMemoryInfo, error)
 
 		ValidatePagination(size, page int) (bool, error)
 		Paginate(
@@ -85,7 +87,13 @@ type (
 		// (Purge|Truncate)Store
 	}
 
-	BadgerLocalManager struct {
+	BadgerLocalManagerV3Params struct {
+		DB         *badger.DB
+		Logger     go_logger.Logger
+		Serializer go_serializer.Serializer
+	}
+
+	BadgerLocalManagerV3 struct {
 		db *badger.DB
 		//TODO: remove logger and instead user error wrapper for returning
 		logger        go_logger.Logger
@@ -96,26 +104,24 @@ type (
 	}
 )
 
-func NewBadgerLocalManager(
-	db *badger.DB,
-	serializer go_serializer.Serializer,
-	logger go_logger.Logger,
-) Manager {
-	m := &BadgerLocalManager{
-		db: db,
+func NewBadgerLocalManagerV3(
+	params *BadgerLocalManagerV3Params,
+) (*BadgerLocalManagerV3, error) {
+	m := &BadgerLocalManagerV3{
+		db: params.DB,
 
-		serializer:    serializer,
-		logger:        logger,
+		serializer:    params.Serializer,
+		logger:        params.Logger,
 		badgerMapping: &sync.Map{},
 	}
 
-	return m
+	return m, nil
 }
 
 // CreateStore creates a new store.
-func (m *BadgerLocalManager) CreateStore(
+func (m *BadgerLocalManagerV3) CreateStore(
 	ctx context.Context,
-	info *management_models.DBInfo,
+	info *badgerdb_management_models_v3.DBInfo,
 ) error {
 	var createStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(info)
@@ -123,7 +129,7 @@ func (m *BadgerLocalManager) CreateStore(
 
 	indexedInfoPath := info.Path + IndexedSuffixPath
 	indexedInfoName := info.Name + IndexedSuffixName
-	indexedInfo := management_models.NewDBInfo(indexedInfoName, indexedInfoPath)
+	indexedInfo := badgerdb_management_models_v3.NewDBInfo(indexedInfoName, indexedInfoPath)
 	var createIndexedStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(indexedInfo)
 	}
@@ -133,7 +139,7 @@ func (m *BadgerLocalManager) CreateStore(
 
 	indexedListInfoPath := info.Path + IndexedListSuffixPath
 	indexedListInfoName := info.Name + IndexedListSuffixName
-	indexedListInfo := management_models.NewDBInfo(indexedListInfoName, indexedListInfoPath)
+	indexedListInfo := badgerdb_management_models_v3.NewDBInfo(indexedListInfoName, indexedListInfoPath)
 	var createIndexedListStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(indexedListInfo)
 	}
@@ -143,7 +149,7 @@ func (m *BadgerLocalManager) CreateStore(
 
 	softDeleteInfoPath := info.Path + SoftDeleteSuffixPath
 	softDeleteInfoName := info.Name + SoftDeleteSuffixName
-	softDeleteInfo := management_models.NewDBInfo(softDeleteInfoName, softDeleteInfoPath)
+	softDeleteInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteInfoName, softDeleteInfoPath)
 	var createSoftDeleteStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(softDeleteInfo)
 	}
@@ -153,7 +159,7 @@ func (m *BadgerLocalManager) CreateStore(
 
 	softDeleteListInfoPath := info.Path + SoftDeleteListSuffixPath
 	softDeleteListInfoName := info.Name + SoftDeleteListSuffixName
-	softDeleteListInfo := management_models.NewDBInfo(softDeleteListInfoName, softDeleteListInfoPath)
+	softDeleteListInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteListInfoName, softDeleteListInfoPath)
 	var createSoftDeleteListStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(softDeleteListInfo)
 	}
@@ -163,7 +169,7 @@ func (m *BadgerLocalManager) CreateStore(
 
 	softDeleteCounterInfoPath := info.Path + SoftDeleteCounterSuffixPath
 	softDeleteCounterInfoName := info.Name + SoftDeleteCounterSuffixName
-	softDeleteCounterInfo := management_models.NewDBInfo(softDeleteCounterInfoName, softDeleteCounterInfoPath)
+	softDeleteCounterInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteCounterInfoName, softDeleteCounterInfoPath)
 	var createSoftDeleteCounterStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(softDeleteCounterInfo)
 	}
@@ -260,7 +266,7 @@ func (m *BadgerLocalManager) CreateStore(
 }
 
 // DeleteStore creates a new store.
-func (m *BadgerLocalManager) DeleteStore(
+func (m *BadgerLocalManagerV3) DeleteStore(
 	ctx context.Context,
 	name string,
 ) error {
@@ -275,7 +281,7 @@ func (m *BadgerLocalManager) DeleteStore(
 
 	indexedInfoPath := info.Path + IndexedSuffixPath
 	indexedInfoName := info.Name + IndexedSuffixName
-	indexedInfo := management_models.NewDBInfo(indexedInfoName, indexedInfoPath)
+	indexedInfo := badgerdb_management_models_v3.NewDBInfo(indexedInfoName, indexedInfoPath)
 	var deleteIndexedStore = func() error {
 		return m.deleteFromMemoryAndDisk(ctx, indexedInfoName)
 	}
@@ -285,7 +291,7 @@ func (m *BadgerLocalManager) DeleteStore(
 
 	indexedListInfoPath := info.Path + IndexedListSuffixPath
 	indexedListInfoName := info.Name + IndexedListSuffixName
-	indexedListInfo := management_models.NewDBInfo(indexedListInfoName, indexedListInfoPath)
+	indexedListInfo := badgerdb_management_models_v3.NewDBInfo(indexedListInfoName, indexedListInfoPath)
 	var deleteIndexedListStore = func() error {
 		return m.deleteFromMemoryAndDisk(ctx, indexedListInfoName)
 	}
@@ -295,7 +301,7 @@ func (m *BadgerLocalManager) DeleteStore(
 
 	softDeleteInfoPath := info.Path + SoftDeleteSuffixPath
 	softDeleteInfoName := info.Name + SoftDeleteSuffixName
-	softDeleteInfo := management_models.NewDBInfo(softDeleteInfoName, softDeleteInfoPath)
+	softDeleteInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteInfoName, softDeleteInfoPath)
 	var deleteSoftDeleteStore = func() error {
 		return m.deleteFromMemoryAndDisk(ctx, softDeleteInfoName)
 	}
@@ -305,7 +311,7 @@ func (m *BadgerLocalManager) DeleteStore(
 
 	softDeleteListInfoPath := info.Path + SoftDeleteListSuffixPath
 	softDeleteListInfoName := info.Name + SoftDeleteListSuffixName
-	softDeleteListInfo := management_models.NewDBInfo(softDeleteListInfoName, softDeleteListInfoPath)
+	softDeleteListInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteListInfoName, softDeleteListInfoPath)
 	var deleteSoftDeleteListStore = func() error {
 		return m.deleteFromMemoryAndDisk(ctx, softDeleteListInfoName)
 	}
@@ -315,7 +321,7 @@ func (m *BadgerLocalManager) DeleteStore(
 
 	//softDeleteCounterInfoPath := info.Path + SoftDeleteCounterSuffixPath
 	softDeleteCounterInfoName := info.Name + SoftDeleteCounterSuffixName
-	//softDeleteCounterInfo := management_models.NewDBInfo(softDeleteCounterInfoName, softDeleteCounterInfoPath)
+	//softDeleteCounterInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteCounterInfoName, softDeleteCounterInfoPath)
 	var deleteSoftDeleteCounterStore = func() error {
 		return m.deleteFromMemoryAndDisk(ctx, softDeleteCounterInfoName)
 	}
@@ -411,27 +417,27 @@ func (m *BadgerLocalManager) DeleteStore(
 	return err
 }
 
-func (m *BadgerLocalManager) GetDBInfo(
+func (m *BadgerLocalManagerV3) GetDBInfo(
 	ctx context.Context,
 	name string,
-) (info *management_models.DBInfo, err error) {
+) (info *badgerdb_management_models_v3.DBInfo, err error) {
 	return m.getStoreInfoFromMemoryOrFromDisk(ctx, name)
 }
 
-func (m *BadgerLocalManager) GetDBMemoryInfo(
+func (m *BadgerLocalManagerV3) GetDBMemoryInfo(
 	ctx context.Context,
 	name string,
-) (info *management_models.DBMemoryInfo, err error) {
+) (info *badgerdb_management_models_v3.DBMemoryInfo, err error) {
 	return m.getStoreMemoryInfoFromMemoryOrDisk(ctx, name)
 }
 
-func (m *BadgerLocalManager) ListStoreInfo(
+func (m *BadgerLocalManagerV3) ListStoreInfo(
 	ctx context.Context,
 	size, page int,
-) ([]*management_models.DBInfo, error) {
+) ([]*badgerdb_management_models_v3.DBInfo, error) {
 	if ok, err := m.ValidatePagination(size, page); !ok {
 		if err != nil {
-			return []*management_models.DBInfo{}, err
+			return []*badgerdb_management_models_v3.DBInfo{}, err
 		}
 
 		return m.listAllStoresInfoFromMemoryOrDisk(ctx)
@@ -440,7 +446,7 @@ func (m *BadgerLocalManager) ListStoreInfo(
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = size
 
-	memoryInfoList := make([]*management_models.DBInfo, size)
+	memoryInfoList := make([]*badgerdb_management_models_v3.DBInfo, size)
 	err := m.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(opt)
 		defer it.Close()
@@ -473,13 +479,13 @@ func (m *BadgerLocalManager) ListStoreInfo(
 	return memoryInfoList, nil
 }
 
-func (m *BadgerLocalManager) ListStoreMemoryInfo(
+func (m *BadgerLocalManagerV3) ListStoreMemoryInfo(
 	ctx context.Context,
 	size, page int,
-) ([]*management_models.DBMemoryInfo, error) {
+) ([]*badgerdb_management_models_v3.DBMemoryInfo, error) {
 	if ok, err := m.ValidatePagination(size, page); !ok {
 		if err != nil {
-			return []*management_models.DBMemoryInfo{}, err
+			return []*badgerdb_management_models_v3.DBMemoryInfo{}, err
 		}
 
 		return m.listAllStoresMemoryInfoFromMemoryOrDisk(ctx)
@@ -488,7 +494,7 @@ func (m *BadgerLocalManager) ListStoreMemoryInfo(
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = size * page
 
-	memoryInfoList := make([]*management_models.DBMemoryInfo, size)
+	memoryInfoList := make([]*badgerdb_management_models_v3.DBMemoryInfo, size)
 	err := m.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(opt)
 		defer it.Close()
@@ -533,13 +539,13 @@ func (m *BadgerLocalManager) ListStoreMemoryInfo(
 	return memoryInfoList, nil
 }
 
-func (m *BadgerLocalManager) listAllStoresInfoFromMemoryOrDisk(
+func (m *BadgerLocalManagerV3) listAllStoresInfoFromMemoryOrDisk(
 	ctx context.Context,
-) ([]*management_models.DBInfo, error) {
+) ([]*badgerdb_management_models_v3.DBInfo, error) {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 50
 
-	var memoryInfoList []*management_models.DBInfo
+	var memoryInfoList []*badgerdb_management_models_v3.DBInfo
 	err := m.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(opt)
 		defer it.Close()
@@ -565,13 +571,13 @@ func (m *BadgerLocalManager) listAllStoresInfoFromMemoryOrDisk(
 	return memoryInfoList, nil
 }
 
-func (m *BadgerLocalManager) listAllStoresMemoryInfoFromMemoryOrDisk(
+func (m *BadgerLocalManagerV3) listAllStoresMemoryInfoFromMemoryOrDisk(
 	ctx context.Context,
-) ([]*management_models.DBMemoryInfo, error) {
+) ([]*badgerdb_management_models_v3.DBMemoryInfo, error) {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 50
 
-	var memoryInfoList []*management_models.DBMemoryInfo
+	var memoryInfoList []*badgerdb_management_models_v3.DBMemoryInfo
 	err := m.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(opt)
 		defer it.Close()

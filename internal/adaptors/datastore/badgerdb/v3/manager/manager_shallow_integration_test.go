@@ -1,4 +1,4 @@
-package manager
+package badgerdb_manager_adaptor_v3
 
 import (
 	"context"
@@ -8,15 +8,14 @@ import (
 	"testing"
 	"time"
 
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
-
 	"github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/require"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
+	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 )
 
 func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
@@ -35,8 +34,8 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	//m := NewBadgerLocalManager(db, s)
-	m := &BadgerLocalManager{
+	//m := NewBadgerLocalManagerV3(db, s)
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -50,7 +49,7 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 		)
 	}
 
-	dnInfo := &management_models.DBInfo{
+	dnInfo := &badgerdb_management_models_v3.DBInfo{
 		Name:         "badger-db-test-1",
 		Path:         "test/path-1",
 		CreatedAt:    time.Now(),
@@ -62,7 +61,7 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 
 	rawRetrievedDBInfo, ok := m.badgerMapping.Load("badger-db-test-1")
 	require.True(t, ok)
-	retrievedDBInfo, ok := rawRetrievedDBInfo.(*management_models.DBMemoryInfo)
+	retrievedDBInfo, ok := rawRetrievedDBInfo.(*badgerdb_management_models_v3.DBMemoryInfo)
 	require.True(t, ok)
 	t.Log(retrievedDBInfo)
 
@@ -109,7 +108,7 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 
 	// From here and below it only closes the database references to prevent memory leak
 	m.badgerMapping.Range(func(key, value any) bool {
-		dbInfo, ok := value.(*management_models.DBMemoryInfo)
+		dbInfo, ok := value.(*badgerdb_management_models_v3.DBMemoryInfo)
 		if !ok {
 			logger.Errorf("corrupted stored memory")
 		}
@@ -160,8 +159,8 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	//m := NewBadgerLocalManager(db, s)
-	m := &BadgerLocalManager{
+	//m := NewBadgerLocalManagerV3(db, s)
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -175,7 +174,7 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 		)
 	}
 
-	dbInfo := &management_models.DBInfo{
+	dbInfo := &badgerdb_management_models_v3.DBInfo{
 		Name:         "badger-db-test-2",
 		Path:         "test/path-2",
 		CreatedAt:    time.Now(),
@@ -187,7 +186,7 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 
 	rawRetrievedDBInfo, ok := m.badgerMapping.Load("badger-db-test-2")
 	require.True(t, ok)
-	retrievedDBInfo, ok := rawRetrievedDBInfo.(*management_models.DBMemoryInfo)
+	retrievedDBInfo, ok := rawRetrievedDBInfo.(*badgerdb_management_models_v3.DBMemoryInfo)
 	require.True(t, ok)
 	t.Log(retrievedDBInfo)
 
@@ -195,8 +194,8 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, dbInfo.Name, memoryInfo.Name)
 	require.Equal(t, dbInfo.Path, memoryInfo.Path)
-	require.IsType(t, &management_models.DBInfo{}, memoryInfo)
-	//reflect.TypeOf(memoryInfo).ConvertibleTo(reflect.TypeOf(management_models.DBInfo{}))
+	require.IsType(t, &badgerdb_management_models_v3.DBInfo{}, memoryInfo)
+	//reflect.TypeOf(memoryInfo).ConvertibleTo(reflect.TypeOf(badgerdb_management_models_v3.DBInfo{}))
 
 	m.ShutdownStores()
 	m.Shutdown()
@@ -232,8 +231,8 @@ func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	//m := NewBadgerLocalManager(db, s)
-	m := &BadgerLocalManager{
+	//m := NewBadgerLocalManagerV3(db, s)
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -247,7 +246,7 @@ func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 		)
 	}
 
-	dbInfo := &management_models.DBInfo{
+	dbInfo := &badgerdb_management_models_v3.DBInfo{
 		Name:         "badger-db-test-3",
 		Path:         "test/path-3",
 		CreatedAt:    time.Now(),
@@ -259,7 +258,7 @@ func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 
 	rawRetrievedDBInfo, ok := m.badgerMapping.Load("badger-db-test-3")
 	require.True(t, ok)
-	retrievedDBInfo, ok := rawRetrievedDBInfo.(*management_models.DBMemoryInfo)
+	retrievedDBInfo, ok := rawRetrievedDBInfo.(*badgerdb_management_models_v3.DBMemoryInfo)
 	require.True(t, ok)
 	t.Log(retrievedDBInfo)
 
@@ -302,8 +301,8 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	//m := NewBadgerLocalManager(db, s)
-	m := &BadgerLocalManager{
+	//m := NewBadgerLocalManagerV3(db, s)
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -317,7 +316,7 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 		)
 	}
 
-	dbInfo := &management_models.DBInfo{
+	dbInfo := &badgerdb_management_models_v3.DBInfo{
 		Name:         "badger-db-test-4",
 		Path:         "test/path-4",
 		CreatedAt:    time.Now(),
@@ -329,7 +328,7 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 
 	rawRetrievedDBInfo, ok := m.badgerMapping.Load("badger-db-test-4")
 	require.True(t, ok)
-	retrievedDBInfo, ok := rawRetrievedDBInfo.(*management_models.DBMemoryInfo)
+	retrievedDBInfo, ok := rawRetrievedDBInfo.(*badgerdb_management_models_v3.DBMemoryInfo)
 	require.True(t, ok)
 	t.Log(retrievedDBInfo)
 
@@ -391,8 +390,8 @@ func Test_Integration_Restart(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	//m := NewBadgerLocalManager(db, s)
-	m := &BadgerLocalManager{
+	//m := NewBadgerLocalManagerV3(db, s)
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -464,7 +463,7 @@ func Test_Raw_Badger_Iterator_Behaviour(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	m := &BadgerLocalManager{
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -472,7 +471,7 @@ func Test_Raw_Badger_Iterator_Behaviour(t *testing.T) {
 	}
 
 	for i := 10; i <= 30; i++ {
-		dnInfo := &management_models.DBInfo{
+		dnInfo := &badgerdb_management_models_v3.DBInfo{
 			Name:         fmt.Sprintf("badger-db-test-%d", i),
 			Path:         fmt.Sprintf("test/path-%v", i),
 			CreatedAt:    time.Now(),
@@ -573,7 +572,7 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 			s := go_serializer.NewJsonSerializer()
 
 			logger.Infof("starting badger instances")
-			m := &BadgerLocalManager{
+			m := &BadgerLocalManagerV3{
 				db:            db,
 				serializer:    s,
 				badgerMapping: &sync.Map{},
@@ -657,7 +656,7 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 			s := go_serializer.NewJsonSerializer()
 
 			logger.Infof("starting badger instances")
-			m := &BadgerLocalManager{
+			m := &BadgerLocalManagerV3{
 				db:            db,
 				serializer:    s,
 				badgerMapping: &sync.Map{},
@@ -741,7 +740,7 @@ func Test_Integration_ListStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 	s := go_serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
-	m := &BadgerLocalManager{
+	m := &BadgerLocalManagerV3{
 		db:            db,
 		serializer:    s,
 		badgerMapping: &sync.Map{},
@@ -822,7 +821,14 @@ func Test_Integration_CreateStore(t *testing.T) {
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
-			badgerManager := NewBadgerLocalManager(db, serializer, logger)
+
+			params := &BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			badgerManager, err := NewBadgerLocalManagerV3(params)
+			require.NoError(t, err)
 
 			err = badgerManager.Start()
 			require.NoError(t, err)
@@ -834,7 +840,7 @@ func Test_Integration_CreateStore(t *testing.T) {
 				go_logger.Field{"stores": stores},
 			)
 
-			info := &management_models.DBInfo{
+			info := &badgerdb_management_models_v3.DBInfo{
 				Name:         "integration-manager-test",
 				Path:         "integration-manager-test/path-1",
 				CreatedAt:    time.Now(),

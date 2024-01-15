@@ -14,10 +14,10 @@ import (
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/transactions/operations"
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
-	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
+	badgerdb_manager_adaptor_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
+	badgerdb_operations_adaptor_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/transactions/operations"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_operation_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/operation"
 	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 )
 
@@ -33,13 +33,26 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: DebugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
 			chainedOperator := chainded_operator.NewChainOperator()
-			m := manager.NewBadgerLocalManager(db, serializer, logger)
-			op := operations.NewBadgerOperator(m, serializer, chainedOperator)
+
+			managerParams := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			m, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(managerParams)
+			require.NoError(t, err)
+			operatorParams := &badgerdb_operations_adaptor_v3.BadgerOperatorV3Params{
+				Manager:         m,
+				Serializer:      serializer,
+				ChainedOperator: chainedOperator,
+			}
+			op, err := badgerdb_operations_adaptor_v3.NewBadgerOperatorV3(operatorParams)
+			require.NoError(t, err)
 
 			logger.Debugf("starting manager")
 			err = m.Start()
@@ -47,7 +60,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("manager started")
 
 			logger.Debugf("creating store")
-			dbInfoOpTest := &management_models.DBInfo{
+			dbInfoOpTest := &badgerdb_management_models_v3.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
 				CreatedAt:    time.Now(),
@@ -67,11 +80,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Create(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 					chainded_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
@@ -80,11 +93,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key:   storeKey,
 					Value: storeValue,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.NoError(t, err)
 			logger.Debugf("value loaded")
@@ -95,11 +108,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Delete(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 					chainded_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
@@ -108,11 +121,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key:   storeKey,
 					Value: storeValue,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.Error(t, err)
 			logger.Debugf("value loaded")
@@ -138,13 +151,26 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: DebugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
 			chainedOperator := chainded_operator.NewChainOperator()
-			m := manager.NewBadgerLocalManager(db, serializer, logger)
-			op := operations.NewBadgerOperator(m, serializer, chainedOperator)
+
+			managerParams := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			m, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(managerParams)
+			require.NoError(t, err)
+			operatorParams := &badgerdb_operations_adaptor_v3.BadgerOperatorV3Params{
+				Manager:         m,
+				Serializer:      serializer,
+				ChainedOperator: chainedOperator,
+			}
+			op, err := badgerdb_operations_adaptor_v3.NewBadgerOperatorV3(operatorParams)
+			require.NoError(t, err)
 
 			logger.Debugf("starting manager")
 			err = m.Start()
@@ -152,7 +178,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("manager started")
 
 			logger.Debugf("creating store")
-			dbInfoOpTest := &management_models.DBInfo{
+			dbInfoOpTest := &badgerdb_management_models_v3.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
 				CreatedAt:    time.Now(),
@@ -172,11 +198,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Create(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 					chainded_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
@@ -187,11 +213,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Upsert(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 					chainded_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
@@ -200,11 +226,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key:   storeKey,
 					Value: storeValue,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.NoError(t, err)
 			logger.Debugf("value loaded")
@@ -215,11 +241,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Delete(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 					chainded_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
@@ -228,11 +254,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key:   storeKey,
 					Value: storeValue,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.Error(t, err)
 			logger.Debugf("value loaded")
@@ -258,13 +284,26 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: DebugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
 			chainedOperator := chainded_operator.NewChainOperator()
-			m := manager.NewBadgerLocalManager(db, serializer, logger)
-			op := operations.NewBadgerOperator(m, serializer, chainedOperator)
+
+			managerParams := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			m, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(managerParams)
+			require.NoError(t, err)
+			operatorParams := &badgerdb_operations_adaptor_v3.BadgerOperatorV3Params{
+				Manager:         m,
+				Serializer:      serializer,
+				ChainedOperator: chainedOperator,
+			}
+			op, err := badgerdb_operations_adaptor_v3.NewBadgerOperatorV3(operatorParams)
+			require.NoError(t, err)
 
 			logger.Debugf("starting manager")
 			err = m.Start()
@@ -272,7 +311,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("manager started")
 
 			logger.Debugf("creating store")
-			dbInfoOpTest := &management_models.DBInfo{
+			dbInfoOpTest := &badgerdb_management_models_v3.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
 				CreatedAt:    time.Now(),
@@ -315,15 +354,15 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Create(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:          true,
 						ParentKey:       storeKey,
 						IndexingKeys:    [][]byte{emailKey, usernameKey},
-						IndexProperties: operation_models.IndexProperties{},
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{},
 					},
 					chainded_operator.DefaultRetrialOps,
 				)
@@ -333,25 +372,25 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key:   storeKey,
 					Value: storeValue,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.NoError(t, err)
 			logger.Debugf("value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName := dbMemoryInfo.Name + manager.IndexedListSuffixName
+			indexedListName := dbMemoryInfo.Name + badgerdb_manager_adaptor_v3.IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key: storeKey,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.NoError(t, err)
 			logger.Debugf("value loaded")
@@ -362,13 +401,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Delete(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key: storeKey,
 					},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx: true,
-						IndexProperties: operation_models.IndexProperties{
-							IndexDeletionBehaviour: operation_models.Cascade,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexDeletionBehaviour: badgerdb_operation_models_v3.Cascade,
 						},
 					},
 					chainded_operator.DefaultRetrialOps,
@@ -379,23 +418,23 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key: storeKey,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.Error(t, err)
 			logger.Debugf("value loaded")
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName = dbMemoryInfo.Name + manager.IndexedListSuffixName
+			indexedListName = dbMemoryInfo.Name + badgerdb_manager_adaptor_v3.IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key: storeKey,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.Error(t, err)
 			logger.Debugf("value loaded")
@@ -421,13 +460,26 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: DebugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
 			chainedOperator := chainded_operator.NewChainOperator()
-			m := manager.NewBadgerLocalManager(db, serializer, logger)
-			op := operations.NewBadgerOperator(m, serializer, chainedOperator)
+
+			managerParams := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			m, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(managerParams)
+			require.NoError(t, err)
+			operatorParams := &badgerdb_operations_adaptor_v3.BadgerOperatorV3Params{
+				Manager:         m,
+				Serializer:      serializer,
+				ChainedOperator: chainedOperator,
+			}
+			op, err := badgerdb_operations_adaptor_v3.NewBadgerOperatorV3(operatorParams)
+			require.NoError(t, err)
 
 			logger.Debugf("starting manager")
 			err = m.Start()
@@ -435,7 +487,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("manager started")
 
 			logger.Debugf("creating store")
-			dbInfoOpTest := &management_models.DBInfo{
+			dbInfoOpTest := &badgerdb_management_models_v3.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
 				CreatedAt:    time.Now(),
@@ -478,15 +530,15 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Upsert(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key:   storeKey,
 						Value: storeValue,
 					},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:          true,
 						ParentKey:       storeKey,
 						IndexingKeys:    [][]byte{emailKey, usernameKey},
-						IndexProperties: operation_models.IndexProperties{},
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{},
 					},
 					chainded_operator.DefaultRetrialOps,
 				)
@@ -496,25 +548,25 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key:   storeKey,
 					Value: storeValue,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.NoError(t, err)
 			logger.Debugf("value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName := dbMemoryInfo.Name + manager.IndexedListSuffixName
+			indexedListName := dbMemoryInfo.Name + badgerdb_manager_adaptor_v3.IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key: storeKey,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.NoError(t, err)
 			logger.Debugf("value loaded")
@@ -525,13 +577,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				Operate(dbMemoryInfo).
 				Delete(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key: storeKey,
 					},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx: true,
-						IndexProperties: operation_models.IndexProperties{
-							IndexDeletionBehaviour: operation_models.Cascade,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexDeletionBehaviour: badgerdb_operation_models_v3.Cascade,
 						},
 					},
 					chainded_operator.DefaultRetrialOps,
@@ -542,23 +594,23 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key: storeKey,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.Error(t, err)
 			logger.Debugf("value loaded")
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName = dbMemoryInfo.Name + manager.IndexedListSuffixName
+			indexedListName = dbMemoryInfo.Name + badgerdb_manager_adaptor_v3.IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
-				&operation_models.Item{
+				&badgerdb_operation_models_v3.Item{
 					Key: storeKey,
 				},
-				&operation_models.IndexOpts{},
+				&badgerdb_operation_models_v3.IndexOpts{},
 			)
 			require.Error(t, err)
 			logger.Debugf("value loaded")
@@ -584,13 +636,26 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: DebugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
 			chainedOperator := chainded_operator.NewChainOperator()
-			m := manager.NewBadgerLocalManager(db, serializer, logger)
-			op := operations.NewBadgerOperator(m, serializer, chainedOperator)
+
+			managerParams := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			m, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(managerParams)
+			require.NoError(t, err)
+			operatorParams := &badgerdb_operations_adaptor_v3.BadgerOperatorV3Params{
+				Manager:         m,
+				Serializer:      serializer,
+				ChainedOperator: chainedOperator,
+			}
+			op, err := badgerdb_operations_adaptor_v3.NewBadgerOperatorV3(operatorParams)
+			require.NoError(t, err)
 
 			logger.Debugf("starting manager")
 			err = m.Start()
@@ -598,7 +663,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("manager started")
 
 			logger.Debugf("creating store")
-			dbInfoOpTest := &management_models.DBInfo{
+			dbInfoOpTest := &badgerdb_management_models_v3.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
 				CreatedAt:    time.Now(),
@@ -647,15 +712,15 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					Operate(dbMemoryInfo).
 					Upsert(
 						ctx,
-						&operation_models.Item{
+						&badgerdb_operation_models_v3.Item{
 							Key:   storeKey,
 							Value: storeValue,
 						},
-						&operation_models.IndexOpts{
+						&badgerdb_operation_models_v3.IndexOpts{
 							HasIdx:          true,
 							ParentKey:       storeKey,
 							IndexingKeys:    [][]byte{emailKey, usernameKey},
-							IndexProperties: operation_models.IndexProperties{},
+							IndexProperties: badgerdb_operation_models_v3.IndexProperties{},
 						},
 						chainded_operator.DefaultRetrialOps,
 					)
@@ -668,10 +733,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key: storeKey,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 				)
 				require.NoError(t, err)
 				logger.Debugf("value loaded")
@@ -684,12 +749,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:    true,
 						ParentKey: storeKey,
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.IndexingList,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.IndexingList,
 						},
 					},
 				)
@@ -705,12 +770,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						IndexingKeys: [][]byte{emailKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.IndexingList,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.IndexingList,
 						},
 					},
 				)
@@ -726,13 +791,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value from index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						ParentKey:    nil,
 						IndexingKeys: [][]byte{usernameKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.AndComputational,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.AndComputational,
 						},
 					},
 				)
@@ -747,13 +812,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value from index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						ParentKey:    nil,
 						IndexingKeys: [][]byte{usernameKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.OrComputational,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.OrComputational,
 						},
 					},
 				)
@@ -768,13 +833,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						ParentKey:    nil,
 						IndexingKeys: [][]byte{emailKey, usernameKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.AndComputational,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.AndComputational,
 						},
 					},
 				)
@@ -789,13 +854,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						ParentKey:    nil,
 						IndexingKeys: [][]byte{emailKey, usernameKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.OrComputational,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.OrComputational,
 						},
 					},
 				)
@@ -812,11 +877,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					Operate(dbMemoryInfo).
 					Delete(
 						ctx,
-						&operation_models.Item{},
-						&operation_models.IndexOpts{
+						&badgerdb_operation_models_v3.Item{},
+						&badgerdb_operation_models_v3.IndexOpts{
 							HasIdx: true,
-							IndexProperties: operation_models.IndexProperties{
-								IndexDeletionBehaviour: operation_models.IndexOnly,
+							IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+								IndexDeletionBehaviour: badgerdb_operation_models_v3.IndexOnly,
 							},
 							IndexingKeys: [][]byte{usernameKey},
 						},
@@ -831,10 +896,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key: storeKey,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 				)
 				require.NoError(t, err)
 				logger.Debugf("value loaded")
@@ -847,12 +912,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:    true,
 						ParentKey: storeKey,
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.IndexingList,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.IndexingList,
 						},
 					},
 				)
@@ -868,13 +933,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value from index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						ParentKey:    nil,
 						IndexingKeys: [][]byte{usernameKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.AndComputational,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.AndComputational,
 						},
 					},
 				)
@@ -888,12 +953,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value from indexed item")
 				_, err = op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						IndexingKeys: [][]byte{usernameKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.One,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.One,
 						},
 					},
 				)
@@ -906,13 +971,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for indexed item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:       true,
 						ParentKey:    nil,
 						IndexingKeys: [][]byte{emailKey},
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.One,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.One,
 						},
 					},
 				)
@@ -929,13 +994,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					Operate(dbMemoryInfo).
 					Delete(
 						ctx,
-						&operation_models.Item{
+						&badgerdb_operation_models_v3.Item{
 							Key: storeKey,
 						},
-						&operation_models.IndexOpts{
+						&badgerdb_operation_models_v3.IndexOpts{
 							HasIdx: true,
-							IndexProperties: operation_models.IndexProperties{
-								IndexDeletionBehaviour: operation_models.Cascade,
+							IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+								IndexDeletionBehaviour: badgerdb_operation_models_v3.Cascade,
 							},
 						},
 						chainded_operator.DefaultRetrialOps,
@@ -949,10 +1014,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value")
 				_, err = op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{
+					&badgerdb_operation_models_v3.Item{
 						Key: storeKey,
 					},
-					&operation_models.IndexOpts{},
+					&badgerdb_operation_models_v3.IndexOpts{},
 				)
 				require.Error(t, err)
 				logger.Debugf("value loaded")
@@ -963,12 +1028,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				logger.Debugf("loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
-					&operation_models.Item{},
-					&operation_models.IndexOpts{
+					&badgerdb_operation_models_v3.Item{},
+					&badgerdb_operation_models_v3.IndexOpts{
 						HasIdx:    true,
 						ParentKey: storeKey,
-						IndexProperties: operation_models.IndexProperties{
-							IndexSearchPattern: operation_models.IndexingList,
+						IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+							IndexSearchPattern: badgerdb_operation_models_v3.IndexingList,
 						},
 					},
 				)
@@ -1000,13 +1065,26 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: DebugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement))
 			require.NoError(t, err)
 
 			serializer := go_serializer.NewJsonSerializer()
 			chainedOperator := chainded_operator.NewChainOperator()
-			m := manager.NewBadgerLocalManager(db, serializer, logger)
-			op := operations.NewBadgerOperator(m, serializer, chainedOperator)
+
+			managerParams := &badgerdb_manager_adaptor_v3.BadgerLocalManagerV3Params{
+				DB:         db,
+				Logger:     logger,
+				Serializer: serializer,
+			}
+			m, err := badgerdb_manager_adaptor_v3.NewBadgerLocalManagerV3(managerParams)
+			require.NoError(t, err)
+			operatorParams := &badgerdb_operations_adaptor_v3.BadgerOperatorV3Params{
+				Manager:         m,
+				Serializer:      serializer,
+				ChainedOperator: chainedOperator,
+			}
+			op, err := badgerdb_operations_adaptor_v3.NewBadgerOperatorV3(operatorParams)
+			require.NoError(t, err)
 
 			logger.Debugf("starting manager")
 			err = m.Start()
@@ -1014,7 +1092,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 			logger.Debugf("manager started")
 
 			logger.Debugf("creating store")
-			dbInfoOpTest := &management_models.DBInfo{
+			dbInfoOpTest := &badgerdb_management_models_v3.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
 				CreatedAt:    time.Now(),
@@ -1073,15 +1151,15 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 							Operate(dbMemoryInfo).
 							Upsert(
 								ctx,
-								&operation_models.Item{
+								&badgerdb_operation_models_v3.Item{
 									Key:   storeKey,
 									Value: storeValue,
 								},
-								&operation_models.IndexOpts{
+								&badgerdb_operation_models_v3.IndexOpts{
 									HasIdx:          true,
 									ParentKey:       storeKey,
 									IndexingKeys:    [][]byte{emailKey, usernameKey},
-									IndexProperties: operation_models.IndexProperties{},
+									IndexProperties: badgerdb_operation_models_v3.IndexProperties{},
 								},
 								chainded_operator.DefaultRetrialOps,
 							)
@@ -1095,10 +1173,10 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing default pagination values")
 					defaultPaginatedRetrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							//ctx,
-							//&operation_models.Item{},
-							&operation_models.IndexOpts{},
-							&management_models.Pagination{},
+							ctx,
+							//&badgerdb_operation_models_v3.Item{},
+							&badgerdb_operation_models_v3.IndexOpts{},
+							&badgerdb_management_models_v3.Pagination{},
 						)
 					require.NoError(t, err)
 					logger.Debugf("values loaded")
@@ -1110,14 +1188,14 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing all values")
 					retrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							//ctx,
-							//&operation_models.Item{},
-							&operation_models.IndexOpts{
-								IndexProperties: operation_models.IndexProperties{
-									ListSearchPattern: operation_models.All,
+							ctx,
+							//&badgerdb_operation_models_v3.Item{},
+							&badgerdb_operation_models_v3.IndexOpts{
+								IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+									ListSearchPattern: badgerdb_operation_models_v3.All,
 								},
 							},
-							&management_models.Pagination{},
+							&badgerdb_management_models_v3.Pagination{},
 						)
 					require.NoError(t, err)
 					logger.Debugf("values loaded")
@@ -1129,14 +1207,14 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing values paginated")
 					paginatedRetrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							//ctx,
-							//&operation_models.Item{},
-							&operation_models.IndexOpts{
-								IndexProperties: operation_models.IndexProperties{
-									ListSearchPattern: operation_models.All,
+							ctx,
+							//&badgerdb_operation_models_v3.Item{},
+							&badgerdb_operation_models_v3.IndexOpts{
+								IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+									ListSearchPattern: badgerdb_operation_models_v3.All,
 								},
 							},
-							&management_models.Pagination{
+							&badgerdb_management_models_v3.Pagination{
 								PageID:   2,
 								PageSize: 2,
 							},
@@ -1158,9 +1236,9 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					listFromKeyValues, err := op.Operate(dbMemoryInfo).
 						ListValuesFromIndexingKeys(
 							ctx,
-							&operation_models.IndexOpts{
+							&badgerdb_operation_models_v3.IndexOpts{
 								IndexingKeys:    [][]byte{p0, p1, p4},
-								IndexProperties: operation_models.IndexProperties{},
+								IndexProperties: badgerdb_operation_models_v3.IndexProperties{},
 							},
 						)
 					require.NoError(t, err)
@@ -1181,9 +1259,9 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					listFromKeyValues, err := op.Operate(dbMemoryInfo).
 						ListValuesFromIndexingKeys(
 							ctx,
-							&operation_models.IndexOpts{
+							&badgerdb_operation_models_v3.IndexOpts{
 								IndexingKeys:    [][]byte{p0, p1, p4, []byte("does-not-exist")},
-								IndexProperties: operation_models.IndexProperties{},
+								IndexProperties: badgerdb_operation_models_v3.IndexProperties{},
 							},
 						)
 					require.NoError(t, err)
@@ -1204,13 +1282,13 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					{
 						err = op.Operate(dbMemoryInfo).Delete(
 							ctx,
-							&operation_models.Item{
+							&badgerdb_operation_models_v3.Item{
 								Key: storeKey,
 							},
-							&operation_models.IndexOpts{
+							&badgerdb_operation_models_v3.IndexOpts{
 								HasIdx: true,
-								IndexProperties: operation_models.IndexProperties{
-									IndexDeletionBehaviour: operation_models.Cascade,
+								IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+									IndexDeletionBehaviour: badgerdb_operation_models_v3.Cascade,
 								},
 							},
 							chainded_operator.DefaultRetrialOps,
@@ -1223,14 +1301,14 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					logger.Debugf("listing all values")
 					retrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
-							//ctx,
-							//&operation_models.Item{},
-							&operation_models.IndexOpts{
-								IndexProperties: operation_models.IndexProperties{
-									ListSearchPattern: operation_models.All,
+							ctx,
+							//&badgerdb_operation_models_v3.Item{},
+							&badgerdb_operation_models_v3.IndexOpts{
+								IndexProperties: badgerdb_operation_models_v3.IndexProperties{
+									ListSearchPattern: badgerdb_operation_models_v3.All,
 								},
 							},
-							&management_models.Pagination{},
+							&badgerdb_management_models_v3.Pagination{},
 						)
 					require.NoError(t, err)
 					logger.Debugf("values loaded")

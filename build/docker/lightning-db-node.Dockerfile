@@ -20,7 +20,12 @@ RUN CGO_ENABLED=0 \
 GOOS=linux \
 GOARCH=amd64 \
 GO111MODULE=on \
-go build -mod=vendor -ldflags="-w -s" -o lightning-db-node cmd/badgerdb/grpc/main.go
+go build -mod=vendor -ldflags="-w -s" -o lightning-db-node cmd/grpc/badgerdb/main.go
+
+# GOOS=linux \
+# GOARCH=amd64 \
+# GOOS=darwin \
+# GOARCH=arm64 \
 
 #go build \
 #-installsuffix 'static' \

@@ -1,16 +1,16 @@
-package operations
+package badgerdb_operations_adaptor_v3
 
 import (
 	"fmt"
 
 	"github.com/dgraph-io/badger/v3"
 
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
-	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
+	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_operation_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/operation"
 )
 
 // create checks if the key exists, if not, it stores the item.
-func (o *BadgerOperator) create(key, value []byte) error {
+func (o *BadgerOperatorV3) create(key, value []byte) error {
 	err := o.dbInfo.DB.Update(func(txn *badger.Txn) error {
 		_, err := txn.Get(key)
 		if err == badger.ErrKeyNotFound {
@@ -26,7 +26,7 @@ func (o *BadgerOperator) create(key, value []byte) error {
 }
 
 // createWithTxn checks if the key exists, if not, it stores the item.
-func (o *BadgerOperator) createWithTxn(txn *badger.Txn, key, value []byte) error {
+func (o *BadgerOperatorV3) createWithTxn(txn *badger.Txn, key, value []byte) error {
 	_, err := txn.Get(key)
 	if err == badger.ErrKeyNotFound {
 		err = txn.Set(key, value)
@@ -38,7 +38,7 @@ func (o *BadgerOperator) createWithTxn(txn *badger.Txn, key, value []byte) error
 }
 
 // upsert updates or creates the key value no matter if the key already exists or not.
-func (o *BadgerOperator) upsert(key, value []byte) error {
+func (o *BadgerOperatorV3) upsert(key, value []byte) error {
 	err := o.dbInfo.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Set(key, value)
 
@@ -49,12 +49,12 @@ func (o *BadgerOperator) upsert(key, value []byte) error {
 }
 
 // upsertWithTxn updates or creates the key value no matter if the key already exists or not.
-func (o *BadgerOperator) upsertWithTxn(txn *badger.Txn, key, value []byte) error {
+func (o *BadgerOperatorV3) upsertWithTxn(txn *badger.Txn, key, value []byte) error {
 	return txn.Set(key, value)
 }
 
 // load checks the given key and returns the serialized item's value whether it exists.
-func (o *BadgerOperator) load(key []byte) ([]byte, error) {
+func (o *BadgerOperatorV3) load(key []byte) ([]byte, error) {
 	var dst []byte
 	if err := o.dbInfo.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(key)
@@ -73,7 +73,7 @@ func (o *BadgerOperator) load(key []byte) ([]byte, error) {
 }
 
 // delete deletes the given key entry if present.
-func (o *BadgerOperator) delete(key []byte) error {
+func (o *BadgerOperatorV3) delete(key []byte) error {
 	err := o.dbInfo.DB.Update(func(txn *badger.Txn) error {
 		return txn.Delete(key)
 	})
@@ -82,8 +82,8 @@ func (o *BadgerOperator) delete(key []byte) error {
 }
 
 // listAll lists all entries from the database info set on the Operate method.
-func (o *BadgerOperator) listAll() (operation_models.Items, error) {
-	var objectList operation_models.Items
+func (o *BadgerOperatorV3) listAll() (badgerdb_operation_models_v3.Items, error) {
+	var objectList badgerdb_operation_models_v3.Items
 	err := o.dbInfo.DB.View(func(txn *badger.Txn) error {
 		opts := badger.IteratorOptions{
 			PrefetchSize:   500,
@@ -102,7 +102,7 @@ func (o *BadgerOperator) listAll() (operation_models.Items, error) {
 				return err
 			}
 
-			object := &operation_models.Item{
+			object := &badgerdb_operation_models_v3.Item{
 				Key:   key,
 				Value: value,
 			}
@@ -117,13 +117,13 @@ func (o *BadgerOperator) listAll() (operation_models.Items, error) {
 }
 
 // ListPaginated lists paginated entries from the database info set on the Operate method.
-func (o *BadgerOperator) listPaginated(
-	pagination *management_models.Pagination,
-) (operation_models.Items, error) {
+func (o *BadgerOperatorV3) listPaginated(
+	pagination *badgerdb_badgerdb_management_models_v3_v3.Pagination,
+) (badgerdb_operation_models_v3.Items, error) {
 	size := int(pagination.PageSize)
 	page := int(pagination.PageID)
 
-	objectList := make(operation_models.Items, size)
+	objectList := make(badgerdb_operation_models_v3.Items, size)
 	err := o.dbInfo.DB.View(func(txn *badger.Txn) error {
 		opts := badger.IteratorOptions{
 			PrefetchSize:   500,
@@ -150,7 +150,7 @@ func (o *BadgerOperator) listPaginated(
 				return err
 			}
 
-			object := &operation_models.Item{
+			object := &badgerdb_operation_models_v3.Item{
 				Key:   key,
 				Value: value,
 			}

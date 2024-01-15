@@ -1,4 +1,4 @@
-package manager
+package badgerdb_manager_adaptor_v3
 
 import (
 	"log"
@@ -6,8 +6,9 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+
+	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 )
 
 // Start initializes all the database paths stored in the local manager.
@@ -16,7 +17,7 @@ import (
 // thirdly it loads into memory the opened db path information.
 // Returns the loaded sync.map reference and,
 // an error if any the above steps fail.
-func (m *BadgerLocalManager) Start() error {
+func (m *BadgerLocalManagerV3) Start() error {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 10 // TODO: make it a const - scope yet to be defined.
 
@@ -57,7 +58,7 @@ func (m *BadgerLocalManager) Start() error {
 // the start call will not be able to initialize all instances again.
 // In that extreme scenario, before shutting down the whole service,
 // try shutting down the stores and then the manager by hand, first.
-func (m *BadgerLocalManager) Restart() error {
+func (m *BadgerLocalManagerV3) Restart() error {
 	logger := m.logger
 	logger.Debugf("restarting badger-db manager")
 
@@ -68,7 +69,7 @@ func (m *BadgerLocalManager) Restart() error {
 }
 
 // Shutdown closes the connection from the badger-db manager.
-func (m *BadgerLocalManager) Shutdown() {
+func (m *BadgerLocalManagerV3) Shutdown() {
 	logger := m.logger
 	logger.Debugf("closing badger-db manager")
 	err := m.db.Close()
@@ -82,7 +83,7 @@ func (m *BadgerLocalManager) Shutdown() {
 
 // ShutdownStores closes the connections to all the stores
 // allocated in memory on the sync map.
-func (m *BadgerLocalManager) ShutdownStores() {
+func (m *BadgerLocalManagerV3) ShutdownStores() {
 	logger := m.logger
 	logger.Debugf("closing badger-db instances")
 
@@ -95,7 +96,7 @@ func (m *BadgerLocalManager) ShutdownStores() {
 			},
 		)
 
-		dbInfo, ok := value.(*management_models.DBMemoryInfo)
+		dbInfo, ok := value.(*badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo)
 		if !ok {
 			logger.Errorf("corrupted stored memory")
 		}

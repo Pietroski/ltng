@@ -1,12 +1,12 @@
-package operations
+package badgerdb_operations_adaptor_v3
 
 import (
 	"bytes"
 	"context"
 	"fmt"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
-	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
+	badgerdb_manager_adaptor_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
+	badgerdb_operation_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/operation"
 	co "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 )
 
@@ -16,10 +16,10 @@ const (
 	ErrKeyAlreadyExist = "key already exist"
 )
 
-func (o *BadgerOperator) indexedStoreOperator(
+func (o *BadgerOperatorV3) indexedStoreOperator(
 	ctx context.Context,
-) (*BadgerOperator, error) {
-	indexedName := o.dbInfo.Name + manager.IndexedSuffixName
+) (*BadgerOperatorV3, error) {
+	indexedName := o.dbInfo.Name + badgerdb_manager_adaptor_v3.IndexedSuffixName
 	idxMemoryInfo, err := o.manager.GetDBMemoryInfo(ctx, indexedName)
 	if err != nil {
 		return o, err
@@ -30,10 +30,10 @@ func (o *BadgerOperator) indexedStoreOperator(
 	return idxOp, nil
 }
 
-func (o *BadgerOperator) indexedListStoreOperator(
+func (o *BadgerOperatorV3) indexedListStoreOperator(
 	ctx context.Context,
-) (*BadgerOperator, error) {
-	indexedListName := o.dbInfo.Name + manager.IndexedListSuffixName
+) (*BadgerOperatorV3, error) {
+	indexedListName := o.dbInfo.Name + badgerdb_manager_adaptor_v3.IndexedListSuffixName
 	idxListMemoryInfo, err := o.manager.GetDBMemoryInfo(ctx, indexedListName)
 	if err != nil {
 		return o, err
@@ -44,10 +44,10 @@ func (o *BadgerOperator) indexedListStoreOperator(
 	return idxListOp, nil
 }
 
-func (o *BadgerOperator) deleteCascadeByIdx(
+func (o *BadgerOperatorV3) deleteCascadeByIdx(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
 	if opts != nil && opts.HasIdx && len(opts.IndexingKeys) == 1 {
@@ -69,10 +69,10 @@ func (o *BadgerOperator) deleteCascadeByIdx(
 	return o.deleteCascade(ctx, item, opts, retrialOpts)
 }
 
-func (o *BadgerOperator) deleteCascade(
+func (o *BadgerOperatorV3) deleteCascade(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
 	txn := o.dbInfo.DB.NewTransaction(true)
@@ -215,10 +215,10 @@ func (o *BadgerOperator) deleteCascade(
 	return err
 }
 
-func (o *BadgerOperator) deleteIdxOnly(
+func (o *BadgerOperatorV3) deleteIdxOnly(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
 	idxOp, err := o.indexedStoreOperator(ctx)
@@ -367,7 +367,7 @@ func removeBytesBytes(obj []byte, index [][]byte) []byte {
 	return newBsObj
 }
 
-func (o *BadgerOperator) andComputationalSearchFn(
+func (o *BadgerOperatorV3) andComputationalSearchFn(
 	indexedKeys [][]byte,
 ) ([]byte, error) {
 	var objKey []byte
@@ -388,7 +388,7 @@ func (o *BadgerOperator) andComputationalSearchFn(
 	return objKey, nil
 }
 
-func (o *BadgerOperator) orComputationalSearchFn(
+func (o *BadgerOperatorV3) orComputationalSearchFn(
 	indexedKeys [][]byte,
 ) ([]byte, error) {
 	var objKey []byte
@@ -409,9 +409,9 @@ func (o *BadgerOperator) orComputationalSearchFn(
 	return objKey, nil
 }
 
-func (o *BadgerOperator) andComputationalSearch(
+func (o *BadgerOperatorV3) andComputationalSearch(
 	ctx context.Context,
-	opts *operation_models.IndexOpts,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 ) (objValue []byte, err error) {
 	indexedOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
@@ -426,9 +426,9 @@ func (o *BadgerOperator) andComputationalSearch(
 	return
 }
 
-func (o *BadgerOperator) orComputationalSearch(
+func (o *BadgerOperatorV3) orComputationalSearch(
 	ctx context.Context,
-	opts *operation_models.IndexOpts,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 ) ([]byte, error) {
 	indexedOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
@@ -443,9 +443,9 @@ func (o *BadgerOperator) orComputationalSearch(
 	return objValue, err
 }
 
-func (o *BadgerOperator) computationalSearch(
+func (o *BadgerOperatorV3) computationalSearch(
 	ctx context.Context,
-	opts *operation_models.IndexOpts,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	fn func(
 		indexedKeys [][]byte,
 	) ([]byte, error),
@@ -458,9 +458,9 @@ func (o *BadgerOperator) computationalSearch(
 	return o.load(objKey)
 }
 
-func (o *BadgerOperator) straightSearch(
+func (o *BadgerOperatorV3) straightSearch(
 	ctx context.Context,
-	opts *operation_models.IndexOpts,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 ) ([]byte, error) {
 	if opts == nil || len(opts.IndexingKeys) != 1 {
 		err := fmt.Errorf("straightSearch requires index key list with length of 1")
@@ -484,9 +484,9 @@ func (o *BadgerOperator) straightSearch(
 	return objValue, err
 }
 
-func (o *BadgerOperator) indexingList(
+func (o *BadgerOperatorV3) indexingList(
 	ctx context.Context,
-	opts *operation_models.IndexOpts,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 ) (idxList []byte, err error) {
 	idxListOp, err := o.indexedListStoreOperator(ctx)
 	if err != nil {

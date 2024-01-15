@@ -1,4 +1,4 @@
-package manager
+package badgerdb_manager_adaptor_v3
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 // ValidatePagination validates whether there is a valid pagination.
-func (m *BadgerLocalManager) ValidatePagination(size, page int) (bool, error) {
+func (m *BadgerLocalManagerV3) ValidatePagination(size, page int) (bool, error) {
 	if size == 0 && page == 0 {
 		return false, nil
 	}
@@ -24,7 +24,7 @@ func (m *BadgerLocalManager) ValidatePagination(size, page int) (bool, error) {
 
 // Paginate traverses the iterator stack until
 // the point to where it was requested.
-func (m *BadgerLocalManager) Paginate(
+func (m *BadgerLocalManagerV3) Paginate(
 	it *badger.Iterator,
 	size, page int,
 ) *badger.Iterator {

@@ -1,12 +1,12 @@
-package manager
+package badgerdb_manager_adaptor_v3
 
-import management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
+import badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 
-func IndexedDBInfoFromDBInfo(dbInfo *management_models.DBInfo) *management_models.DBInfo {
+func IndexedDBInfoFromDBInfo(dbInfo *badgerdb_management_models_v3.DBInfo) *badgerdb_management_models_v3.DBInfo {
 	indexedDBName := dbInfo.Name + IndexedSuffixName
 	indexedDBPath := dbInfo.Path + IndexedSuffixPath
 
-	indexedDBInfo := &management_models.DBInfo{
+	indexedDBInfo := &badgerdb_management_models_v3.DBInfo{
 		Path:         indexedDBPath,
 		Name:         indexedDBName,
 		CreatedAt:    dbInfo.CreatedAt,
@@ -16,11 +16,11 @@ func IndexedDBInfoFromDBInfo(dbInfo *management_models.DBInfo) *management_model
 	return indexedDBInfo
 }
 
-func IndexedListDBInfoFromDBInfo(dbInfo *management_models.DBInfo) *management_models.DBInfo {
+func IndexedListDBInfoFromDBInfo(dbInfo *badgerdb_management_models_v3.DBInfo) *badgerdb_management_models_v3.DBInfo {
 	indexedDBName := dbInfo.Name + IndexedListSuffixName
 	indexedDBPath := dbInfo.Path + IndexedListSuffixPath
 
-	indexedDBInfo := &management_models.DBInfo{
+	indexedDBInfo := &badgerdb_management_models_v3.DBInfo{
 		Path:         indexedDBPath,
 		Name:         indexedDBName,
 		CreatedAt:    dbInfo.CreatedAt,

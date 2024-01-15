@@ -35,7 +35,7 @@ func main() {
 
 	logger.Debugf("test here")
 
-	db, err := badger.Open(badger.DefaultOptions(manager.InternalLocalManagement + "playground-test"))
+	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement + "playground-test"))
 	handleErr(err)
 	defer db.Close()
 

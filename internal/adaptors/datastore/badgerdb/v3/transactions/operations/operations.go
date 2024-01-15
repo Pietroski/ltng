@@ -1,4 +1,4 @@
-package operations
+package badgerdb_operations_adaptor_v3
 
 import (
 	"bytes"
@@ -7,55 +7,61 @@ import (
 
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
-	management_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/management"
-	operation_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/operation"
+	badgerdb_manager_adaptor_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
+	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_operation_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/operation"
 	co "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 )
 
 type (
 	Operator interface {
-		Operate(dbInfo *management_models.DBMemoryInfo) Operator
+		Operate(dbInfo *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo) Operator
 
 		Create(
 			ctx context.Context,
-			item *operation_models.Item,
-			opts *operation_models.IndexOpts,
+			item *badgerdb_operation_models_v3.Item,
+			opts *badgerdb_operation_models_v3.IndexOpts,
 			retrialOpts *co.RetrialOpts,
 		) error
 		Upsert(
 			ctx context.Context,
-			item *operation_models.Item,
-			opts *operation_models.IndexOpts,
+			item *badgerdb_operation_models_v3.Item,
+			opts *badgerdb_operation_models_v3.IndexOpts,
 			retrialOpts *co.RetrialOpts,
 		) error
 		Delete(
 			ctx context.Context,
-			item *operation_models.Item,
-			opts *operation_models.IndexOpts,
+			item *badgerdb_operation_models_v3.Item,
+			opts *badgerdb_operation_models_v3.IndexOpts,
 			retrialOpts *co.RetrialOpts,
 		) error
 		Load(
 			ctx context.Context,
-			item *operation_models.Item,
-			opts *operation_models.IndexOpts,
+			item *badgerdb_operation_models_v3.Item,
+			opts *badgerdb_operation_models_v3.IndexOpts,
 		) ([]byte, error)
 
 		List(
-			//ctx context.Context,
-			//item *operation_models.Item,
-			opts *operation_models.IndexOpts,
-			pagination *management_models.Pagination,
-		) (operation_models.Items, error)
+			ctx context.Context,
+			//item *badgerdb_operation_models_v3.Item,
+			opts *badgerdb_operation_models_v3.IndexOpts,
+			pagination *badgerdb_badgerdb_management_models_v3_v3.Pagination,
+		) (badgerdb_operation_models_v3.Items, error)
 		ListValuesFromIndexingKeys(
 			ctx context.Context,
-			opts *operation_models.IndexOpts,
-		) (operation_models.Items, error)
+			opts *badgerdb_operation_models_v3.IndexOpts,
+		) (badgerdb_operation_models_v3.Items, error)
 	}
 
-	BadgerOperator struct {
-		manager    manager.Manager
-		dbInfo     *management_models.DBMemoryInfo
+	BadgerOperatorV3Params struct {
+		Manager         badgerdb_manager_adaptor_v3.Manager
+		Serializer      go_serializer.Serializer
+		ChainedOperator *co.ChainOperator
+	}
+
+	BadgerOperatorV3 struct {
+		manager    badgerdb_manager_adaptor_v3.Manager
+		dbInfo     *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo
 		serializer go_serializer.Serializer
 
 		chainedOperator *co.ChainOperator
@@ -63,23 +69,21 @@ type (
 	}
 )
 
-func NewBadgerOperator(
-	manager manager.Manager,
-	serializer go_serializer.Serializer,
-	chainedOperator *co.ChainOperator,
-) Operator {
-	o := &BadgerOperator{
-		manager:         manager,
-		serializer:      serializer,
-		chainedOperator: chainedOperator,
+func NewBadgerOperatorV3(
+	params *BadgerOperatorV3Params,
+) (*BadgerOperatorV3, error) {
+	o := &BadgerOperatorV3{
+		manager:         params.Manager,
+		serializer:      params.Serializer,
+		chainedOperator: params.ChainedOperator,
 	}
 
-	return o
+	return o, nil
 }
 
 // Operate operates in the given database.
-func (o *BadgerOperator) Operate(dbInfo *management_models.DBMemoryInfo) Operator {
-	no := &BadgerOperator{
+func (o *BadgerOperatorV3) Operate(dbInfo *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo) Operator {
+	no := &BadgerOperatorV3{
 		manager:    o.manager,
 		dbInfo:     dbInfo,
 		serializer: o.serializer,
@@ -89,8 +93,8 @@ func (o *BadgerOperator) Operate(dbInfo *management_models.DBMemoryInfo) Operato
 }
 
 // operateInternally operates in the given database.
-func (o *BadgerOperator) operate(dbInfo *management_models.DBMemoryInfo) *BadgerOperator {
-	no := &BadgerOperator{
+func (o *BadgerOperatorV3) operate(dbInfo *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo) *BadgerOperatorV3 {
+	no := &BadgerOperatorV3{
 		manager:    o.manager,
 		dbInfo:     dbInfo,
 		serializer: o.serializer,
@@ -100,10 +104,10 @@ func (o *BadgerOperator) operate(dbInfo *management_models.DBMemoryInfo) *Badger
 }
 
 // Create checks if the key exists, if not, it stores the item.
-func (o *BadgerOperator) Create(
+func (o *BadgerOperatorV3) Create(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
 	txn := o.dbInfo.DB.NewTransaction(true)
@@ -280,10 +284,10 @@ func (o *BadgerOperator) Create(
 }
 
 // Upsert updates or creates the key value no matter if the key already exists or not.
-func (o *BadgerOperator) Upsert(
+func (o *BadgerOperatorV3) Upsert(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
 	txn := o.dbInfo.DB.NewTransaction(true)
@@ -554,10 +558,10 @@ func (o *BadgerOperator) Upsert(
 }
 
 // Delete deletes the given key entry if present.
-func (o *BadgerOperator) Delete(
+func (o *BadgerOperatorV3) Delete(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 	retrialOpts *co.RetrialOpts,
 ) error {
 	if !opts.HasIdx {
@@ -565,13 +569,13 @@ func (o *BadgerOperator) Delete(
 	}
 
 	switch opts.IndexProperties.IndexDeletionBehaviour {
-	case operation_models.IndexOnly:
+	case badgerdb_operation_models_v3.IndexOnly:
 		return o.deleteIdxOnly(ctx, item, opts, retrialOpts)
-	case operation_models.Cascade:
+	case badgerdb_operation_models_v3.Cascade:
 		return o.deleteCascade(ctx, item, opts, retrialOpts)
-	case operation_models.CascadeByIdx:
+	case badgerdb_operation_models_v3.CascadeByIdx:
 		return o.deleteCascadeByIdx(ctx, item, opts, retrialOpts)
-	case operation_models.None:
+	case badgerdb_operation_models_v3.None:
 		fallthrough
 	default:
 		return fmt.Errorf("delete was not called - invalid behaviour")
@@ -579,23 +583,23 @@ func (o *BadgerOperator) Delete(
 }
 
 // Load checks the given key and returns the serialized item's value whether it exists.
-func (o *BadgerOperator) Load(
+func (o *BadgerOperatorV3) Load(
 	ctx context.Context,
-	item *operation_models.Item,
-	opts *operation_models.IndexOpts,
+	item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
 ) (bs []byte, err error) {
 	if !opts.HasIdx {
 		return o.load(item.Key)
 	}
 
 	switch opts.IndexProperties.IndexSearchPattern {
-	case operation_models.IndexingList:
+	case badgerdb_operation_models_v3.IndexingList:
 		bs, err = o.indexingList(ctx, opts)
-	case operation_models.AndComputational:
+	case badgerdb_operation_models_v3.AndComputational:
 		bs, err = o.andComputationalSearch(ctx, opts)
-	case operation_models.OrComputational:
+	case badgerdb_operation_models_v3.OrComputational:
 		bs, err = o.orComputationalSearch(ctx, opts)
-	case operation_models.One:
+	case badgerdb_operation_models_v3.One:
 		fallthrough
 	default:
 		bs, err = o.straightSearch(ctx, opts)
@@ -604,12 +608,12 @@ func (o *BadgerOperator) Load(
 	return bs, err
 }
 
-func (o *BadgerOperator) List(
-	//ctx context.Context,
-	//item *operation_models.Item,
-	opts *operation_models.IndexOpts,
-	pagination *management_models.Pagination,
-) (items operation_models.Items, err error) {
+func (o *BadgerOperatorV3) List(
+	_ context.Context,
+	//item *badgerdb_operation_models_v3.Item,
+	opts *badgerdb_operation_models_v3.IndexOpts,
+	pagination *badgerdb_badgerdb_management_models_v3_v3.Pagination,
+) (items badgerdb_operation_models_v3.Items, err error) {
 	ok, err := o.manager.ValidatePagination(int(pagination.PageSize), int(pagination.PageID))
 	if err != nil {
 		return items, fmt.Errorf("invalid pagination: %v", err)
@@ -619,12 +623,12 @@ func (o *BadgerOperator) List(
 	}
 
 	switch opts.IndexProperties.ListSearchPattern {
-	case operation_models.All:
+	case badgerdb_operation_models_v3.All:
 		return o.listAll()
-	case operation_models.Default:
+	case badgerdb_operation_models_v3.Default:
 		fallthrough
 	default:
-		pagination = &management_models.Pagination{
+		pagination = &badgerdb_badgerdb_management_models_v3_v3.Pagination{
 			PageID:   1,
 			PageSize: 20,
 		}
@@ -632,20 +636,20 @@ func (o *BadgerOperator) List(
 	}
 }
 
-func (o *BadgerOperator) ListValuesFromIndexingKeys(
+func (o *BadgerOperatorV3) ListValuesFromIndexingKeys(
 	ctx context.Context,
-	opts *operation_models.IndexOpts,
-) (operation_models.Items, error) {
+	opts *badgerdb_operation_models_v3.IndexOpts,
+) (badgerdb_operation_models_v3.Items, error) {
 	idxOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
-		return operation_models.Items{}, nil
+		return badgerdb_operation_models_v3.Items{}, nil
 	}
 
-	items := make(operation_models.Items, len(opts.IndexingKeys))
+	items := make(badgerdb_operation_models_v3.Items, len(opts.IndexingKeys))
 	for idx, idxKey := range opts.IndexingKeys {
 		objKey, err := idxOp.load(idxKey)
 		if err != nil {
-			item := &operation_models.Item{
+			item := &badgerdb_operation_models_v3.Item{
 				Error: fmt.Errorf("error searching from idx key: %s", idxKey),
 			}
 			items[idx] = item
@@ -655,7 +659,7 @@ func (o *BadgerOperator) ListValuesFromIndexingKeys(
 
 		objValue, err := o.load(objKey)
 		if err != nil {
-			item := &operation_models.Item{
+			item := &badgerdb_operation_models_v3.Item{
 				Error: fmt.Errorf("error searching from main key: %s", objKey),
 			}
 			items[idx] = item
@@ -663,7 +667,7 @@ func (o *BadgerOperator) ListValuesFromIndexingKeys(
 			continue
 		}
 
-		item := &operation_models.Item{
+		item := &badgerdb_operation_models_v3.Item{
 			Key:   idxKey,
 			Value: objValue,
 		}
