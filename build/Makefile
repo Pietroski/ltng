@@ -14,7 +14,7 @@ build-ltng-db-node-image:
 
 ## docker lightning-db-node's image build with no caching
 build-ltng-db-node-image-no-cache:
-	docker image build --no-cache -t pietroski/lightning-db-node -f build/docker/lightning-db-node.Dockerfile .
+	docker image build --progress=plain --no-cache -t pietroski/lightning-db-node -f build/docker/lightning-db-node.Dockerfile .
 
 ## docker lightning-db's image tag
 tagging-ltng-db-node-image:
