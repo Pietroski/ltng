@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.1.0]
  - refactor: ltng-db support to engine versioning
  
 # [v1.0.31]
