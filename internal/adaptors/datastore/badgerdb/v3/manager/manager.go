@@ -16,24 +16,14 @@ import (
 )
 
 const (
-	InternalLocalManagement = ".db/internal/local/management"
+	InternalLocalManagement        = ".db/internal/local/management"
+	InternalLocalManagementVersion = "v3"
 
 	IndexedSuffixPath = "/indexed"
 	IndexedSuffixName = "-indexed"
 
 	IndexedListSuffixPath = "/indexed-list"
 	IndexedListSuffixName = "-indexed-list"
-
-	// TODO: Delete soft-delete stuff!!
-
-	SoftDeleteSuffixPath = "/soft-delete"
-	SoftDeleteSuffixName = "-soft-delete"
-
-	SoftDeleteListSuffixPath = "/soft-delete-list"
-	SoftDeleteListSuffixName = "-soft-delete-list"
-
-	SoftDeleteCounterSuffixPath = "/soft-delete-counter"
-	SoftDeleteCounterSuffixName = "-soft-delete-counter"
 
 	ErrCorruptedStoreDataCastFailure = "corrupted stored memory - failed to cast into DBMemInfo model"
 	ErrKeyNotFound                   = "key not found"
@@ -147,82 +137,11 @@ func (m *BadgerLocalManagerV3) CreateStore(
 		return m.deleteFromMemoryAndDisk(ctx, indexedInfoName)
 	}
 
-	softDeleteInfoPath := info.Path + SoftDeleteSuffixPath
-	softDeleteInfoName := info.Name + SoftDeleteSuffixName
-	softDeleteInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteInfoName, softDeleteInfoPath)
-	var createSoftDeleteStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(softDeleteInfo)
-	}
-	var deleteIndexedListStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, indexedListInfoName)
-	}
-
-	softDeleteListInfoPath := info.Path + SoftDeleteListSuffixPath
-	softDeleteListInfoName := info.Name + SoftDeleteListSuffixName
-	softDeleteListInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteListInfoName, softDeleteListInfoPath)
-	var createSoftDeleteListStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(softDeleteListInfo)
-	}
-	var deleteSoftDeleteStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, softDeleteInfoName)
-	}
-
-	softDeleteCounterInfoPath := info.Path + SoftDeleteCounterSuffixPath
-	softDeleteCounterInfoName := info.Name + SoftDeleteCounterSuffixName
-	softDeleteCounterInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteCounterInfoName, softDeleteCounterInfoPath)
-	var createSoftDeleteCounterStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(softDeleteCounterInfo)
-	}
-	var deleteSoftDeleteListStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, softDeleteListInfoName)
-	}
-
-	createSoftDeleteCounterOps := &co.Ops{
-		Action: &co.Action{
-			Act:         createSoftDeleteCounterStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteSoftDeleteListStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-	}
-
-	createSoftDeleteListOps := &co.Ops{
-		Action: &co.Action{
-			Act:         createSoftDeleteListStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        createSoftDeleteCounterOps,
-		},
-		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteSoftDeleteStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-	}
-	createSoftDeleteCounterOps.RollbackAction.Next = createSoftDeleteListOps
-
-	createSoftDeleteOps := &co.Ops{
-		Action: &co.Action{
-			Act:         createSoftDeleteStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        createSoftDeleteListOps,
-		},
-		RollbackAction: &co.RollbackAction{
-			RollbackAct: deleteIndexedListStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-	}
-	createSoftDeleteListOps.RollbackAction.Next = createSoftDeleteOps
-
 	createIndexedListOps := &co.Ops{
 		Action: &co.Action{
 			Act:         createIndexedListStore,
 			RetrialOpts: co.DefaultRetrialOps,
-			Next:        createSoftDeleteOps,
+			Next:        nil,
 		},
 		RollbackAction: &co.RollbackAction{
 			RollbackAct: deleteIndexedStore,
@@ -230,7 +149,6 @@ func (m *BadgerLocalManagerV3) CreateStore(
 			Next:        nil,
 		},
 	}
-	createSoftDeleteOps.RollbackAction.Next = createIndexedListOps
 
 	createIndexedOps := &co.Ops{
 		Action: &co.Action{
@@ -278,6 +196,9 @@ func (m *BadgerLocalManagerV3) DeleteStore(
 	if err != nil {
 		return err
 	}
+	var createStore = func() error {
+		return m.createOpenStoreAndLoadIntoMemory(info)
+	}
 
 	indexedInfoPath := info.Path + IndexedSuffixPath
 	indexedInfoName := info.Name + IndexedSuffixName
@@ -285,96 +206,20 @@ func (m *BadgerLocalManagerV3) DeleteStore(
 	var deleteIndexedStore = func() error {
 		return m.deleteFromMemoryAndDisk(ctx, indexedInfoName)
 	}
-	var createStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(info)
-	}
-
-	indexedListInfoPath := info.Path + IndexedListSuffixPath
-	indexedListInfoName := info.Name + IndexedListSuffixName
-	indexedListInfo := badgerdb_management_models_v3.NewDBInfo(indexedListInfoName, indexedListInfoPath)
-	var deleteIndexedListStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, indexedListInfoName)
-	}
 	var createIndexedStore = func() error {
 		return m.createOpenStoreAndLoadIntoMemory(indexedInfo)
 	}
 
-	softDeleteInfoPath := info.Path + SoftDeleteSuffixPath
-	softDeleteInfoName := info.Name + SoftDeleteSuffixName
-	softDeleteInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteInfoName, softDeleteInfoPath)
-	var deleteSoftDeleteStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, softDeleteInfoName)
+	indexedListInfoName := info.Name + IndexedListSuffixName
+	var deleteIndexedListStore = func() error {
+		return m.deleteFromMemoryAndDisk(ctx, indexedListInfoName)
 	}
-	var createIndexedListStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(indexedListInfo)
-	}
-
-	softDeleteListInfoPath := info.Path + SoftDeleteListSuffixPath
-	softDeleteListInfoName := info.Name + SoftDeleteListSuffixName
-	softDeleteListInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteListInfoName, softDeleteListInfoPath)
-	var deleteSoftDeleteListStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, softDeleteListInfoName)
-	}
-	var createSoftDeleteStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(softDeleteInfo)
-	}
-
-	//softDeleteCounterInfoPath := info.Path + SoftDeleteCounterSuffixPath
-	softDeleteCounterInfoName := info.Name + SoftDeleteCounterSuffixName
-	//softDeleteCounterInfo := badgerdb_management_models_v3.NewDBInfo(softDeleteCounterInfoName, softDeleteCounterInfoPath)
-	var deleteSoftDeleteCounterStore = func() error {
-		return m.deleteFromMemoryAndDisk(ctx, softDeleteCounterInfoName)
-	}
-	var createSoftDeleteListStore = func() error {
-		return m.createOpenStoreAndLoadIntoMemory(softDeleteListInfo)
-	}
-
-	deleteSoftDeleteCounterStoreOps := &co.Ops{
-		Action: &co.Action{
-			Act:         deleteSoftDeleteCounterStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-		RollbackAction: &co.RollbackAction{
-			RollbackAct: createSoftDeleteListStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-	}
-
-	deleteSoftDeleteListStoreOps := &co.Ops{
-		Action: &co.Action{
-			Act:         deleteSoftDeleteListStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        deleteSoftDeleteCounterStoreOps,
-		},
-		RollbackAction: &co.RollbackAction{
-			RollbackAct: createSoftDeleteStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-	}
-	deleteSoftDeleteCounterStoreOps.RollbackAction.Next = deleteSoftDeleteListStoreOps
-
-	deleteSoftDeleteStoreOps := &co.Ops{
-		Action: &co.Action{
-			Act:         deleteSoftDeleteStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        deleteSoftDeleteListStoreOps,
-		},
-		RollbackAction: &co.RollbackAction{
-			RollbackAct: createIndexedListStore,
-			RetrialOpts: co.DefaultRetrialOps,
-			Next:        nil,
-		},
-	}
-	deleteSoftDeleteListStoreOps.RollbackAction.Next = deleteSoftDeleteStoreOps
 
 	deleteIndexedListStoreOps := &co.Ops{
 		Action: &co.Action{
 			Act:         deleteIndexedListStore,
 			RetrialOpts: co.DefaultRetrialOps,
-			Next:        deleteSoftDeleteStoreOps,
+			Next:        nil,
 		},
 		RollbackAction: &co.RollbackAction{
 			RollbackAct: createIndexedStore,
@@ -382,7 +227,6 @@ func (m *BadgerLocalManagerV3) DeleteStore(
 			Next:        nil,
 		},
 	}
-	deleteSoftDeleteStoreOps.RollbackAction.Next = deleteIndexedListStoreOps
 
 	deleteIndexedStoreOps := &co.Ops{
 		Action: &co.Action{
@@ -540,7 +384,7 @@ func (m *BadgerLocalManagerV3) ListStoreMemoryInfo(
 }
 
 func (m *BadgerLocalManagerV3) listAllStoresInfoFromMemoryOrDisk(
-	ctx context.Context,
+	_ context.Context,
 ) ([]*badgerdb_management_models_v3.DBInfo, error) {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 50
@@ -572,7 +416,7 @@ func (m *BadgerLocalManagerV3) listAllStoresInfoFromMemoryOrDisk(
 }
 
 func (m *BadgerLocalManagerV3) listAllStoresMemoryInfoFromMemoryOrDisk(
-	ctx context.Context,
+	_ context.Context,
 ) ([]*badgerdb_management_models_v3.DBMemoryInfo, error) {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 50

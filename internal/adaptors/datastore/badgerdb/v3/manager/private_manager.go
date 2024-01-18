@@ -14,7 +14,9 @@ import (
 
 // CreateOpenStoreAndLoadIntoMemory method checks if the give into key already exists in database,
 // if it does not, it opens a db path and stores it in the db manager and loads it into memory for caching.
-func (m *BadgerLocalManagerV3) createOpenStoreAndLoadIntoMemory(info *badgerdb_badgerdb_management_models_v3_v3.DBInfo) error {
+func (m *BadgerLocalManagerV3) createOpenStoreAndLoadIntoMemory(
+	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
+) error {
 	sKey, err := m.serializer.Serialize(info.Name)
 	if err != nil {
 		return err
@@ -90,7 +92,7 @@ func (m *BadgerLocalManagerV3) persistInfo(
 func (m *BadgerLocalManagerV3) openAndLoad(
 	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
 ) error {
-	path := InternalLocalManagement + "/" + info.Path
+	path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
 	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
 		return fmt.Errorf("error opening db path - %v: %v", info.Name, err)
@@ -109,7 +111,7 @@ func (m *BadgerLocalManagerV3) openAndLoad(
 func (m *BadgerLocalManagerV3) openLoadAndReturn(
 	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
 ) (*badger.DB, error) {
-	path := InternalLocalManagement + "/" + info.Path
+	path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
 	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
 		return db, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
@@ -228,7 +230,8 @@ func (m *BadgerLocalManagerV3) getStoreMemoryInfoFromMemoryOrDisk(
 			"failed to get store from db",
 			go_logger.Mapper("err", err.Error()),
 		)
-		return &badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo{}, fmt.Errorf("failed to get store from db")
+		return &badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo{},
+			fmt.Errorf("failed to get store from db")
 	}
 
 	db, err := m.openLoadAndReturn(dbInfo)
