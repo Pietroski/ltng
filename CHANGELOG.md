@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.2.0]
  - refactor: client call version verification on startup
  - refactor: directory manager structure versioning
  - refactor: ltng-db support to engine versioning
