@@ -1,27 +1,34 @@
 # CHANGELOG
 
 # [UNRELEASED]
- 
-# [v1.1.0]
+ - refactor: client call version verification on startup
+ - refactor: directory manager structure versioning
  - refactor: ltng-db support to engine versioning
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.31]
  - chore: docker version bump
  - chore: docker version bump
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.30]
  - chore: go deps bump
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.29]
  - chore: docker version
  - fix: upsert behaviour - rawIndexList, err = indexListItem.ValueCopy- [nil]
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.28]
  - chore: docker version bump
  - chore: docker version bump
+ - Merge branch 'release/merging-branch' into 'main'
+ - Merge branch 'main' into 'release/merging-branch'
  
 # [v1.0.27]
  - feat: mocked ltng client
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.26]
  - chore: docker build version bump
@@ -34,18 +41,22 @@
 # [v1.0.24]
  - chore: docker build version
  - chore: drone pipeline & validation
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.23]
  - chore: docker build version bump
  - chore: docker file and build
  - feat: delete on cascade by index
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.22]
  - feat: default retrial options variable
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.21]
  - chore: docker build version bump
  - refactor: repo and upsert operation behaviour
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.20]
  - chore: docker version
@@ -53,30 +64,39 @@
 # [v1.0.19]
  - chore: go deps bump
  - chore: docker version bump
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.18]
  - chore: drone pipeline and validate, go version and deps bump, small adaptor refactor
+ - Merge branch 'release/merging-branch' into 'main'
  - refactor: badger v3 separated as adaptor
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.17]
  - chore: docker build version
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.16]
  - fix: uint32 to uint64 in tests for the pagination
  
 # [v1.0.15]
  - refactor: pagination type & deps update
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.14]
  - chore: repo and docker version bump - synced
  - chore: gitlab pipeline removed
  - chore: upgraded deps
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.12]
+ - Merge branch 'release/merging-branch' into 'main'
  - chore: docker version bump
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.11]
  - fix: delete before create store does not panic anymore
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.0.10]
  
