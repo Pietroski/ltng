@@ -6,6 +6,7 @@ OUTPUT_PATH=schemas/generated
 SWAGGER_PATH="$OUTPUT_PATH/swagger"
 
 declare -a proto_list=(
+    "common/queries/config"
     "common/search"
 
     "management"
@@ -25,3 +26,4 @@ done
 
 go mod tidy
 go mod download
+go mod vendor

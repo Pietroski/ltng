@@ -3,6 +3,7 @@ syntax = "proto3";
 package operations;
 option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/transactions/operations;grpc_ops";
 
+import "common/queries/config/engine.proto";
 import "transactions/operations/operation_messages.proto";
 
 service Operation {
@@ -19,4 +20,8 @@ service Operation {
   // ListValuesFromIndexingKeys
   rpc ListValuesFromIndexingKeys(ListValuesFromIndexingKeysRequest)
       returns (ListValuesFromIndexingKeysResponse);
+
+  // CheckOperatorEngine
+  rpc CheckOperatorEngine(common.queries.config.CheckEngineRequest)
+      returns(common.queries.config.CheckEngineResponse);
 }

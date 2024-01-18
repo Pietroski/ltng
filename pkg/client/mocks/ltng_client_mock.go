@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	grpc_query_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/queries/config"
 	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
 	grpc_ops "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/transactions/operations"
 	grpc "google.golang.org/grpc"
@@ -35,6 +36,46 @@ func NewMockLTNGClient(ctrl *gomock.Controller) *MockLTNGClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockLTNGClient) EXPECT() *MockLTNGClientMockRecorder {
 	return m.recorder
+}
+
+// CheckManagerEngine mocks base method.
+func (m *MockLTNGClient) CheckManagerEngine(arg0 context.Context, arg1 *grpc_query_config.CheckEngineRequest, arg2 ...grpc.CallOption) (*grpc_query_config.CheckEngineResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CheckManagerEngine", varargs...)
+	ret0, _ := ret[0].(*grpc_query_config.CheckEngineResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckManagerEngine indicates an expected call of CheckManagerEngine.
+func (mr *MockLTNGClientMockRecorder) CheckManagerEngine(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckManagerEngine", reflect.TypeOf((*MockLTNGClient)(nil).CheckManagerEngine), varargs...)
+}
+
+// CheckOperatorEngine mocks base method.
+func (m *MockLTNGClient) CheckOperatorEngine(arg0 context.Context, arg1 *grpc_query_config.CheckEngineRequest, arg2 ...grpc.CallOption) (*grpc_query_config.CheckEngineResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CheckOperatorEngine", varargs...)
+	ret0, _ := ret[0].(*grpc_query_config.CheckEngineResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckOperatorEngine indicates an expected call of CheckOperatorEngine.
+func (mr *MockLTNGClientMockRecorder) CheckOperatorEngine(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOperatorEngine", reflect.TypeOf((*MockLTNGClient)(nil).CheckOperatorEngine), varargs...)
 }
 
 // Close mocks base method.

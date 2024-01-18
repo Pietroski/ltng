@@ -3,6 +3,7 @@ syntax = "proto3";
 package management;
 option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management;grpc_mngmt";
 
+import "common/queries/config/engine.proto";
 import "management/management_messages.proto";
 
 service Management {
@@ -15,4 +16,8 @@ service Management {
       returns(RestartLightningNodeResponse);
   rpc ShutdownLightningNode(ShutdownLightningNodeRequest)
       returns(ShutdownLightningNodeResponse);
+
+  // CheckManagerEngine
+  rpc CheckManagerEngine(common.queries.config.CheckEngineRequest)
+      returns(common.queries.config.CheckEngineResponse);
 }

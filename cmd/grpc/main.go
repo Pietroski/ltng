@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	common_model "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/common"
 
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
@@ -41,8 +42,9 @@ func main() {
 		return
 	}
 
-	switch cfg.LTNGNode.LTNGEngine.Engine {
-	case "BADGER-DB-ENGINE_V3":
+	switch common_model.ToEngineVersionType(cfg.LTNGNode.LTNGEngine.Engine) {
+	case common_model.DefaultEngineVersionType,
+		common_model.BadgerDBV3EngineVersionType:
 		//params := &badgerdb_engine_v3.V3Params{
 		//	Ctx:             ctx,
 		//	CancelFn:        cancelFn,
@@ -52,8 +54,9 @@ func main() {
 		//	Binder:          binder,
 		//	ChainedOperator: chainedOperator,
 		//}
-		fallthrough
-	default:
+
+		badgerdb_engine_v3.StartV3(ctx, cancelFn, cfg, logger, serializer, binder, chainedOperator)
+	default: // TODO return an error instead?
 		badgerdb_engine_v3.StartV3(ctx, cancelFn, cfg, logger, serializer, binder, chainedOperator)
 	}
 }

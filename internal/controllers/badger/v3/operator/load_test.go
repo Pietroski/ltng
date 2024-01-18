@@ -39,6 +39,7 @@ func TestBadgerDBServiceController_Load(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
 
 			controllerParams := &BadgerDBOperatorServiceControllerV3Params{
+				Config:   config,
 				Logger:   logger,
 				Binder:   mockBinder,
 				Manager:  mockManager,
@@ -86,6 +87,7 @@ func TestBadgerDBServiceController_Load(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
 
 			controllerParams := &BadgerDBOperatorServiceControllerV3Params{
+				Config:   config,
 				Logger:   logger,
 				Binder:   mockBinder,
 				Manager:  mockManager,
@@ -169,6 +171,7 @@ func TestBadgerDBServiceController_Load(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
 
 			controllerParams := &BadgerDBOperatorServiceControllerV3Params{
+				Config:   config,
 				Logger:   logger,
 				Binder:   mockBinder,
 				Manager:  mockManager,

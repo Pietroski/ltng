@@ -9,11 +9,12 @@ services:
     env_file:
       - ../../.tests.integration.ltng.db.env
     ports:
+      - '7001:7001'
       - '50051:50051'
       - '50052:50052'
     volumes:
-      - lightning-db-node-benchmark-test-db:/var/lib/lightning-db-node/data
+      - lightning-db-node-integration-test-db:/var/lib/lightning-db-node/data
 
 volumes:
-  lightning-db-node-benchmark-test-db:
+  lightning-db-node-integration-test-db:
     driver: local

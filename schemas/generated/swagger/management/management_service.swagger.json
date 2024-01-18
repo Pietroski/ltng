@@ -17,6 +17,9 @@
   ],
   "paths": {},
   "definitions": {
+    "configCheckEngineResponse": {
+      "type": "object"
+    },
     "managementCreateStoreResponse": {
       "type": "object",
       "properties": {

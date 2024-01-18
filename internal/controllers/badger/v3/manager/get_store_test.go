@@ -39,6 +39,7 @@ func TestBadgerDBManagerServiceController_GetStore(t *testing.T) {
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mock_badgerdb_manager_adaptor_v3.NewMockManager(ctrl)
 			controllerParams := &BadgerDBManagerServiceControllerV3Params{
+				Config:  config,
 				Logger:  logger,
 				Binder:  mockedBinder,
 				Manager: manager,
@@ -80,6 +81,7 @@ func TestBadgerDBManagerServiceController_GetStore(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			manager := mock_badgerdb_manager_adaptor_v3.NewMockManager(ctrl)
 			controllerParams := &BadgerDBManagerServiceControllerV3Params{
+				Config:  config,
 				Logger:  logger,
 				Binder:  binder,
 				Manager: manager,
@@ -121,6 +123,7 @@ func TestBadgerDBManagerServiceController_GetStore(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			manager := mock_badgerdb_manager_adaptor_v3.NewMockManager(ctrl)
 			controllerParams := &BadgerDBManagerServiceControllerV3Params{
+				Config:  config,
 				Logger:  logger,
 				Binder:  binder,
 				Manager: manager,

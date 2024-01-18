@@ -106,6 +106,7 @@ func StartV3(
 	}
 	managerFactoryParams := &badgerdb_manager_factory_v3.BadgerDBManagerServiceFactoryV3Params{
 		Listener: managerListener,
+		Config:   cfg,
 		Logger:   logger,
 		Binder:   binder,
 		Manager:  mngr,
@@ -134,6 +135,7 @@ func StartV3(
 	}
 	operatorParams := &badgerdb_operator_factory_v3.BadgerDBServiceOperatorFactoryV3Params{
 		Listener: operatorListener,
+		Config:   cfg,
 		Logger:   logger,
 		Binder:   binder,
 		Manager:  mngr,

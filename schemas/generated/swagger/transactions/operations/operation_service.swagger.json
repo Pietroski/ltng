@@ -45,6 +45,9 @@
       ],
       "default": "DEFAULT"
     },
+    "configCheckEngineResponse": {
+      "type": "object"
+    },
     "operationsCreateResponse": {
       "type": "object",
       "title": "CreateResponse"

@@ -2,6 +2,7 @@ package badgerdb_manager_factory_v3
 
 import (
 	"fmt"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
 	"net"
 
 	"google.golang.org/grpc"
@@ -17,6 +18,7 @@ import (
 type (
 	BadgerDBManagerServiceFactoryV3Params struct {
 		Listener net.Listener
+		Config   *ltng_node_config.Config
 		Logger   go_logger.Logger
 		Binder   go_binder.Binder
 		Manager  badgerdb_manager_adaptor_v3.Manager
@@ -24,6 +26,7 @@ type (
 
 	BadgerDBManagerServiceFactoryV3 struct {
 		listener net.Listener
+		cfg      *ltng_node_config.Config
 		server   *grpc.Server
 		logger   go_logger.Logger
 		binder   go_binder.Binder
@@ -38,12 +41,14 @@ func NewBadgerDBManagerServiceFactoryV3(
 ) (*BadgerDBManagerServiceFactoryV3, error) {
 	factory := &BadgerDBManagerServiceFactoryV3{
 		listener: params.Listener,
+		cfg:      params.Config,
 		logger:   params.Logger,
 		binder:   params.Binder,
 		manager:  params.Manager,
 	}
 
 	controllerParams := &badgerdb_manager_controller_v3.BadgerDBManagerServiceControllerV3Params{
+		Config:  factory.cfg,
 		Logger:  factory.logger,
 		Binder:  factory.binder,
 		Manager: factory.manager,
