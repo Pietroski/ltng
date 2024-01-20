@@ -1,6 +1,7 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - feat: grpcurl tests and reflection proto analisys
  
 # [v1.2.0]
  - refactor: client call version verification on startup
