@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.2.1]
  - feat: grpcurl tests and reflection proto analisys
  
 # [v1.2.0]
