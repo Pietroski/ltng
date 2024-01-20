@@ -15,6 +15,7 @@ require (
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.20
 	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.18
 	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
+	gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11
 	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.12
 	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.18
 	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25

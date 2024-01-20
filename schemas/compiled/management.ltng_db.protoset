@@ -1,0 +1,64 @@
+
+ÿ
+google/protobuf/timestamp.protogoogle.protobuf";
+	Timestamp
+seconds (Rseconds
+nanos (RnanosB…
+com.google.protobufBTimestampProtoPZ2google.golang.org/protobuf/types/known/timestamppbø¢GPBªGoogle.Protobuf.WellKnownTypesbproto3
+‡
+common/search/pagination.protocommon.search"B
+
+Pagination
+page_id (RpageId
+	page_size (RpageSizeB‰Z†gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/search;grpc_paginationbproto3
+Á
+$management/management_messages.proto
+managementgoogle/protobuf/timestamp.protocommon/search/pagination.proto"­
+DBInfo
+name (	Rname
+path (	Rpath9
+
+created_at (2.google.protobuf.TimestampR	createdAt@
+last_opened_at (2.google.protobuf.TimestampRlastOpenedAt"<
+CreateStoreRequest
+name (	Rname
+path (	Rpath"’
+CreateStoreResponse9
+
+created_at (2.google.protobuf.TimestampR	createdAt@
+last_opened_at (2.google.protobuf.TimestampRlastOpenedAt"(
+DeleteStoreRequest
+name (	Rname"
+DeleteStoreResponse"%
+GetStoreRequest
+name (	Rname"?
+GetStoreResponse+
+db_info (2.management.DBInfoRdbInfo"N
+ListStoresRequest9
+
+pagination (2.common.search.PaginationR
+pagination"E
+ListStoresResponse/
+	dbs_infos (2.management.DBInfoRdbsInfos"
+RestartLightningNodeRequest"
+RestartLightningNodeResponse"
+ShutdownLightningNodeRequest"
+ShutdownLightningNodeResponseB€Z~gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management;grpc_mngmtbproto3
+ž
+"common/queries/config/engine.protocommon.queries.config",
+CheckEngineRequest
+engine (	Rengine"
+CheckEngineResponseB“Zgitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/queries/config;grpc_query_configbproto3
+
+#management/management_service.proto
+management"common/queries/config/engine.proto$management/management_messages.proto2†
+
+ManagementN
+CreateStore.management.CreateStoreRequest.management.CreateStoreResponseN
+DeleteStore.management.DeleteStoreRequest.management.DeleteStoreResponseE
+GetStore.management.GetStoreRequest.management.GetStoreResponseK
+
+ListStores.management.ListStoresRequest.management.ListStoresResponsei
+RestartLightningNode'.management.RestartLightningNodeRequest(.management.RestartLightningNodeResponsel
+ShutdownLightningNode(.management.ShutdownLightningNodeRequest).management.ShutdownLightningNodeResponsek
+CheckManagerEngine).common.queries.config.CheckEngineRequest*.common.queries.config.CheckEngineResponseB€Z~gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management;grpc_mngmtbproto3

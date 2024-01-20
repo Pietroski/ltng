@@ -28,6 +28,14 @@ update-docker-ltng-db-node-image:
 ltng-docker-patch: build-ltng-db-node-image tagging-ltng-db-node-image update-docker-ltng-db-node-image
 
 #########################################################################################################################
+
+start-local-ltng-db:
+	DOCKER_BUILDKIT=0 docker compose -f ./build/orchestrator/docker-compose.yml up -d --build
+
+stop-local-ltng-db:
+	docker compose -f ./build/orchestrator/docker-compose.yml down
+
+#########################################################################################################################
 #
 #remote-build-ltng-db-node-image:
 #	build/docker/scripts/remote-build-ltng-db-node-image.sh $(REMOTE) $(API_REMOTE) $(NETRC_LOGIN) $(NETRC_PASSWORD)

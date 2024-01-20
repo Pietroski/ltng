@@ -141,6 +141,8 @@ gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.
 gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.18/go.mod h1:+laypcHnN/ouK8VdDe7nlXuNiK42k4RG5yeeXzndO0A=
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12 h1:MHQH18OVc2aERVg2YdFFgHt+fej/ea4ya//7mxaxwIY=
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12/go.mod h1:rwhu+jlRKBNRSxY0S/Hf8ztHOxkolnnBbCxrmcJ21x8=
+gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11 h1:Uapy2CuQiyUsg7cVF0J8G9bbJ+kjFYsuPLcNDF0oQ+o=
+gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11/go.mod h1:Hv2HGxd8bZB8DjENqsB6ESBv00/rfrHctfJCEqBz0s8=
 gitlab.com/pietroski-software-company/tools/random/go-random v0.0.12 h1:oafGfxRsDHsvv9qFoveKDz4cuSNfpTQOwXF2bj6hPlM=
 gitlab.com/pietroski-software-company/tools/random/go-random v0.0.12/go.mod h1:eFOZKbtFxtZarJa7yhB5pbaTQPDJ+brVb4N2q7wGnjE=
 gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.18 h1:rnLT/mz30gM9RF+/7YzlUGNnckqC7SdwunnFMgqWDFI=

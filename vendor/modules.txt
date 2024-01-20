@@ -127,6 +127,9 @@ gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger/dyer
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger/encapsulator
 gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/publisher
+# gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11
+## explicit; go 1.21
+gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer
 # gitlab.com/pietroski-software-company/tools/random/go-random v0.0.12
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random
@@ -237,6 +240,9 @@ google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
+google.golang.org/grpc/reflection
+google.golang.org/grpc/reflection/grpc_reflection_v1
+google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/resolver
 google.golang.org/grpc/resolver/dns
 google.golang.org/grpc/serviceconfig

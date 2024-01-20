@@ -2,15 +2,17 @@ package badgerdb_manager_factory_v3
 
 import (
 	"fmt"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
 
 	badgerdb_manager_adaptor_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
 	badgerdb_manager_controller_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/controllers/badger/v3/manager"
 	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
 )
@@ -65,10 +67,17 @@ func NewBadgerDBManagerServiceFactoryV3(
 }
 
 func (s *BadgerDBManagerServiceFactoryV3) handle() {
-	var grpcOpts []grpc.ServerOption
+	grpcOpts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			go_tracer_middleware.NewGRPCUnaryTracerServerMiddleware(),
+		),
+	}
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	grpc_mngmt.RegisterManagementServer(grpcServer, s.controller)
+
+	// Register reflection service on gRPC server.
+	reflection.Register(grpcServer)
 
 	s.server = grpcServer
 }

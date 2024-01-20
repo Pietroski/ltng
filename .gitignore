@@ -10,10 +10,10 @@
 .netrc
 
 # env files
-.env
-.env.prod
-.env.stg
-.env.dev
+.local.env
+.prod.env
+.stg.env
+.dev.env
 
 # playgroud directory
 playground

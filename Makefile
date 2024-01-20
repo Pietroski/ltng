@@ -2,6 +2,7 @@
 
 -include ./scripts/docs/Makefile
 -include ./scripts/schemas/Makefile
+-include ./scripts/gPRC-curl/grpc-curl.mk
 
 # Drone-ci makefile commands
 -include .pipelines/.drone/Makefile
