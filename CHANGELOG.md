@@ -2,6 +2,9 @@
 
 # [UNRELEASED]
  
+# [v1.2.3]
+ - chore: dockerfile go version
+ 
 # [v1.2.2]
  - Major repository refactor
  
