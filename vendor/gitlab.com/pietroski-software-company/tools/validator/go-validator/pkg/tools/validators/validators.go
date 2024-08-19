@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o ../../../fakes/fake_validator.go . Validator
+//go:generate mockgen -package mocks -destination ../../../mocks/mocked_validators.go . Validator
+
 type (
 	Validator interface {
 		Validate(obj interface{}) (err error)

@@ -1,9 +1,11 @@
 package badgerdb_manager_adaptor_v3
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
@@ -16,7 +18,7 @@ import (
 )
 
 const (
-	InternalLocalManagement        = ".db/internal/local/management"
+	InternalLocalManagement        = ".db/internal/local/management/" + InternalLocalManagementVersion
 	InternalLocalManagementVersion = "v3"
 
 	IndexedSuffixPath = "/indexed"
@@ -457,4 +459,44 @@ func (m *BadgerLocalManagerV3) listAllStoresMemoryInfoFromMemoryOrDisk(
 	}
 
 	return memoryInfoList, nil
+}
+
+func (m *BadgerLocalManagerV3) Backup(_ context.Context, filePath string, backupSince uint64) error {
+	buffer := bytes.NewBuffer([]byte{})
+	_, err := m.db.Backup(buffer, backupSince)
+	if err != nil {
+		return fmt.Errorf("failed to backup: %v", err)
+	}
+
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to create backup file: %v", err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	_, err = f.Write(buffer.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to write backup file: %v", err)
+	}
+
+	return nil
+}
+
+func (m *BadgerLocalManagerV3) RestoreBackup(_ context.Context, filePath string, maxPendingWrites int) error {
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_RDONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open backup file: %v", err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	err = m.db.Load(f, maxPendingWrites)
+	if err != nil {
+		return fmt.Errorf("failed to restore backup: %v", err)
+	}
+
+	return nil
 }

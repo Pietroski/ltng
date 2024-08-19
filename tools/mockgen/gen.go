@@ -1,6 +1,9 @@
+//go:build tools
+// +build tools
+
 package mock_generator
 
-import _ "github.com/golang/mock/mockgen/model"
+import _ "go.uber.org/mock/mockgen/model"
 
 // adaptors
 // // datastore

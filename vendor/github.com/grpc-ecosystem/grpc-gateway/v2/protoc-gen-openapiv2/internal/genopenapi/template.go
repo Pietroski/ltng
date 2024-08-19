@@ -106,7 +106,8 @@ var wktSchemas = map[string]schemaCore{
 	},
 }
 
-func listEnumNames(reg *descriptor.Registry, enum *descriptor.Enum) (names []string) {
+func listEnumNames(reg *descriptor.Registry, enum *descriptor.Enum) interface{} {
+	var names []string
 	for _, value := range enum.GetValue() {
 		if !isVisible(getEnumValueVisibilityOption(value), reg) {
 			continue
@@ -124,7 +125,8 @@ func listEnumNames(reg *descriptor.Registry, enum *descriptor.Enum) (names []str
 	return nil
 }
 
-func listEnumNumbers(reg *descriptor.Registry, enum *descriptor.Enum) (numbers []int) {
+func listEnumNumbers(reg *descriptor.Registry, enum *descriptor.Enum) interface{} {
+	var numbers []int
 	for _, value := range enum.GetValue() {
 		if reg.GetOmitEnumDefaultValue() && value.GetNumber() == 0 {
 			continue
@@ -167,6 +169,11 @@ func getEnumDefaultNumber(reg *descriptor.Registry, enum *descriptor.Enum) inter
 // messageToQueryParameters converts a message to a list of OpenAPI query parameters.
 func messageToQueryParameters(message *descriptor.Message, reg *descriptor.Registry, pathParams []descriptor.Parameter, body *descriptor.Body, httpMethod string) (params []openapiParameterObject, err error) {
 	for _, field := range message.Fields {
+		// When body is set to oneof field, we want to skip other fields in the oneof group.
+		if isBodySameOneOf(body, field) {
+			continue
+		}
+
 		if !isVisible(getFieldVisibilityOption(field), reg) {
 			continue
 		}
@@ -181,6 +188,22 @@ func messageToQueryParameters(message *descriptor.Message, reg *descriptor.Regis
 		params = append(params, p...)
 	}
 	return params, nil
+}
+
+func isBodySameOneOf(body *descriptor.Body, field *descriptor.Field) bool {
+	if field.OneofIndex == nil {
+		return false
+	}
+
+	if body == nil || len(body.FieldPath) == 0 {
+		return false
+	}
+
+	if body.FieldPath[0].Target.OneofIndex == nil {
+		return false
+	}
+
+	return *body.FieldPath[0].Target.OneofIndex == *field.OneofIndex
 }
 
 // queryParams converts a field to a list of OpenAPI query parameters recursively through the use of nestedQueryParams.
@@ -326,6 +349,7 @@ func nestedQueryParams(message *descriptor.Message, field *descriptor.Field, pre
 			Format:      schema.Format,
 			Pattern:     schema.Pattern,
 			Required:    required,
+			UniqueItems: schema.UniqueItems,
 			extensions:  schema.extensions,
 			Enum:        schema.Enum,
 		}
@@ -411,6 +435,10 @@ func getMapParamKey(t descriptorpb.FieldDescriptorProto_Type) (string, error) {
 // findServicesMessagesAndEnumerations discovers all messages and enums defined in the RPC methods of the service.
 func findServicesMessagesAndEnumerations(s []*descriptor.Service, reg *descriptor.Registry, m messageMap, ms messageMap, e enumMap, refs refMap) {
 	for _, svc := range s {
+		if !isVisible(getServiceVisibilityOption(svc), reg) {
+			continue
+		}
+
 		for _, meth := range svc.Methods {
 			// Request may be fully included in query
 			{
@@ -1136,6 +1164,8 @@ func renderServices(services []*descriptor.Service, paths *openapiPathsObject, r
 				continue
 			}
 
+			deprecated := reg.GetEnableRpcDeprecation() && meth.GetOptions().GetDeprecated()
+
 			for bIdx, b := range meth.Bindings {
 				operationFunc := operationForMethod(b.HTTPMethod)
 				// Iterate over all the OpenAPI parameters
@@ -1306,7 +1336,7 @@ func renderServices(services []*descriptor.Service, paths *openapiPathsObject, r
 						// "NOTE: the referred field must be present at the top-level of the request message type."
 						// Ref: https://github.com/googleapis/googleapis/blob/b3397f5febbf21dfc69b875ddabaf76bee765058/google/api/http.proto#L350-L352
 						if len(b.Body.FieldPath) > 1 {
-							return fmt.Errorf("Body of request %q is not a top level field: '%v'.", meth.Service.GetName(), b.Body.FieldPath)
+							return fmt.Errorf("body of request %q is not a top level field: '%v'", meth.Service.GetName(), b.Body.FieldPath)
 						}
 						bodyField := b.Body.FieldPath[0]
 						if reg.GetUseJSONNamesForFields() {
@@ -1481,6 +1511,7 @@ func renderServices(services []*descriptor.Service, paths *openapiPathsObject, r
 				operationObject := &openapiOperationObject{
 					Parameters: parameters,
 					Responses:  openapiResponsesObject{},
+					Deprecated: deprecated,
 				}
 
 				if !reg.GetDisableDefaultResponses() {
@@ -1539,14 +1570,17 @@ func renderServices(services []*descriptor.Service, paths *openapiPathsObject, r
 					grpclog.Error(err)
 					return err
 				}
+
 				opts, err := getMethodOpenAPIOption(reg, meth)
 				if opts != nil {
 					if err != nil {
 						panic(err)
 					}
 					operationObject.ExternalDocs = protoExternalDocumentationToOpenAPIExternalDocumentation(opts.ExternalDocs, reg, meth)
-					// TODO(ivucica): this would be better supported by looking whether the method is deprecated in the proto file
-					operationObject.Deprecated = opts.Deprecated
+
+					if opts.Deprecated {
+						operationObject.Deprecated = true
+					}
 
 					if opts.Summary != "" {
 						operationObject.Summary = opts.Summary
@@ -2476,6 +2510,7 @@ func protoComments(reg *descriptor.Registry, file *descriptor.File, outers []str
 			// - trim every line only if that is the case
 			// - join by \n
 			comments = strings.ReplaceAll(comments, "\n ", "\n")
+			comments = removeInternalComments(comments)
 		}
 		if loc.TrailingComments != nil {
 			trailing := strings.TrimSpace(*loc.TrailingComments)
@@ -2902,7 +2937,6 @@ func updateswaggerObjectFromJSONSchema(s *openapiSchemaObject, j *openapi_option
 		s.Items.MinLength = j.GetMinLength()
 		s.Items.Pattern = j.GetPattern()
 		s.Items.Default = j.GetDefault()
-		s.Items.UniqueItems = j.GetUniqueItems()
 		s.Items.MaxProperties = j.GetMaxProperties()
 		s.Items.MinProperties = j.GetMinProperties()
 		s.Items.Required = j.GetRequired()
@@ -2928,7 +2962,6 @@ func updateswaggerObjectFromJSONSchema(s *openapiSchemaObject, j *openapi_option
 		s.MinLength = j.GetMinLength()
 		s.Pattern = j.GetPattern()
 		s.Default = j.GetDefault()
-		s.UniqueItems = j.GetUniqueItems()
 		s.MaxProperties = j.GetMaxProperties()
 		s.MinProperties = j.GetMinProperties()
 		s.Required = j.GetRequired()
@@ -2950,6 +2983,7 @@ func updateswaggerObjectFromJSONSchema(s *openapiSchemaObject, j *openapi_option
 			s.Format = j.GetFormat()
 		}
 	}
+	s.UniqueItems = j.GetUniqueItems()
 	s.MaxItems = j.GetMaxItems()
 	s.MinItems = j.GetMinItems()
 

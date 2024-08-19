@@ -8,7 +8,7 @@ import (
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 )
 
 // Start initializes all the database paths stored in the local manager.
@@ -19,7 +19,6 @@ import (
 // an error if any the above steps fail.
 func (m *BadgerLocalManagerV3) Start() error {
 	opt := badger.DefaultIteratorOptions
-	opt.PrefetchSize = 10 // TODO: make it a const - scope yet to be defined.
 
 	err := m.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(opt)
@@ -96,7 +95,7 @@ func (m *BadgerLocalManagerV3) ShutdownStores() {
 			},
 		)
 
-		dbInfo, ok := value.(*badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo)
+		dbInfo, ok := value.(*badgerdb_management_models_v3.DBMemoryInfo)
 		if !ok {
 			logger.Errorf("corrupted stored memory")
 		}

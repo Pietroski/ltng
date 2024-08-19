@@ -27,7 +27,7 @@ env-check-ltng-db-node:
 
 ## generates mocks
 mock-generate:
-	go get -d github.com/golang/mock/mockgen
+	go get -d go.uber.org/mock/mockgen
 	go mod vendor
 	go generate ./...
 	go mod tidy
@@ -72,8 +72,7 @@ tag:
 changelog:
 	@./scripts/docs/changelog.sh
 
-commit-changelog:
-	git add .
+commit-changelog: add-all
 	git commit -m "chore: changelog"
 
 gitea-push-main:
@@ -85,13 +84,12 @@ gitlab-push-main:
 push-main-all: gitea-push-main gitlab-push-main
 
 amend:
-	git commit --amend
+	git commit --amend --no-edit
 
 rebase-continue:
 	git rebase --continue
 
-trigger-pipeline:
-	git commit --amend
+trigger-pipeline: amend
 	git push gitea main --force-with-lease
 
 gitea-push-tags:

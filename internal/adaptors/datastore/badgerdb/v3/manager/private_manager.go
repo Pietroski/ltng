@@ -9,13 +9,13 @@ import (
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 )
 
 // CreateOpenStoreAndLoadIntoMemory method checks if the give into key already exists in database,
 // if it does not, it opens a db path and stores it in the db manager and loads it into memory for caching.
 func (m *BadgerLocalManagerV3) createOpenStoreAndLoadIntoMemory(
-	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
+	info *badgerdb_management_models_v3.DBInfo,
 ) error {
 	sKey, err := m.serializer.Serialize(info.Name)
 	if err != nil {
@@ -37,7 +37,7 @@ func (m *BadgerLocalManagerV3) createOpenStoreAndLoadIntoMemory(
 }
 
 // updateStoreInfo method updates store info into the database
-func (m *BadgerLocalManagerV3) updateLastOpenedAt(info *badgerdb_badgerdb_management_models_v3_v3.DBInfo) error {
+func (m *BadgerLocalManagerV3) updateLastOpenedAt(info *badgerdb_management_models_v3.DBInfo) error {
 	sKey, err := m.serializer.Serialize(info.Name)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (m *BadgerLocalManagerV3) updateLastOpenedAt(info *badgerdb_badgerdb_manage
 // returns an error if any of the above steps fail.
 func (m *BadgerLocalManagerV3) persistInfo(
 	txn *badger.Txn,
-	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
+	info *badgerdb_management_models_v3.DBInfo,
 	sKey []byte,
 ) error {
 	sValue, err := m.serializer.Serialize(info)
@@ -90,9 +90,10 @@ func (m *BadgerLocalManagerV3) persistInfo(
 // openAndLoad opens the db path, and then,
 // it loads into memory the opened db path information.
 func (m *BadgerLocalManagerV3) openAndLoad(
-	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
+	info *badgerdb_management_models_v3.DBInfo,
 ) error {
-	path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
+	//path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
+	path := InternalLocalManagement + "/" + info.Path
 	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
 		return fmt.Errorf("error opening db path - %v: %v", info.Name, err)
@@ -109,9 +110,10 @@ func (m *BadgerLocalManagerV3) openAndLoad(
 // and finally return the pointer to the db;
 // any previous mistake it returns the error.
 func (m *BadgerLocalManagerV3) openLoadAndReturn(
-	info *badgerdb_badgerdb_management_models_v3_v3.DBInfo,
+	info *badgerdb_management_models_v3.DBInfo,
 ) (*badger.DB, error) {
-	path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
+	//path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
+	path := InternalLocalManagement + "/" + info.Path
 	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
 		return db, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
@@ -129,12 +131,12 @@ func (m *BadgerLocalManagerV3) openLoadAndReturn(
 // for any failure regarding any previous steps an error will be returned.
 func (m *BadgerLocalManagerV3) getStoreFromMemory(
 	name string,
-) (*badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo, error) {
+) (*badgerdb_management_models_v3.DBMemoryInfo, error) {
 	var err error
-	info := &badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo{}
+	info := &badgerdb_management_models_v3.DBMemoryInfo{}
 
 	if infoFromName, ok := m.badgerMapping.Load(name); ok {
-		info, ok = infoFromName.(*badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo)
+		info, ok = infoFromName.(*badgerdb_management_models_v3.DBMemoryInfo)
 		if !ok {
 			err = fmt.Errorf(ErrCorruptedStoreDataCastFailure)
 			return info, err
@@ -152,9 +154,9 @@ func (m *BadgerLocalManagerV3) getStoreFromMemory(
 // For any failure regarding any previous steps an error will be returned.
 func (m *BadgerLocalManagerV3) getStoreFromDB(
 	name string,
-) (*badgerdb_badgerdb_management_models_v3_v3.DBInfo, error) {
+) (*badgerdb_management_models_v3.DBInfo, error) {
 	var err error
-	info := &badgerdb_badgerdb_management_models_v3_v3.DBInfo{}
+	info := &badgerdb_management_models_v3.DBInfo{}
 
 	serializedKey, err := m.serializer.Serialize(name)
 	if err != nil {
@@ -185,7 +187,7 @@ func (m *BadgerLocalManagerV3) getStoreFromDB(
 func (m *BadgerLocalManagerV3) getStoreInfoFromMemoryOrFromDisk(
 	ctx context.Context,
 	name string,
-) (info *badgerdb_badgerdb_management_models_v3_v3.DBInfo, err error) {
+) (info *badgerdb_management_models_v3.DBInfo, err error) {
 	logger := m.logger.FromCtx(ctx)
 
 	memoryInfo, err := m.getStoreFromMemory(name)
@@ -212,7 +214,7 @@ func (m *BadgerLocalManagerV3) getStoreInfoFromMemoryOrFromDisk(
 func (m *BadgerLocalManagerV3) getStoreMemoryInfoFromMemoryOrDisk(
 	ctx context.Context,
 	name string,
-) (*badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo, error) {
+) (*badgerdb_management_models_v3.DBMemoryInfo, error) {
 	logger := m.logger.FromCtx(ctx)
 	dbMemoryInfo, err := m.getStoreFromMemory(name)
 	if err == nil {
@@ -230,7 +232,7 @@ func (m *BadgerLocalManagerV3) getStoreMemoryInfoFromMemoryOrDisk(
 			"failed to get store from db",
 			go_logger.Mapper("err", err.Error()),
 		)
-		return &badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo{},
+		return &badgerdb_management_models_v3.DBMemoryInfo{},
 			fmt.Errorf("failed to get store from db")
 	}
 
@@ -240,7 +242,7 @@ func (m *BadgerLocalManagerV3) getStoreMemoryInfoFromMemoryOrDisk(
 			"failed to open store retrieved from db",
 			go_logger.Mapper("err", err.Error()),
 		)
-		return &badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo{}, err
+		return &badgerdb_management_models_v3.DBMemoryInfo{}, err
 	}
 
 	openedDBInfo := dbInfo.InfoToMemoryInfo(db)

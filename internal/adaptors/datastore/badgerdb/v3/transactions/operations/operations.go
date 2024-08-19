@@ -8,14 +8,14 @@ import (
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
 	badgerdb_manager_adaptor_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
-	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 	badgerdb_operation_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/operation"
 	co "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 )
 
 type (
 	Operator interface {
-		Operate(dbInfo *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo) Operator
+		Operate(dbInfo *badgerdb_management_models_v3.DBMemoryInfo) Operator
 
 		Create(
 			ctx context.Context,
@@ -45,7 +45,7 @@ type (
 			ctx context.Context,
 			//item *badgerdb_operation_models_v3.Item,
 			opts *badgerdb_operation_models_v3.IndexOpts,
-			pagination *badgerdb_badgerdb_management_models_v3_v3.Pagination,
+			pagination *badgerdb_management_models_v3.Pagination,
 		) (badgerdb_operation_models_v3.Items, error)
 		ListValuesFromIndexingKeys(
 			ctx context.Context,
@@ -61,7 +61,7 @@ type (
 
 	BadgerOperatorV3 struct {
 		manager    badgerdb_manager_adaptor_v3.Manager
-		dbInfo     *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo
+		dbInfo     *badgerdb_management_models_v3.DBMemoryInfo
 		serializer go_serializer.Serializer
 
 		chainedOperator *co.ChainOperator
@@ -82,7 +82,7 @@ func NewBadgerOperatorV3(
 }
 
 // Operate operates in the given database.
-func (o *BadgerOperatorV3) Operate(dbInfo *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo) Operator {
+func (o *BadgerOperatorV3) Operate(dbInfo *badgerdb_management_models_v3.DBMemoryInfo) Operator {
 	no := &BadgerOperatorV3{
 		manager:    o.manager,
 		dbInfo:     dbInfo,
@@ -93,7 +93,7 @@ func (o *BadgerOperatorV3) Operate(dbInfo *badgerdb_badgerdb_management_models_v
 }
 
 // operateInternally operates in the given database.
-func (o *BadgerOperatorV3) operate(dbInfo *badgerdb_badgerdb_management_models_v3_v3.DBMemoryInfo) *BadgerOperatorV3 {
+func (o *BadgerOperatorV3) operate(dbInfo *badgerdb_management_models_v3.DBMemoryInfo) *BadgerOperatorV3 {
 	no := &BadgerOperatorV3{
 		manager:    o.manager,
 		dbInfo:     dbInfo,
@@ -612,7 +612,7 @@ func (o *BadgerOperatorV3) List(
 	_ context.Context,
 	//item *badgerdb_operation_models_v3.Item,
 	opts *badgerdb_operation_models_v3.IndexOpts,
-	pagination *badgerdb_badgerdb_management_models_v3_v3.Pagination,
+	pagination *badgerdb_management_models_v3.Pagination,
 ) (items badgerdb_operation_models_v3.Items, err error) {
 	ok, err := o.manager.ValidatePagination(int(pagination.PageSize), int(pagination.PageID))
 	if err != nil {
@@ -628,7 +628,7 @@ func (o *BadgerOperatorV3) List(
 	case badgerdb_operation_models_v3.Default:
 		fallthrough
 	default:
-		pagination = &badgerdb_badgerdb_management_models_v3_v3.Pagination{
+		pagination = &badgerdb_management_models_v3.Pagination{
 			PageID:   1,
 			PageSize: 20,
 		}

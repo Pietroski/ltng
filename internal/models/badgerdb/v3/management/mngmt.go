@@ -1,4 +1,4 @@
-package badgerdb_badgerdb_management_models_v3_v3
+package badgerdb_management_models_v3
 
 import (
 	"time"
@@ -25,11 +25,11 @@ type (
 
 func NewDBInfo(name, path string) *DBInfo {
 	dbInfo := &DBInfo{
-		Path:         path,
-		Name:         name,
-		CreatedAt:    time.Now(),
-		LastOpenedAt: time.Time{},
+		Path:      path,
+		Name:      name,
+		CreatedAt: time.Now(),
 	}
+	dbInfo.LastOpenedAt = dbInfo.CreatedAt
 
 	return dbInfo
 }

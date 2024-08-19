@@ -3,6 +3,7 @@ package badgerdb_operations_adaptor_v3
 import (
 	"bytes"
 	"context"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -23,6 +24,9 @@ import (
 var debugMode = false
 
 func Test_Integration_Create_Load_Delete(t *testing.T) {
+	err := exec.Command("rm", "-rf", ".db").Run()
+	require.NoError(t, err)
+
 	t.Run(
 		"happy path",
 		func(t *testing.T) {
@@ -1363,6 +1367,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 }
 
 func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
+	err := exec.Command("rm", "-rf", ".db").Run()
+	require.NoError(t, err)
+
 	t.Run(
 		"happy path - Create_Multiples_List_Delete",
 		func(t *testing.T) {
@@ -1636,6 +1643,9 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 }
 
 func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
+	err := exec.Command("rm", "-rf", ".db").Run()
+	require.NoError(t, err)
+
 	type TestStructure struct {
 		Field1PK     string `json:"field1PK"`
 		Field2       string `json:"field2"`

@@ -45,18 +45,8 @@ func main() {
 	switch common_model.ToEngineVersionType(cfg.LTNGNode.LTNGEngine.Engine) {
 	case common_model.DefaultEngineVersionType,
 		common_model.BadgerDBV3EngineVersionType:
-		//params := &badgerdb_engine_v3.V3Params{
-		//	Ctx:             ctx,
-		//	CancelFn:        cancelFn,
-		//	Cfg:             cfg,
-		//	Logger:          logger,
-		//	Serializer:      serializer,
-		//	Binder:          binder,
-		//	ChainedOperator: chainedOperator,
-		//}
-
 		badgerdb_engine_v3.StartV3(ctx, cancelFn, cfg, logger, serializer, binder, chainedOperator)
-	default: // TODO return an error instead?
+	default:
 		badgerdb_engine_v3.StartV3(ctx, cancelFn, cfg, logger, serializer, binder, chainedOperator)
 	}
 }

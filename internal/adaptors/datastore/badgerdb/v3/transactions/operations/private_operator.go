@@ -5,7 +5,7 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 
-	badgerdb_badgerdb_management_models_v3_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
+	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/management"
 	badgerdb_operation_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v3/operation"
 )
 
@@ -118,7 +118,7 @@ func (o *BadgerOperatorV3) listAll() (badgerdb_operation_models_v3.Items, error)
 
 // ListPaginated lists paginated entries from the database info set on the Operate method.
 func (o *BadgerOperatorV3) listPaginated(
-	pagination *badgerdb_badgerdb_management_models_v3_v3.Pagination,
+	pagination *badgerdb_management_models_v3.Pagination,
 ) (badgerdb_operation_models_v3.Items, error) {
 	size := int(pagination.PageSize)
 	page := int(pagination.PageID)
