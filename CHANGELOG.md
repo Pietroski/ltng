@@ -1,6 +1,7 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - chore: dockerfile go version
  
 # [v1.2.2]
  - Major repository refactor
