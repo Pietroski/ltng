@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.2.2]
  - Major repository refactor
  
 # [v1.2.1]

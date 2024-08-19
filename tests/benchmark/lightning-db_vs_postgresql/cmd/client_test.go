@@ -65,9 +65,12 @@ func init() {
 		log.Fatalf("failed to get config: %v", err)
 	}
 
-	ltngClient, err = ltng_client.NewLTNGClient(&ltng_client.Addresses{
-		Manager:  managerServerAddr,
-		Operator: operatorServerAddr,
+	ltngClient, err = ltng_client.NewLTNGClient(ctx, &ltng_client.LTNGClientParams{
+		Addresses: &ltng_client.Addresses{
+			Manager:  managerServerAddr,
+			Operator: operatorServerAddr,
+		},
+		Engine: "default",
 	})
 	if err != nil {
 		defer ltngClient.Close()

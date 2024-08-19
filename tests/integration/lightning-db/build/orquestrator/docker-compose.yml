@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   lightning-db-node:
     container_name: 'test-integration-ltng-db-node'
