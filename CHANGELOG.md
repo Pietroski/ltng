@@ -1,6 +1,7 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - Major repository refactor
  
 # [v1.2.1]
  - feat: grpcurl tests and reflection proto analisys
