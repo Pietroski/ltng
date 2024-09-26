@@ -92,17 +92,36 @@ func (m *BadgerLocalManagerV3) persistInfo(
 func (m *BadgerLocalManagerV3) openAndLoad(
 	info *badgerdb_management_models_v3.DBInfo,
 ) error {
-	//path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
-	path := InternalLocalManagement + "/" + info.Path
-	db, err := badger.Open(badger.DefaultOptions(path))
+	var memInfo *badgerdb_management_models_v3.DBMemoryInfo
+	v, ok := m.badgerMapping.Load(info.Name)
+	if ok {
+		memInfo, ok = v.(*badgerdb_management_models_v3.DBMemoryInfo)
+		if ok {
+			return nil
+		}
+	}
+
+	db, err := openBadger(info)
 	if err != nil {
 		return fmt.Errorf("error opening db path - %v: %v", info.Name, err)
 	}
 
-	memInfo := info.InfoToMemoryInfo(db)
+	memInfo = info.InfoToMemoryInfo(db)
 	m.badgerMapping.Store(info.Name, memInfo)
 
 	return nil
+}
+
+func openBadger(
+	info *badgerdb_management_models_v3.DBInfo,
+) (*badger.DB, error) {
+	path := InternalLocalManagement + "/" + info.Path
+	db, err := badger.Open(badger.DefaultOptions(path))
+	if err != nil {
+		return nil, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+	}
+
+	return db, nil
 }
 
 // openAndLoad opens the db path, then,
@@ -112,15 +131,22 @@ func (m *BadgerLocalManagerV3) openAndLoad(
 func (m *BadgerLocalManagerV3) openLoadAndReturn(
 	info *badgerdb_management_models_v3.DBInfo,
 ) (*badger.DB, error) {
-	//path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
-	path := InternalLocalManagement + "/" + info.Path
-	db, err := badger.Open(badger.DefaultOptions(path))
+	var memInfo *badgerdb_management_models_v3.DBMemoryInfo
+	v, ok := m.badgerMapping.Load(info.Name)
+	if ok {
+		memInfo, ok = v.(*badgerdb_management_models_v3.DBMemoryInfo)
+		if ok {
+			return memInfo.DB, nil
+		}
+	}
+
+	db, err := openBadger(info)
 	if err != nil {
-		return db, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+		return nil, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
 	}
 	info.LastOpenedAt = time.Now()
 
-	memInfo := info.InfoToMemoryInfo(db)
+	memInfo = info.InfoToMemoryInfo(db)
 	m.badgerMapping.Store(info.Name, memInfo)
 
 	return db, nil
