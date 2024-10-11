@@ -27,7 +27,8 @@ func (o *BadgerOperatorV3) create(key, value []byte) error {
 
 // createWithTxn checks if the key exists, if not, it stores the item.
 func (o *BadgerOperatorV3) createWithTxn(txn *badger.Txn, key, value []byte) error {
-	_, err := txn.Get(key)
+	item, err := txn.Get(key)
+	_ = item
 	if err == badger.ErrKeyNotFound {
 		err = txn.Set(key, value)
 	} else if err == nil {

@@ -3,6 +3,7 @@ package badgerdb_manager_adaptor_v3
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
@@ -20,6 +21,16 @@ func (m *BadgerLocalManagerV3) createOpenStoreAndLoadIntoMemory(
 	sKey, err := m.serializer.Serialize(info.Name)
 	if err != nil {
 		return err
+	}
+
+	{ // req mapping mtx
+		_, ok := m.reqMapping.Load(info.Name)
+		for ok {
+			_, ok = m.reqMapping.Load(info.Name)
+			runtime.Gosched()
+		}
+		m.reqMapping.Store(info.Name, info)
+		defer m.reqMapping.Delete(info.Name)
 	}
 
 	err = m.db.Update(
