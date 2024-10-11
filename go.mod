@@ -2,8 +2,6 @@ module gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-ligh
 
 go 1.23
 
-toolchain go1.23.0
-
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/dgraph-io/badger/v4 v4.2.0

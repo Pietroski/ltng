@@ -91,6 +91,8 @@ type (
 		logger        go_logger.Logger
 		serializer    go_serializer.Serializer
 		badgerMapping *sync.Map
+		reqMapping    *sync.Map
+		mtx           *sync.Mutex
 
 		chainedOperator co.ChainOperator
 	}
@@ -105,6 +107,8 @@ func NewBadgerLocalManagerV3(
 		serializer:    params.Serializer,
 		logger:        params.Logger,
 		badgerMapping: &sync.Map{},
+		reqMapping:    &sync.Map{},
+		mtx:           &sync.Mutex{},
 	}
 
 	return m, nil

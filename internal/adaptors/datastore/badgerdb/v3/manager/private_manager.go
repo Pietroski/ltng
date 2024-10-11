@@ -3,6 +3,7 @@ package badgerdb_manager_adaptor_v3
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
@@ -20,6 +21,16 @@ func (m *BadgerLocalManagerV3) createOpenStoreAndLoadIntoMemory(
 	sKey, err := m.serializer.Serialize(info.Name)
 	if err != nil {
 		return err
+	}
+
+	{ // req mapping mtx
+		_, ok := m.reqMapping.Load(info.Name)
+		for ok {
+			_, ok = m.reqMapping.Load(info.Name)
+			runtime.Gosched()
+		}
+		m.reqMapping.Store(info.Name, info)
+		defer m.reqMapping.Delete(info.Name)
 	}
 
 	err = m.db.Update(
@@ -92,17 +103,36 @@ func (m *BadgerLocalManagerV3) persistInfo(
 func (m *BadgerLocalManagerV3) openAndLoad(
 	info *badgerdb_management_models_v3.DBInfo,
 ) error {
-	//path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
-	path := InternalLocalManagement + "/" + info.Path
-	db, err := badger.Open(badger.DefaultOptions(path))
+	var memInfo *badgerdb_management_models_v3.DBMemoryInfo
+	v, ok := m.badgerMapping.Load(info.Name)
+	if ok {
+		memInfo, ok = v.(*badgerdb_management_models_v3.DBMemoryInfo)
+		if ok {
+			return nil
+		}
+	}
+
+	db, err := openBadger(info)
 	if err != nil {
 		return fmt.Errorf("error opening db path - %v: %v", info.Name, err)
 	}
 
-	memInfo := info.InfoToMemoryInfo(db)
+	memInfo = info.InfoToMemoryInfo(db)
 	m.badgerMapping.Store(info.Name, memInfo)
 
 	return nil
+}
+
+func openBadger(
+	info *badgerdb_management_models_v3.DBInfo,
+) (*badger.DB, error) {
+	path := InternalLocalManagement + "/" + info.Path
+	db, err := badger.Open(badger.DefaultOptions(path))
+	if err != nil {
+		return nil, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+	}
+
+	return db, nil
 }
 
 // openAndLoad opens the db path, then,
@@ -112,15 +142,22 @@ func (m *BadgerLocalManagerV3) openAndLoad(
 func (m *BadgerLocalManagerV3) openLoadAndReturn(
 	info *badgerdb_management_models_v3.DBInfo,
 ) (*badger.DB, error) {
-	//path := InternalLocalManagement + "/" + InternalLocalManagementVersion + "/" + info.Path
-	path := InternalLocalManagement + "/" + info.Path
-	db, err := badger.Open(badger.DefaultOptions(path))
+	var memInfo *badgerdb_management_models_v3.DBMemoryInfo
+	v, ok := m.badgerMapping.Load(info.Name)
+	if ok {
+		memInfo, ok = v.(*badgerdb_management_models_v3.DBMemoryInfo)
+		if ok {
+			return memInfo.DB, nil
+		}
+	}
+
+	db, err := openBadger(info)
 	if err != nil {
-		return db, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+		return nil, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
 	}
 	info.LastOpenedAt = time.Now()
 
-	memInfo := info.InfoToMemoryInfo(db)
+	memInfo = info.InfoToMemoryInfo(db)
 	m.badgerMapping.Store(info.Name, memInfo)
 
 	return db, nil
