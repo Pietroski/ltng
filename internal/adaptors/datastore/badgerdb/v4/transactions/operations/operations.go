@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
+	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
@@ -35,7 +35,7 @@ type (
 			ctx context.Context,
 			item *badgerdb_operation_models_v4.Item,
 			opts *badgerdb_operation_models_v4.IndexOpts,
-			retrialOpts *co.RetrialOpts,
+			retrialOpts *lo.RetrialOpts,
 		) error
 		Load(
 			ctx context.Context,
@@ -431,7 +431,7 @@ func (o *BadgerOperatorV4) Delete(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *co.RetrialOpts,
+	retrialOpts *lo.RetrialOpts,
 ) error {
 	if !opts.HasIdx {
 		return o.delete(item.Key)

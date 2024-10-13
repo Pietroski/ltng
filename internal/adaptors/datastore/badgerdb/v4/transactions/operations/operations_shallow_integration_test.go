@@ -18,7 +18,6 @@ import (
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/operation"
-	chainded_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator"
 	list_operator "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
 )
 
@@ -103,7 +102,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					chainded_operator.DefaultRetrialOps,
+					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Debugf("value deleted")
@@ -224,7 +223,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					chainded_operator.DefaultRetrialOps,
+					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Debugf("value deleted")
@@ -377,7 +376,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 						},
 					},
-					chainded_operator.DefaultRetrialOps,
+					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Debugf("value deleted")
@@ -541,7 +540,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						},
 						IndexingKeys: [][]byte{emailKey},
 					},
-					chainded_operator.DefaultRetrialOps,
+					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Debugf("value deleted")
@@ -706,7 +705,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 						},
 					},
-					chainded_operator.DefaultRetrialOps,
+					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Debugf("value deleted")
@@ -994,7 +993,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							},
 							IndexingKeys: [][]byte{usernameKey},
 						},
-						chainded_operator.DefaultRetrialOps,
+						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Debugf("value deleted")
@@ -1112,7 +1111,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 								IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 							},
 						},
-						chainded_operator.DefaultRetrialOps,
+						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Debugf("value deleted")
@@ -1255,7 +1254,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					chainded_operator.DefaultRetrialOps,
+					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Debugf("value deleted")
@@ -1512,7 +1511,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 									IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 								},
 							},
-							chainded_operator.DefaultRetrialOps,
+							list_operator.DefaultRetrialOps,
 						)
 					}
 				}
@@ -1811,7 +1810,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 								IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 							},
 						},
-						chainded_operator.DefaultRetrialOps,
+						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Debugf("value deleted")
