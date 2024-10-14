@@ -7,6 +7,7 @@ type EngineVersionType string
 const (
 	DefaultEngineVersionType    EngineVersionType = "DEFAULT"
 	BadgerDBV3EngineVersionType EngineVersionType = "BADGER-DB-ENGINE_V3"
+	BadgerDBV4EngineVersionType EngineVersionType = "BADGER-DB-ENGINE_V4"
 )
 
 func ToEngineVersionType(e string) EngineVersionType {
