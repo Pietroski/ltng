@@ -1,8 +1,6 @@
 module gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node
 
-go 1.23.0
-
-toolchain go1.23.2
+go 1.23.2
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.5
@@ -23,10 +21,10 @@ require (
 	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
 	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.12
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.27
-	go.uber.org/mock v0.4.0
-	google.golang.org/grpc v1.65.0
+	go.uber.org/mock v0.5.0
+	google.golang.org/grpc v1.67.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.35.1
 )
 
 require (

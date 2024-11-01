@@ -8,9 +8,6 @@ import _ "go.uber.org/mock/mockgen/model"
 // adaptors
 // // datastore
 // // // badgerdb
-// // // // v3
-//go:generate mockgen -package mock_badgerdb_manager_adaptor_v3 -destination ../../internal/adaptors/datastore/badgerdb/v3/manager/mocks/manager.go gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager Manager
-//go:generate mockgen -package mock_badgerdb_operations_adaptor_v3 -destination ../../internal/adaptors/datastore/badgerdb/v3/transactions/operations/mocks/operations.go gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/transactions/operations Operator
 // // // // v4
 //go:generate mockgen -package mock_badgerdb_manager_adaptor_v4 -destination ../../internal/adaptors/datastore/badgerdb/v4/manager/mocks/manager.go gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager Manager
 //go:generate mockgen -package mock_badgerdb_operations_adaptor_v4 -destination ../../internal/adaptors/datastore/badgerdb/v4/transactions/operations/mocks/operations.go gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/transactions/operations Operator
