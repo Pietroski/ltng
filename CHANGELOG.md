@@ -1,6 +1,17 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - [gitlab/main, , ) - Merge pull request 'feat/badgerdb-v4' (#2] from feat/badgerdb-v4 into main
+ - [gitea/feat/badgerdb-v4, feat/badgerdb-v4] - chore: badger v3 removed completely
+ - chore: drone image update
+ - chore: v3 removed
+ - feat: badger-db v4
+ - feat: badgerdb v4 adapter
+ - feat: wip v4
+ - Merge branch 'fix/open-db' into 'main'
+ - [gitlab/fix/open-db, fix/open-db] - fix: concurrent table and data creation
+ - fix: open and load badger db
+ - Merge branch 'release/merging-branch' into 'main'
  
 # [v1.2.3]
  - chore: dockerfile go version
