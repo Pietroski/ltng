@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.3.0]
  - [gitlab/main, , ) - Merge pull request 'feat/badgerdb-v4' (#2] from feat/badgerdb-v4 into main
  - [gitea/feat/badgerdb-v4, feat/badgerdb-v4] - chore: badger v3 removed completely
  - chore: drone image update
