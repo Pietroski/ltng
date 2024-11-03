@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.3.1]
  - [gitlab/main] - chore: docker image version bump
  
 # [v1.3.0]
