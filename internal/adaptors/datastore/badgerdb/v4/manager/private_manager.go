@@ -24,12 +24,11 @@ func (m *BadgerLocalManagerV4) createOpenStoreAndLoadIntoMemory(
 	}
 
 	{ // req mapping mtx
-		_, ok := m.reqMapping.Load(info.Name)
+		_, ok := m.reqMapping.LoadOrStore(info.Name, info)
 		for ok {
-			_, ok = m.reqMapping.Load(info.Name)
+			_, ok = m.reqMapping.LoadOrStore(info.Name, info)
 			runtime.Gosched()
 		}
-		m.reqMapping.Store(info.Name, info)
 		defer m.reqMapping.Delete(info.Name)
 	}
 
