@@ -1,0 +1,154 @@
+package badgerdb_manager_controller_v4
+
+import (
+	"context"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+
+	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
+	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
+	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
+	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
+
+	mock_badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager/mocks"
+	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
+	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
+)
+
+func TestBadgerDBManagerServiceController_CreateStore(t *testing.T) {
+	t.Run(
+		"fails to create a store - invalid",
+		func(t *testing.T) {
+			ctx := context.Background()
+			loggerPublishers := &go_logger.Publishers{}
+			loggerOpts := &go_logger.Opts{
+				Debug:   true,
+				Publish: true,
+			}
+			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+
+			ctrl := gomock.NewController(t)
+			mockedBinder := mock_binder.NewMockBinder(ctrl)
+			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			service, err := NewBadgerDBManagerServiceControllerV4(ctx,
+				WithConfig(config),
+				WithLogger(logger),
+				WithBinder(mockedBinder),
+				WithManger(manager),
+			)
+			require.NoError(t, err)
+
+			payload := &grpc_mngmt.CreateStoreRequest{
+				Name: "any-string",
+				Path: "any-string",
+			}
+			var r badgerdb_management_models_v4.CreateStoreRequest
+			mockedBinder.
+				EXPECT().
+				ShouldBind(gomock.Eq(payload), gomock.Eq(&r)).
+				Times(1).
+				Return(fmt.Errorf("any-error"))
+			resp, err := service.CreateStore(ctx, payload)
+			require.Error(t, err)
+			require.NotNil(t, resp)
+			t.Log(resp)
+		},
+	)
+
+	t.Run(
+		"fails to create a store - internal",
+		func(t *testing.T) {
+			ctx := context.Background()
+			loggerPublishers := &go_logger.Publishers{}
+			loggerOpts := &go_logger.Opts{
+				Debug:   true,
+				Publish: true,
+			}
+			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			serializer := go_serializer.NewJsonSerializer()
+			validator := go_validator.NewStructValidator()
+			binder := go_binder.NewStructBinder(serializer, validator)
+
+			ctrl := gomock.NewController(t)
+			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			service, err := NewBadgerDBManagerServiceControllerV4(ctx,
+				WithConfig(config),
+				WithLogger(logger),
+				WithBinder(binder),
+				WithManger(manager),
+			)
+			require.NoError(t, err)
+
+			data := &badgerdb_management_models_v4.DBInfo{
+				Name:         "any-string",
+				Path:         "any-string",
+				CreatedAt:    time.Now(),
+				LastOpenedAt: time.Now(),
+			}
+			manager.
+				EXPECT().
+				CreateStore(gomock.Eq(ctx), EqDBInfo(data)).
+				Times(1).
+				Return(fmt.Errorf("any-error"))
+			payload := &grpc_mngmt.CreateStoreRequest{
+				Name: data.Name,
+				Path: data.Path,
+			}
+			resp, err := service.CreateStore(ctx, payload)
+			require.Error(t, err)
+			require.NotNil(t, resp)
+			t.Log(resp)
+		},
+	)
+
+	t.Run(
+		"successfully creates a store",
+		func(t *testing.T) {
+			ctx := context.Background()
+			loggerPublishers := &go_logger.Publishers{}
+			loggerOpts := &go_logger.Opts{
+				Debug:   true,
+				Publish: true,
+			}
+			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			serializer := go_serializer.NewJsonSerializer()
+			validator := go_validator.NewStructValidator()
+			binder := go_binder.NewStructBinder(serializer, validator)
+
+			ctrl := gomock.NewController(t)
+			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			service, err := NewBadgerDBManagerServiceControllerV4(ctx,
+				WithConfig(config),
+				WithLogger(logger),
+				WithBinder(binder),
+				WithManger(manager),
+			)
+			require.NoError(t, err)
+
+			data := &badgerdb_management_models_v4.DBInfo{
+				Name:         "any-string",
+				Path:         "any-string",
+				CreatedAt:    time.Now(),
+				LastOpenedAt: time.Now(),
+			}
+			manager.
+				EXPECT().
+				CreateStore(ctx, EqDBInfo(data)).
+				Times(1).
+				Return(nil)
+			payload := &grpc_mngmt.CreateStoreRequest{
+				Name: data.Name,
+				Path: data.Path,
+			}
+			resp, err := service.CreateStore(ctx, payload)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			t.Log(resp)
+		},
+	)
+}

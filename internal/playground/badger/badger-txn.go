@@ -5,12 +5,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v4"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v3/manager"
+	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 
 	logger.Debugf("test here")
 
-	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v3.InternalLocalManagement + "playground-test"))
+	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement + "playground-test"))
 	handleErr(err)
 	defer db.Close()
 

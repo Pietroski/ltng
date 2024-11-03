@@ -1,0 +1,19 @@
+package badgerdb_manager_controller_v4
+
+import (
+	"context"
+	"fmt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
+)
+
+func (c *BadgerDBManagerServiceControllerV4) ShutdownLightningNode(
+	_ context.Context,
+	_ *grpc_mngmt.ShutdownLightningNodeRequest,
+) (*grpc_mngmt.ShutdownLightningNodeResponse, error) {
+	err := status.Error(codes.Unimplemented, fmt.Sprintf("unimplemented method. Implement it."))
+	return &grpc_mngmt.ShutdownLightningNodeResponse{}, err
+}

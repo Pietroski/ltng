@@ -174,5 +174,5 @@ local Pipeline(name, image) = {
 };
 
 [
-  Pipeline('lightning-node-pipeline', 'pietroski/alpine-docker-golang:v0.0.2'),
+  Pipeline('lightning-node-pipeline', 'pietroski/alpine-docker-golang:v0.0.4'),
 ]
