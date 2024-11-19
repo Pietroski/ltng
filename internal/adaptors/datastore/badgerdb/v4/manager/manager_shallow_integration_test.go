@@ -11,8 +11,8 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
@@ -31,7 +31,7 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	m := &BadgerLocalManagerV4{
@@ -156,7 +156,7 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
@@ -229,7 +229,7 @@ func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
@@ -300,7 +300,7 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
@@ -390,7 +390,7 @@ func Test_Integration_Restart(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
@@ -464,7 +464,7 @@ func Test_Raw_Badger_Iterator_Behaviour(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	m := &BadgerLocalManagerV4{
@@ -574,7 +574,7 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 				)
 			}
 
-			s := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("starting badger instances")
 			m := &BadgerLocalManagerV4{
@@ -659,7 +659,7 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 				)
 			}
 
-			s := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("starting badger instances")
 			m := &BadgerLocalManagerV4{
@@ -744,7 +744,7 @@ func Test_Integration_ListStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 		)
 	}
 
-	s := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("starting badger instances")
 	m := &BadgerLocalManagerV4{
@@ -828,7 +828,7 @@ func Test_Integration_CreateStore(t *testing.T) {
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			serializer := go_serializer.NewJsonSerializer()
+			serializer := serializer.NewJsonSerializer()
 
 			badgerManager, err := NewBadgerLocalManagerV4(ctx, WithDB(db), WithSerializer(serializer))
 			require.NoError(t, err)

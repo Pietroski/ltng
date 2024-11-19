@@ -10,10 +10,10 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	mock_badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager/mocks"
@@ -118,9 +118,9 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				Publish: true,
 			}
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(serializer, validator)
+			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
@@ -162,9 +162,9 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				Publish: true,
 			}
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(serializer, validator)
+			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
@@ -207,9 +207,9 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				Publish: true,
 			}
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(serializer, validator)
+			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
@@ -282,9 +282,9 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 				Publish: true,
 			}
 			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(serializer, validator)
+			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)

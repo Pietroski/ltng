@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/cmd/grpc/badgerdb/v4"
@@ -25,9 +25,9 @@ func main() {
 	}
 	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts).FromCtx(ctx)
 
-	serializer := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 	validator := go_validator.NewStructValidator()
-	binder := go_binder.NewStructBinder(serializer, validator)
+	binder := go_binder.NewStructBinder(s, validator)
 
 	cfg := &ltng_node_config.Config{}
 	err = go_env_extractor.LoadEnvs(cfg)
@@ -42,10 +42,10 @@ func main() {
 
 	switch common_model.ToEngineVersionType(cfg.LTNGNode.LTNGEngine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, serializer, binder)
+		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
 	case common_model.DefaultEngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, serializer, binder)
+		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
 	default:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, serializer, binder)
+		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
 	}
 }

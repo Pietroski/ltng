@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"fmt"
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	"log"
 	"os"
 	"os/exec"
@@ -11,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/tools/lock"
 	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
 )
@@ -21,7 +22,7 @@ import (
 type (
 	LTNGEngine struct {
 		opMtx            *lock.EngineLock
-		serializer       go_serializer.Serializer
+		serializer       serializer_models.Serializer
 		fileStoreMapping map[string]*fileInfo
 	}
 
@@ -69,7 +70,7 @@ func New(opts ...options.Option) *LTNGEngine {
 	engine := &LTNGEngine{
 		opMtx:            new(lock.EngineLock),
 		fileStoreMapping: make(map[string]*fileInfo),
-		serializer:       go_serializer.NewRawBinarySerializer(),
+		serializer:       serializer.NewRawBinarySerializer(),
 	}
 	options.ApplyOptions(engine, opts...)
 

@@ -1,0 +1,82 @@
+# CHANGELOG
+
+# [UNRELEASED]
+ 
+# [v0.0.1]
+ - [gitlab/main, github/main, gitea/main, gitea/HEAD] - docs: readme
+ - chore: repo reorg, lib profilling and much more
+ - feat: repo reorg
+ - wip: charts and result docs
+ - chore: pipeline
+ - wip: repo refactor - mocks & fakes
+ - wip: repo reorg
+ - wip: repo restructure
+ - wip: repo re-org
+ - wip: serailzier reorg
+ - wip:L binary serialzier performance improvements
+ - wip:L binary serialzier performance improvements
+ - feat: unsafe copy and grow removal
+ - wip: binary serialzier performance improvements
+ - wip: binary serializer code improvement
+ - wip: binary serializer slice encoder improvements
+ - wip: binary serializer slice encoder improvements
+ - wip: binary serializer slice encoder improvements
+ - wip: binary serializer slice encoder improvements
+ - wip: binary serializer slice encoder improvements
+ - wip: binary serializer slice encoder improvements
+ - feat: grain refinement
+ - feat: binary serializer improvements
+ - chore: unsafe binary serializer rename to raw binary serialzier
+ - Merge pull request 'feat/binary-serializer' - [#1] from feat/binary-serializer into main
+ - [gitea/feat/binary-serializer] - feat: blazingly fucking freaking phenomenally fast binary serializer
+ - feat: benchmarks
+ - feat: binary serializer
+ - wip: binary serialzier
+ - feat: code cleanup
+ - feat: binary serializer huge performance improvements
+ - feat: blazingly fast binary serializer
+ - wip: blazingly fast binary serializer
+ - wip: binary serializer
+ - wip: binary serializer
+ - wip: binary serializer map encoder
+ - feat: binary serialzier
+ - wip: binary serializer
+ - wip: binary serializer
+ - wip: binary serializer
+ - wip: binary serializer v2
+ - wip: binary serializer v2
+ - wip: binary serializer v2
+ - wip: binary serializer code cleanup
+ - wip: binary serializer code cleanup
+ - wip: binary serializer code cleanup
+ - wip: binary serializer code cleanup
+ - wip: binary serializer code cleanup
+ - wip: binary serializer code cleanup deletion
+ - wip: binary serializer code cleanup
+ - wip: binary serializer
+ - refactor: mock deps
+ - chore: drone pipeline and validation
+ - chore: drone pipeline and validation
+ - feat: publish makefile command
+ - chore: pipelines
+ - chore: deps bump
+ - chore: go mod version
+ - feat: io benchmark
+ - feat: added makefile commands
+ - refactor: small code clean up
+ - feat: added proto serializer
+ - chore: drone-analysis
+ - chore: vendor deps
+ - refactor: pipelines
+ - chore: repo updated
+ - refactor: minor drone varialbe pipeline
+ - refactor: minor pipeline repo issues
+ - refactor: pipeline update
+ - feat: drone pipeline checkpoint
+ - feat: mocks
+ - feat: pipelines
+ - chore: fix mod and imports path
+ - chore: mod path changed
+ - refactor: standard pkg naming
+ - feat: data rebind added to serializer interface
+ - feat: data serializer

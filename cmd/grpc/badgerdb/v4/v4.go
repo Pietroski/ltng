@@ -8,9 +8,9 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 	transporthandler "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
@@ -27,7 +27,7 @@ func StartV4(
 	cancelFn context.CancelFunc,
 	cfg *ltng_node_config.Config,
 	logger go_logger.Logger,
-	serializer go_serializer.Serializer,
+	s serializer_models.Serializer,
 	binder go_binder.Binder,
 ) {
 	logger.Debugf("opening badger local manager")
@@ -45,7 +45,7 @@ func StartV4(
 	mngr, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx,
 		badgerdb_manager_adaptor_v4.WithDB(db),
 		badgerdb_manager_adaptor_v4.WithLogger(logger),
-		badgerdb_manager_adaptor_v4.WithSerializer(serializer),
+		badgerdb_manager_adaptor_v4.WithSerializer(s),
 	)
 	if err != nil {
 		logger.Errorf(
@@ -65,7 +65,7 @@ func StartV4(
 	}
 
 	oprt, err := badgerdb_operations_adaptor_v4.NewBadgerOperatorV4(ctx,
-		badgerdb_operations_adaptor_v4.WithSerializer(serializer),
+		badgerdb_operations_adaptor_v4.WithSerializer(s),
 		badgerdb_operations_adaptor_v4.WithManager(mngr),
 	)
 	if err != nil {

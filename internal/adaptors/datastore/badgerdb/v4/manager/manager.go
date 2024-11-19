@@ -10,9 +10,10 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
 	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
@@ -84,7 +85,7 @@ type (
 		db *badger.DB
 		//TODO: remove logger and instead user error wrapper for returning
 		logger        go_logger.Logger
-		serializer    go_serializer.Serializer
+		serializer    serializer_models.Serializer
 		badgerMapping *sync.Map
 		reqMapping    *sync.Map
 		mtx           *sync.Mutex
@@ -95,7 +96,7 @@ func NewBadgerLocalManagerV4(
 	ctx context.Context, opts ...options.Option,
 ) (*BadgerLocalManagerV4, error) {
 	m := &BadgerLocalManagerV4{
-		serializer: go_serializer.NewJsonSerializer(),
+		serializer: serializer.NewJsonSerializer(),
 		logger:     go_logger.NewGoLogger(ctx, nil, go_logger.NewDefaultOpts()).FromCtx(ctx),
 
 		badgerMapping: &sync.Map{},

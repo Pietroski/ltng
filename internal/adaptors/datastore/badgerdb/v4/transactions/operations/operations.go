@@ -5,8 +5,9 @@ import (
 	"context"
 	"fmt"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
@@ -57,13 +58,13 @@ type (
 
 	BadgerOperatorV4Params struct {
 		Manager    badgerdb_manager_adaptor_v4.Manager
-		Serializer go_serializer.Serializer
+		Serializer serializer_models.Serializer
 	}
 
 	BadgerOperatorV4 struct {
 		manager    badgerdb_manager_adaptor_v4.Manager
 		dbInfo     *badgerdb_management_models_v4.DBMemoryInfo
-		serializer go_serializer.Serializer
+		serializer serializer_models.Serializer
 
 		chainedOperator *co.ChainOperator
 		listOperator    *lo.ListOperator
@@ -76,7 +77,7 @@ func NewBadgerOperatorV4(
 	ctx context.Context, opts ...options.Option,
 ) (*BadgerOperatorV4, error) {
 	o := &BadgerOperatorV4{
-		serializer:      go_serializer.NewJsonSerializer(),
+		serializer:      serializer.NewJsonSerializer(),
 		chainedOperator: co.NewChainOperator(),
 	}
 	options.ApplyOptions(o, opts...)

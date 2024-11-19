@@ -1,0 +1,12 @@
+# IDE's configs
+.idea
+.vscode
+
+# vendor
+# vendor/
+
+# report files
+# drone-analysis
+# drone-analysis.json
+
+.DS_Store

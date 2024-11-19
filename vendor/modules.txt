@@ -4,8 +4,8 @@ github.com/cespare/xxhash/v2
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/dgraph-io/badger/v4 v4.3.1
-## explicit; go 1.19
+# github.com/dgraph-io/badger/v4 v4.4.0
+## explicit; go 1.21
 github.com/dgraph-io/badger/v4
 github.com/dgraph-io/badger/v4/fb
 github.com/dgraph-io/badger/v4/options
@@ -14,11 +14,11 @@ github.com/dgraph-io/badger/v4/skl
 github.com/dgraph-io/badger/v4/table
 github.com/dgraph-io/badger/v4/trie
 github.com/dgraph-io/badger/v4/y
-# github.com/dgraph-io/ristretto v1.0.0
-## explicit; go 1.19
-github.com/dgraph-io/ristretto
-github.com/dgraph-io/ristretto/z
-github.com/dgraph-io/ristretto/z/simd
+# github.com/dgraph-io/ristretto/v2 v2.0.0
+## explicit; go 1.21
+github.com/dgraph-io/ristretto/v2
+github.com/dgraph-io/ristretto/v2/z
+github.com/dgraph-io/ristretto/v2/z/simd
 # github.com/dustin/go-humanize v1.0.1
 ## explicit; go 1.16
 github.com/dustin/go-humanize
@@ -37,7 +37,7 @@ github.com/google/flatbuffers/go
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
+# github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0
 ## explicit; go 1.21
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/casing
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/codegenerator
@@ -52,7 +52,7 @@ github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/internal/genopenapi
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
-# github.com/klauspost/compress v1.17.10
+# github.com/klauspost/compress v1.17.11
 ## explicit; go 1.21
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
@@ -64,11 +64,6 @@ github.com/klauspost/compress/s2
 github.com/klauspost/compress/snappy
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/lib/pq v1.10.9
-## explicit; go 1.13
-github.com/lib/pq
-github.com/lib/pq/oid
-github.com/lib/pq/scram
 # github.com/maxbrunsfeld/counterfeiter/v6 v6.10.0
 ## explicit; go 1.23
 github.com/maxbrunsfeld/counterfeiter/v6
@@ -98,7 +93,12 @@ github.com/vmihailenco/msgpack/v5/msgpcode
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
 github.com/vmihailenco/tagparser/v2/internal/parser
-# gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.21
+# gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1
+## explicit; go 1.23
+gitlab.com/pietroski-software-company/devex/golang/serializer
+gitlab.com/pietroski-software-company/devex/golang/serializer/internal/bytesx
+gitlab.com/pietroski-software-company/devex/golang/serializer/models
+# gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks
@@ -123,8 +123,8 @@ gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options
 # gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random
-# gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0
-## explicit; go 1.23
+# gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.18
+## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/builder/errors
 gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer
 # gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
@@ -137,7 +137,7 @@ gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handl
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/profiler/pprof-server
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/tracer/stack
-# gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.27
+# gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.29
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/parsers/strings
 gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators
@@ -208,7 +208,7 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142
+# google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
@@ -216,8 +216,8 @@ google.golang.org/genproto/googleapis/api/visibility
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.67.1
-## explicit; go 1.21
+# google.golang.org/grpc v1.68.0
+## explicit; go 1.22.7
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -225,6 +225,8 @@ google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/pickfirst
+google.golang.org/grpc/balancer/pickfirst/internal
+google.golang.org/grpc/balancer/pickfirst/pickfirstleaf
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/channelz
@@ -280,7 +282,7 @@ google.golang.org/grpc/tap
 # google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 ## explicit; go 1.21
 google.golang.org/grpc/cmd/protoc-gen-go-grpc
-# google.golang.org/protobuf v1.35.1
+# google.golang.org/protobuf v1.35.2
 ## explicit; go 1.21
 google.golang.org/protobuf/cmd/protoc-gen-go
 google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo

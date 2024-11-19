@@ -11,9 +11,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
@@ -259,7 +259,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -307,13 +307,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			key := newUUID
 			value := person
-			emailKey, err := serializer.Serialize(person.Email)
+			emailKey, err := s.Serialize(person.Email)
 			require.NoError(t, err)
-			usernameKey, err := serializer.Serialize(person.Username)
+			usernameKey, err := s.Serialize(person.Username)
 			require.NoError(t, err)
-			storeKey, err := serializer.Serialize(key)
+			storeKey, err := s.Serialize(key)
 			require.NoError(t, err)
-			storeValue, err := serializer.Serialize(value)
+			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
 			logger.Debugf("writing value")
 			err = op.
@@ -424,7 +424,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -472,13 +472,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			key := newUUID
 			value := person
-			emailKey, err := serializer.Serialize(person.Email)
+			emailKey, err := s.Serialize(person.Email)
 			require.NoError(t, err)
-			usernameKey, err := serializer.Serialize(person.Username)
+			usernameKey, err := s.Serialize(person.Username)
 			require.NoError(t, err)
-			storeKey, err := serializer.Serialize(key)
+			storeKey, err := s.Serialize(key)
 			require.NoError(t, err)
-			storeValue, err := serializer.Serialize(value)
+			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
 			logger.Debugf("writing value")
 			err = op.
@@ -588,7 +588,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -636,13 +636,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			key := newUUID
 			value := person
-			emailKey, err := serializer.Serialize(person.Email)
+			emailKey, err := s.Serialize(person.Email)
 			require.NoError(t, err)
-			usernameKey, err := serializer.Serialize(person.Username)
+			usernameKey, err := s.Serialize(person.Username)
 			require.NoError(t, err)
-			storeKey, err := serializer.Serialize(key)
+			storeKey, err := s.Serialize(key)
 			require.NoError(t, err)
-			storeValue, err := serializer.Serialize(value)
+			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
 			logger.Debugf("writing value")
 			err = op.
@@ -753,7 +753,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -805,13 +805,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			key := newUUID
 			value := person
-			emailKey, err := serializer.Serialize(person.Email)
+			emailKey, err := s.Serialize(person.Email)
 			require.NoError(t, err)
-			usernameKey, err := serializer.Serialize(person.Username)
+			usernameKey, err := s.Serialize(person.Username)
 			require.NoError(t, err)
-			storeKey, err := serializer.Serialize(key)
+			storeKey, err := s.Serialize(key)
 			require.NoError(t, err)
-			storeValue, err := serializer.Serialize(value)
+			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
 			// UPSERT
 			{
@@ -1295,7 +1295,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
-			serializer := go_serializer.NewJsonSerializer()
+			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -1356,13 +1356,13 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 					key := person.ID
 					value := person
 
-					emailKey, err := serializer.Serialize(person.Email)
+					emailKey, err := s.Serialize(person.Email)
 					require.NoError(t, err)
-					usernameKey, err := serializer.Serialize(person.Username)
+					usernameKey, err := s.Serialize(person.Username)
 					require.NoError(t, err)
-					storeKey, err := serializer.Serialize(key)
+					storeKey, err := s.Serialize(key)
 					require.NoError(t, err)
-					storeValue, err := serializer.Serialize(value)
+					storeValue, err := s.Serialize(value)
 					require.NoError(t, err)
 
 					// UPSERT
@@ -1448,11 +1448,11 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 				// list items
 				{
 					logger.Debugf("listing list items values")
-					p0, err := serializer.Serialize(people[0].Email)
+					p0, err := s.Serialize(people[0].Email)
 					require.NoError(t, err)
-					p1, err := serializer.Serialize(people[1].Email)
+					p1, err := s.Serialize(people[1].Email)
 					require.NoError(t, err)
-					p4, err := serializer.Serialize(people[4].Email)
+					p4, err := s.Serialize(people[4].Email)
 					require.NoError(t, err)
 					listFromKeyValues, err := op.Operate(dbMemoryInfo).
 						ListValuesFromIndexingKeys(
@@ -1470,11 +1470,11 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 				// list items
 				{
 					logger.Debugf("listing list items values")
-					p0, err := serializer.Serialize(people[0].Email)
+					p0, err := s.Serialize(people[0].Email)
 					require.NoError(t, err)
-					p1, err := serializer.Serialize(people[1].Email)
+					p1, err := s.Serialize(people[1].Email)
 					require.NoError(t, err)
-					p4, err := serializer.Serialize(people[4].Email)
+					p4, err := s.Serialize(people[4].Email)
 					require.NoError(t, err)
 					listFromKeyValues, err := op.Operate(dbMemoryInfo).
 						ListValuesFromIndexingKeys(
@@ -1495,7 +1495,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 
 				for _, person := range people {
 					key := person.ID
-					storeKey, err := serializer.Serialize(key)
+					storeKey, err := s.Serialize(key)
 					require.NoError(t, err)
 
 					// DELETE - cascade
@@ -1573,7 +1573,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 
 	ctx, _ := context.WithCancel(context.Background())
 	logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
-	serializer := go_serializer.NewJsonSerializer()
+	s := serializer.NewJsonSerializer()
 
 	logger.Infof("opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -1604,13 +1604,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 	require.NoError(t, err)
 
-	storeKey, err := serializer.Serialize(ts.Field1PK)
+	storeKey, err := s.Serialize(ts.Field1PK)
 	require.NoError(t, err)
-	storeValue, err := serializer.Serialize(ts)
+	storeValue, err := s.Serialize(ts)
 	require.NoError(t, err)
-	field4IdxKeyKey, err := serializer.Serialize(ts.Field4IdxKey)
+	field4IdxKeyKey, err := s.Serialize(ts.Field4IdxKey)
 	require.NoError(t, err)
-	field5IdxKeyKey, err := serializer.Serialize(ts.Field5IdxKey)
+	field5IdxKeyKey, err := s.Serialize(ts.Field5IdxKey)
 	require.NoError(t, err)
 
 	t.Run(
@@ -1667,7 +1667,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 						logger.Debugf("value written")
 					}
 
-					newStoreKey, err := serializer.Serialize("new-main-key")
+					newStoreKey, err := s.Serialize("new-main-key")
 					require.NoError(t, err)
 
 					// fail for index

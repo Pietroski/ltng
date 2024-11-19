@@ -2,14 +2,14 @@ package badgerdb_operator_factory_v4
 
 import (
 	"context"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	"google.golang.org/grpc/reflection"
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	_ "google.golang.org/grpc/reflection"
 
 	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
+	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
 	badgerdb_operator_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/controllers/badger/v4/operator"

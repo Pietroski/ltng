@@ -1,8 +1,8 @@
 package badgerdb_operations_adaptor_v4
 
 import (
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
 )
@@ -15,7 +15,7 @@ func WithManager(manager badgerdb_manager_adaptor_v4.Manager) options.Option {
 	}
 }
 
-func WithSerializer(serializer go_serializer.Serializer) options.Option {
+func WithSerializer(serializer serializer_models.Serializer) options.Option {
 	return func(cfg interface{}) {
 		if c, ok := cfg.(*BadgerOperatorV4); ok {
 			c.serializer = serializer

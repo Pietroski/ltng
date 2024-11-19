@@ -2,16 +2,16 @@ package badgerdb_manager_controller_v4
 
 import (
 	"context"
-	common_model "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/common"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
-	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
+	common_model "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/common"
 	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
 )
 
@@ -67,7 +67,7 @@ func defaultBadgerDBManagerServiceControllerV4(
 			ctx, nil, go_logger.NewDefaultOpts(),
 		).FromCtx(ctx),
 		binder: go_binder.NewStructBinder(
-			go_serializer.NewJsonSerializer(),
+			serializer.NewJsonSerializer(),
 			go_validator.NewStructValidator(),
 		),
 	}

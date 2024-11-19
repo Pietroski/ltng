@@ -2,8 +2,9 @@ package badgerdb_operator_controller_v4
 
 import (
 	"context"
+
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/common"
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
@@ -61,7 +62,7 @@ func defaultBadgerDBOperatorServiceControllerV4(
 			ctx, nil, go_logger.NewDefaultOpts(),
 		).FromCtx(ctx),
 		binder: go_binder.NewStructBinder(
-			go_serializer.NewJsonSerializer(),
+			serializer.NewJsonSerializer(),
 			go_validator.NewStructValidator(),
 		),
 		manager:  nil,

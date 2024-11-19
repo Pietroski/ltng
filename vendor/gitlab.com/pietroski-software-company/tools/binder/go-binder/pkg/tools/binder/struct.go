@@ -3,12 +3,12 @@ package go_binder
 import (
 	"fmt"
 
-	go_serializer "gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer"
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 )
 
 func NewStructBinder(
-	serializer go_serializer.Serializer,
+	serializer serializer_models.Serializer,
 	validator go_validator.Validator,
 ) Binder {
 	return &structBinder{
