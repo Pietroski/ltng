@@ -16,7 +16,7 @@ require (
 	gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11
 	gitlab.com/pietroski-software-company/tools/options/go-opts v0.0.2
 	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13
-	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.19
+	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0
 	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
 	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.12
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.27
@@ -48,6 +48,6 @@ require (
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

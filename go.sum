@@ -106,8 +106,10 @@ gitlab.com/pietroski-software-company/tools/options/go-opts v0.0.2 h1:7h4uowZYm+
 gitlab.com/pietroski-software-company/tools/options/go-opts v0.0.2/go.mod h1:ESVXNCWdcpA5g3Q7xZ13GqEz25FqjDrs8yQsGJI9h58=
 gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13 h1:DP+ZumMUU2HxTLQ50nezsdY0xwIcRuFdNZmO86KqNcI=
 gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13/go.mod h1:eUG+R24pcdW7TpfbsFOvhMhp7jKqYvU0Zskz8Utzz+A=
-gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.19 h1:qL7UpU0oPydbXz1jNIkiu11E+WzCI2BiwFMolDY75zA=
-gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.19/go.mod h1:l52lfTfnF67VYcoUA3A9AgBMcgmXKRpw5diHsjUzjVQ=
+gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.21 h1:yFn+yqZbHzcJttapK/ps/PJLxPfmE4W6TxHJwWLPez8=
+gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.1.21/go.mod h1:ggltV+7c4Ecvd3oGoxnE8B0K2pzDo2EKb9rtXEKfHf8=
+gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0 h1:IMAkY2bq2UZNSoa9774TrJzlYdsGGhGU6IvJjylum2E=
+gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0/go.mod h1:ggltV+7c4Ecvd3oGoxnE8B0K2pzDo2EKb9rtXEKfHf8=
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25 h1:Ji5VhkiS4IgoT808W16tUlAJzozZhrjFdUqAIvxMH/0=
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25/go.mod h1:9/GBMA/mchxtCtvox9R71rDd7eWXDGmmASWU2Ixoftk=
 gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.12 h1:g+2PMfTWn88rW6Hi3VbHlLlljjph8RihaAS5i49uEHs=
@@ -179,8 +181,8 @@ google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55/go.mod h1:DMBHOl98
 google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013/go.mod h1:NbSheEEYHJ7i3ixzK3sjbqSGDJWnxyFXZblF3eUsNvo=
 google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 h1:wKguEg1hsxI2/L3hUYrpo1RVi48K+uTyzKqprwLXsb8=
 google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142/go.mod h1:d6be+8HhtEtucleCbxpPW9PA9XwISACu8nvpPqF0BVo=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 h1:e7S5W7MGGLaSu8j3YjdezkZ+m1/Nm0uRVRMEMGk26Xs=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142/go.mod h1:UqMtugtsSgubUsoxbuAoiCXvqvErP7Gf0so0mK9tHxU=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 h1:zciRKQ4kBpFgpfC5QQCVtnnNAcLIqweL7plyZRQHVpI=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38/go.mod h1:GX3210XPVPUjJbTUbvwI8f2IpZDMZuPJWDzDuebbviI=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.23.0/go.mod h1:Y5yQAOtifL1yxbo5wqy6BxZv8vAUGQwXBOALyacEbxg=
 google.golang.org/grpc v1.25.1/go.mod h1:c3i+UQWmh7LiEpx4sFZnkU36qjEYZ0imhYfXVyQciAY=
