@@ -9,9 +9,15 @@ type EngineLock struct {
 	opTracker *sync.Map
 }
 
+func NewEngineLock() *EngineLock {
+	return &EngineLock{
+		opTracker: new(sync.Map),
+	}
+}
+
 func (mtx *EngineLock) Lock(key, value any) {
 	_, ok := mtx.opTracker.LoadOrStore(key, value)
-	if !ok {
+	for !ok {
 		_, ok = mtx.opTracker.LoadOrStore(key, value)
 		runtime.Gosched()
 	}
