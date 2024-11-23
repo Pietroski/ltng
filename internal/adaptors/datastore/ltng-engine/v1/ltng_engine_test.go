@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"github.com/stretchr/testify/require"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	"testing"
 	"time"
 
@@ -105,7 +106,7 @@ func TestLTNGEngine_DeleteStore(t *testing.T) {
 }
 
 func TestLTNGEngineFlow(t *testing.T) {
-	t.Run("", func(t *testing.T) {
+	t.Run("create - get - delete flow", func(t *testing.T) {
 		ctx := context.Background()
 		ltngEngine, err := New(ctx)
 		require.NoError(t, err)
@@ -115,6 +116,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 			Path: "test-path",
 		})
 		assert.NoError(t, err)
+		assert.NotNil(t, info)
 
 		info, err = ltngEngine.LoadStore(ctx, &DBInfo{
 			Name: "test-store",
@@ -136,7 +138,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 		assert.Nil(t, info)
 	})
 
-	t.Run("", func(t *testing.T) {
+	t.Run("detect last opened at difference after closing", func(t *testing.T) {
 		ctx := context.Background()
 		ltngEngine, err := New(ctx)
 		require.NoError(t, err)
@@ -181,6 +183,62 @@ func TestLTNGEngineFlow(t *testing.T) {
 		infoHistory = append(infoHistory, info)
 
 		assertLOFromHistory(t, infoHistory)
+	})
+
+	t.Run("create - get - delete flow", func(t *testing.T) {
+		ctx := context.Background()
+		ltngEngine, err := New(ctx)
+		require.NoError(t, err)
+
+		info, err := ltngEngine.CreateStore(ctx, &DBInfo{
+			Name: "test-store",
+			Path: "test-path",
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, info)
+
+		info, err = ltngEngine.CreateStore(ctx, &DBInfo{
+			Name: "test-another-store",
+			Path: "test-another-path",
+		})
+		assert.NoError(t, err)
+
+		infos, err := ltngEngine.ListStores(ctx, &ltng_engine_models.Pagination{
+			PageID:   1,
+			PageSize: 5,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, infos, 2)
+		t.Log(infos)
+
+		for _, info = range infos {
+			t.Log(info)
+		}
+
+		err = ltngEngine.DeleteStore(ctx, &DBInfo{
+			Name: "test-store",
+			Path: "test-path",
+		})
+		assert.NoError(t, err)
+
+		err = ltngEngine.DeleteStore(ctx, &DBInfo{
+			Name: "test-another-store",
+			Path: "test-another-path",
+		})
+		assert.NoError(t, err)
+
+		infos, err = ltngEngine.ListStores(ctx, &ltng_engine_models.Pagination{
+			PageID:   1,
+			PageSize: 5,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, infos, 0)
+		t.Log(infos, err)
+
+		info, err = ltngEngine.LoadStore(ctx, dbManagerInfo.RelationalInfo())
+		assert.NoError(t, err)
+		assert.NotNil(t, info)
+		t.Log(info)
 	})
 }
 

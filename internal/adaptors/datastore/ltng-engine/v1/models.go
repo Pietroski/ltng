@@ -18,8 +18,9 @@ type (
 	}
 
 	fileInfo struct {
-		DBInfo *DBInfo
-		File   *os.File
+		DBInfo     *DBInfo
+		File       *os.File
+		HeaderSize uint32 `json:"headerSize"`
 	}
 
 	DBInfo struct {
@@ -62,6 +63,15 @@ func (dbInfo *DBInfo) RelationalInfo() *DBInfo {
 	}
 }
 
+func (dbInfo *DBInfo) TmpRelationalInfo() *DBInfo {
+	return &DBInfo{
+		Name:         dbInfo.Name + suffixSep + dbRelationalName + suffixSep + tmp,
+		Path:         dbInfo.Path + dbRelationalPath + tmpPath,
+		CreatedAt:    dbInfo.CreatedAt,
+		LastOpenedAt: dbInfo.LastOpenedAt,
+	}
+}
+
 func (dbInfo *DBInfo) LockName(key string) string {
 	return getFileLockName(dbInfo.Name, key)
 }
@@ -76,6 +86,7 @@ const (
 	all           = "*"
 	allExt        = all + ext
 	lineBreak     = "\n"
+	lb            = "&#;#&" // "?#\r\n\t#?" // bsSeparator = "&#-#&"
 
 	basePath      = dbBasePath + dbBaseVersion
 	baseDataPath  = basePath + dbDataPath
@@ -93,6 +104,8 @@ const (
 	dbIndexListStoreSuffixPath = "/indexed-list"
 	dbRelationalName           = "relational"
 	dbRelationalPath           = "/relational"
+	tmp                        = "tmp"
+	tmpPath                    = "/tmp"
 
 	dbManagerName = "ltng-engine-manager"
 	dbManagerPath = "internal/ltng-engine/manager"
@@ -159,6 +172,13 @@ func (dbInfo *DatabaseMetaInfo) RelationalInfo() *DatabaseMetaInfo {
 	return &DatabaseMetaInfo{
 		Name: dbInfo.Name + suffixSep + dbRelationalName,
 		Path: dbInfo.Path + dbRelationalPath,
+	}
+}
+
+func (dbInfo *DatabaseMetaInfo) TmpRelationalInfo() *DatabaseMetaInfo {
+	return &DatabaseMetaInfo{
+		Name: dbInfo.Name + suffixSep + dbRelationalName + suffixSep + tmp,
+		Path: dbInfo.Path + dbRelationalPath + tmpPath,
 	}
 }
 
