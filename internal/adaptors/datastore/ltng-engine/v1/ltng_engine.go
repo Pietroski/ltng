@@ -25,23 +25,25 @@ func New(ctx context.Context, opts ...options.Option) (*LTNGEngine, error) {
 	}
 	options.ApplyOptions(engine, opts...)
 
-	if err := engine.createStatsPathOnDisk(ctx); err != nil {
-		return nil, err
-	}
-	if _, err := engine.createStoreStatsOnDisk(
-		ctx, dbManagerInfo.RelationalInfo(),
-	); err != nil {
-		return nil, fmt.Errorf("failed creating store stats manager on-disk: %w", err)
-	}
-	if err := os.MkdirAll(
-		dbTmpDelDataPath, dbFilePerm,
-	); err != nil {
-		return nil, err
-	}
-	if err := os.MkdirAll(
-		dbTmpDelStatsPath, dbFilePerm,
-	); err != nil {
-		return nil, err
+	{ // init store structure
+		if err := engine.createStatsPathOnDisk(ctx); err != nil {
+			return nil, err
+		}
+		if _, err := engine.createStoreStatsOnDisk(
+			ctx, dbManagerInfo.RelationalInfo(),
+		); err != nil {
+			return nil, fmt.Errorf("failed creating store stats manager on-disk: %w", err)
+		}
+		if err := os.MkdirAll(
+			dbTmpDelDataPath, dbFilePerm,
+		); err != nil {
+			return nil, err
+		}
+		if err := os.MkdirAll(
+			dbTmpDelStatsPath, dbFilePerm,
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	return engine, nil
@@ -301,13 +303,6 @@ func (e *LTNGEngine) DeleteStore(
 	delete(e.fileStoreMapping, info.Name)
 	delete(e.fileStoreMapping, info.RelationalInfo().Name)
 
-	// create temporary deletion data directory
-	if err := os.MkdirAll(
-		getTmpDelDataPathWithSep(info.Name), dbFilePerm,
-	); err != nil {
-		return err
-	}
-
 	// create temporary deletion stats directory
 	if err := os.MkdirAll(
 		getTmpDelStatsPathWithSep(info.Name), dbFilePerm,
@@ -315,70 +310,11 @@ func (e *LTNGEngine) DeleteStore(
 		return err
 	}
 
-	copyDataPath := func() error {
-		// copy data store to tmp del path
-		if bs, err := cpExec(ctx, getDataPathWithSep(info.Path), getTmpDelDataPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("error copying %s store data - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-	copyDataPathRollback := func() error {
-		// delete all files from store directory
-		if bs, err := delExec(ctx, getTmpDelDataPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("failed deleting %s tmp data store - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-
-	copyStatsFile := func() error {
-		// copy stats file to tmp del stats path
-		if bs, err := cpExec(ctx, getStatsFilepath(info.Name), getTmpDelStatsPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("error copying %s store stats - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-	copyStatsFileRollback := func() error {
-		// copy stats file to tmp del stats path
-		if bs, err := delExec(ctx, getTmpDelStatsPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("error deleting %s tmp store stats - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-
-	deleteDataPath := func() error {
-		// delete all files from store directory
-		if bs, err := delExec(ctx, getDataPathWithSep(info.Path)); err != nil {
-			return fmt.Errorf("failed to delete %s data store - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-	deleteDataPathRollback := func() error {
-		if bs, err := cpExec(ctx, getTmpDelDataPathWithSep(info.Name), getDataPathWithSep(info.Path)); err != nil {
-			return fmt.Errorf("error de-copying %s data store - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-
-	deleteStatsPath := func() error {
-		// delete stats file
-		if bs, err := delFileExec(ctx, getStatsFilepath(info.Name)); err != nil {
-			return fmt.Errorf("failed to relete %s stats file - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
-	}
-	deleteStatsPathRollback := func() error {
-		if bs, err := cpExec(ctx, getTmpDelStatsPathWithSep(info.Name), getStatsFilepath(info.Name)); err != nil {
-			return fmt.Errorf("error de-copying %s store stats file - output: %s: %w", info.Name, bs, err)
-		}
-
-		return nil
+	// create temporary deletion data directory
+	if err := os.MkdirAll(
+		getTmpDelDataPathWithSep(info.Name), dbFilePerm,
+	); err != nil {
+		return err
 	}
 
 	deleteRowFromRelationalStore := func() error {
@@ -401,6 +337,72 @@ func (e *LTNGEngine) DeleteStore(
 		return nil
 	}
 
+	copyStatsFile := func() error {
+		// copy stats file to tmp del stats path
+		if bs, err := cpExec(ctx, getStatsFilepath(info.Name), getTmpDelStatsPathWithSep(info.Name)); err != nil {
+			return fmt.Errorf("error copying %s store stats - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+	copyStatsFileRollback := func() error {
+		// delete stats file from tmp del stats path
+		if bs, err := delHardExec(ctx, getTmpDelStatsPathWithSep(info.Name)); err != nil {
+			return fmt.Errorf("error deleting %s tmp store stats - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+
+	copyDataPath := func() error {
+		// copy data store to tmp del path
+		if bs, err := cpExec(ctx, getDataPathWithSep(info.Path), getTmpDelDataPathWithSep(info.Name)); err != nil {
+			return fmt.Errorf("error copying %s store data - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+	copyDataPathRollback := func() error {
+		// delete all files from store directory
+		if bs, err := delHardExec(ctx, getTmpDelDataPathWithSep(info.Name)); err != nil {
+			return fmt.Errorf("failed deleting %s tmp data store - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+
+	deleteStatsPath := func() error {
+		// delete stats file
+		if bs, err := delFileExec(ctx, getStatsFilepath(info.Name)); err != nil {
+			return fmt.Errorf("failed to relete %s stats file - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+	deleteStatsPathRollback := func() error {
+		if bs, err := cpExec(ctx, getTmpDelStatsPathWithSep(info.Name), getStatsFilepath(info.Name)); err != nil {
+			return fmt.Errorf("error de-copying %s store stats file - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+
+	deleteDataPath := func() error {
+		// delete all files from store directory // delExec
+		if bs, err := delStoreDirsExec(ctx, getDataPath(info.Path)); err != nil {
+			return fmt.Errorf("failed to delete %s data store - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+	deleteDataPathRollback := func() error {
+		if bs, err := cpExec(ctx, getTmpDelDataPathWithSep(info.Name), getDataPathWithSep(info.Path+sep+info.Name)); err != nil {
+			return fmt.Errorf("error de-copying %s data store - output: %s: %w", info.Name, bs, err)
+		}
+
+		return nil
+	}
+
 	deleteTmpDataAndStatsPath := func() error {
 		// delete tmp stats path
 		if bs, err := delHardExec(ctx, getTmpDelDataPathWithSep(info.Name)); err != nil {
@@ -415,16 +417,14 @@ func (e *LTNGEngine) DeleteStore(
 		return nil
 	}
 
-	// TODO: add delete of item's directories
-
 	operations := []*lo.Operation{
 		{
 			Action: &lo.Action{
-				Act:         copyDataPath,
+				Act:         deleteRowFromRelationalStore,
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 			Rollback: &lo.RollbackAction{
-				RollbackAct: copyDataPathRollback,
+				RollbackAct: deleteRowFromRelationalStoreRollback,
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 		},
@@ -440,11 +440,11 @@ func (e *LTNGEngine) DeleteStore(
 		},
 		{
 			Action: &lo.Action{
-				Act:         deleteDataPath,
+				Act:         copyDataPath,
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteDataPathRollback,
+				RollbackAct: copyDataPathRollback,
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 		},
@@ -460,11 +460,11 @@ func (e *LTNGEngine) DeleteStore(
 		},
 		{
 			Action: &lo.Action{
-				Act:         deleteRowFromRelationalStore,
+				Act:         deleteDataPath,
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteRowFromRelationalStoreRollback,
+				RollbackAct: deleteDataPathRollback,
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 		},

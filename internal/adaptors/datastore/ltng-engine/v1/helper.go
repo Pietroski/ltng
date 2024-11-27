@@ -25,7 +25,31 @@ func cpFileExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, err
 
 func delExec(_ context.Context, filepath string) ([]byte, error) {
 	return executor(
+		//exec.Command("find", filepath, "-maxdepth", "1", "-type", "d", "-name", "indexed", "-o", "-name", "indexed-list", "-o", "-name", "relational", "-exec", "rm", "{}", ";"))
 		exec.Command("find", filepath, "-maxdepth", "1", "-type", "f", "-exec", "rm", "{}", ";"))
+}
+
+func cpStoreDirsExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, error) {
+	return executor(
+		exec.Command("cp", "-R", fromFilepath+"/{indexed,indexed-list,relational}", toFilepath))
+}
+
+func delStoreDirsExec(_ context.Context, filepath string) ([]byte, error) {
+	return executor(
+		exec.Command("sh", "-c",
+			fmt.Sprintf("rm -rf %s/{indexed,indexed-list,relational}", filepath)))
+
+	//return nil, nil
+
+	//return executor(
+	//	exec.Command("find", filepath, "-maxdepth", "1", "-type", "d",
+	//		"(", "-name", "indexed", "-o", "-name", "indexed-list", "-o", "-name", "relational", ")",
+	//		"-exec", "rm", "-rf", "{}", ";"))
+}
+
+func delSoftDirExec(_ context.Context, filepath string) ([]byte, error) {
+	return executor(
+		exec.Command("rm", filepath))
 }
 
 func delHardExec(_ context.Context, filepath string) ([]byte, error) {

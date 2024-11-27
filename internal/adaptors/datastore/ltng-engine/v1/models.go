@@ -77,7 +77,7 @@ func (dbInfo *DBInfo) LockName(key string) string {
 }
 
 const (
-	dbBasePath    = ".db"
+	dbBasePath    = ".ltngdb"
 	dbBaseVersion = "/v1"
 	dbDataPath    = "/stores"
 	dbStatsPath   = "/stores/stats"

@@ -4,6 +4,7 @@
 
 # bagder-db default local manager directory
 .db
+.ltngdb
 .DS_Store
 
 # credential files
