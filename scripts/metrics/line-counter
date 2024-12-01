@@ -2,7 +2,17 @@
 
 # shellcheck disable=SC2038
 find . -type f \( -iname "*.go" \
-	! -ipath "./vendor/*" \
-	! -path "./schemas/*" \
-	! -path "*/postgresql/*" \
-	! -path "*/mocks/*" \) | xargs wc -l
+    ! -ipath "./vendor/*" \
+    ! -path "./schemas/*" \
+    ! -path "*/postgresql/*" \
+    ! -path "*/mocks/*" \) | xargs wc -l
+
+printf "\n\n\n\n\n"
+
+DIR=internal/adaptors/datastore/ltng-engine/v1
+#DIR=internal/adaptors/datastore/badgerdb/v4
+
+# total
+find "$DIR" -type f -name "*.go" | xargs wc -l | tail -n1
+# total for each file
+find "$DIR" -type f -name "*.go" | xargs wc -l
