@@ -256,7 +256,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 	t.Run("item crud tests", func(t *testing.T) {
 		t.Run("for single item", func(t *testing.T) {
-			ctx := context.Background()
+			ctx := prepareTest(t)
 			ltngEngine, err := New(ctx)
 			require.NoError(t, err)
 
@@ -271,7 +271,19 @@ func TestLTNGEngineFlow(t *testing.T) {
 			info, err = ltngEngine.LoadStore(ctx, dbInfo)
 			assert.NoError(t, err)
 
-			// ###################################################### \\
+			infos, err := ltngEngine.ListStores(ctx, &ltng_engine_models.Pagination{
+				PageID:   1,
+				PageSize: 5,
+			})
+			assert.NoError(t, err)
+			assert.Len(t, infos, 1)
+			t.Log(infos)
+
+			for _, info = range infos {
+				t.Log(info)
+			}
+
+			// #################################################################################### \\
 
 			timeNow := time.Now().UTC().Unix()
 			userData := &user{
@@ -284,6 +296,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				CreatedAt: timeNow,
 				UpdatedAt: timeNow,
 			}
+			t.Log(userData.Email)
 
 			bsKey, err := ltngEngine.serializer.Serialize(userData.Email)
 			require.NoError(t, err)

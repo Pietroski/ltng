@@ -14,13 +14,9 @@ import (
 )
 
 func (e *LTNGEngine) openCreateTruncatedFile(
-	ctx context.Context,
+	_ context.Context,
 	filePath string,
 ) (*os.File, error) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("file does not exist: %v", err)
-	}
-
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL|os.O_TRUNC, dbFileOp)
 	if err != nil {
 		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
@@ -69,7 +65,7 @@ func (e *LTNGEngine) openFile(
 	return file, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) readAll(
 	_ context.Context,
@@ -141,7 +137,7 @@ func (e *LTNGEngine) getRelationalFileInfo(
 	return relationalFileInfo, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) writeToFile(
 	ctx context.Context,
@@ -221,7 +217,7 @@ func (e *LTNGEngine) writeToRelationalFileWithNoSeek(
 	return bs, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 type (
 	fileWriter struct {
@@ -239,7 +235,7 @@ func newFileWriter(
 	}, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 type (
 	fileReader struct {

@@ -34,7 +34,7 @@ func (e *LTNGEngine) createStatsPathOnDisk(
 	return nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) createOrOpenRelationalStatsStoreOnDisk(
 	ctx context.Context,
@@ -82,7 +82,7 @@ func (e *LTNGEngine) writeRelationalStatsStoreToFile(
 	return fi, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) createStatsStoreOnDisk(
 	ctx context.Context,
@@ -127,7 +127,7 @@ func (e *LTNGEngine) writeStatsStoreToFile(
 	return fi, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 	ctx context.Context,
@@ -141,6 +141,8 @@ func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 				"failed to load %s store info from disk: %v",
 				info.Name, err)
 		}
+
+		e.storeFileMapping[info.Name] = fi
 
 		return fi, nil
 	}
@@ -173,14 +175,14 @@ func (e *LTNGEngine) loadStoreStatsFromDisk(
 		return nil, fmt.Errorf("error writing store stats file: %v", err)
 	}
 
-	if _, err = e.updateRelationalStatsFile(ctx, fi, fi.FileData); err != nil {
+	if _, err = e.updateRelationalStatsFile(ctx, fi.FileData); err != nil {
 		return nil, fmt.Errorf("error updateRelationalStatsFile: %v", err)
 	}
 
 	return fi, err
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) loadRelationalStoreFromMemoryOrDisk(
 	ctx context.Context,
@@ -193,6 +195,8 @@ func (e *LTNGEngine) loadRelationalStoreFromMemoryOrDisk(
 				"failed to load %s store info from disk: %v",
 				dbManagerStoreInfo.RelationalInfo().Name, err)
 		}
+
+		e.storeFileMapping[dbManagerStoreInfo.RelationalInfo().Name] = fi
 
 		return fi, nil
 	}
@@ -223,18 +227,14 @@ func (e *LTNGEngine) loadRelationalStoreStatsFromDisk(
 }
 
 func (e *LTNGEngine) updateRelationalStatsFile(
-	ctx context.Context, fi *fileInfo, fileData *FileData,
+	ctx context.Context, fileData *FileData,
 ) (*fileInfo, error) {
-	fi, ok := e.storeFileMapping[dbManagerStoreInfo.RelationalInfo().Name]
-	if !ok {
-		var err error
-		fi, err = e.loadRelationalStoreStatsFromDisk(ctx)
-		if err != nil {
-			return nil, err
-		}
+	fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := e.updateRelationalStats(
+	if err = e.updateRelationalStats(
 		ctx, fi, []byte(fileData.Header.StoreInfo.Name), fileData,
 	); err != nil {
 		return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
@@ -243,7 +243,7 @@ func (e *LTNGEngine) updateRelationalStatsFile(
 	return fi, nil
 }
 
-// ########################################################################################
+// #####################################################################################################################
 
 func (e *LTNGEngine) deleteFromRelationalStats(
 	ctx context.Context,
@@ -406,6 +406,8 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 
 	return
 }
+
+// TODO: change the tmp place for the relational stats file
 
 func (e *LTNGEngine) updateRelationalStats(
 	ctx context.Context,
@@ -767,4 +769,4 @@ func (e *LTNGEngine) insertRelationalStats(
 	return nil
 }
 
-// ########################################################################################
+// #####################################################################################################################

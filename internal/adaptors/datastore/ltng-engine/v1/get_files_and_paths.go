@@ -44,6 +44,10 @@ func getTmpDelDataPathWithSep(path string) string {
 	return dbTmpDelDataPath + sep + path + sep
 }
 
+func getTmpDelDataFilePath(path, filename string) string {
+	return dbTmpDelDataPath + sep + path + sep + filename + ext
+}
+
 func getTmpDelStatsPathWithSep(path string) string {
 	return dbTmpDelStatsPath + sep + path + sep
 }

@@ -90,6 +90,6 @@ func (e *LTNGEngine) ListItems(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
-	return e.createItem(ctx, dbMetaInfo, item, opts)
+) ([][]byte, error) {
+	return [][]byte{}, nil
 }

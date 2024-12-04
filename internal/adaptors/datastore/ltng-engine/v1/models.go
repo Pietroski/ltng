@@ -20,6 +20,7 @@ const (
 	allExt        = all + ext
 	lineBreak     = "\n"
 	lb            = "&#;#&" // "?#\r\n\t#?" // bsSeparator = "&#-#&"
+	bytesSep      = "&#!;;#!&"
 
 	basePath      = dbBasePath + dbBaseVersion
 	baseDataPath  = basePath + dbDataPath
@@ -42,6 +43,9 @@ const (
 
 	dbManagerName = "ltng-engine-manager"
 	dbManagerPath = "internal/ltng-engine/manager"
+
+	relationalDataStore     = "relational-data-store"
+	relationalDataStoreFile = relationalDataStore + ext
 
 	dbFilePerm = 0750
 	dbFileOp   = 0644
@@ -91,6 +95,7 @@ type (
 	}
 
 	FileData struct {
+		Key    []byte  `json:"key,omitempty"`
 		Header *Header `json:"header,omitempty"`
 		Data   []byte  `json:"data,omitempty"`
 	}
@@ -222,7 +227,7 @@ const (
 	One IndexSearchPattern = iota
 	AndComputational
 	OrComputational
-	// IndexingList
+	IndexingList
 )
 
 type ListSearchPattern int

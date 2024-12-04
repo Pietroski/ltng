@@ -20,7 +20,12 @@ func cpExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, error) 
 
 func cpFileExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, error) {
 	return executor(
-		exec.Command("find", fromFilepath, "-maxdepth", "1", "-type", "f", "-exec", "cp", "{}", toFilepath, ";"))
+		exec.Command("sh", "-c", fmt.Sprintf("cp %v %v", fromFilepath, toFilepath)))
+}
+
+func mvFileExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, error) {
+	return executor(
+		exec.Command("sh", "-c", fmt.Sprintf("mv -f %v %v", fromFilepath, toFilepath)))
 }
 
 func delExec(_ context.Context, filepath string) ([]byte, error) {

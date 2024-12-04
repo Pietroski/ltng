@@ -104,9 +104,12 @@ func (e *LTNGEngine) createStore(
 
 	relationalInfo := info.RelationalInfo()
 	relationalStoreCreation := func() error {
-		err = e.createDataPathOnDisk(ctx, relationalInfo)
-		if err != nil {
-			return fmt.Errorf("error creating %s index-list store: %v", info.Name, err)
+		if err = e.createDataPathOnDisk(ctx, relationalInfo); err != nil {
+			return fmt.Errorf("error creating %s relational store: %v", relationalInfo.Name, err)
+		}
+
+		if _, err = e.createRelationalItemStore(ctx, info); err != nil {
+			return fmt.Errorf("error creating %s relational store header item: %v", relationalInfo.Name, err)
 		}
 
 		return nil
@@ -114,7 +117,7 @@ func (e *LTNGEngine) createStore(
 	relationalStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, relationalInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index-list store: %v", info.Name, err)
+			return fmt.Errorf("error deleting %s index-list store: %v", relationalInfo.Name, err)
 		}
 
 		return nil
@@ -182,7 +185,6 @@ func (e *LTNGEngine) createStore(
 			},
 		},
 	}
-
 	if err = lo.New(operations...).Operate(); err != nil {
 		return nil, err
 	}
