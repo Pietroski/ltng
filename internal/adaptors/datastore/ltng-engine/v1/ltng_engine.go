@@ -82,7 +82,7 @@ func (e *LTNGEngine) DeleteItem(
 	item *Item,
 	opts *IndexOpts,
 ) ([]byte, error) {
-	return e.createItem(ctx, dbMetaInfo, item, opts)
+	return nil, e.deleteItem(ctx, dbMetaInfo, item.Key) // , opts
 }
 
 func (e *LTNGEngine) ListItems(

@@ -16,11 +16,12 @@ func (e *LTNGEngine) loadItemFromMemoryOrDisk(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
+	updateRelationalData bool,
 ) ([]byte, error) {
-	strItemKey := string(item.Key)
+	strItemKey := hex.EncodeToString(item.Key)
 	fi, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
 	if !ok {
-		return e.loadItemFromDisk(ctx, dbMetaInfo, item)
+		return e.loadItemFromDisk(ctx, dbMetaInfo, item, updateRelationalData)
 	}
 
 	bs, err := e.readAll(ctx, fi.File)
@@ -41,8 +42,9 @@ func (e *LTNGEngine) loadItemFromDisk(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
+	updateRelationalData bool,
 ) ([]byte, error) {
-	strItemKey := string(item.Key)
+	strItemKey := hex.EncodeToString(item.Key)
 	filepath := getDataFilepath(dbMetaInfo.Path, strItemKey)
 	bs, file, err := e.openReadWholeFile(ctx, filepath)
 	if err != nil {
@@ -65,17 +67,21 @@ func (e *LTNGEngine) loadItemFromDisk(
 		return nil, fmt.Errorf("error writing item data to file: %v", err)
 	}
 
-	if err = e.updateRelationalData(
-		ctx, dbMetaInfo, &itemFileData,
-	); err != nil {
-		return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
-	}
-
-	e.itemFileMapping[dbMetaInfo.LockName(strItemKey)] = &fileInfo{
+	fi := &fileInfo{
 		File:     file,
 		FileData: &itemFileData,
 		DataSize: uint32(len(itemFileData.Data)),
 	}
+
+	if updateRelationalData {
+		if err = e.updateRelationalDataFile(
+			ctx, dbMetaInfo, &itemFileData,
+		); err != nil {
+			return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
+		}
+	}
+
+	e.itemFileMapping[dbMetaInfo.LockName(strItemKey)] = fi
 
 	return itemFileData.Data, nil
 }
@@ -145,7 +151,7 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	dbMetaInfo *ManagerStoreMetaInfo,
 ) (*fileInfo, error) {
 	f, err := e.openFile(ctx,
-		getDataFilepath(dbMetaInfo.RelationalInfo().Path, relationalDataStoreFile))
+		getDataFilepath(dbMetaInfo.RelationalInfo().Path, relationalDataStore))
 	if err != nil {
 		return nil, err
 	}
@@ -170,20 +176,22 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	fi.DataSize = uint32(len(fileData.Data))
 
 	return fi, e.updateRelationalData(
-		ctx, dbMetaInfo, &fileData,
+		ctx, dbMetaInfo, fi, &fileData,
 	)
 }
 
 func (e *LTNGEngine) updateRelationalDataFile(
-	ctx context.Context, dbMetaInfo *ManagerStoreMetaInfo, fileData *FileData,
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	fileData *FileData,
 ) error {
-	_, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
 	if err != nil {
 		return err
 	}
 
 	if err = e.updateRelationalData(
-		ctx, dbMetaInfo, fileData,
+		ctx, dbMetaInfo, fi, fileData,
 	); err != nil {
 		return fmt.Errorf("failed to update store stats manager file: %v", err)
 	}
@@ -200,16 +208,24 @@ func (e *LTNGEngine) straightSearch(
 	opts *IndexOpts,
 	dbMetaInfo *ManagerStoreMetaInfo,
 ) ([]byte, error) {
+	key := opts.ParentKey
+	if key == nil && (opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0) {
+		return nil, fmt.Errorf("invalid indexing key")
+	} else if key == nil {
+		key = opts.IndexingKeys[0]
+	}
+
+	// TODO: sometimes dbMetaInfo others dbMetaInfo.IndexInfo
 	mainKeyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
-		Key: opts.IndexingKeys[0],
-	})
+		Key: key,
+	}, false)
 	if err != nil {
 		return []byte{}, err
 	}
 
 	value, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
 		Key: mainKeyValue,
-	})
+	}, true)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -226,7 +242,7 @@ func (e *LTNGEngine) andComputationalSearch(
 	for _, key := range opts.IndexingKeys {
 		keyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
 			Key: key,
-		})
+		}, false)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +256,7 @@ func (e *LTNGEngine) andComputationalSearch(
 
 	return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
 		Key: parentKey,
-	})
+	}, true)
 }
 
 func (e *LTNGEngine) orComputationalSearch(
@@ -251,14 +267,14 @@ func (e *LTNGEngine) orComputationalSearch(
 	for _, key := range opts.IndexingKeys {
 		parentKey, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
 			Key: key,
-		})
+		}, false)
 		if err != nil {
 			continue
 		}
 
 		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
 			Key: parentKey,
-		})
+		}, true)
 	}
 
 	return nil, fmt.Errorf("no keys found")
@@ -272,7 +288,7 @@ func (e *LTNGEngine) loadIndexingList(
 ) ([][]byte, error) {
 	rawIndexingList, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexListInfo(), &Item{
 		Key: opts.ParentKey,
-	})
+	}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -311,9 +327,7 @@ func (e *LTNGEngine) upsertItemOnDisk(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 ) error {
-	hex.EncodeToString(item.Key[:])
-	strItemKey := string(item.Key)
-	//strItemKey := hex.EncodeToString(item.Key[:])
+	strItemKey := hex.EncodeToString(item.Key)
 	filePath := getDataFilepath(dbMetaInfo.Path, strItemKey)
 
 	timeNow := time.Now().UTC().Unix()
@@ -331,8 +345,6 @@ func (e *LTNGEngine) upsertItemOnDisk(
 		Data: item.Value,
 		Key:  item.Key,
 	}
-
-	fmt.Println(strItemKey)
 
 	createFileItem := func() error {
 		file, err := e.openCreateTruncatedFile(ctx, filePath)
@@ -384,7 +396,7 @@ func (e *LTNGEngine) upsertIndexItemOnDisk(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 ) error {
-	strItemKey := string(item.Key)
+	strItemKey := hex.EncodeToString(item.Key)
 	filePath := getDataFilepath(dbMetaInfo.Path, strItemKey)
 
 	timeNow := time.Now().UTC().Unix()
@@ -403,7 +415,7 @@ func (e *LTNGEngine) upsertIndexItemOnDisk(
 		Key:  item.Key,
 	}
 
-	file, err := e.openCreateTruncatedFile(ctx, getDataPath(filePath))
+	file, err := e.openCreateTruncatedFile(ctx, filePath)
 	if err != nil {
 		return fmt.Errorf("error opening/creating a truncated indexed file at %s: %v", filePath, err)
 	}
@@ -483,23 +495,17 @@ func (e *LTNGEngine) insertRelationalData(
 func (e *LTNGEngine) updateRelationalData(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
+	fi *fileInfo,
 	fileData *FileData,
 ) (err error) {
-	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-	if err != nil {
-		return fmt.Errorf("error creating %s relational store: %w",
-			dbMetaInfo.RelationalInfo().Name, err)
-	}
-
-	strKey := string(fileData.Key)
+	strKey := hex.EncodeToString(fileData.Key)
 	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
 	relationalPath := relationalInfo.Path
-	relationalFilePath := relationalPath + sep + strKey + ext
 	tmpFileInfo := fi.FileData.Header.StoreInfo.TmpRelationalInfo()
 	tmpFilePath := tmpFileInfo.Path
 	relationalLockKey := relationalInfo.LockName(relationalDataStore)
 
-	reader, err := newFileReader(ctx, fi, true)
+	reader, err := newFileReader(ctx, fi, false)
 	if err != nil {
 		return fmt.Errorf("error creating %s file reader: %w",
 			fi.File.Name(), err)
@@ -527,7 +533,7 @@ func (e *LTNGEngine) updateRelationalData(
 	}
 
 	if !found {
-		return fmt.Errorf("could not find key %s in item relational file %s", fileData.Key, relationalFilePath)
+		return fmt.Errorf("could not find key %s in item relational file %s", fileData.Key, fi.File.Name())
 	}
 
 	if _, err = fi.File.Seek(0, 0); err != nil {
@@ -536,8 +542,12 @@ func (e *LTNGEngine) updateRelationalData(
 
 	var tmpFile *os.File
 	copyToTmpFile := func() error {
+		if err = os.MkdirAll(getDataPathWithSep(tmpFilePath), os.ModePerm); err != nil {
+			return fmt.Errorf("error creating tmp file directory: %w", err)
+		}
+
 		tmpFile, err = os.OpenFile(
-			getDataFilepath(tmpFilePath, strKey),
+			getDataFilepath(tmpFilePath, relationalDataStore),
 			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, dbFilePerm,
 		)
 		if err != nil {
@@ -580,25 +590,21 @@ func (e *LTNGEngine) updateRelationalData(
 	}
 
 	removeMainFile := func() error {
-		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("error closing original file: %w", err)
-		}
-
-		if err = os.Remove(getDataFilepath(relationalPath, strKey)); err != nil {
+		if err = os.Remove(getDataFilepath(relationalPath, relationalDataStore)); err != nil {
 			return fmt.Errorf("error removing %s relational item's file: %w", relationalPath, err)
 		}
 
 		return nil
 	}
 	reopenMainFile := func() error {
-		fi, err = e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-		if err != nil {
-			return fmt.Errorf(
-				"error re-opening %s item relational store: %w",
-				relationalFilePath, err)
-		}
-
-		e.itemFileMapping[relationalLockKey] = fi
+		//fi, err = e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+		//if err != nil {
+		//	return fmt.Errorf(
+		//		"error re-opening %s item relational store: %w",
+		//		relationalLockKey, err)
+		//}
+		//
+		//e.itemFileMapping[relationalLockKey] = fi
 
 		return nil
 	}
@@ -631,14 +637,17 @@ func (e *LTNGEngine) updateRelationalData(
 
 	{ // renaming tmp file
 		if err = os.Rename(
-			getDataFilepath(tmpFilePath, strKey),
-			getDataFilepath(relationalPath, strKey),
+			getDataFilepath(tmpFilePath, relationalDataStore),
+			getDataFilepath(relationalPath, relationalDataStore),
 		); err != nil {
 			return fmt.Errorf("error renaming tmp file: %w", err)
 		}
 
+		// TODO: log error
+		_ = os.RemoveAll(getDataPathWithSep(tmpFilePath))
+
 		var file *os.File
-		file, err = e.openFile(ctx, getDataFilepath(relationalPath, strKey))
+		file, err = e.openFile(ctx, getDataFilepath(relationalPath, relationalDataStore))
 		if err != nil {
 			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
 		}
@@ -664,10 +673,9 @@ func (e *LTNGEngine) upsertRelationalData(
 			dbMetaInfo.RelationalInfo().Name, err)
 	}
 
-	strKey := string(fileData.Key)
+	strKey := hex.EncodeToString(fileData.Key)
 	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
 	relationalPath := relationalInfo.Path
-	relationalFilePath := relationalPath + sep + strKey + ext
 	tmpFileInfo := fi.FileData.Header.StoreInfo.TmpRelationalInfo()
 	tmpFilePath := tmpFileInfo.Path
 	relationalLockKey := relationalInfo.LockName(relationalDataStore)
@@ -713,6 +721,10 @@ func (e *LTNGEngine) upsertRelationalData(
 
 	var tmpFile *os.File
 	copyToTmpFile := func() error {
+		if err = os.MkdirAll(getDataPathWithSep(tmpFilePath), os.ModePerm); err != nil {
+			return fmt.Errorf("error creating tmp file directory: %w", err)
+		}
+
 		tmpFile, err = os.OpenFile(
 			getDataFilepath(tmpFilePath, strKey),
 			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, dbFilePerm,
@@ -772,7 +784,7 @@ func (e *LTNGEngine) upsertRelationalData(
 		if err != nil {
 			return fmt.Errorf(
 				"error re-opening %s item relational store: %w",
-				relationalFilePath, err)
+				relationalPath, err)
 		}
 
 		e.itemFileMapping[relationalLockKey] = fi
@@ -814,6 +826,9 @@ func (e *LTNGEngine) upsertRelationalData(
 			return fmt.Errorf("error renaming tmp file: %w", err)
 		}
 
+		// TODO: log error
+		_ = os.RemoveAll(getDataPathWithSep(tmpFilePath))
+
 		var file *os.File
 		file, err = e.openFile(ctx, getDataFilepath(relationalPath, strKey))
 		if err != nil {
@@ -841,7 +856,7 @@ func (e *LTNGEngine) deleteRelationalData(
 		return err
 	}
 
-	strKey := string(key)
+	strKey := hex.EncodeToString(key)
 	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
 	relationalPath := relationalInfo.Path
 	relationalFilePath := relationalPath + sep + strKey + ext
@@ -886,6 +901,10 @@ func (e *LTNGEngine) deleteRelationalData(
 
 	var tmpFile *os.File
 	copyToTmpFile := func() error {
+		if err = os.MkdirAll(getDataPathWithSep(tmpFilePath), os.ModePerm); err != nil {
+			return fmt.Errorf("error creating tmp file directory: %w", err)
+		}
+
 		tmpFile, err = os.OpenFile(
 			getDataFilepath(tmpFilePath, strKey),
 			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, dbFilePerm,
@@ -984,6 +1003,9 @@ func (e *LTNGEngine) deleteRelationalData(
 		); err != nil {
 			return fmt.Errorf("error renaming tmp file: %w", err)
 		}
+
+		// TODO: log error
+		_ = os.RemoveAll(getDataPathWithSep(tmpFilePath))
 
 		var file *os.File
 		file, err = e.openFile(ctx, getDataFilepath(relationalPath, strKey))

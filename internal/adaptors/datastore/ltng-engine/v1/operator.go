@@ -3,6 +3,7 @@ package v1
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"os"
 
@@ -20,13 +21,12 @@ func (e *LTNGEngine) loadItem(
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if opts == nil || len(opts.IndexingKeys) != 1 {
-		err := fmt.Errorf("load item requires index key list with length of 1")
-		return []byte{}, fmt.Errorf("invalid index payload size for giving option: %w", err)
+	if opts == nil {
+		return nil, nil
 	}
 
 	if !opts.HasIdx {
-		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item)
+		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, false)
 	}
 
 	switch opts.IndexProperties.IndexSearchPattern {
@@ -54,11 +54,13 @@ func (e *LTNGEngine) createItem(
 	item *Item,
 	opts *IndexOpts,
 ) ([]byte, error) {
-	lockKey := dbMetaInfo.LockName(string(item.Key))
+	strItemKey := hex.EncodeToString(item.Key)
+
+	lockKey := dbMetaInfo.LockName(strItemKey)
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item); err == nil {
+	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, false); err == nil {
 		return nil, fmt.Errorf("error item already exists")
 	}
 
@@ -66,13 +68,11 @@ func (e *LTNGEngine) createItem(
 		return nil, e.createItemOnDisk(ctx, dbMetaInfo, item)
 	}
 
-	strKey := string(item.Key)
-
 	createItemOnDisk := func() error {
 		return e.createItemOnDisk(ctx, dbMetaInfo, item)
 	}
 	deleteItemOnDisk := func() error {
-		return os.Remove(getDataFilepath(dbMetaInfo.Path, strKey))
+		return os.Remove(getDataFilepath(dbMetaInfo.Path, strItemKey))
 	}
 
 	createIndexedItemOnDisk := func() error {
@@ -106,9 +106,6 @@ func (e *LTNGEngine) createItem(
 			},
 		)
 	}
-	//deleteIndexedItemListOnDisk := func() error {
-	//	return os.Remove(getDataFilepath(dbMetaInfo.IndexListInfo().Path, strKey))
-	//}
 
 	operations := []*lo.Operation{
 		{
@@ -151,11 +148,13 @@ func (e *LTNGEngine) upsertItem(
 	item *Item,
 	opts *IndexOpts,
 ) ([]byte, error) {
-	lockKey := dbMetaInfo.LockName(string(item.Key))
+	strItemKey := hex.EncodeToString(item.Key)
+
+	lockKey := dbMetaInfo.LockName(strItemKey)
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item); err == nil {
+	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, false); err == nil {
 		return nil, fmt.Errorf("error item already exists")
 	}
 
@@ -163,13 +162,11 @@ func (e *LTNGEngine) upsertItem(
 		return nil, e.upsertItemOnDisk(ctx, dbMetaInfo, item)
 	}
 
-	strKey := string(item.Key)
-
 	createItemOnDisk := func() error {
 		return e.upsertItemOnDisk(ctx, dbMetaInfo, item)
 	}
 	deleteItemOnDisk := func() error {
-		return os.Remove(getDataFilepath(dbMetaInfo.Path, strKey))
+		return os.Remove(getDataFilepath(dbMetaInfo.Path, strItemKey))
 	}
 
 	createIndexedItemOnDisk := func() error {
@@ -244,7 +241,7 @@ func (e *LTNGEngine) deleteItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	key []byte,
 ) error {
-	strItemKey := string(key)
+	strItemKey := hex.EncodeToString(key)
 	filePath := getDataFilepath(dbMetaInfo.Path, strItemKey)
 
 	delPaths, err := e.createTmpDeletionPaths(ctx, dbMetaInfo)
@@ -273,7 +270,7 @@ func (e *LTNGEngine) deleteItem(
 	}
 	moveIndexesToTmpFile := func() error {
 		for _, index := range indexList {
-			strItemKey = string(index)
+			strItemKey = hex.EncodeToString(index)
 
 			if _, err = mvFileExec(ctx,
 				getDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),

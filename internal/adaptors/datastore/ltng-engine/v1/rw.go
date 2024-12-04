@@ -30,7 +30,7 @@ func (e *LTNGEngine) openReadWholeFile(
 	filePath string,
 ) ([]byte, *os.File, error) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, nil, fmt.Errorf("file does not exist: %v", err)
+		return nil, nil, fmt.Errorf("file does not exist: %s: %v", filePath, err)
 	}
 
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_SYNC, dbFileOp)
@@ -253,8 +253,10 @@ func newFileReader(
 ) (*fileReader, error) {
 	fr := &fileReader{
 		file:       fi.File,
-		header:     fi.FileData.Header,
 		headerSize: fi.HeaderSize,
+	}
+	if fi.FileData != nil {
+		fr.header = fi.FileData.Header
 	}
 
 	_, err := fr.file.Seek(0, io.SeekStart)

@@ -324,13 +324,28 @@ func TestLTNGEngineFlow(t *testing.T) {
 			assert.NoError(t, err)
 
 			// search by key
-			searchOpts := &IndexOpts{
-				HasIdx:    true,
-				ParentKey: item.Key,
-			}
+			searchOpts := &IndexOpts{}
 			bsItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
 			assert.NoError(t, err)
 			assert.NotNil(t, bsItem)
+
+			var u user
+			err = ltngEngine.serializer.Deserialize(bsItem, &u)
+			assert.NoError(t, err)
+			t.Log(u)
+
+			// search by key - parent key
+			searchOpts = &IndexOpts{
+				HasIdx:    true,
+				ParentKey: item.Key,
+			}
+			bsItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+			assert.NoError(t, err)
+			assert.NotNil(t, bsItem)
+
+			err = ltngEngine.serializer.Deserialize(bsItem, &u)
+			assert.NoError(t, err)
+			t.Log(u)
 
 			// search by index
 			searchOpts = &IndexOpts{
@@ -341,6 +356,10 @@ func TestLTNGEngineFlow(t *testing.T) {
 			bsItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
 			assert.NoError(t, err)
 			assert.NotNil(t, bsItem)
+
+			err = ltngEngine.serializer.Deserialize(bsItem, &u)
+			assert.NoError(t, err)
+			t.Log(u)
 		})
 	})
 }
