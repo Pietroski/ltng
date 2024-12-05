@@ -66,7 +66,7 @@ func delFileExec(_ context.Context, filepath string) ([]byte, error) {
 		exec.Command("rm", "-r", filepath))
 }
 
-// -maxdepth 1
+// countFilesExec -maxdepth 1
 func countFilesExec(_ context.Context, filepath string) ([]byte, error) {
 	return executor(
 		exec.Command("find", filepath, "-maxdepth", "1", "-type", "f", "|", "wc", "-l"))

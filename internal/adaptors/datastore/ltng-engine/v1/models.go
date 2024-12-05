@@ -46,6 +46,7 @@ const (
 
 	relationalDataStore     = "relational-data-store"
 	relationalDataStoreFile = relationalDataStore + ext
+	listingItemsFromStore   = "listing-items-from-store"
 
 	dbFilePerm = 0750
 	dbFileOp   = 0644
@@ -227,7 +228,6 @@ const (
 	One IndexSearchPattern = iota
 	AndComputational
 	OrComputational
-	IndexingList
 )
 
 type ListSearchPattern int
@@ -235,4 +235,5 @@ type ListSearchPattern int
 const (
 	Default ListSearchPattern = iota
 	All
+	IndexingList
 )

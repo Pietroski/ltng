@@ -245,6 +245,8 @@ func (e *LTNGEngine) updateRelationalStatsFile(
 
 // #####################################################################################################################
 
+// TODO: change the tmp place for the relational stats file
+
 func (e *LTNGEngine) deleteFromRelationalStats(
 	ctx context.Context,
 	fi *fileInfo,
@@ -406,8 +408,6 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 
 	return
 }
-
-// TODO: change the tmp place for the relational stats file
 
 func (e *LTNGEngine) updateRelationalStats(
 	ctx context.Context,

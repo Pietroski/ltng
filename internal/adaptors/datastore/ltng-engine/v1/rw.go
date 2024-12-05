@@ -22,6 +22,10 @@ func (e *LTNGEngine) openCreateTruncatedFile(
 		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
 	}
 
+	if err = file.Truncate(0); err != nil {
+		return nil, fmt.Errorf("error truncating %s file: %v", filePath, err)
+	}
+
 	return file, nil
 }
 

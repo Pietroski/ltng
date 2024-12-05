@@ -17,7 +17,7 @@ func (e *LTNGEngine) loadItemFromMemoryOrDisk(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	updateRelationalData bool,
-) ([]byte, error) {
+) (*Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 	fi, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
 	if !ok {
@@ -35,7 +35,10 @@ func (e *LTNGEngine) loadItemFromMemoryOrDisk(
 		return nil, err
 	}
 
-	return itemFileData.Data, nil
+	return &Item{
+		Key:   itemFileData.Key,
+		Value: itemFileData.Data,
+	}, nil
 }
 
 func (e *LTNGEngine) loadItemFromDisk(
@@ -43,7 +46,7 @@ func (e *LTNGEngine) loadItemFromDisk(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	updateRelationalData bool,
-) ([]byte, error) {
+) (*Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 	filepath := getDataFilepath(dbMetaInfo.Path, strItemKey)
 	bs, file, err := e.openReadWholeFile(ctx, filepath)
@@ -57,6 +60,8 @@ func (e *LTNGEngine) loadItemFromDisk(
 		return nil, err
 	}
 	itemFileData.Header.ItemInfo.LastOpenedAt = time.Now().UTC().Unix()
+
+	// TODO: write to tmp file and rename and delete
 
 	err = file.Truncate(0)
 	if err != nil {
@@ -83,7 +88,10 @@ func (e *LTNGEngine) loadItemFromDisk(
 
 	e.itemFileMapping[dbMetaInfo.LockName(strItemKey)] = fi
 
-	return itemFileData.Data, nil
+	return &Item{
+		Key:   itemFileData.Key,
+		Value: itemFileData.Data,
+	}, nil
 }
 
 // #####################################################################################################################
@@ -207,7 +215,7 @@ func (e *LTNGEngine) straightSearch(
 	ctx context.Context,
 	opts *IndexOpts,
 	dbMetaInfo *ManagerStoreMetaInfo,
-) ([]byte, error) {
+) (*Item, error) {
 	key := opts.ParentKey
 	if key == nil && (opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0) {
 		return nil, fmt.Errorf("invalid indexing key")
@@ -220,24 +228,27 @@ func (e *LTNGEngine) straightSearch(
 		Key: key,
 	}, false)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
-	value, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
-		Key: mainKeyValue,
+	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
+		Key: mainKeyValue.Value,
 	}, true)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
-	return value, nil
+	return &Item{
+		Key:   item.Key,
+		Value: item.Value,
+	}, nil
 }
 
 func (e *LTNGEngine) andComputationalSearch(
 	ctx context.Context,
 	opts *IndexOpts,
 	dbMetaInfo *ManagerStoreMetaInfo,
-) ([]byte, error) {
+) (*Item, error) {
 	var parentKey []byte
 	for _, key := range opts.IndexingKeys {
 		keyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
@@ -247,11 +258,11 @@ func (e *LTNGEngine) andComputationalSearch(
 			return nil, err
 		}
 
-		if !bytes.Equal(keyValue, parentKey) && parentKey != nil {
+		if !bytes.Equal(keyValue.Value, parentKey) && parentKey != nil {
 			return nil, fmt.Errorf("")
 		}
 
-		parentKey = keyValue
+		parentKey = keyValue.Value
 	}
 
 	return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
@@ -263,9 +274,9 @@ func (e *LTNGEngine) orComputationalSearch(
 	ctx context.Context,
 	opts *IndexOpts,
 	dbMetaInfo *ManagerStoreMetaInfo,
-) ([]byte, error) {
+) (*Item, error) {
 	for _, key := range opts.IndexingKeys {
-		parentKey, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
+		parentItem, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
 			Key: key,
 		}, false)
 		if err != nil {
@@ -273,19 +284,21 @@ func (e *LTNGEngine) orComputationalSearch(
 		}
 
 		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{
-			Key: parentKey,
+			Key: parentItem.Value,
 		}, true)
 	}
 
 	return nil, fmt.Errorf("no keys found")
 }
 
+// #####################################################################################################################'
+
 // loadIndexingList it returns all the indexing list a parent key has
 func (e *LTNGEngine) loadIndexingList(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
 	opts *IndexOpts,
-) ([][]byte, error) {
+) ([]*Item, error) {
 	rawIndexingList, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexListInfo(), &Item{
 		Key: opts.ParentKey,
 	}, false)
@@ -293,7 +306,16 @@ func (e *LTNGEngine) loadIndexingList(
 		return nil, err
 	}
 
-	return bytes.Split(rawIndexingList, []byte(bytesSep)), nil
+	indexingList := bytes.Split(rawIndexingList.Value, []byte(bytesSep))
+	itemList := make([]*Item, len(indexingList))
+	for i, item := range indexingList {
+		itemList[i] = &Item{
+			Key:   opts.ParentKey,
+			Value: item,
+		}
+	}
+
+	return itemList, nil
 }
 
 // #####################################################################################################################
@@ -415,6 +437,8 @@ func (e *LTNGEngine) upsertIndexItemOnDisk(
 		Key:  item.Key,
 	}
 
+	// TODO: write to tmp file and then delete main and rename tmp and then delete tmp
+
 	file, err := e.openCreateTruncatedFile(ctx, filePath)
 	if err != nil {
 		return fmt.Errorf("error opening/creating a truncated indexed file at %s: %v", filePath, err)
@@ -425,6 +449,253 @@ func (e *LTNGEngine) upsertIndexItemOnDisk(
 	}
 
 	return nil
+}
+
+// #####################################################################################################################
+
+func (e *LTNGEngine) deleteCascade(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	key []byte,
+) error {
+	strItemKey := hex.EncodeToString(key)
+	filePath := getDataFilepath(dbMetaInfo.Path, strItemKey)
+
+	delPaths, err := e.createTmpDeletionPaths(ctx, dbMetaInfo)
+	if err != nil {
+		return err
+	}
+
+	moveItemForDeletion := func() error {
+		if _, err = mvFileExec(ctx, filePath, getTmpDelDataFilePath(delPaths.tmpDelPath, strItemKey)); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	recreateDeletedItem := func() error {
+		if _, err = mvFileExec(ctx, getTmpDelDataFilePath(delPaths.tmpDelPath, strItemKey), filePath); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	itemList, err := e.loadIndexingList(ctx, dbMetaInfo, &IndexOpts{ParentKey: key})
+	if err != nil {
+		return err
+	}
+	moveIndexesToTmpFile := func() error {
+		for _, item := range itemList {
+			strItemKey = hex.EncodeToString(item.Value)
+
+			if _, err = mvFileExec(ctx,
+				getDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),
+				getTmpDelDataFilePath(delPaths.indexTmpDelPath, strItemKey),
+			); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+	recreateIndexes := func() error {
+		for _, item := range itemList {
+			if err = e.createIndexItemOnDisk(ctx, dbMetaInfo, &Item{
+				Key:   item.Value,
+				Value: key,
+			}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	moveIndexListToTmpFile := func() error {
+		if _, err = mvFileExec(ctx,
+			getDataFilepath(dbMetaInfo.IndexListInfo().Path, strItemKey),
+			getTmpDelDataFilePath(delPaths.indexListTmpDelPath, strItemKey),
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	recreateIndexListFromTmpFile := func() error {
+		indexList := make([][]byte, len(itemList))
+		for i, item := range itemList {
+			indexList[i] = item.Value
+		}
+		idxList := bytes.Join(indexList, []byte(bytesSep))
+		return e.createItemOnDisk(ctx, dbMetaInfo, &Item{
+			Key:   key,
+			Value: idxList,
+		})
+	}
+
+	deleteFromRelationalData := func() error {
+		return e.deleteRelationalData(ctx, dbMetaInfo, key)
+	}
+
+	operations := []*lo.Operation{
+		{
+			Action: &lo.Action{
+				Act:         moveItemForDeletion,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &lo.Action{
+				Act:         moveIndexesToTmpFile,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+			Rollback: &lo.RollbackAction{
+				RollbackAct: recreateDeletedItem,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &lo.Action{
+				Act:         moveIndexListToTmpFile,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+			Rollback: &lo.RollbackAction{
+				RollbackAct: recreateIndexes,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &lo.Action{
+				Act:         deleteFromRelationalData,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+			Rollback: &lo.RollbackAction{
+				RollbackAct: recreateIndexListFromTmpFile,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+		},
+	}
+	if err = lo.New(operations...).Operate(); err != nil {
+		return err
+	}
+
+	// deleteTmpFiles
+	if _, err = delStoreDirsExec(ctx, dbTmpDelDataPath+sep+delPaths.tmpDelPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *LTNGEngine) deleteIndexOnly(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	key []byte,
+) error {
+	strItemKey := hex.EncodeToString(key)
+
+	delPaths, err := e.createTmpDeletionPaths(ctx, dbMetaInfo)
+	if err != nil {
+		return err
+	}
+
+	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{Key: key}, true)
+	if err != nil {
+		return err
+	}
+
+	var fileData FileData
+	if err = e.serializer.Deserialize(item.Value, &fileData); err != nil {
+		return err
+	}
+
+	itemList, err := e.loadIndexingList(ctx, dbMetaInfo, &IndexOpts{ParentKey: fileData.Data})
+	if err != nil {
+		return err
+	}
+
+	moveIndexesToTmpFile := func() error {
+		if _, err = mvFileExec(ctx,
+			getDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),
+			getTmpDelDataFilePath(delPaths.indexTmpDelPath, strItemKey),
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	recreateIndexes := func() error {
+		return e.createIndexItemOnDisk(ctx, dbMetaInfo, &Item{
+			Key:   fileData.Data,
+			Value: key,
+		})
+	}
+
+	updateIndexList := func() error {
+		var newIndexList [][]byte
+		for _, item := range itemList {
+			if bytes.Equal(item.Value, key) {
+				continue
+			}
+
+			newIndexList = append(newIndexList, item.Value)
+		}
+
+		newIndexListBs := bytes.Join(newIndexList, []byte(bytesSep))
+
+		return e.upsertIndexItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &Item{
+			Key:   key,
+			Value: newIndexListBs,
+		})
+	}
+
+	operations := []*lo.Operation{
+		{
+			Action: &lo.Action{
+				Act:         moveIndexesToTmpFile,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &lo.Action{
+				Act:         updateIndexList,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+			Rollback: &lo.RollbackAction{
+				RollbackAct: recreateIndexes,
+				RetrialOpts: lo.DefaultRetrialOps,
+			},
+		},
+	}
+	if err = lo.New(operations...).Operate(); err != nil {
+		return err
+	}
+
+	// deleteTmpFiles
+	if _, err = delStoreDirsExec(ctx, dbTmpDelDataPath+sep+delPaths.tmpDelPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *LTNGEngine) deleteCascadeByIdx(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	key []byte,
+) error {
+	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &Item{Key: key}, true)
+	if err != nil {
+		return err
+	}
+
+	var fileData FileData
+	if err = e.serializer.Deserialize(item.Value, &fileData); err != nil {
+		return err
+	}
+
+	return e.deleteCascade(ctx, dbMetaInfo, fileData.Data)
 }
 
 // #####################################################################################################################

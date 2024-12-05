@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	"os"
 
 	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
@@ -15,7 +16,7 @@ func (e *LTNGEngine) loadItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	lockKey := dbMetaInfo.LockName(string(item.Key))
 
 	e.opMtx.Lock(lockKey, struct{}{})
@@ -26,7 +27,7 @@ func (e *LTNGEngine) loadItem(
 	}
 
 	if !opts.HasIdx {
-		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, false)
+		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true)
 	}
 
 	switch opts.IndexProperties.IndexSearchPattern {
@@ -34,13 +35,6 @@ func (e *LTNGEngine) loadItem(
 		return e.andComputationalSearch(ctx, opts, dbMetaInfo)
 	case OrComputational:
 		return e.orComputationalSearch(ctx, opts, dbMetaInfo)
-	case IndexingList:
-		indexingList, err := e.loadIndexingList(ctx, dbMetaInfo, opts)
-		if err != nil {
-			return nil, err
-		}
-
-		return bytes.Join(indexingList, []byte(bytesSep)), nil
 	case One:
 		fallthrough
 	default:
@@ -60,7 +54,7 @@ func (e *LTNGEngine) createItem(
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, false); err == nil {
+	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true); err == nil {
 		return nil, fmt.Errorf("error item already exists")
 	}
 
@@ -154,7 +148,7 @@ func (e *LTNGEngine) upsertItem(
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, false); err == nil {
+	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true); err == nil {
 		return nil, fmt.Errorf("error item already exists")
 	}
 
@@ -239,130 +233,52 @@ func (e *LTNGEngine) upsertItem(
 func (e *LTNGEngine) deleteItem(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
-	key []byte,
-) error {
-	strItemKey := hex.EncodeToString(key)
-	filePath := getDataFilepath(dbMetaInfo.Path, strItemKey)
+	item *Item,
+	opts *IndexOpts,
+) ([]byte, error) {
+	strItemKey := hex.EncodeToString(item.Key)
 
-	delPaths, err := e.createTmpDeletionPaths(ctx, dbMetaInfo)
-	if err != nil {
-		return err
+	lockKey := dbMetaInfo.LockName(strItemKey)
+	e.opMtx.Lock(lockKey, struct{}{})
+	defer e.opMtx.Unlock(lockKey)
+
+	switch opts.IndexProperties.IndexDeletionBehaviour {
+	case Cascade:
+		return nil, e.deleteCascade(ctx, dbMetaInfo, item.Key)
+	case CascadeByIdx:
+		return nil, e.deleteCascadeByIdx(ctx, dbMetaInfo, item.Key)
+	case IndexOnly:
+		return nil, e.deleteIndexOnly(ctx, dbMetaInfo, item.Key)
+	case None:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("invalid index deletion behaviour")
+	}
+}
+
+func (e *LTNGEngine) listItems(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	opts *IndexOpts,
+	pagination *ltng_engine_models.Pagination,
+) ([]*Item, error) {
+	lockKey := dbMetaInfo.LockName(listingItemsFromStore)
+
+	e.opMtx.Lock(lockKey, struct{}{})
+	defer e.opMtx.Unlock(lockKey)
+
+	if opts == nil {
+		return nil, nil
 	}
 
-	moveItemForDeletion := func() error {
-		if _, err = mvFileExec(ctx, filePath, getTmpDelDataFilePath(delPaths.tmpDelPath, strItemKey)); err != nil {
-			return err
-		}
-
-		return nil
+	switch opts.IndexProperties.ListSearchPattern {
+	case All:
+		return nil, nil
+	case IndexingList:
+		return e.loadIndexingList(ctx, dbMetaInfo, opts)
+	case Default:
+		fallthrough
+	default:
+		return nil, nil
 	}
-	recreateDeletedItem := func() error {
-		if _, err = mvFileExec(ctx, getTmpDelDataFilePath(delPaths.tmpDelPath, strItemKey), filePath); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	indexList, err := e.loadIndexingList(ctx, dbMetaInfo, &IndexOpts{ParentKey: key})
-	if err != nil {
-		return err
-	}
-	moveIndexesToTmpFile := func() error {
-		for _, index := range indexList {
-			strItemKey = hex.EncodeToString(index)
-
-			if _, err = mvFileExec(ctx,
-				getDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),
-				getTmpDelDataFilePath(delPaths.indexTmpDelPath, strItemKey),
-			); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-	recreateIndexes := func() error {
-		for _, index := range indexList {
-			if err = e.createIndexItemOnDisk(ctx, dbMetaInfo, &Item{
-				Key:   index,
-				Value: key,
-			}); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	moveIndexListToTmpFile := func() error {
-		if _, err = mvFileExec(ctx,
-			getDataFilepath(dbMetaInfo.IndexListInfo().Path, strItemKey),
-			getTmpDelDataFilePath(delPaths.indexListTmpDelPath, strItemKey),
-		); err != nil {
-			return err
-		}
-
-		return nil
-	}
-	recreateIndexListFromTmpFile := func() error {
-		idxList := bytes.Join(indexList, []byte(bytesSep))
-		return e.createItemOnDisk(ctx, dbMetaInfo, &Item{
-			Key:   key,
-			Value: idxList,
-		})
-	}
-
-	deleteFromRelationalData := func() error {
-		return e.deleteRelationalData(ctx, dbMetaInfo, key)
-	}
-
-	operations := []*lo.Operation{
-		{
-			Action: &lo.Action{
-				Act:         moveItemForDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         moveIndexesToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateDeletedItem,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         moveIndexListToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateIndexes,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         deleteFromRelationalData,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateIndexListFromTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-	}
-	if err = lo.New(operations...).Operate(); err != nil {
-		return err
-	}
-
-	// deleteTmpFiles
-	if _, err = delStoreDirsExec(ctx, dbTmpDelDataPath+sep+delPaths.tmpDelPath); err != nil {
-		return err
-	}
-
-	return nil
 }
