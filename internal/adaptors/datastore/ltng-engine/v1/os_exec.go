@@ -25,7 +25,7 @@ func cpFileExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, err
 
 func mvFileExec(_ context.Context, fromFilepath, toFilepath string) ([]byte, error) {
 	return executor(
-		exec.Command("sh", "-c", fmt.Sprintf("mv -f %v %v", fromFilepath, toFilepath)))
+		exec.Command("sh", "-c", fmt.Sprintf("mv -f %s %s", fromFilepath, toFilepath)))
 }
 
 func delExec(_ context.Context, filepath string) ([]byte, error) {
@@ -47,6 +47,14 @@ func delStoreDirsExec(_ context.Context, filepath string) ([]byte, error) {
 	return executor(
 		exec.Command("sh", "-c",
 			fmt.Sprintf(`rm -rf %s/{indexed,indexed-list,relational} && 
+					[ $(find %s -mindepth 1 -type d | wc -l) -eq 0 ] && rm -rf %s`,
+				filepath, filepath, filepath)))
+}
+
+func delDataStoreRawDirsExec(_ context.Context, filepath string) ([]byte, error) {
+	return executor(
+		exec.Command("sh", "-c",
+			fmt.Sprintf(`rm -rf %s{indexed,indexed-list,relational} && 
 					[ $(find %s -mindepth 1 -type d | wc -l) -eq 0 ] && rm -rf %s`,
 				filepath, filepath, filepath)))
 }

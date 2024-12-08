@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
 )
 
@@ -151,6 +152,10 @@ func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 		return fi, nil
 	}
 
+	//if isFileClosed(fi.File) {
+	//	return nil, os.ErrClosed
+	//}
+
 	return fi, nil
 }
 
@@ -292,6 +297,174 @@ func (e *LTNGEngine) orComputationalSearch(
 }
 
 // #####################################################################################################################'
+
+func (e *LTNGEngine) listPaginatedItems(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	pagination *ltng_engine_models.Pagination,
+) (*ListItemsResult, error) {
+	var matchBox []*Item
+	var idx, limit uint64
+	if pagination.IsValid() {
+		if pagination.PaginationCursor > 0 {
+			return e.listPaginatedItemsFromCursor(ctx, dbMetaInfo, pagination)
+		}
+
+		idx = (pagination.PageID - 1) * pagination.PageSize
+		limit = pagination.PageID * pagination.PageSize
+
+		matchBox = make([]*Item, limit)
+	} else {
+		return nil, fmt.Errorf("invalid pagination")
+	}
+
+	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := newFileReader(ctx, fi, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var count int
+	for ; idx < limit; idx++ {
+		var bs []byte
+		bs, err = reader.read(ctx)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+
+		var fileData FileData
+		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
+			return nil, err
+		}
+
+		matchBox[idx] = &Item{
+			Key:   fileData.Key,
+			Value: fileData.Data,
+		}
+		count++
+	}
+
+	return &ListItemsResult{
+		Items: matchBox[:count],
+		Pagination: &ltng_engine_models.Pagination{
+			PageID:           pagination.PageID + 1,
+			PageSize:         pagination.PageSize,
+			PaginationCursor: uint64(reader.cursor),
+		},
+	}, nil
+}
+
+func (e *LTNGEngine) listPaginatedItemsFromCursor(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+	pagination *ltng_engine_models.Pagination,
+) (*ListItemsResult, error) {
+	var matchBox []*Item
+	var idx, limit uint64
+
+	if pagination.IsValid() {
+		idx = (pagination.PageID - 1) * pagination.PageSize
+		limit = idx * pagination.PageSize
+
+		matchBox = make([]*Item, limit)
+	} else {
+		return nil, fmt.Errorf("invalid pagination")
+	}
+
+	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := newFileReader(ctx, fi, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = reader.setCursor(ctx, pagination.PaginationCursor); err != nil {
+		return nil, err
+	}
+
+	for ; idx < limit; idx++ {
+		var bs []byte
+		bs, err = reader.read(ctx)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+
+		var fileData FileData
+		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
+			return nil, err
+		}
+
+		matchBox[idx] = &Item{
+			Key:   fileData.Key,
+			Value: fileData.Data,
+		}
+	}
+
+	return &ListItemsResult{
+		Items: matchBox,
+		Pagination: &ltng_engine_models.Pagination{
+			PageID:           pagination.PageID + 1,
+			PageSize:         pagination.PageSize,
+			PaginationCursor: uint64(reader.cursor),
+		},
+	}, nil
+}
+
+func (e *LTNGEngine) listAllItems(
+	ctx context.Context,
+	dbMetaInfo *ManagerStoreMetaInfo,
+) (*ListItemsResult, error) {
+	var matchBox []*Item
+
+	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := newFileReader(ctx, fi, true)
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		var bs []byte
+		bs, err = reader.read(ctx)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+
+		var fileData FileData
+		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
+			return nil, err
+		}
+
+		matchBox = append(matchBox, &Item{
+			Key:   fileData.Key,
+			Value: fileData.Data,
+		})
+	}
+
+	return &ListItemsResult{Items: matchBox}, nil
+}
 
 // loadIndexingList it returns all the indexing list a parent key has
 func (e *LTNGEngine) loadIndexingList(
@@ -467,14 +640,20 @@ func (e *LTNGEngine) deleteCascade(
 	}
 
 	moveItemForDeletion := func() error {
-		if _, err = mvFileExec(ctx, filePath, getTmpDelDataFilePath(delPaths.tmpDelPath, strItemKey)); err != nil {
+		if _, err = mvFileExec(ctx, filePath, rawPathWithSepForFile(delPaths.tmpDelPath, strItemKey)); err != nil {
 			return err
 		}
+
+		fileStats, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
+		if ok {
+			_ = fileStats.File.Close()
+		}
+		delete(e.itemFileMapping, dbMetaInfo.LockName(strItemKey))
 
 		return nil
 	}
 	recreateDeletedItem := func() error {
-		if _, err = mvFileExec(ctx, getTmpDelDataFilePath(delPaths.tmpDelPath, strItemKey), filePath); err != nil {
+		if _, err = mvFileExec(ctx, rawPathWithSepForFile(delPaths.tmpDelPath, strItemKey), filePath); err != nil {
 			return err
 		}
 
@@ -487,21 +666,27 @@ func (e *LTNGEngine) deleteCascade(
 	}
 	moveIndexesToTmpFile := func() error {
 		for _, item := range itemList {
-			strItemKey = hex.EncodeToString(item.Value)
+			strItemKey := hex.EncodeToString(item.Value)
 
 			if _, err = mvFileExec(ctx,
 				getDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),
-				getTmpDelDataFilePath(delPaths.indexTmpDelPath, strItemKey),
+				rawPathWithSepForFile(delPaths.indexTmpDelPath, strItemKey),
 			); err != nil {
 				return err
 			}
+
+			fileStats, ok := e.itemFileMapping[dbMetaInfo.IndexInfo().LockName(strItemKey)]
+			if ok {
+				_ = fileStats.File.Close()
+			}
+			delete(e.itemFileMapping, dbMetaInfo.IndexInfo().LockName(strItemKey))
 		}
 
 		return nil
 	}
 	recreateIndexes := func() error {
 		for _, item := range itemList {
-			if err = e.createIndexItemOnDisk(ctx, dbMetaInfo, &Item{
+			if err = e.createIndexItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
 				Key:   item.Value,
 				Value: key,
 			}); err != nil {
@@ -515,10 +700,16 @@ func (e *LTNGEngine) deleteCascade(
 	moveIndexListToTmpFile := func() error {
 		if _, err = mvFileExec(ctx,
 			getDataFilepath(dbMetaInfo.IndexListInfo().Path, strItemKey),
-			getTmpDelDataFilePath(delPaths.indexListTmpDelPath, strItemKey),
+			rawPathWithSepForFile(delPaths.indexListTmpDelPath, strItemKey),
 		); err != nil {
 			return err
 		}
+
+		fileStats, ok := e.itemFileMapping[dbMetaInfo.IndexListInfo().LockName(strItemKey)]
+		if ok {
+			_ = fileStats.File.Close()
+		}
+		delete(e.itemFileMapping, dbMetaInfo.IndexListInfo().LockName(strItemKey))
 
 		return nil
 	}
@@ -528,7 +719,7 @@ func (e *LTNGEngine) deleteCascade(
 			indexList[i] = item.Value
 		}
 		idxList := bytes.Join(indexList, []byte(bytesSep))
-		return e.createItemOnDisk(ctx, dbMetaInfo, &Item{
+		return e.createIndexItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &Item{
 			Key:   key,
 			Value: idxList,
 		})
@@ -581,7 +772,7 @@ func (e *LTNGEngine) deleteCascade(
 	}
 
 	// deleteTmpFiles
-	if _, err = delStoreDirsExec(ctx, dbTmpDelDataPath+sep+delPaths.tmpDelPath); err != nil {
+	if _, err = delDataStoreRawDirsExec(ctx, delPaths.tmpDelPath); err != nil {
 		return err
 	}
 
@@ -997,7 +1188,7 @@ func (e *LTNGEngine) upsertRelationalData(
 		}
 
 		tmpFile, err = os.OpenFile(
-			getDataFilepath(tmpFilePath, strKey),
+			getDataFilepath(tmpFilePath, relationalDataStore),
 			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, dbFilePerm,
 		)
 		if err != nil {
@@ -1040,10 +1231,6 @@ func (e *LTNGEngine) upsertRelationalData(
 	}
 
 	removeMainFile := func() error {
-		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("error closing original file: %w", err)
-		}
-
 		if err = os.Remove(getDataFilepath(relationalPath, strKey)); err != nil {
 			return fmt.Errorf("error removing %s relational item's file: %w", relationalPath, err)
 		}
@@ -1091,8 +1278,8 @@ func (e *LTNGEngine) upsertRelationalData(
 
 	{ // renaming tmp file
 		if err = os.Rename(
-			getDataFilepath(tmpFilePath, strKey),
-			getDataFilepath(relationalPath, strKey),
+			getDataFilepath(tmpFilePath, relationalDataStore),
+			getDataFilepath(relationalPath, relationalDataStore),
 		); err != nil {
 			return fmt.Errorf("error renaming tmp file: %w", err)
 		}
@@ -1101,7 +1288,7 @@ func (e *LTNGEngine) upsertRelationalData(
 		_ = os.RemoveAll(getDataPathWithSep(tmpFilePath))
 
 		var file *os.File
-		file, err = e.openFile(ctx, getDataFilepath(relationalPath, strKey))
+		file, err = e.openFile(ctx, getDataFilepath(relationalPath, relationalDataStore))
 		if err != nil {
 			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
 		}
@@ -1177,7 +1364,7 @@ func (e *LTNGEngine) deleteRelationalData(
 		}
 
 		tmpFile, err = os.OpenFile(
-			getDataFilepath(tmpFilePath, strKey),
+			getDataFilepath(tmpFilePath, relationalDataStore),
 			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, dbFilePerm,
 		)
 		if err != nil {
@@ -1218,11 +1405,7 @@ func (e *LTNGEngine) deleteRelationalData(
 	}
 
 	removeMainFile := func() error {
-		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("error closing original file: %w", err)
-		}
-
-		if err = os.Remove(getDataFilepath(relationalPath, strKey)); err != nil {
+		if err = os.Remove(getDataFilepath(relationalPath, relationalDataStore)); err != nil {
 			return fmt.Errorf("error removing %s relational item's file: %w", relationalPath, err)
 		}
 
@@ -1269,8 +1452,8 @@ func (e *LTNGEngine) deleteRelationalData(
 
 	{ // renaming tmp file
 		if err = os.Rename(
-			getDataFilepath(tmpFilePath, strKey),
-			getDataFilepath(relationalPath, strKey),
+			getDataFilepath(tmpFilePath, relationalDataStore),
+			getDataFilepath(relationalPath, relationalDataStore),
 		); err != nil {
 			return fmt.Errorf("error renaming tmp file: %w", err)
 		}
@@ -1279,7 +1462,7 @@ func (e *LTNGEngine) deleteRelationalData(
 		_ = os.RemoveAll(getDataPathWithSep(tmpFilePath))
 
 		var file *os.File
-		file, err = e.openFile(ctx, getDataFilepath(relationalPath, strKey))
+		file, err = e.openFile(ctx, getDataFilepath(relationalPath, relationalDataStore))
 		if err != nil {
 			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
 		}

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -223,6 +224,13 @@ func (e *LTNGEngine) writeToRelationalFileWithNoSeek(
 
 // #####################################################################################################################
 
+func isFileClosed(file *os.File) bool {
+	_, err := file.Stat()
+	return errors.Is(err, os.ErrClosed)
+}
+
+// #####################################################################################################################
+
 type (
 	fileWriter struct {
 		file       *os.File
@@ -321,6 +329,14 @@ func (fr *fileReader) read(_ context.Context) (bs []byte, err error) {
 	fr.cursor += rowSize
 
 	return row, nil
+}
+
+func (fr *fileReader) setCursor(_ context.Context, cursor uint64) error {
+	if _, err := fr.file.Seek(int64(cursor), 0); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (fr *fileReader) yield() uint32 {

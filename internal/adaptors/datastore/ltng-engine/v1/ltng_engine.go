@@ -63,7 +63,7 @@ func (e *LTNGEngine) CreateItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	return e.createItem(ctx, dbMetaInfo, item, opts)
 }
 
@@ -72,7 +72,7 @@ func (e *LTNGEngine) UpsertItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	return e.upsertItem(ctx, dbMetaInfo, item, opts)
 }
 
@@ -81,15 +81,15 @@ func (e *LTNGEngine) DeleteItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	return e.deleteItem(ctx, dbMetaInfo, item, opts)
 }
 
 func (e *LTNGEngine) ListItems(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
-	item *Item,
+	pagination *ltng_engine_models.Pagination,
 	opts *IndexOpts,
-) ([][]byte, error) {
-	return [][]byte{}, nil
+) (*ListItemsResult, error) {
+	return e.listItems(ctx, dbMetaInfo, pagination, opts)
 }

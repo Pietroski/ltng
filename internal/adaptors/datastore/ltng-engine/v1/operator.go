@@ -6,9 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
-	"os"
-
 	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
+	"os"
 )
 
 func (e *LTNGEngine) loadItem(
@@ -47,7 +46,7 @@ func (e *LTNGEngine) createItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 
 	lockKey := dbMetaInfo.LockName(strItemKey)
@@ -133,7 +132,7 @@ func (e *LTNGEngine) createItem(
 		return nil, err
 	}
 
-	return item.Value, nil
+	return item, nil
 }
 
 func (e *LTNGEngine) upsertItem(
@@ -141,7 +140,7 @@ func (e *LTNGEngine) upsertItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 
 	lockKey := dbMetaInfo.LockName(strItemKey)
@@ -227,7 +226,7 @@ func (e *LTNGEngine) upsertItem(
 		return nil, err
 	}
 
-	return item.Value, nil
+	return item, nil
 }
 
 func (e *LTNGEngine) deleteItem(
@@ -235,7 +234,7 @@ func (e *LTNGEngine) deleteItem(
 	dbMetaInfo *ManagerStoreMetaInfo,
 	item *Item,
 	opts *IndexOpts,
-) ([]byte, error) {
+) (*Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 
 	lockKey := dbMetaInfo.LockName(strItemKey)
@@ -259,10 +258,11 @@ func (e *LTNGEngine) deleteItem(
 func (e *LTNGEngine) listItems(
 	ctx context.Context,
 	dbMetaInfo *ManagerStoreMetaInfo,
-	opts *IndexOpts,
 	pagination *ltng_engine_models.Pagination,
-) ([]*Item, error) {
-	lockKey := dbMetaInfo.LockName(listingItemsFromStore)
+	opts *IndexOpts,
+) (*ListItemsResult, error) {
+	relationalItemStore := dbMetaInfo.RelationalInfo()
+	lockKey := relationalItemStore.LockName(listingItemsFromStore)
 
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
@@ -273,12 +273,17 @@ func (e *LTNGEngine) listItems(
 
 	switch opts.IndexProperties.ListSearchPattern {
 	case All:
-		return nil, nil
+		return e.listAllItems(ctx, dbMetaInfo)
 	case IndexingList:
-		return e.loadIndexingList(ctx, dbMetaInfo, opts)
+		itemList, err := e.loadIndexingList(ctx, dbMetaInfo, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		return &ListItemsResult{Items: itemList}, nil
 	case Default:
 		fallthrough
 	default:
-		return nil, nil
+		return e.listPaginatedItems(ctx, dbMetaInfo, pagination)
 	}
 }

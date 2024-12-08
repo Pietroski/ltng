@@ -1,6 +1,7 @@
 package v1
 
 import (
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	"os"
 	"sync"
 
@@ -197,7 +198,10 @@ type (
 		Error error
 	}
 
-	Items []*Item
+	ListItemsResult struct {
+		Pagination *ltng_engine_models.Pagination
+		Items      []*Item
+	}
 
 	IndexOpts struct {
 		HasIdx          bool
