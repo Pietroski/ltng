@@ -1,7 +1,8 @@
 
-‡
-common/search/pagination.protocommon.search"B
+‘
+common/search/pagination.protocommon.search"o
 
 Pagination
 page_id (RpageId
-	page_size (RpageSizeB‰Z†gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/search;grpc_paginationbproto3
+	page_size (RpageSize+
+pagination_cursor (RpaginationCursorBgZegitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search;grpc_paginationbproto3

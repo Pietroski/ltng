@@ -27,7 +27,7 @@ env-check-ltng-db-node:
 
 ## generates mocks
 mock-generate:
-	go get -d go.uber.org/mock/mockgen
+	go get go.uber.org/mock/mockgen
 	go mod vendor
 	go generate ./...
 	go mod tidy

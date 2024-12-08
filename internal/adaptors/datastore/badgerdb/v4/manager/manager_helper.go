@@ -1,6 +1,6 @@
 package badgerdb_manager_adaptor_v4
 
-import badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
+import badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 
 func IndexedDBInfoFromDBInfo(dbInfo *badgerdb_management_models_v4.DBInfo) *badgerdb_management_models_v4.DBInfo {
 	indexedDBName := dbInfo.Name + IndexedSuffixName

@@ -4,7 +4,7 @@ import (
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
+	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
 )
 
 func WithManager(manager badgerdb_manager_adaptor_v4.Manager) options.Option {

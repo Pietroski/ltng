@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MOD_NAME=gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated
+MOD_NAME=gitlab.com/pietroski-software-company/lightning-db/schemas/generated
 PROTO_PATH=schemas/protos
 OUTPUT_PATH=schemas/generated
 OUTPUT_COMPILED_PATH=schemas/compiled
@@ -13,16 +13,14 @@ declare -a proto_list=(
     "common/queries/config"
     "common/search"
 
-    "management"
-    "transactions/operations"
+    "ltng-db"
 )
 
 declare -A proto_list_map=(
     ["common/queries/config"]="common_queries_config"
     ["common/search"]="common_search"
 
-    ["management"]="management"
-    ["transactions/operations"]="transactions_operations"
+    ["ltng-db"]="ltng-db"
 )
 
 for domain in "${proto_list[@]}"; do
@@ -38,6 +36,6 @@ for domain in "${proto_list[@]}"; do
         --include_imports
 done
 
-go mod tidy
-go mod download
-go mod vendor
+#go mod tidy
+#go mod download
+#go mod vendor

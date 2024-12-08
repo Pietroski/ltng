@@ -11,7 +11,7 @@ import (
 
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
 )
 
 func TestLTNGEngineFlow(t *testing.T) {

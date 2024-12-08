@@ -1,4 +1,4 @@
-module gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node
+module gitlab.com/pietroski-software-company/lightning-db
 
 go 1.23.2
 

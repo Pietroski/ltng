@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package ltngdb;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb;grpc_ltngdb";
+
+import "common/queries/config/engine.proto";
+import "ltng-db/manager_messages.proto";
+import "ltng-db/operator_messages.proto";
+
+service LightningDB {
+  // CreateStore
+  rpc CreateStore(CreateStoreRequest) returns(CreateStoreResponse);
+  // DeleteStore
+  rpc DeleteStore(DeleteStoreRequest) returns(DeleteStoreResponse);
+  // GetStore
+  rpc GetStore(GetStoreRequest) returns(GetStoreResponse);
+  // ListStores
+  rpc ListStores(ListStoresRequest) returns(ListStoresResponse);
+
+  // RestartLightningNode
+  rpc RestartLightningNode(RestartLightningNodeRequest)
+      returns(RestartLightningNodeResponse);
+  // ShutdownLightningNode
+  rpc ShutdownLightningNode(ShutdownLightningNodeRequest)
+      returns(ShutdownLightningNodeResponse);
+  // CheckLightingNodeEngine
+  rpc CheckLightingNodeEngine(common.queries.config.CheckEngineRequest)
+      returns(common.queries.config.CheckEngineResponse);
+
+  // Create
+  rpc Create(CreateRequest) returns (CreateResponse);
+  // Upsert
+  rpc Upsert(UpsertRequest) returns (UpsertResponse);
+  // Delete
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  // Load
+  rpc Load(LoadRequest) returns (LoadResponse);
+  // List
+  rpc List(ListRequest) returns (ListResponse);
+
+  // ListIndexingKeys
+  rpc ListIndexingKeys(ListValuesFromIndexingKeysRequest)
+      returns (ListValuesFromIndexingKeysResponse);
+  // ListValuesFromIndexingKeys
+  rpc ListValuesFromIndexingKeys(ListValuesFromIndexingKeysRequest)
+      returns (ListValuesFromIndexingKeysResponse);
+}

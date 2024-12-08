@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator/mocks/list_operator_fakes"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator/mocks/list_operator_fakes"
 )
 
 var testErr = errors.New("test-error")

@@ -1,10 +1,12 @@
 syntax = "proto3";
 
 package common.queries.config;
-option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/queries/config;grpc_query_config";
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/queries/config;grpc_query_config";
 
 message CheckEngineRequest {
   string engine = 1;
 }
 
-message CheckEngineResponse {}
+message CheckEngineResponse {
+  string engine = 1;
+}

@@ -1,0 +1,292 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "ltng-db/db_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "LightningDB"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "IndexPropertiesIndexDeletionBehaviour": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "CASCADE",
+        "INDEX_ONLY",
+        "CASCADE_BY_INDEX"
+      ],
+      "default": "NONE"
+    },
+    "IndexPropertiesIndexSearchPattern": {
+      "type": "string",
+      "enum": [
+        "ONE",
+        "AND_COMPUTATIONAL",
+        "OR_COMPUTATION"
+      ],
+      "default": "ONE"
+    },
+    "IndexPropertiesListSearchPattern": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "ALL",
+        "INDEXING_LIST"
+      ],
+      "default": "DEFAULT"
+    },
+    "configCheckEngineResponse": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string"
+        }
+      }
+    },
+    "ltngdbCreateResponse": {
+      "type": "object",
+      "title": "CreateResponse"
+    },
+    "ltngdbCreateStoreResponse": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastOpenedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "CreateStoreResponse"
+    },
+    "ltngdbDBInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastOpenedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ltngdbDatabaseMetaInfo": {
+      "type": "object",
+      "properties": {
+        "databaseName": {
+          "type": "string"
+        },
+        "databasePath": {
+          "type": "string"
+        }
+      }
+    },
+    "ltngdbDeleteResponse": {
+      "type": "object",
+      "title": "DeleteResponse"
+    },
+    "ltngdbDeleteStoreResponse": {
+      "type": "object",
+      "title": "DeleteStoreResponse"
+    },
+    "ltngdbGetStoreResponse": {
+      "type": "object",
+      "properties": {
+        "dbInfo": {
+          "$ref": "#/definitions/ltngdbDBInfo"
+        }
+      },
+      "title": "GetStoreResponse"
+    },
+    "ltngdbIndexOpts": {
+      "type": "object",
+      "properties": {
+        "hasIdx": {
+          "type": "boolean"
+        },
+        "parentKey": {
+          "type": "string",
+          "format": "byte"
+        },
+        "indexingKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "byte"
+          }
+        },
+        "indexingProperties": {
+          "$ref": "#/definitions/ltngdbIndexProperties"
+        }
+      }
+    },
+    "ltngdbIndexProperties": {
+      "type": "object",
+      "properties": {
+        "indexDeletionBehaviour": {
+          "$ref": "#/definitions/IndexPropertiesIndexDeletionBehaviour"
+        },
+        "indexSearchPattern": {
+          "$ref": "#/definitions/IndexPropertiesIndexSearchPattern"
+        },
+        "listSearchPattern": {
+          "$ref": "#/definitions/IndexPropertiesListSearchPattern"
+        }
+      }
+    },
+    "ltngdbItem": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "byte"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "ltngdbListResponse": {
+      "type": "object",
+      "properties": {
+        "pagination": {
+          "$ref": "#/definitions/searchPagination"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ltngdbItem"
+          }
+        }
+      },
+      "title": "ListResponse"
+    },
+    "ltngdbListStoresResponse": {
+      "type": "object",
+      "properties": {
+        "dbsInfos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ltngdbDBInfo"
+          }
+        }
+      },
+      "title": "ListStoresResponse"
+    },
+    "ltngdbListValuesFromIndexingKeysResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ltngdbItem"
+          }
+        }
+      },
+      "title": "ListValuesFromIndexingKeysResponse"
+    },
+    "ltngdbLoadResponse": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "title": "LoadResponse"
+    },
+    "ltngdbRestartLightningNodeResponse": {
+      "type": "object",
+      "title": "RestartLightningNodeResponse"
+    },
+    "ltngdbRetrialOpts": {
+      "type": "object",
+      "properties": {
+        "retrialOnError": {
+          "type": "boolean"
+        },
+        "retrialCount": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "ltngdbShutdownLightningNodeResponse": {
+      "type": "object",
+      "title": "ShutdownLightningNodeResponse"
+    },
+    "ltngdbUpsertResponse": {
+      "type": "object",
+      "title": "UpsertResponse"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "searchPagination": {
+      "type": "object",
+      "properties": {
+        "pageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "pageSize": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "paginationCursor": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    }
+  }
+}

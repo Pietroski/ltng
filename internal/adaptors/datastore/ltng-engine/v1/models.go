@@ -1,13 +1,13 @@
 package v1
 
 import (
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
 	"os"
 	"sync"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/tools/lock"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 )
 
 const (

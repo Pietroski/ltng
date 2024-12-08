@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
-	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
+	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 func (e *LTNGEngine) loadItemFromMemoryOrDisk(

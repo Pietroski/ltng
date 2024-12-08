@@ -10,7 +10,7 @@ import (
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 )
 
 func newLTNGEngine(

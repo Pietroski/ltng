@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
+	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 func (e *LTNGEngine) createDataPathOnDisk(

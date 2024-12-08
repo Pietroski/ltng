@@ -15,12 +15,12 @@ gitlab.com/pietroski-software-company/devex/golang/serializer
 go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
-"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/client"
-grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/search"
-grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
-grpc_ops "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/transactions/operations"
-ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/tests/benchmark/lightning-db_vs_postgresql/config"
-sqlc_user_store "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/tests/benchmark/lightning-db_vs_postgresql/internal/adaptors/datastore/postgresql/user/sqlc"
+"gitlab.com/pietroski-software-company/lightning-db/pkg/client"
+grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
+grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
+
+ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/tests/benchmark/lightning-db_vs_postgresql/config"
+sqlc_user_store "gitlab.com/pietroski-software-company/lightning-db/tests/benchmark/lightning-db_vs_postgresql/internal/adaptors/datastore/postgresql/user/sqlc"
 )
 
 const (
@@ -50,7 +50,7 @@ var (
 	psqlDB      *sql.DB
 	userStore   sqlc_user_store.Store
 
-	databaseMetaInfo = &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore}
+	databaseMetaInfo = &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore}
 	serializer       = go_serializer.NewJsonSerializer()
 
 	ltngKey, ltngValue []byte
@@ -113,7 +113,7 @@ func init() {
 	{
 		_, err = ltngClient.CreateStore(
 			ctx,
-			&grpc_mngmt.CreateStoreRequest{
+			&grpc_ltngdb.CreateStoreRequest{
 				Name: clientTestStore,
 				Path: clientTestStorePath,
 			},
@@ -149,9 +149,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	begin := time.Now()
 	_, err = ltngClient.Load(
 		ctx,
-		&grpc_ops.LoadRequest{
+		&grpc_ltngdb.LoadRequest{
 			DatabaseMetaInfo: databaseMetaInfo,
-			Item:             &grpc_ops.Item{Key: ltngKey},
+			Item:             &grpc_ltngdb.Item{Key: ltngKey},
 		},
 	)
 	end := time.Since(begin)
@@ -161,13 +161,13 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
 	begin2 := time.Now()
-	_, err = ltngClient.Create(ctx, &grpc_ops.CreateRequest{
+	_, err = ltngClient.Create(ctx, &grpc_ltngdb.CreateRequest{
 		DatabaseMetaInfo: databaseMetaInfo,
-		Item: &grpc_ops.Item{
+		Item: &grpc_ltngdb.Item{
 			Key:   ltngKey,
 			Value: ltngValue,
 		},
-		IndexOpts: &grpc_ops.IndexOpts{
+		IndexOpts: &grpc_ltngdb.IndexOpts{
 			HasIdx:       true,
 			ParentKey:    ltngKey,
 			IndexingKeys: [][]byte{ltngEmailIndexKey},
@@ -180,9 +180,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	//t.Log("Set response ->", setResp.String())
 
 	begin3 := time.Now()
-	_, err = ltngClient.Load(ctx, &grpc_ops.LoadRequest{
+	_, err = ltngClient.Load(ctx, &grpc_ltngdb.LoadRequest{
 		DatabaseMetaInfo: databaseMetaInfo,
-		Item:             &grpc_ops.Item{Key: ltngKey},
+		Item:             &grpc_ltngdb.Item{Key: ltngKey},
 	})
 	end3 := time.Since(begin3)
 	require.NoError(t, err)
@@ -190,14 +190,14 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	//t.Log("Get response ->", string(getResp.GetValue()))
 
 	begin3a := time.Now()
-	_, err = ltngClient.Load(ctx, &grpc_ops.LoadRequest{
+	_, err = ltngClient.Load(ctx, &grpc_ltngdb.LoadRequest{
 		DatabaseMetaInfo: databaseMetaInfo,
-		Item:             &grpc_ops.Item{Key: ltngKey},
-		IndexOpts: &grpc_ops.IndexOpts{
+		Item:             &grpc_ltngdb.Item{Key: ltngKey},
+		IndexOpts: &grpc_ltngdb.IndexOpts{
 			HasIdx:       true,
 			IndexingKeys: [][]byte{ltngEmailIndexKey},
-			IndexingProperties: &grpc_ops.IndexProperties{
-				IndexSearchPattern: grpc_ops.IndexProperties_ONE,
+			IndexingProperties: &grpc_ltngdb.IndexProperties{
+				IndexSearchPattern: grpc_ltngdb.IndexProperties_ONE,
 			},
 		},
 	})
@@ -209,7 +209,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	begin4 := time.Now()
 	listResp, err := ltngClient.List(
 		ctx,
-		&grpc_ops.ListRequest{
+		&grpc_ltngdb.ListRequest{
 			DatabaseMetaInfo: databaseMetaInfo,
 			Pagination: &grpc_pagination.Pagination{
 				PageId:   1,
@@ -226,13 +226,13 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	begin5 := time.Now()
 	_, err = ltngClient.Delete(
 		ctx,
-		&grpc_ops.DeleteRequest{
+		&grpc_ltngdb.DeleteRequest{
 			DatabaseMetaInfo: databaseMetaInfo,
-			Item:             &grpc_ops.Item{Key: ltngKey},
-			IndexOpts: &grpc_ops.IndexOpts{
+			Item:             &grpc_ltngdb.Item{Key: ltngKey},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
 				HasIdx: true,
-				IndexingProperties: &grpc_ops.IndexProperties{
-					IndexDeletionBehaviour: grpc_ops.IndexProperties_CASCADE,
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
 				},
 			},
 		},
@@ -244,7 +244,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 
 	listResp, err = ltngClient.List(
 		ctx,
-		&grpc_ops.ListRequest{
+		&grpc_ltngdb.ListRequest{
 			DatabaseMetaInfo: databaseMetaInfo,
 			Pagination: &grpc_pagination.Pagination{
 				PageId:   1,

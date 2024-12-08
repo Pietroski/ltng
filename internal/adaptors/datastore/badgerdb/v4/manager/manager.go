@@ -15,8 +15,8 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
-	lo "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator"
+	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
+	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 const (

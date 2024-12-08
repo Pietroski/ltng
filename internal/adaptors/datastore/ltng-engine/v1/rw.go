@@ -11,7 +11,7 @@ import (
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 
-	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/tools/bytesx"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 )
 
 func (e *LTNGEngine) openCreateTruncatedFile(

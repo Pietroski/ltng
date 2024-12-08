@@ -12,8 +12,8 @@ package manager
 //	gitlab.com/pietroski-software-company/devex/golang/serializer
 //	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 //
-//	"gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
-//	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
+//	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
+//	badgerdb_management_models_v3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 //)
 //
 //func Test_Integration_CreateStore(t *testing.T) {

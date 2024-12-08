@@ -14,9 +14,8 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
 
-	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/search"
-	grpc_mngmt "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/management"
-	grpc_ops "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/transactions/operations"
+	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
+	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
 const (
@@ -38,9 +37,9 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	require.NoError(t, err)
 	defer managerConn.Close()
 
-	manager := grpc_mngmt.NewManagementClient(managerConn)
+	manager := grpc_ltngdb.NewLightningDBClient(managerConn)
 
-	stores, err := manager.ListStores(ctx, &grpc_mngmt.ListStoresRequest{
+	stores, err := manager.ListStores(ctx, &grpc_ltngdb.ListStoresRequest{
 		Pagination: &grpc_pagination.Pagination{
 			PageId:   1,
 			PageSize: 5,
@@ -49,7 +48,7 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("stores ->", stores)
 
-	createdStoreResp, err := manager.CreateStore(ctx, &grpc_mngmt.CreateStoreRequest{
+	createdStoreResp, err := manager.CreateStore(ctx, &grpc_ltngdb.CreateStoreRequest{
 		Name: clientTestStore,
 		Path: clientTestStorePath,
 	})
@@ -60,22 +59,22 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	require.NoError(t, err)
 	defer managerConn.Close()
 
-	operator := grpc_ops.NewOperationClient(operatorConn)
+	operator := grpc_ltngdb.NewLightningDBClient(operatorConn)
 
 	keyToStore := []byte("any-test-key")
 	valueToStore := []byte("any-test-value")
 
-	getResp, err := operator.Load(ctx, &grpc_ops.LoadRequest{
-		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ops.Item{Key: keyToStore},
+	getResp, err := operator.Load(ctx, &grpc_ltngdb.LoadRequest{
+		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
+		Item:             &grpc_ltngdb.Item{Key: keyToStore},
 	})
 	require.Error(t, err)
 	t.Log("Get response string ->", getResp.String())
 	t.Log("Get response ->", string(getResp.GetValue()))
 
-	setResp, err := operator.Create(ctx, &grpc_ops.CreateRequest{
-		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item: &grpc_ops.Item{
+	setResp, err := operator.Create(ctx, &grpc_ltngdb.CreateRequest{
+		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
+		Item: &grpc_ltngdb.Item{
 			Key:   keyToStore,
 			Value: valueToStore,
 		},
@@ -83,15 +82,15 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("Set response ->", setResp.String())
 
-	getResp, err = operator.Load(ctx, &grpc_ops.LoadRequest{
-		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ops.Item{Key: keyToStore},
+	getResp, err = operator.Load(ctx, &grpc_ltngdb.LoadRequest{
+		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
+		Item:             &grpc_ltngdb.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	t.Log("Get response ->", string(getResp.GetValue()))
 
-	listResp, err := operator.List(ctx, &grpc_ops.ListRequest{
-		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
+	listResp, err := operator.List(ctx, &grpc_ltngdb.ListRequest{
+		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
 		Pagination: &grpc_pagination.Pagination{
 			PageId:   1,
 			PageSize: 5,
@@ -101,15 +100,15 @@ func Test_LightningNode_ServerWithClient(t *testing.T) {
 	IndentedListResp, err := json.MarshalIndent(listResp.GetItems(), "", "  ")
 	t.Log("List response ->", string(IndentedListResp))
 
-	deleteResp, err := operator.Delete(ctx, &grpc_ops.DeleteRequest{
-		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ops.Item{Key: keyToStore},
+	deleteResp, err := operator.Delete(ctx, &grpc_ltngdb.DeleteRequest{
+		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
+		Item:             &grpc_ltngdb.Item{Key: keyToStore},
 	})
 	require.NoError(t, err)
 	t.Log("Delete response ->", deleteResp.String())
 
-	listResp, err = operator.List(ctx, &grpc_ops.ListRequest{
-		DatabaseMetaInfo: &grpc_ops.DatabaseMetaInfo{DatabaseName: clientTestStore},
+	listResp, err = operator.List(ctx, &grpc_ltngdb.ListRequest{
+		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
 		Pagination: &grpc_pagination.Pagination{
 			PageId:   1,
 			PageSize: 5,
@@ -150,9 +149,9 @@ func Test_LightningNode_ServerWithClient_TracingTest(t *testing.T) {
 	require.NoError(t, err)
 	defer managerConn.Close()
 
-	manager := grpc_mngmt.NewManagementClient(managerConn)
+	manager := grpc_ltngdb.NewLightningDBClient(managerConn)
 
-	stores, err := manager.ListStores(ctx, &grpc_mngmt.ListStoresRequest{
+	stores, err := manager.ListStores(ctx, &grpc_ltngdb.ListStoresRequest{
 		Pagination: &grpc_pagination.Pagination{
 			PageId:   1,
 			PageSize: 5,
@@ -161,14 +160,14 @@ func Test_LightningNode_ServerWithClient_TracingTest(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("stores ->", stores)
 
-	createdStoreResp, err := manager.CreateStore(ctx, &grpc_mngmt.CreateStoreRequest{
+	createdStoreResp, err := manager.CreateStore(ctx, &grpc_ltngdb.CreateStoreRequest{
 		Name: clientTestStore,
 		Path: clientTestStorePath,
 	})
 	require.NoError(t, err)
 	t.Log("created store if it does not exist ->", createdStoreResp)
 
-	stores, err = manager.ListStores(ctx, &grpc_mngmt.ListStoresRequest{
+	stores, err = manager.ListStores(ctx, &grpc_ltngdb.ListStoresRequest{
 		Pagination: &grpc_pagination.Pagination{
 			PageId:   1,
 			PageSize: 5,

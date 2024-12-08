@@ -5,7 +5,7 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 
-	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/badgerdb/v4/management"
+	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 )
 
 // deserializeItem deserializes a badger item and,

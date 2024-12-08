@@ -7,7 +7,7 @@ local envs() = {
   GITLAB_USERNAME: FromSecret('GITLAB_USERNAME'),
 };
 
-local remote_git_repo_address = 'https://gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node.git';
+local remote_git_repo_address = 'https://gitlab.com/pietroski-software-company/lightning-db.git';
 
 local set_netrc = [
   'apk update && apk upgrade && apk add git bash make build-base ncurses',

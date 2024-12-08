@@ -9,9 +9,10 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
-	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/cmd/grpc/badgerdb/v4"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
-	common_model "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/common"
+	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/badgerdb/v4"
+	ltngdb_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/ltngdb/v1"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
+	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
 
 func main() {
@@ -33,19 +34,21 @@ func main() {
 	err = go_env_extractor.LoadEnvs(cfg)
 	if err != nil {
 		logger.Errorf(
-			"failed to load ltng node configs",
+			"failed to load ltng's node configs",
 			go_logger.Mapper("err", err.Error()),
 		)
 
 		return
 	}
 
-	switch common_model.ToEngineVersionType(cfg.LTNGNode.LTNGEngine.Engine) {
+	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
 		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
+	case common_model.LightningEngineV1EngineVersionType:
+		fallthrough
 	case common_model.DefaultEngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
+		fallthrough
 	default:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
+		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder)
 	}
 }

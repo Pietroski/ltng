@@ -1,9 +1,10 @@
 syntax = "proto3";
 
 package common.search;
-option go_package = "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/schemas/generated/go/common/search;grpc_pagination";
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search;grpc_pagination";
 
 message Pagination {
   uint64 page_id = 1;
   uint64 page_size = 2;
+  uint64 pagination_cursor = 3;
 }

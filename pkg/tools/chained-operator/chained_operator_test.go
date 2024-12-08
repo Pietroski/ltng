@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	chained_mock "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/chained-operator/mocks"
+	chained_mock "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/chained-operator/mocks"
 )
 
 func TestChainOperator_Operate(t *testing.T) {

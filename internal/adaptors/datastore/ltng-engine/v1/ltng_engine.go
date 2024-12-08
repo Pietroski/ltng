@@ -5,7 +5,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/models/ltng-engine/v1"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
 )
 
 func New(ctx context.Context, opts ...options.Option) (*LTNGEngine, error) {

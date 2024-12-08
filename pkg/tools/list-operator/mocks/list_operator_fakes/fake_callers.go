@@ -4,7 +4,7 @@ package list_operator_fakes
 import (
 	"sync"
 
-	list_operator_mocks "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/pkg/tools/list-operator/mocks"
+	list_operator_mocks "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator/mocks"
 )
 
 type FakeCallers struct {

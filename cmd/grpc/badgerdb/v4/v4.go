@@ -13,13 +13,11 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	transporthandler "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/manager"
-	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/config"
-	badgerdb_manager_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/controllers/badger/v4/manager"
-	badgerdb_operator_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/controllers/badger/v4/operator"
-	badgerdb_manager_factory_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/badger/v4/manager"
-	badgerdb_operator_factory_v4 "gitlab.com/pietroski-software-company/lightning-db/lightning-node/go-lightning-node/internal/factories/badger/v4/operator"
+	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
+	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
+	badgerdb_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/badger/v4"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/factories/badger/v4"
 )
 
 func StartV4(
@@ -77,40 +75,25 @@ func StartV4(
 		return
 	}
 
-	managerController, err := badgerdb_manager_controller_v4.NewBadgerDBManagerServiceControllerV4(ctx,
-		badgerdb_manager_controller_v4.WithConfig(cfg),
-		badgerdb_manager_controller_v4.WithLogger(logger),
-		badgerdb_manager_controller_v4.WithBinder(binder),
-		badgerdb_manager_controller_v4.WithManger(mngr),
+	controller, err := badgerdb_controller_v4.New(ctx,
+		badgerdb_controller_v4.WithConfig(cfg),
+		badgerdb_controller_v4.WithLogger(logger),
+		badgerdb_controller_v4.WithBinder(binder),
+		badgerdb_controller_v4.WithManger(mngr),
+		badgerdb_controller_v4.WithOperator(oprt),
 	)
 	if err != nil {
 		logger.Errorf(
-			"ferror creating NewBadgerDBManagerServiceControllerV4",
+			"error creating BadgerDB v4",
 			go_logger.Mapper("err", err.Error()),
 		)
 
 		return
 	}
 
-	operatorController, err := badgerdb_operator_controller_v4.NewBadgerDBOperatorServiceControllerV4(ctx,
-		badgerdb_operator_controller_v4.WithConfig(cfg),
-		badgerdb_operator_controller_v4.WithLogger(logger),
-		badgerdb_operator_controller_v4.WithBinder(binder),
-		badgerdb_operator_controller_v4.WithManger(mngr),
-		badgerdb_operator_controller_v4.WithOperator(oprt),
-	)
-	if err != nil {
-		logger.Errorf(
-			"ferror creating NewBadgerDBOperatorServiceControllerV4",
-			go_logger.Mapper("err", err.Error()),
-		)
-
-		return
-	}
-
-	managerListener, err := net.Listen(
-		cfg.LTNGNode.LTNGManager.Network,
-		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGManager.Port),
+	listener, err := net.Listen(
+		cfg.Node.Server.Network,
+		fmt.Sprintf(":%v", cfg.Node.Server.Port),
 	)
 	if err != nil {
 		logger.Errorf(
@@ -120,11 +103,11 @@ func StartV4(
 
 		return
 	}
-	mngrsvr, err := badgerdb_manager_factory_v4.NewBadgerDBManagerServiceFactoryV4(ctx,
-		badgerdb_manager_factory_v4.WithConfig(cfg),
-		badgerdb_manager_factory_v4.WithListener(managerListener),
-		badgerdb_manager_factory_v4.WithManager(mngr),
-		badgerdb_manager_factory_v4.WithController(managerController),
+	factory, err := badgerdb_factory_v4.New(ctx,
+		badgerdb_factory_v4.WithConfig(cfg),
+		badgerdb_factory_v4.WithListener(listener),
+		badgerdb_factory_v4.WithManager(mngr),
+		badgerdb_factory_v4.WithController(controller),
 	)
 	if err != nil {
 		logger.Errorf(
@@ -135,39 +118,10 @@ func StartV4(
 		return
 	}
 
-	operatorListener, err := net.Listen(
-		cfg.LTNGNode.LTNGOperator.Network,
-		fmt.Sprintf(":%v", cfg.LTNGNode.LTNGOperator.Port),
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed to create net listener",
-			go_logger.Mapper("err", err.Error()),
-		)
-
-		return
-	}
-	opsvr, err := badgerdb_operator_factory_v4.NewBadgerDBOperatorServiceFactoryV4(ctx,
-		badgerdb_operator_factory_v4.WithConfig(cfg),
-		badgerdb_operator_factory_v4.WithListener(operatorListener),
-		//badgerdb_operator_factory_v4.WithManager(mngr),
-		//badgerdb_operator_factory_v4.WithOperator(oprt),
-		badgerdb_operator_factory_v4.WithController(operatorController),
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed to create NewBadgerDBOperatorServiceFactoryV4",
-			go_logger.Mapper("err", err.Error()),
-		)
-
-		return
-	}
-
 	h := transporthandler.NewHandler(
 		ctx, cancelFn, os.Exit, nil, logger, &transporthandler.Opts{Debug: true},
 	)
 	h.StartServers(transporthandler.ServerMapping{
-		"badger-lightning-node-manager-v4":  mngrsvr,
-		"badger-lightning-node-operator-v4": opsvr,
+		"lightning-node-badger-db-engine-v4": factory,
 	})
 }
