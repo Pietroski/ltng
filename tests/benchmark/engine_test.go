@@ -231,6 +231,7 @@ func benchmarkLTNGDBEngineV2(b *testing.B) {
 	}
 
 	//ets.LTNGDBEngineV2.Close()
+	time.Sleep(500 * time.Millisecond)
 
 	{
 		pagination := &ltngenginemodels.Pagination{

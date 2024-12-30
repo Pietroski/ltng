@@ -1112,6 +1112,9 @@ func (e *LTNGEngine) upsertRelationalData(
 	tmpFilePath := tmpFileInfo.Path
 	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
 
+	e.opMtx.Lock(relationalLockKey, struct{}{})
+	defer e.opMtx.Unlock(relationalLockKey)
+
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {
 		return fmt.Errorf("error creating %s file reader: %w",

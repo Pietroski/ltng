@@ -221,7 +221,7 @@ func (e *LTNGEngine) listItems(
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.ListItemsResult, error) {
 	relationalItemStore := dbMetaInfo.RelationalInfo()
-	lockKey := relationalItemStore.LockName(ltngenginemodels.ListingItemsFromStore)
+	lockKey := relationalItemStore.LockName(ltngenginemodels.RelationalDataStore)
 
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
