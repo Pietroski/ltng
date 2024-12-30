@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine"
 	"math"
 	"testing"
 	"time"
@@ -10,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
-
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
 )
 
 func TestLTNGEngineFlow(t *testing.T) {

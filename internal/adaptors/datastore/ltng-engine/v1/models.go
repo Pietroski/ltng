@@ -6,7 +6,8 @@ import (
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
+	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 )
 
@@ -68,6 +69,7 @@ type (
 
 		serializer serializer_models.Serializer
 
+		fq               *filequeuev1.FileQueue
 		storeFileMapping map[string]*fileInfo
 		itemFileMapping  map[string]*fileInfo
 	}

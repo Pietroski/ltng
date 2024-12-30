@@ -2,6 +2,7 @@ package ltngdb_controller_v1
 
 import (
 	"context"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -9,7 +10,6 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
 	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )

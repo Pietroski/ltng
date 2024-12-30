@@ -17,7 +17,7 @@ func NewEngineLock() *EngineLock {
 
 func (mtx *EngineLock) Lock(key, value any) {
 	_, ok := mtx.opTracker.LoadOrStore(key, value)
-	for !ok {
+	for ok {
 		_, ok = mtx.opTracker.LoadOrStore(key, value)
 		runtime.Gosched()
 	}

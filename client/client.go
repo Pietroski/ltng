@@ -3,11 +3,9 @@ package ltng_client
 import (
 	"context"
 	"fmt"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	grpc_query_config "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/queries/config"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -57,12 +55,15 @@ func New(
 
 	client.LightningDBClient = lightningDBClient
 
-	_, err = client.LightningDBClient.CheckLightingNodeEngine(ctx, &grpc_query_config.CheckEngineRequest{
-		Engine: params.Engine,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to check ltng's engine: %v", err)
-	}
+	//_, err = client.LightningDBClient.CheckLightingNodeEngine(ctx,
+	//	&grpc_query_config.CheckEngineRequest{
+	//		Engine: params.Engine,
+	//	})
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to check ltng's engine: %v", err)
+	//}
+
+	//time.Sleep(time.Second * 1)
 
 	return client, nil
 }

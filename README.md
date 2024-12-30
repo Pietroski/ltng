@@ -4,3 +4,23 @@ Lightning-DB is not only a Badger-DB wrapper written in GoLang and that uses gRP
 However, Lightning-DB is a graph database which has as its engine, Badger-DB and also uses gRPC as its transport layer.
 
 LTNG_ENGINE=default badgerV3 badgerV4 ltng_engine
+
+
+[//]: # (###############)
+
+#Ltng-Eco
+
+# Lightning - Ecosystem
+
+- Lightning-DB
+- Lightning-Cache
+- Lightning-Queue
+- Lightning-Storage
+
+## Lightning-Queue
+
+- can consume from:
+  - live stream
+  - historical stream
+
+- a stream is created thought on how an event will be propagated (round-robin, fan out, etc...)

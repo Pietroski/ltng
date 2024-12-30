@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 

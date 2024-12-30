@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine/v1"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	"os"
+
+	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 func (e *LTNGEngine) loadItem(
@@ -61,76 +62,113 @@ func (e *LTNGEngine) createItem(
 		return nil, e.createItemOnDisk(ctx, dbMetaInfo, item)
 	}
 
-	createItemOnDisk := func() error {
-		return e.createItemOnDisk(ctx, dbMetaInfo, item)
-	}
-	deleteItemOnDisk := func() error {
-		return os.Remove(getDataFilepath(dbMetaInfo.Path, strItemKey))
-	}
+	//createItemOnDisk := func() error {
+	//	return e.createItemOnDisk(ctx, dbMetaInfo, item)
+	//}
+	//deleteItemOnDisk := func() error {
+	//	return os.Remove(getDataFilepath(dbMetaInfo.Path, strItemKey))
+	//}
+	//
+	//createIndexedItemOnDisk := func() error {
+	//	for _, indexKey := range opts.IndexingKeys {
+	//		if err := e.createIndexItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
+	//			Key:   indexKey,
+	//			Value: opts.ParentKey,
+	//		}); err != nil {
+	//			return err
+	//		}
+	//	}
+	//
+	//	return nil
+	//}
+	//deleteIndexedItemOnDisk := func() error {
+	//	for _, indexKey := range opts.IndexingKeys {
+	//		if err := os.Remove(getDataFilepath(dbMetaInfo.IndexInfo().Path, string(indexKey))); err != nil {
+	//			return fmt.Errorf("error deleting item on database: %w", err)
+	//		}
+	//	}
+	//
+	//	return nil
+	//}
+	//
+	//createIndexedItemListOnDisk := func() error {
+	//	return e.createIndexItemOnDisk(ctx,
+	//		dbMetaInfo.IndexListInfo(),
+	//		&Item{
+	//			Key:   opts.ParentKey,
+	//			Value: bytes.Join(opts.IndexingKeys, []byte(bytesSep)),
+	//		},
+	//	)
+	//}
+	//
+	//operations := []*lo.Operation{
+	//	{
+	//		Action: &lo.Action{
+	//			Act:         createItemOnDisk,
+	//			RetrialOpts: lo.DefaultRetrialOps,
+	//		},
+	//	},
+	//	{
+	//		Action: &lo.Action{
+	//			Act:         createIndexedItemOnDisk,
+	//			RetrialOpts: lo.DefaultRetrialOps,
+	//		},
+	//		Rollback: &lo.RollbackAction{
+	//			RollbackAct: deleteItemOnDisk,
+	//			RetrialOpts: lo.DefaultRetrialOps,
+	//		},
+	//	},
+	//	{
+	//		Action: &lo.Action{
+	//			Act:         createIndexedItemListOnDisk,
+	//			RetrialOpts: lo.DefaultRetrialOps,
+	//		},
+	//		Rollback: &lo.RollbackAction{
+	//			RollbackAct: deleteIndexedItemOnDisk,
+	//			RetrialOpts: lo.DefaultRetrialOps,
+	//		},
+	//	},
+	//}
+	//if err := lo.New(operations...).Operate(); err != nil {
+	//	return nil, err
+	//}
 
-	createIndexedItemOnDisk := func() error {
-		for _, indexKey := range opts.IndexingKeys {
-			if err := e.createIndexItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &Item{
-				Key:   indexKey,
-				Value: opts.ParentKey,
-			}); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-	deleteIndexedItemOnDisk := func() error {
-		for _, indexKey := range opts.IndexingKeys {
-			if err := os.Remove(getDataFilepath(dbMetaInfo.IndexInfo().Path, string(indexKey))); err != nil {
-				return fmt.Errorf("error deleting item on database: %w", err)
-			}
-		}
-
-		return nil
-	}
-
-	createIndexedItemListOnDisk := func() error {
-		return e.createIndexItemOnDisk(ctx,
-			dbMetaInfo.IndexListInfo(),
-			&Item{
-				Key:   opts.ParentKey,
-				Value: bytes.Join(opts.IndexingKeys, []byte(bytesSep)),
-			},
-		)
-	}
-
-	operations := []*lo.Operation{
+	cs := newCreateSaga(e)
+	if err := lo.New([]*lo.Operation{
 		{
 			Action: &lo.Action{
-				Act:         createItemOnDisk,
+				Act:         cs.createItemOnDisk(ctx, dbMetaInfo, item),
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 		},
 		{
 			Action: &lo.Action{
-				Act:         createIndexedItemOnDisk,
+				Act:         cs.createIndexedItemOnDisk(ctx, dbMetaInfo, opts),
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteItemOnDisk,
+				RollbackAct: cs.deleteItemOnDisk(dbMetaInfo.Path, strItemKey),
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 		},
 		{
 			Action: &lo.Action{
-				Act:         createIndexedItemListOnDisk,
+				Act:         cs.createIndexedItemListOnDisk(ctx, dbMetaInfo, opts),
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIndexedItemOnDisk,
+				RollbackAct: cs.deleteIndexedItemOnDisk(dbMetaInfo, opts),
 				RetrialOpts: lo.DefaultRetrialOps,
 			},
 		},
-	}
-	if err := lo.New(operations...).Operate(); err != nil {
+	}...).Operate(); err != nil {
 		return nil, err
 	}
+
+	//err := e.fq.Write(ctx, item)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return item, nil
 }
@@ -147,9 +185,9 @@ func (e *LTNGEngine) upsertItem(
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true); err == nil {
-		return nil, fmt.Errorf("error item already exists")
-	}
+	//if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true); err == nil {
+	//	return nil, fmt.Errorf("error item already exists")
+	//}
 
 	if !opts.HasIdx {
 		return nil, e.upsertItemOnDisk(ctx, dbMetaInfo, item)

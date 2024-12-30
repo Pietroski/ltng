@@ -11,16 +11,16 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 
-gitlab.com/pietroski-software-company/devex/golang/serializer
-go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
-go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
+	go_serializer "gitlab.com/pietroski-software-company/devex/golang/serializer"
+	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
+	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
-ltng_client "gitlab.com/pietroski-software-company/lightning-db/pkg/client"
-grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
-grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
+	ltng_client "gitlab.com/pietroski-software-company/lightning-db/pkg/client"
+	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
+	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 
-ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/tests/benchmark/lightning-db_vs_postgresql/config"
-sqlc_user_store "gitlab.com/pietroski-software-company/lightning-db/tests/benchmark/lightning-db_vs_postgresql/internal/adaptors/datastore/postgresql/user/sqlc"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/tests/benchmark/lightning-db_vs_postgresql/config"
+	sqlc_user_store "gitlab.com/pietroski-software-company/lightning-db/tests/benchmark/lightning-db_vs_postgresql/internal/adaptors/datastore/postgresql/user/sqlc"
 )
 
 const (

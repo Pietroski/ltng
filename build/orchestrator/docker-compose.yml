@@ -9,8 +9,7 @@ services:
       - ../../.local.env
     ports:
       - '7001:7001'
-      - '50051:50051'
-      - '50052:50052'
+      - '50050:50050'
     volumes:
       - lightning-db-node-local-db:/var/lib/lightning-db-node/data
 

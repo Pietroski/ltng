@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -18,7 +19,7 @@ func (e *LTNGEngine) openCreateTruncatedFile(
 	_ context.Context,
 	filePath string,
 ) (*os.File, error) {
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL|os.O_TRUNC, dbFileOp)
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFileOp)
 	if err != nil {
 		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
 	}
@@ -38,7 +39,7 @@ func (e *LTNGEngine) openReadWholeFile(
 		return nil, nil, fmt.Errorf("file does not exist: %s: %v", filePath, err)
 	}
 
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_SYNC, dbFileOp)
+	file, err := os.OpenFile(filePath, os.O_RDWR, dbFileOp)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error opening %s file: %v", filePath, err)
 	}
@@ -62,7 +63,7 @@ func (e *LTNGEngine) openFile(
 		return nil, fmt.Errorf("file does not exist: %v", err)
 	}
 
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_SYNC, dbFileOp)
+	file, err := os.OpenFile(filePath, os.O_RDWR, dbFileOp)
 	if err != nil {
 		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
 	}
@@ -76,10 +77,23 @@ func (e *LTNGEngine) readAll(
 	_ context.Context,
 	file *os.File,
 ) ([]byte, error) {
-	row, err := io.ReadAll(file)
+	stat, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
+	size := stat.Size()
+
+	reader := bufio.NewReaderSize(file, int(size))
+
+	buf := make([]byte, size)
+	if _, err = reader.Read(buf); err != nil {
+		return nil, err
+	}
+
+	//row, err := io.ReadAll(file)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	// Seek back to start
 	_, err = file.Seek(0, 0)
@@ -87,15 +101,18 @@ func (e *LTNGEngine) readAll(
 		return nil, fmt.Errorf("error seeking/resetting file from %s: %v", file.Name(), err)
 	}
 
-	return row, nil
+	return buf, nil
 }
 
 func (e *LTNGEngine) readRelationalRow(
 	_ context.Context,
 	file *os.File,
 ) ([]byte, error) {
+	reader := bufio.NewReader(file)
 	rawRowSize := make([]byte, 4)
-	_, err := file.Read(rawRowSize)
+	_, err := reader.Read(rawRowSize)
+	//rawRowSize := make([]byte, 4)
+	//_, err := file.Read(rawRowSize)
 	if err != nil {
 		if err != io.EOF {
 			return nil, io.EOF
@@ -106,7 +123,8 @@ func (e *LTNGEngine) readRelationalRow(
 
 	rowSize := bytesx.Uint32(rawRowSize)
 	row := make([]byte, rowSize)
-	_, err = file.Read(row)
+	_, err = reader.Read(row)
+	//_, err = file.Read(row)
 	if err != nil {
 		if err != io.EOF {
 			return nil, io.EOF
@@ -180,13 +198,29 @@ func (e *LTNGEngine) writeAndSeek(
 	file *os.File,
 	data []byte,
 ) ([]byte, error) {
-	if _, err := file.Write(data); err != nil {
+	writer := bufio.NewWriter(file)
+	if _, err := writer.Write(data); err != nil {
 		return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
 	}
 
-	if err := file.Sync(); err != nil {
+	//if _, err := file.Write(data); err != nil {
+	//	return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
+	//}
+
+	if err := writer.Flush(); err != nil {
 		return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
 	}
+	//if err := file.Sync(); err != nil {
+	//	return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
+	//}
+
+	//if _, err := file.Write(data); err != nil {
+	//	return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
+	//}
+	//
+	//if err := file.Sync(); err != nil {
+	//	return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
+	//}
 
 	// set the file ready to be read
 	if _, err := file.Seek(0, 0); err != nil {
@@ -207,15 +241,28 @@ func (e *LTNGEngine) writeToRelationalFileWithNoSeek(
 	}
 
 	bsLen := bytesx.AddUint32(uint32(len(bs)))
-	if _, err = file.Write(bsLen); err != nil {
+	//if _, err = file.Write(bsLen); err != nil {
+	//	return nil, fmt.Errorf("failed to write data length to file - %s | err: %v", file.Name(), err)
+	//}
+	//
+	//if _, err = file.Write(bs); err != nil {
+	//	return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
+	//}
+	//
+	//if err = file.Sync(); err != nil {
+	//	return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
+	//}
+
+	writer := bufio.NewWriter(file)
+	if _, err = writer.Write(bsLen); err != nil {
 		return nil, fmt.Errorf("failed to write data length to file - %s | err: %v", file.Name(), err)
 	}
 
-	if _, err = file.Write(bs); err != nil {
+	if _, err = writer.Write(bs); err != nil {
 		return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
 	}
 
-	if err = file.Sync(); err != nil {
+	if err := writer.Flush(); err != nil {
 		return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
 	}
 
@@ -257,6 +304,7 @@ type (
 		hasHeader  bool
 		rawHeader  []byte
 		cursor     uint32
+		reader     *bufio.Reader
 	}
 )
 
@@ -266,6 +314,7 @@ func newFileReader(
 	fr := &fileReader{
 		file:       fi.File,
 		headerSize: fi.HeaderSize,
+		reader:     bufio.NewReader(fi.File),
 	}
 	if fi.FileData != nil {
 		fr.header = fi.FileData.Header
@@ -299,17 +348,25 @@ func (fr *fileReader) readAll(_ context.Context) (bs []byte, err error) {
 	}
 
 	fr.cursor = uint32(fileStats.Size())
+	//bs = make([]byte, fr.cursor)
+	//_, err = fr.reader.Read(bs)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//return bs, nil
 	return io.ReadAll(fr.file)
 }
 
 func (fr *fileReader) read(_ context.Context) (bs []byte, err error) {
-	defer func() {
-		if err != nil && err != io.EOF {
-			_ = fr.file.Close()
-		}
-	}()
+	//defer func() {
+	//	if err != nil && err != io.EOF {
+	//		_ = fr.file.Close()
+	//	}
+	//}()
 
 	rawRowSize := make([]byte, 4)
+	//_, err = fr.reader.Read(rawRowSize)
 	_, err = fr.file.Read(rawRowSize)
 	if err != nil {
 		if err == io.EOF {
@@ -322,6 +379,7 @@ func (fr *fileReader) read(_ context.Context) (bs []byte, err error) {
 
 	rowSize := bytesx.Uint32(rawRowSize)
 	row := make([]byte, rowSize)
+	//_, err = fr.reader.Read(row)
 	_, err = fr.file.Read(row)
 	if err != nil {
 		return nil, err

@@ -10,15 +10,25 @@ import (
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
+	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 )
 
 func newLTNGEngine(
 	ctx context.Context, opts ...options.Option,
 ) (*LTNGEngine, error) {
+	fq, err := filequeuev1.New(ctx,
+		filequeuev1.CreateFileQueueFilePath,
+		filequeuev1.CreateFileQueueFileName,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	engine := &LTNGEngine{
 		opMtx:            lock.NewEngineLock(),
 		mtx:              new(sync.Mutex),
+		fq:               fq,
 		storeFileMapping: make(map[string]*fileInfo),
 		itemFileMapping:  make(map[string]*fileInfo),
 		serializer:       serializer.NewRawBinarySerializer(),
