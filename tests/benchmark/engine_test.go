@@ -2,8 +2,6 @@ package benchmark
 
 import (
 	"context"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"os/exec"
 	"strings"
 	"testing"
@@ -18,6 +16,8 @@ import (
 	models_badgerdb_v4_management "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	models_badgerdb_v4_operation "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
@@ -231,7 +231,7 @@ func benchmarkLTNGDBEngineV2(b *testing.B) {
 	}
 
 	//ets.LTNGDBEngineV2.Close()
-	time.Sleep(500 * time.Millisecond)
+	//time.Sleep(500 * time.Millisecond)
 
 	{
 		pagination := &ltngenginemodels.Pagination{
@@ -251,6 +251,8 @@ func benchmarkLTNGDBEngineV2(b *testing.B) {
 		b.Log(b.Elapsed())
 		b.ResetTimer()
 	}
+
+	ets.LTNGDBEngineV2.Close()
 }
 
 func Benchmark_BadgerDB_Engine(b *testing.B) {

@@ -17,9 +17,9 @@ const (
 	ALL           = "*"
 	ALLExt        = ALL + Ext
 	LineBreak     = "\n"
-	LB            = "&#;#&" // "?#\r\n\t#?" // bsSeparator = "&#-#&"
-	BytesSep      = "&#!;;#!&"
-	BytesSliceSep = "&#!;+|+;#!&"
+	LB            = "&#!;+|ltngdb|+;#!&"
+	BytesSep      = "&#!;+|ltngdb|+;#!&"
+	BytesSliceSep = "&#!;+|ltngdb|+;#!&"
 
 	BasePath      = DBBasePath + DBBaseVersion
 	BaseDataPath  = BasePath + DBDataPath
@@ -124,7 +124,7 @@ type OpType string
 
 const (
 	OpTypeCreate OpType = "create"
-	OpTypeUpdate OpType = "update"
+	OpTypeUpsert OpType = "upsert"
 	OpTypeDelete OpType = "delete"
 	OpTypeGet    OpType = "get"
 	OpTypeList   OpType = "list"

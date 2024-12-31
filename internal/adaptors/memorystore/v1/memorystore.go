@@ -77,6 +77,65 @@ func (ltng *LTNGCacheEngine) CreateItem(
 	return item, nil
 }
 
+func (ltng *LTNGCacheEngine) UpsertItem(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.Item, error) {
+	key := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
+		[]byte(ltngenginemodels.BytesSep),
+	)
+	strKey := hex.EncodeToString(key)
+	if err := ltng.cache.Set(ctx, strKey, item.Value); err != nil {
+		return nil, err
+	}
+
+	if opts == nil || !opts.HasIdx {
+		return item, nil
+	}
+
+	for _, itemKey := range opts.IndexingKeys {
+		indexKey := bytes.Join(
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[]byte(ltngenginemodels.BytesSep),
+		)
+		strIndexKey := hex.EncodeToString(indexKey)
+		if err := ltng.cache.Set(ctx, strIndexKey, opts.ParentKey); err != nil {
+			return nil, err
+		}
+	}
+
+	indexListKey := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
+		[]byte(ltngenginemodels.BytesSep),
+	)
+	strIndexListKey := hex.EncodeToString(indexListKey)
+	if err := ltng.cache.Set(ctx, strIndexListKey, opts.IndexingKeys); err != nil {
+		return nil, err
+	}
+
+	relationalKey := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[]byte(ltngenginemodels.BytesSep),
+	)
+	strRelationalKey := hex.EncodeToString(relationalKey)
+	var value []*ltngenginemodels.Item
+	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
+		return append(value, &ltngenginemodels.Item{
+			Key:   key,
+			Value: item.Value,
+		}), nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return item, nil
+}
+
+// TODO: deleteItem
+
 func (ltng *LTNGCacheEngine) LoadItem(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
@@ -179,3 +238,5 @@ func (ltng *LTNGCacheEngine) LoadItem(
 		}, nil
 	}
 }
+
+// TODO: listItems

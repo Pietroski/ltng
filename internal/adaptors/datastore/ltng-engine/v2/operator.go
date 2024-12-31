@@ -1,14 +1,12 @@
 package v2
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 func (e *LTNGEngine) loadItem(
@@ -65,9 +63,6 @@ func (e *LTNGEngine) createItem(
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
-	//lockKey := dbMetaInfo.LockName(strItemKey)
-	//e.opMtx.Lock(lockKey, struct{}{})
-	//defer e.opMtx.Unlock(lockKey)
 
 	if _, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err != nil {
 		if _, err = os.Stat(ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)); !os.IsNotExist(err) {
@@ -98,92 +93,17 @@ func (e *LTNGEngine) upsertItem(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	strItemKey := hex.EncodeToString(item.Key)
-
-	lockKey := dbMetaInfo.LockName(strItemKey)
-	e.opMtx.Lock(lockKey, struct{}{})
-	defer e.opMtx.Unlock(lockKey)
-
-	//if _, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true); err == nil {
-	//	return nil, fmt.Errorf("error item already exists")
-	//}
-
-	if !opts.HasIdx {
-		return nil, e.upsertItemOnDisk(ctx, dbMetaInfo, item)
+	itemInfoData := &ltngenginemodels.ItemInfoData{
+		OpType:     ltngenginemodels.OpTypeUpsert,
+		DBMetaInfo: dbMetaInfo,
+		Item:       item,
+		Opts:       opts,
 	}
-
-	createItemOnDisk := func() error {
-		return e.upsertItemOnDisk(ctx, dbMetaInfo, item)
-	}
-	deleteItemOnDisk := func() error {
-		return os.Remove(ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey))
-	}
-
-	createIndexedItemOnDisk := func() error {
-		for _, indexKey := range opts.IndexingKeys {
-			if err := e.upsertIndexItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
-				Key:   indexKey,
-				Value: opts.ParentKey,
-			}); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-	deleteIndexedItemOnDisk := func() error {
-		for _, indexKey := range opts.IndexingKeys {
-			if err := os.Remove(
-				ltngenginemodels.GetDataFilepath(dbMetaInfo.IndexInfo().Path, string(indexKey)),
-			); err != nil {
-				return fmt.Errorf("error deleting item on database: %w", err)
-			}
-		}
-
-		return nil
-	}
-
-	createIndexedItemListOnDisk := func() error {
-		return e.upsertIndexItemOnDisk(ctx,
-			dbMetaInfo.IndexListInfo(),
-			&ltngenginemodels.Item{
-				Key:   opts.ParentKey,
-				Value: bytes.Join(opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
-			},
-		)
-	}
-
-	operations := []*lo.Operation{
-		{
-			Action: &lo.Action{
-				Act:         createItemOnDisk,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         createIndexedItemOnDisk,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteItemOnDisk,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         createIndexedItemListOnDisk,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIndexedItemOnDisk,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-	}
-	if err := lo.New(operations...).Operate(); err != nil {
+	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err
 	}
+	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
+	_, _ = e.memoryStore.UpsertItem(ctx, dbMetaInfo, item, opts)
 
 	return item, nil
 }
