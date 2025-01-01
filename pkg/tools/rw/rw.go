@@ -218,24 +218,9 @@ func (e *FileManager) WriteAndSeek(
 		return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
 	}
 
-	//if _, err := file.Write(data); err != nil {
-	//	return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
-	//}
-
 	if err := writer.Flush(); err != nil {
 		return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
 	}
-	//if err := file.Sync(); err != nil {
-	//	return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
-	//}
-
-	//if _, err := file.Write(data); err != nil {
-	//	return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
-	//}
-	//
-	//if err := file.Sync(); err != nil {
-	//	return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
-	//}
 
 	// set the file ready to be read
 	if _, err := file.Seek(0, 0); err != nil {
@@ -256,17 +241,6 @@ func (e *FileManager) WriteToRelationalFileWithNoSeek(
 	}
 
 	bsLen := bytesx.AddUint32(uint32(len(bs)))
-	//if _, err = file.Write(bsLen); err != nil {
-	//	return nil, fmt.Errorf("failed to write data length to file - %s | err: %v", file.Name(), err)
-	//}
-	//
-	//if _, err = file.Write(bs); err != nil {
-	//	return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
-	//}
-	//
-	//if err = file.Sync(); err != nil {
-	//	return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
-	//}
 
 	writer := bufio.NewWriter(file)
 	if _, err = writer.Write(bsLen); err != nil {
@@ -387,12 +361,6 @@ func (fr *FileReader) ReadAll(_ context.Context) (bs []byte, err error) {
 }
 
 func (fr *FileReader) Read(_ context.Context) (bs []byte, err error) {
-	//defer func() {
-	//	if err != nil && err != io.EOF {
-	//		_ = fr.file.Close()
-	//	}
-	//}()
-
 	rawRowSize := make([]byte, 4)
 	//_, err = fr.reader.Read(rawRowSize)
 	_, err = fr.file.Read(rawRowSize)
