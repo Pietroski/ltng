@@ -24,6 +24,10 @@ func GetDataFilepath(path, filename string) string {
 	return GetDataPathWithSep(path) + filename + Ext
 }
 
+func GetTmpDataFilepath(path, filename string) string {
+	return GetDataPathWithSep(path) + TmpPrefix + filename + Ext
+}
+
 func GetStatsFilepath(storeName string) string {
 	return GetStatsPathWithSep() + storeName + Ext
 }

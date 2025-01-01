@@ -2,6 +2,7 @@ package ltngenginemodels
 
 import (
 	"context"
+	"encoding/hex"
 	"os"
 	"time"
 )
@@ -17,7 +18,7 @@ const (
 	ALL           = "*"
 	ALLExt        = ALL + Ext
 	LineBreak     = "\n"
-	LB            = "&#!;+|ltngdb|+;#!&"
+	BsSep         = "&#!;+|ltngdb|+;#!&"
 	BytesSep      = "&#!;+|ltngdb|+;#!&"
 	BytesSliceSep = "&#!;+|ltngdb|+;#!&"
 
@@ -39,6 +40,8 @@ const (
 	DBRelationalPath           = "/relational"
 	Tmp                        = "tmp"
 	TmpPath                    = "/tmp"
+	TmpPrefix                  = "tmp-"
+	TmpSuffix                  = "-tmp"
 
 	DBManagerName = "ltng-engine-manager"
 	DBManagerPath = "internal/ltng-engine/manager"
@@ -299,6 +302,25 @@ type (
 		ListSearchPattern      ListSearchPattern
 	}
 )
+
+func IndexListToMap(indexingList []*Item) map[string]struct{} {
+	indexingMap := map[string]struct{}{}
+	for _, item := range indexingList {
+		strKey := hex.EncodeToString(item.Value)
+		indexingMap[strKey] = struct{}{}
+	}
+
+	return indexingMap
+}
+
+func IndexListToBytesList(indexingList []*Item) [][]byte {
+	bytesList := make([][]byte, len(indexingList))
+	for idx, item := range indexingList {
+		bytesList[idx] = item.Value
+	}
+
+	return bytesList
+}
 
 type IndexDeletionBehaviour int
 

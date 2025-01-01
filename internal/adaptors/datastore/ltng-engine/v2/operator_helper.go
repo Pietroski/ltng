@@ -5,99 +5,15 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 	"io"
 	"os"
 	"time"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
-
-func (e *LTNGEngine) loadItemFromMemoryOrDisk(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	updateRelationalData bool,
-) (*ltngenginemodels.Item, error) {
-	strItemKey := hex.EncodeToString(item.Key)
-	fi, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
-	if !ok {
-		return e.loadItemFromDisk(ctx, dbMetaInfo, item, updateRelationalData)
-	}
-
-	bs, err := e.fileManager.ReadAll(ctx, fi.File)
-	if err != nil {
-		return nil, err
-	}
-
-	var itemFileData ltngenginemodels.FileData
-	err = e.serializer.Deserialize(bs, &itemFileData)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ltngenginemodels.Item{
-		Key:   itemFileData.Key,
-		Value: itemFileData.Data,
-	}, nil
-}
-
-func (e *LTNGEngine) loadItemFromDisk(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	updateRelationalData bool,
-) (*ltngenginemodels.Item, error) {
-	strItemKey := hex.EncodeToString(item.Key)
-	filepath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
-	bs, file, err := e.fileManager.OpenReadWholeFile(ctx, filepath)
-	if err != nil {
-		return nil, fmt.Errorf("error openning to read whole file %s: %w", filepath, err)
-	}
-
-	var itemFileData ltngenginemodels.FileData
-	err = e.serializer.Deserialize(bs, &itemFileData)
-	if err != nil {
-		return nil, err
-	}
-	itemFileData.Header.ItemInfo.LastOpenedAt = time.Now().UTC().Unix()
-
-	// TODO: write to tmp file and rename and delete
-
-	err = file.Truncate(0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to truncate store stats file: %v", err)
-	}
-
-	if _, err = e.fileManager.WriteToFile(ctx, file, itemFileData); err != nil {
-		return nil, fmt.Errorf("error writing item data to file: %v", err)
-	}
-
-	fi := &ltngenginemodels.FileInfo{
-		File:     file,
-		FileData: &itemFileData,
-		DataSize: uint32(len(itemFileData.Data)),
-	}
-
-	if updateRelationalData {
-		if err = e.updateRelationalDataFile(
-			ctx, dbMetaInfo, &itemFileData,
-		); err != nil {
-			return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
-		}
-	}
-
-	e.itemFileMapping[dbMetaInfo.LockName(strItemKey)] = fi
-
-	return &ltngenginemodels.Item{
-		Key:   itemFileData.Key,
-		Value: itemFileData.Data,
-	}, nil
-}
-
-// #####################################################################################################################
 
 func (e *LTNGEngine) createRelationalItemStore(
 	ctx context.Context,
@@ -138,6 +54,103 @@ func (e *LTNGEngine) createRelationalItemStore(
 
 	return fi, nil
 }
+
+// #####################################################################################################################
+
+func (e *LTNGEngine) loadItemFromMemoryOrDisk(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+	updateRelationalData bool,
+) (*ltngenginemodels.Item, error) {
+	strItemKey := hex.EncodeToString(item.Key)
+	fi, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
+	if !ok {
+		var err error
+		fi, err = e.loadItemFromDisk(ctx, dbMetaInfo, item, updateRelationalData)
+		if err != nil {
+			return nil, err
+		}
+		e.itemFileMapping[dbMetaInfo.LockName(strItemKey)] = fi
+
+		return &ltngenginemodels.Item{
+			Key:   fi.FileData.Key,
+			Value: fi.FileData.Data,
+		}, nil
+	}
+
+	bs, err := e.fileManager.ReadAll(ctx, fi.File)
+	if err != nil {
+		return nil, err
+	}
+
+	var itemFileData ltngenginemodels.FileData
+	err = e.serializer.Deserialize(bs, &itemFileData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ltngenginemodels.Item{
+		Key:   itemFileData.Key,
+		Value: itemFileData.Data,
+	}, nil
+}
+
+func (e *LTNGEngine) loadItemFromDisk(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+	updateRelationalData bool,
+) (*ltngenginemodels.FileInfo, error) {
+	strItemKey := hex.EncodeToString(item.Key)
+	filepath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
+	bs, file, err := e.fileManager.OpenReadWholeFile(ctx, filepath)
+	if err != nil {
+		return nil, fmt.Errorf("error openning to read whole file %s: %w", filepath, err)
+	}
+
+	var fileData ltngenginemodels.FileData
+	err = e.serializer.Deserialize(bs, &fileData)
+	if err != nil {
+		return nil, err
+	}
+	fileData.Header.ItemInfo.LastOpenedAt = time.Now().UTC().Unix()
+
+	tmpFilepath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
+	tmpFile, err := e.fileManager.OpenCreateTruncatedFile(ctx, tmpFilepath)
+	if err != nil {
+		return nil, fmt.Errorf("error openning temporary file to upsert metadata %s: %w", tmpFilepath, err)
+	}
+
+	if _, err = e.fileManager.WriteToFile(ctx, tmpFile, fileData); err != nil {
+		return nil, fmt.Errorf("error writing item metadata to file: %v", err)
+	}
+
+	if err = os.Rename(tmpFilepath, filepath); err != nil {
+		return nil, fmt.Errorf("error renaming temporary file %s to %s: %w", tmpFilepath, filepath, err)
+	}
+
+	if updateRelationalData {
+		fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = e.upsertRelationalData(
+			ctx, dbMetaInfo, &fileData, fi,
+		); err != nil {
+			return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
+		}
+	}
+
+	return &ltngenginemodels.FileInfo{
+		File:     file,
+		FileData: &fileData,
+		DataSize: uint32(len(fileData.Data)),
+	}, nil
+}
+
+// #####################################################################################################################
 
 func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 	ctx context.Context,
@@ -192,28 +205,9 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	fi.HeaderSize = uint32(len(reader.RawHeader))
 	fi.DataSize = uint32(len(fileData.Data))
 
-	return fi, e.updateRelationalData(
-		ctx, dbMetaInfo, fi, &fileData,
+	return fi, e.upsertRelationalData(
+		ctx, dbMetaInfo, &fileData, fi,
 	)
-}
-
-func (e *LTNGEngine) updateRelationalDataFile(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	fileData *ltngenginemodels.FileData,
-) error {
-	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-	if err != nil {
-		return err
-	}
-
-	if err = e.updateRelationalData(
-		ctx, dbMetaInfo, fi, fileData,
-	); err != nil {
-		return fmt.Errorf("failed to update store stats manager file: %v", err)
-	}
-
-	return nil
 }
 
 // #####################################################################################################################
@@ -232,7 +226,6 @@ func (e *LTNGEngine) straightSearch(
 		key = opts.IndexingKeys[0]
 	}
 
-	// TODO: sometimes dbMetaInfo others dbMetaInfo.IndexInfo
 	mainKeyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
 		Key: key,
 	}, false)
@@ -502,42 +495,6 @@ func (e *LTNGEngine) createItemOnDisk(
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
 	item *ltngenginemodels.Item,
 ) error {
-	if _, err := os.Stat(ltngenginemodels.GetDataPath(dbMetaInfo.Path)); os.IsNotExist(err) {
-		return fmt.Errorf("store does not exist: %v", err)
-	}
-
-	return e.upsertItemOnDisk(ctx, dbMetaInfo, item)
-}
-
-func (e *LTNGEngine) createIndexItemOnDisk(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-) error {
-	if _, err := os.Stat(ltngenginemodels.GetDataPath(dbMetaInfo.Path)); os.IsNotExist(err) {
-		return fmt.Errorf("store does not exist: %v", err)
-	}
-
-	return e.upsertIndexItemOnDisk(ctx, dbMetaInfo, item)
-}
-
-func (e *LTNGEngine) createRelationalItemOnDisk(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-) error {
-	if _, err := os.Stat(ltngenginemodels.GetDataPath(dbMetaInfo.Path)); os.IsNotExist(err) {
-		return fmt.Errorf("store does not exist: %v", err)
-	}
-
-	return e.upsertRelationalItemOnDisk(ctx, dbMetaInfo, item)
-}
-
-func (e *LTNGEngine) upsertItemOnDisk(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-) error {
 	strItemKey := hex.EncodeToString(item.Key)
 	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
 
@@ -554,22 +511,42 @@ func (e *LTNGEngine) upsertItemOnDisk(
 	return nil
 }
 
-func (e *LTNGEngine) upsertIndexItemOnDisk(
+func (e *LTNGEngine) createRelationalItemOnDisk(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+) error {
+	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
+
+	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+	if err != nil {
+		return fmt.Errorf("error creating %s relational store: %w",
+			dbMetaInfo.RelationalInfo().Name, err)
+	}
+
+	return e.upsertRelationalData(ctx, dbMetaInfo, fileData, fi)
+}
+
+func (e *LTNGEngine) upsertItemOnDisk(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
 	item *ltngenginemodels.Item,
 ) error {
 	strItemKey := hex.EncodeToString(item.Key)
 	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
+	tmpFilePath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
 
-	// TODO: write to tmp file and then delete main and rename tmp and then delete tmp
 	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
-	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)
+	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, tmpFilePath)
 	if err != nil {
-		return fmt.Errorf("error opening/creating a truncated indexed file at %s: %v", filePath, err)
+		return fmt.Errorf("error opening/creating a temporary truncated file at %s: %v", tmpFilePath, err)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
+		return err
+	}
+
+	if err = os.Rename(tmpFilePath, filePath); err != nil {
 		return err
 	}
 
@@ -582,7 +559,14 @@ func (e *LTNGEngine) upsertRelationalItemOnDisk(
 	item *ltngenginemodels.Item,
 ) error {
 	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
-	return e.upsertRelationalData(ctx, dbMetaInfo, fileData)
+
+	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
+	if err != nil {
+		return fmt.Errorf("error creating %s relational store: %w",
+			dbMetaInfo.RelationalInfo().Name, err)
+	}
+
+	return e.upsertRelationalData(ctx, dbMetaInfo, fileData, fi)
 }
 
 // #####################################################################################################################
@@ -651,7 +635,7 @@ func (e *LTNGEngine) deleteCascade(
 	}
 	recreateIndexes := func() error {
 		for _, item := range itemList {
-			if err = e.createIndexItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
+			if err = e.createItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
 				Key:   item.Value,
 				Value: key,
 			}); err != nil {
@@ -684,7 +668,7 @@ func (e *LTNGEngine) deleteCascade(
 			indexList[i] = item.Value
 		}
 		idxList := bytes.Join(indexList, []byte(ltngenginemodels.BytesSep))
-		return e.createIndexItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
+		return e.createItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
 			Key:   key,
 			Value: idxList,
 		})
@@ -782,7 +766,7 @@ func (e *LTNGEngine) deleteIndexOnly(
 		return nil
 	}
 	recreateIndexes := func() error {
-		return e.createIndexItemOnDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{
+		return e.createItemOnDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{
 			Key:   fileData.Data,
 			Value: key,
 		})
@@ -800,7 +784,7 @@ func (e *LTNGEngine) deleteIndexOnly(
 
 		newIndexListBs := bytes.Join(newIndexList, []byte(ltngenginemodels.BytesSep))
 
-		return e.upsertIndexItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
+		return e.upsertItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
 			Key:   key,
 			Value: newIndexListBs,
 		})
@@ -899,212 +883,12 @@ func (e *LTNGEngine) createTmpDeletionPaths(
 
 // #####################################################################################################################
 
-func (e *LTNGEngine) insertRelationalData(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	fileData *ltngenginemodels.FileData,
-) (err error) {
-	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-	if err != nil {
-		return fmt.Errorf("error creating %s relational store: %w",
-			dbMetaInfo.RelationalInfo().Name, err)
-	}
-
-	if _, err = fi.File.Seek(0, 2); err != nil {
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, fi.File, fileData); err != nil {
-		return fmt.Errorf("error updating info into file %s: %w", fi.File.Name(), err)
-	}
-
-	return nil
-}
-
-func (e *LTNGEngine) updateRelationalData(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	fi *ltngenginemodels.FileInfo,
-	fileData *ltngenginemodels.FileData,
-) (err error) {
-	strKey := hex.EncodeToString(fileData.Key)
-	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
-	relationalPath := relationalInfo.Path
-	tmpFileInfo := fi.FileData.Header.StoreInfo.TmpRelationalInfo()
-	tmpFilePath := tmpFileInfo.Path
-	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
-
-	reader, err := rw.NewFileReader(ctx, fi, false)
-	if err != nil {
-		return fmt.Errorf("error creating %s file reader: %w",
-			fi.File.Name(), err)
-	}
-
-	var found bool
-	var upTo, from uint32
-	for {
-		var bs []byte
-		bs, err = reader.Read(ctx)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return fmt.Errorf("error reading %s file: %w", fi.File.Name(), err)
-		}
-
-		if bytes.Contains(bs, fileData.Key) {
-			found = true
-			from = reader.Yield()
-			upTo = from - uint32(len(bs)+4)
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("could not find key %s in item relational file %s", fileData.Key, fi.File.Name())
-	}
-
-	if _, err = fi.File.Seek(0, 0); err != nil {
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	var tmpFile *os.File
-	copyToTmpFile := func() error {
-		if err = os.MkdirAll(ltngenginemodels.GetDataPathWithSep(tmpFilePath), os.ModePerm); err != nil {
-			return fmt.Errorf("error creating tmp file directory: %w", err)
-		}
-
-		tmpFile, err = os.OpenFile(
-			ltngenginemodels.GetDataFilepath(tmpFilePath, ltngenginemodels.RelationalDataStore),
-			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-		)
-		if err != nil {
-			return err
-		}
-
-		// example pair (upTo - from) | 102 - 154
-		if _, err = io.CopyN(tmpFile, fi.File, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file to tmp file: %w", err)
-		}
-
-		if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, tmpFile, fileData); err != nil {
-			return fmt.Errorf("error writing info into relational file %s: %w", tmpFile.Name(), err)
-		}
-
-		if _, err = fi.File.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
-		}
-
-		if _, err = io.Copy(tmpFile, fi.File); err != nil {
-			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
-		}
-
-		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
-		}
-
-		return nil
-	}
-	discardTmpFile := func() error {
-		if _, err = fi.File.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
-		}
-
-		if err = os.Remove(ltngenginemodels.GetDataFilepath(tmpFilePath, strKey)); err != nil {
-			return fmt.Errorf("error removing unecessary tmp %s relational file: %w", fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return nil
-	}
-
-	removeMainFile := func() error {
-		if err = os.Remove(
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore),
-		); err != nil {
-			return fmt.Errorf("error removing %s relational item's file: %w", relationalPath, err)
-		}
-
-		return nil
-	}
-	reopenMainFile := func() error {
-		//fi, err = e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-		//if err != nil {
-		//	return fmt.Errorf(
-		//		"error re-opening %s item relational store: %w",
-		//		relationalLockKey, err)
-		//}
-		//
-		//e.itemFileMapping[relationalLockKey] = fi
-
-		return nil
-	}
-
-	operations := []*lo.Operation{
-		{
-			Action: &lo.Action{
-				Act:         copyToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: discardTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         removeMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: reopenMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-	}
-	if err = lo.New(operations...).Operate(); err != nil {
-		return err
-	}
-
-	{ // renaming tmp file
-		if err = os.Rename(
-			ltngenginemodels.GetDataFilepath(tmpFilePath, ltngenginemodels.RelationalDataStore),
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore),
-		); err != nil {
-			return fmt.Errorf("error renaming tmp file: %w", err)
-		}
-
-		// TODO: log error
-		_ = os.RemoveAll(ltngenginemodels.GetDataPathWithSep(tmpFilePath))
-
-		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx,
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore))
-		if err != nil {
-			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
-		}
-
-		if _, ok := e.itemFileMapping[relationalLockKey]; !ok {
-			e.itemFileMapping[relationalLockKey] = fi
-		}
-		fi.File = file
-		e.itemFileMapping[relationalLockKey].File = file
-	}
-
-	return
-}
-
 func (e *LTNGEngine) upsertRelationalData(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
 	fileData *ltngenginemodels.FileData,
+	fi *ltngenginemodels.FileInfo,
 ) (err error) {
-	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-	if err != nil {
-		return fmt.Errorf("error creating %s relational store: %w",
-			dbMetaInfo.RelationalInfo().Name, err)
-	}
-
 	strKey := hex.EncodeToString(fileData.Key)
 	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
 	relationalPath := relationalInfo.Path
@@ -1261,7 +1045,8 @@ func (e *LTNGEngine) upsertRelationalData(
 		_ = os.RemoveAll(ltngenginemodels.GetDataPathWithSep(tmpFilePath))
 
 		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx, ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore))
+		file, err = e.fileManager.OpenFile(ctx,
+			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore))
 		if err != nil {
 			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
 		}
