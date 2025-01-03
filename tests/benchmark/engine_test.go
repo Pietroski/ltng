@@ -203,7 +203,7 @@ func benchmarkLTNGDBEngineV2(b *testing.B) {
 	{
 		b.Log("CreateItem")
 
-		bd := testbench.BenchData{}
+		bd := testbench.New()
 		for _, user := range users {
 			bd.Count()
 			bvs := data.GetUserBytesValues(b, ets.TS(), user)
@@ -282,7 +282,7 @@ func benchmarkBadgerDBEngine(b *testing.B) {
 	{
 		b.Log("CreateItem")
 
-		bd := testbench.BenchData{}
+		bd := testbench.New()
 		for _, user := range users {
 			bd.Count()
 			bvs := data.GetUserBytesValues(b, ets.TS(), user)

@@ -21,7 +21,10 @@ func (e *LTNGEngine) loadItem(
 	lockKey := dbMetaInfo.LockName(strItemKey)
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
-	if i, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err == nil && i != nil {
+
+	if i, err := e.memoryStore.LoadItem(
+		ctx, dbMetaInfo, item, opts,
+	); err == nil && i != nil {
 		return i, nil
 	}
 

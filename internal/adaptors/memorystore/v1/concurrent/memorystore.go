@@ -1,44 +1,41 @@
-package concurrentv1
+package concurrentmemorystorev1
 
 import (
-	"bytes"
 	"context"
-	"encoding/hex"
-	"fmt"
+
+	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	go_cache "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/cache"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 )
 
 type LTNGCacheEngine struct {
-	opMtx         *lock.EngineLock
-	crudChannels  *ltngenginemodels.CrudChannels
-	createChannel chan *ltngenginemodels.ItemInfoData
+	opMtx *lock.EngineLock
 
-	itemFileMapping map[string]*ltngenginemodels.FileData
-
-	cache go_cache.Cacher
+	opSaga *opSaga
+	cache  go_cache.Cacher
 }
 
 func New(ctx context.Context, opts ...options.Option) *LTNGCacheEngine {
 	engine := &LTNGCacheEngine{
-		opMtx:           lock.NewEngineLock(),
-		cache:           go_cache.New(),
-		itemFileMapping: make(map[string]*ltngenginemodels.FileData),
-
-		crudChannels: &ltngenginemodels.CrudChannels{
-			CreateChannels: ltngenginemodels.MakeOpChannels(),
-			UpsertChannels: ltngenginemodels.MakeOpChannels(),
-			DeleteChannels: ltngenginemodels.MakeOpChannels(),
-		},
-		createChannel: make(chan *ltngenginemodels.ItemInfoData, 1<<8),
+		opMtx: lock.NewEngineLock(),
+		cache: go_cache.New(),
 	}
 	options.ApplyOptions(engine, opts...)
 
-	newCreateSaga(ctx, engine)
+	op := newOpSaga(ctx, engine)
+	engine.opSaga = op
 
 	return engine
+}
+
+func WithCache(cache go_cache.Cacher) options.Option {
+	return func(i interface{}) {
+		if cfg, ok := i.(*LTNGCacheEngine); ok {
+			cfg.cache = cache
+		}
+	}
 }
 
 func (engine *LTNGCacheEngine) CreateItem(
@@ -49,48 +46,16 @@ func (engine *LTNGCacheEngine) CreateItem(
 ) (*ltngenginemodels.Item, error) {
 	respSignal := make(chan error)
 	itemInfoData := &ltngenginemodels.ItemInfoData{
+		OpType:     ltngenginemodels.OpTypeCreate,
 		DBMetaInfo: dbMetaInfo,
 		Item:       item,
 		Opts:       opts,
 		RespSignal: respSignal,
 	}
-	engine.createChannel <- itemInfoData
+	engine.opSaga.crudChannels.OpSagaChannel.InfoChannel <- itemInfoData
 	if err := <-respSignal; err != nil {
 		return nil, err
 	}
 
 	return nil, nil
-}
-
-func (engine *LTNGCacheEngine) LoadItem(
-	_ context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
-	if opts == nil {
-		return nil, nil
-	}
-
-	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
-		[]byte(ltngenginemodels.BytesSep),
-	)
-	strKey := hex.EncodeToString(key)
-	if !opts.HasIdx {
-		engine.opMtx.Lock(dbMetaInfo.LockName(strKey), struct{}{})
-		defer engine.opMtx.Unlock(dbMetaInfo.LockName(strKey))
-
-		fd, ok := engine.itemFileMapping[strKey]
-		if !ok {
-			return nil, fmt.Errorf("not found")
-		}
-
-		return &ltngenginemodels.Item{
-			Key:   fd.Key,
-			Value: fd.Data,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("not found")
 }

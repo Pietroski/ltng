@@ -9,7 +9,7 @@ find . -type f \( -iname "*.go" \
 
 printf "\n\n\n\n\n"
 
-DIR=internal/adaptors/datastore/ltng-engine/v1
+DIR=internal/adaptors/datastore/ltng-engine/v2
 #DIR=internal/adaptors/datastore/badgerdb/v4
 
 # total

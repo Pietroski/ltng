@@ -31,3 +31,19 @@ func CalRightDiff(base, ref [][]byte) [][]byte {
 // A - B - C
 // B - C - D
 // D
+
+func CalLeftDiff(base, ref [][]byte) [][]byte {
+	difference := make([][]byte, 0)
+
+	//baseMap := BytesListToMap(base)
+	refMap := BytesListToMap(ref)
+
+	for _, key := range base {
+		strKey := hex.EncodeToString(key)
+		if _, ok := refMap[strKey]; !ok {
+			difference = append(difference, key)
+		}
+	}
+
+	return difference
+}

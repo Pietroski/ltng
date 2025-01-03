@@ -17,10 +17,10 @@ const (
 	Ext           = ".ptk"
 	ALL           = "*"
 	ALLExt        = ALL + Ext
-	LineBreak     = "\n"
-	BsSep         = "&#!;+|ltngdb|+;#!&"
-	BytesSep      = "&#!;+|ltngdb|+;#!&"
-	BytesSliceSep = "&#!;+|ltngdb|+;#!&"
+	LB            = "\n"
+	BsSep         = "!|ltngdb|!" // "&#!;+|ltngdb|+;#!&"
+	BytesSep      = "!|ltngdb|!" // "&#!;+|ltngdb|+;#!&"
+	BytesSliceSep = "!|ltngdb|!" // "&#!;+|ltngdb|+;#!&"
 
 	BasePath      = DBBasePath + DBBaseVersion
 	BaseDataPath  = BasePath + DBDataPath
@@ -289,6 +289,8 @@ type (
 		Items      []*Item
 	}
 
+	ItemList []*Item
+
 	IndexOpts struct {
 		HasIdx          bool
 		ParentKey       []byte
@@ -303,10 +305,42 @@ type (
 	}
 )
 
+func (il *ItemList) GetItemsFromPagination(pagination *Pagination) []*Item {
+	if il == nil || len(*il) == 0 || pagination == nil {
+		return []*Item{}
+	}
+
+	if !pagination.IsValid() {
+		return *il
+	}
+
+	// If pagination is not valid, return all items
+	if !pagination.IsValid() {
+		return *il
+	}
+
+	// Calculate start and end indices
+	startIndex := (pagination.PageID - 1) * pagination.PageSize
+	endIndex := startIndex + pagination.PageSize
+
+	// Check if startIndex is beyond the slice length
+	if startIndex >= uint64(len(*il)) {
+		return []*Item{}
+	}
+
+	// Adjust endIndex if it exceeds the slice length
+	if endIndex > uint64(len(*il)) {
+		endIndex = uint64(len(*il))
+	}
+
+	// Return the paginated subset
+	return (*il)[startIndex:endIndex]
+}
+
 func IndexListToMap(indexingList []*Item) map[string]struct{} {
 	indexingMap := map[string]struct{}{}
 	for _, item := range indexingList {
-		strKey := hex.EncodeToString(item.Value)
+		strKey := hex.EncodeToString(item.Key)
 		indexingMap[strKey] = struct{}{}
 	}
 

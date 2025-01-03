@@ -1,0 +1,137 @@
+package memorystorev1
+
+import (
+	"encoding/hex"
+	"github.com/stretchr/testify/assert"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+)
+
+func TestLTNGCacheEngine(t *testing.T) {
+	ts := setupTestSuite(t)
+	storeInfo := &ltngenginemodels.StoreInfo{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	dbMetaInfo := storeInfo.ManagerStoreMetaInfo()
+
+	{ // create
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			_, err := ts.cacheEngine.CreateItem(ts.ctx, dbMetaInfo, bv.Item, &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bv.BsKey,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+			})
+			require.NoError(t, err)
+		}
+	}
+
+	{ // load
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, &ltngenginemodels.IndexOpts{})
+			require.NoError(t, err)
+			require.Equal(t, bv.BsKey, fetchedItem.Key)
+			require.Equal(t, bv.BsValue, fetchedItem.Value)
+		}
+	}
+
+	{ // list
+		fetchedItems, err := ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, &ltngenginemodels.Pagination{
+			PageID:   1,
+			PageSize: 50,
+		}, &ltngenginemodels.IndexOpts{
+			IndexProperties: ltngenginemodels.IndexProperties{
+				ListSearchPattern: ltngenginemodels.All,
+			},
+		})
+		assert.NoError(t, err)
+		assert.Len(t, fetchedItems.Items, 50)
+		fetchedItemsMap := ltngenginemodels.IndexListToMap(fetchedItems.Items)
+
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			strKey := hex.EncodeToString(bv.Item.Key)
+			_, ok := fetchedItemsMap[strKey]
+			assert.True(t, ok)
+		}
+	}
+}
+
+func BenchmarkLTNGCacheEngine(b *testing.B) {
+	ts := setupTestSuite(b)
+	storeInfo := &ltngenginemodels.StoreInfo{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	dbMetaInfo := storeInfo.ManagerStoreMetaInfo()
+
+	{ // create
+		bd := testbench.New()
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			var err error
+			bd.CalcAvg(
+				bd.CalcElapsed(func() {
+					_, err = ts.cacheEngine.CreateItem(ts.ctx, dbMetaInfo, bv.Item, &ltngenginemodels.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    bv.BsKey,
+						IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+					})
+				}))
+			require.NoError(b, err)
+		}
+		b.Logf("create: %s\n", bd.String())
+	}
+
+	{ // load
+		bd := testbench.New()
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			var fetchedItem *ltngenginemodels.Item
+			var err error
+			bd.CalcAvg(
+				bd.CalcElapsed(func() {
+					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, &ltngenginemodels.IndexOpts{})
+				}))
+			require.NoError(b, err)
+			require.Equal(b, bv.BsKey, fetchedItem.Key)
+		}
+		b.Logf("load: %s\n", bd.String())
+	}
+
+	{ // list
+		bd := testbench.New()
+		pagination := &ltngenginemodels.Pagination{
+			PageID:   1,
+			PageSize: 50,
+		}
+		opts := &ltngenginemodels.IndexOpts{
+			IndexProperties: ltngenginemodels.IndexProperties{
+				ListSearchPattern: ltngenginemodels.All,
+			},
+		}
+		var err error
+		var fetchedItems *ltngenginemodels.ListItemsResult
+		bd.CalcAvg(bd.CalcElapsed(func() {
+			fetchedItems, err = ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, pagination, opts)
+		}))
+		assert.NoError(b, err)
+		assert.Len(b, fetchedItems.Items, 50)
+		fetchedItemsMap := ltngenginemodels.IndexListToMap(fetchedItems.Items)
+
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			strKey := hex.EncodeToString(bv.Item.Key)
+			_, ok := fetchedItemsMap[strKey]
+			assert.True(b, ok)
+		}
+
+		b.Logf("list: %s\n", bd.String())
+	}
+}

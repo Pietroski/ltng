@@ -1,16 +1,62 @@
-package data
+package memorystorev1
 
 import (
+	"context"
 	"math"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 )
+
+type (
+	testSuite struct {
+		ctx         context.Context
+		cancel      context.CancelFunc
+		users       []*User
+		cacheEngine *LTNGCacheEngine
+		testsuite   *TestSuite
+	}
+)
+
+func setupTestSuite[T TestBench](tb T) *testSuite {
+	ctx, cancel := context.WithCancel(context.Background())
+	tb.Cleanup(cancel)
+
+	ts := &testSuite{
+		ctx:         ctx,
+		cancel:      cancel,
+		users:       GenerateRandomUsers(tb, 50),
+		cacheEngine: New(ctx),
+		testsuite: &TestSuite{
+			Ctx:        ctx,
+			Serializer: serializer.NewRawBinarySerializer(),
+		},
+	}
+	return ts
+}
+
+type TestSuite struct {
+	Ctx        context.Context
+	Serializer serializermodels.Serializer
+}
+
+type TestBench interface {
+	*testing.T | *testing.B | *require.TestingT | *assert.TestingT
+
+	Cleanup(f func())
+	Errorf(format string, args ...interface{})
+	FailNow()
+	Logf(format string, args ...interface{})
+	Log(args ...interface{})
+}
 
 type (
 	User struct {

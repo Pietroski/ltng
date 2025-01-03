@@ -21,11 +21,39 @@ type (
 )
 
 func (p *Pagination) IsValid() bool {
-	if p != nil && p.PageID > 0 && p.PageSize > 0 {
+	if p != nil && p.PageID > 0 { // && p.PageSize > 0
 		return true
 	}
 
 	return false
+}
+
+func (p *Pagination) CalcNextPage(length uint64) *Pagination {
+	if length == 0 {
+		return &Pagination{
+			PageID:   1,
+			PageSize: p.PageSize,
+		}
+	}
+
+	pages := length / p.PageSize
+	remainingItems := length % p.PageSize
+	var nextPage uint64
+	nextPageSize := p.PageSize
+	if p.PageID < pages {
+		nextPage = p.PageID + 1
+	} else if p.PageID == pages && remainingItems > 0 {
+		nextPage = p.PageID + 1
+		nextPageSize = remainingItems
+	} else if p.PageID == pages && remainingItems == 0 {
+		nextPage = p.PageID + 1
+		nextPageSize = 0
+	}
+
+	return &Pagination{
+		PageID:   nextPage,
+		PageSize: nextPageSize,
+	}
 }
 
 const DefaultPageSize = 20
