@@ -41,6 +41,22 @@ func TestLTNGCacheEngine(t *testing.T) {
 		}
 	}
 
+	{ // load - from secondary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+			require.Equal(t, bv.BsKey, fetchedItem.Key)
+		}
+	}
+
 	{ // list
 		fetchedItems, err := ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, &ltngenginemodels.Pagination{
 			PageID:   1,
@@ -76,13 +92,14 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 		for _, user := range ts.users {
 			bv := GetUserBytesValues(b, ts.testsuite, user)
 			var err error
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bv.BsKey,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+			}
 			bd.CalcAvg(
 				bd.CalcElapsed(func() {
-					_, err = ts.cacheEngine.CreateItem(ts.ctx, dbMetaInfo, bv.Item, &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bv.BsKey,
-						IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
-					})
+					_, err = ts.cacheEngine.CreateItem(ts.ctx, dbMetaInfo, bv.Item, opts)
 				}))
 			require.NoError(b, err)
 		}
@@ -95,14 +112,38 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 			bv := GetUserBytesValues(b, ts.testsuite, user)
 			var fetchedItem *ltngenginemodels.Item
 			var err error
+			opts := &ltngenginemodels.IndexOpts{}
 			bd.CalcAvg(
 				bd.CalcElapsed(func() {
-					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, &ltngenginemodels.IndexOpts{})
+					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
 				}))
 			require.NoError(b, err)
 			require.Equal(b, bv.BsKey, fetchedItem.Key)
 		}
 		b.Logf("load: %s\n", bd.String())
+	}
+
+	{ // load - from secondary index
+		bd := testbench.New()
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			var fetchedItem *ltngenginemodels.Item
+			var err error
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			bd.CalcAvg(
+				bd.CalcElapsed(func() {
+					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+				}))
+			require.NoError(b, err)
+			require.Equal(b, bv.BsKey, fetchedItem.Key)
+		}
+		b.Logf("load - from secondary index: %s\n", bd.String())
 	}
 
 	{ // list

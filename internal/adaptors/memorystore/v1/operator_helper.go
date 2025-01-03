@@ -160,14 +160,17 @@ func (ltng *LTNGCacheEngine) straightSearch(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey},
-		[]byte(ltngenginemodels.BytesSliceSep),
-	)
-	strKey := hex.EncodeToString(key)
-	if key == nil && (opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0) {
+	var key []byte
+	var strKey string
+	if opts.ParentKey != nil {
+		key = bytes.Join(
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey},
+			[]byte(ltngenginemodels.BytesSliceSep),
+		)
+		strKey = hex.EncodeToString(key)
+	} else if opts.IndexingKeys == nil || len(opts.IndexingKeys) != 1 {
 		return nil, fmt.Errorf("invalid indexing key")
-	} else if key == nil {
+	} else {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
 			[]byte(ltngenginemodels.BytesSliceSep),

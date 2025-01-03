@@ -178,12 +178,13 @@ func (ltng *LTNGCacheEngine) loadItem(
 		return nil, fmt.Errorf("invalid index deletion behaviour")
 	}
 
-	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
-		[]byte(ltngenginemodels.BytesSliceSep),
-	)
-	strKey := hex.EncodeToString(key)
 	if !opts.HasIdx {
+		key := bytes.Join(
+			[][]byte{[]byte(dbMetaInfo.Name), item.Key},
+			[]byte(ltngenginemodels.BytesSliceSep),
+		)
+		strKey := hex.EncodeToString(key)
+
 		var value []byte
 		if err := ltng.cache.Get(ctx, strKey, &value, nil); err != nil {
 			return nil, err
