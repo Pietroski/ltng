@@ -137,10 +137,22 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	_ = ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
 		return []*ltngenginemodels.Item{}, nil
 	})
-	value = append(value, &ltngenginemodels.Item{
-		Key:   key,
-		Value: item.Value,
-	})
+	var found bool
+	for idx, itemValue := range value {
+		if bytes.Equal(item.Key, itemValue.Key) {
+			found = true
+			value[idx] = &ltngenginemodels.Item{
+				Key:   item.Key,
+				Value: item.Value,
+			}
+		}
+	}
+	if !found {
+		value = append(value, &ltngenginemodels.Item{
+			Key:   item.Key,
+			Value: item.Value,
+		})
+	}
 	if err := ltng.cache.Set(ctx, strRelationalKey, value); err != nil {
 		return nil, err
 	}
