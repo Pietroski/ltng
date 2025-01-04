@@ -66,14 +66,15 @@ type (
 		Name      string
 		Surname   string
 		Age       uint8
+		RandomKey string
 		CreatedAt int64
 		UpdatedAt int64
 	}
 )
 
 type BytesValues struct {
-	BsKey, BsValue, SecondaryIndexBs []byte
-	Item                             *ltngenginemodels.Item
+	BsKey, BsValue, SecondaryIndexBs, TertiaryIndexBs []byte
+	Item                                              *ltngenginemodels.Item
 }
 
 func GenerateRandomUser[T TestBench](tb T) *User {
@@ -85,6 +86,7 @@ func GenerateRandomUser[T TestBench](tb T) *User {
 		Name:      go_random.RandomStringWithPrefixWithSep(12, "name", "-"),
 		Surname:   go_random.RandomStringWithPrefixWithSep(12, "surname", "-"),
 		Age:       uint8(go_random.RandomInt(0, math.MaxUint8)),
+		RandomKey: go_random.RandomString(10),
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
@@ -117,10 +119,16 @@ func GetUserBytesValues[T TestBench](tb T, ts *TestSuite, userData *User) *Bytes
 	require.NotNil(tb, secondaryIndexBs)
 	//tb.Log(string(secondaryIndexBs))
 
+	tertiaryIndexBs, err := ts.Serializer.Serialize(userData.RandomKey)
+	require.NoError(tb, err)
+	require.NotNil(tb, tertiaryIndexBs)
+	//tb.Log(string(tertiaryIndexBs))
+
 	return &BytesValues{
 		BsKey:            bsKey,
 		BsValue:          bsValue,
 		SecondaryIndexBs: secondaryIndexBs,
+		TertiaryIndexBs:  tertiaryIndexBs,
 		Item: &ltngenginemodels.Item{
 			Key:   bsKey,
 			Value: bsValue,

@@ -95,10 +95,6 @@ func (ltng *LTNGCacheEngine) upsertItem(
 		[]byte(ltngenginemodels.BytesSliceSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
-	if err := ltng.cache.Set(ctx, strIndexListKey, opts.IndexingKeys); err != nil {
-		return nil, err
-	}
-
 	var indexingKeys [][]byte
 	_ = ltng.cache.Get(ctx, strIndexListKey, &indexingKeys, func() (interface{}, error) {
 		return []*ltngenginemodels.Item{}, nil
@@ -126,6 +122,10 @@ func (ltng *LTNGCacheEngine) upsertItem(
 		if err := ltng.cache.Del(ctx, strIndexKey); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := ltng.cache.Set(ctx, strIndexListKey, opts.IndexingKeys); err != nil {
+		return nil, err
 	}
 
 	relationalKey := bytes.Join(

@@ -113,6 +113,44 @@ func TestLTNGCacheEngine(t *testing.T) {
 			assert.True(t, ok)
 		}
 	}
+
+	{ // upsert
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bv.BsKey,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs, bv.TertiaryIndexBs},
+			}
+			_, err := ts.cacheEngine.UpsertItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+		}
+	}
+
+	{ // load - from tertiary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.TertiaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+			require.Equal(t, bv.BsKey, fetchedItem.Key)
+		}
+	}
+
+	// delete idx
+	// delete cascade by idx
+	// load
+	// list
+	// re-create
+	// delete cascade
+	// load
+	// list
 }
 
 func BenchmarkLTNGCacheEngine(b *testing.B) {
