@@ -140,7 +140,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 
 	var newIndexingList [][]byte
 	for _, v := range indexingList {
-		if bytes.Equal(v, item.Key) {
+		if bytes.Equal(v, opts.IndexingKeys[0]) {
 			continue
 		}
 		newIndexingList = append(newIndexingList, v)
@@ -250,6 +250,87 @@ func (ltng *LTNGCacheEngine) orComputationalSearch(
 	}
 
 	return nil, fmt.Errorf("not found")
+}
+
+// #####################################################################################################################
+
+func (ltng *LTNGCacheEngine) defaultListItems(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	pagination *ltngenginemodels.Pagination,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.ListItemsResult, error) {
+	relationalKey := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[]byte(ltngenginemodels.BytesSliceSep),
+	)
+	strRelationalKey := hex.EncodeToString(relationalKey)
+	var value []*ltngenginemodels.Item
+	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
+		return []*ltngenginemodels.Item{}, nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &ltngenginemodels.ListItemsResult{
+		Pagination: pagination.CalcNextPage(uint64(len(value))),
+		Items: (*ltngenginemodels.ItemList)(&value).
+			GetItemsFromPagination(pagination),
+	}, nil
+}
+
+func (ltng *LTNGCacheEngine) allListItems(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	pagination *ltngenginemodels.Pagination,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.ListItemsResult, error) {
+	relationalKey := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[]byte(ltngenginemodels.BytesSliceSep),
+	)
+	strRelationalKey := hex.EncodeToString(relationalKey)
+	var value []*ltngenginemodels.Item
+	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
+		return []*ltngenginemodels.Item{}, nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &ltngenginemodels.ListItemsResult{
+		Pagination: pagination,
+		Items:      value,
+	}, nil
+}
+
+func (ltng *LTNGCacheEngine) indexingListItems(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	pagination *ltngenginemodels.Pagination,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.ListItemsResult, error) {
+	indexListKey := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
+		[]byte(ltngenginemodels.BytesSliceSep),
+	)
+	strIndexListKey := hex.EncodeToString(indexListKey)
+	var indexingKeys [][]byte
+	_ = ltng.cache.Get(ctx, strIndexListKey, &indexingKeys, func() (interface{}, error) {
+		return []*ltngenginemodels.Item{}, nil
+	})
+
+	items := make([]*ltngenginemodels.Item, len(indexingKeys))
+	for idx, indexingKey := range indexingKeys {
+		items[idx] = &ltngenginemodels.Item{
+			Key:   opts.ParentKey,
+			Value: indexingKey,
+		}
+	}
+
+	return &ltngenginemodels.ListItemsResult{
+		Pagination: pagination,
+		Items:      items,
+	}, nil
 }
 
 // #####################################################################################################################

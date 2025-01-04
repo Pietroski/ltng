@@ -218,21 +218,14 @@ func (ltng *LTNGCacheEngine) listItems(
 		return nil, fmt.Errorf("invalid pagination")
 	}
 
-	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
-		[]byte(ltngenginemodels.BytesSliceSep),
-	)
-	strRelationalKey := hex.EncodeToString(relationalKey)
-	var value []*ltngenginemodels.Item
-	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
-	}); err != nil {
-		return nil, err
+	switch opts.IndexProperties.ListSearchPattern {
+	case ltngenginemodels.IndexingList:
+		return ltng.indexingListItems(ctx, dbMetaInfo, pagination, opts)
+	case ltngenginemodels.All:
+		return ltng.allListItems(ctx, dbMetaInfo, pagination, opts)
+	case ltngenginemodels.Default:
+		fallthrough
+	default:
+		return ltng.defaultListItems(ctx, dbMetaInfo, pagination, opts)
 	}
-
-	return &ltngenginemodels.ListItemsResult{
-		Pagination: pagination.CalcNextPage(uint64(len(value))),
-		Items: (*ltngenginemodels.ItemList)(&value).
-			GetItemsFromPagination(pagination),
-	}, nil
 }

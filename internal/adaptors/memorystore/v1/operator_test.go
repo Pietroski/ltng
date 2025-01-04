@@ -1,6 +1,7 @@
 package memorystorev1
 
 import (
+	"bytes"
 	"encoding/hex"
 	"testing"
 
@@ -98,6 +99,29 @@ func TestLTNGCacheEngine(t *testing.T) {
 		}
 		opts := &ltngenginemodels.IndexOpts{
 			IndexProperties: ltngenginemodels.IndexProperties{
+				ListSearchPattern: ltngenginemodels.Default,
+			},
+		}
+		fetchedItems, err := ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, pagination, opts)
+		assert.NoError(t, err)
+		assert.Len(t, fetchedItems.Items, 50)
+		fetchedItemsMap := ltngenginemodels.IndexListToMap(fetchedItems.Items)
+
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			strKey := hex.EncodeToString(bv.Item.Key)
+			_, ok := fetchedItemsMap[strKey]
+			assert.True(t, ok)
+		}
+	}
+
+	{ // list
+		pagination := &ltngenginemodels.Pagination{
+			PageID:   1,
+			PageSize: 50,
+		}
+		opts := &ltngenginemodels.IndexOpts{
+			IndexProperties: ltngenginemodels.IndexProperties{
 				ListSearchPattern: ltngenginemodels.All,
 			},
 		}
@@ -143,7 +167,66 @@ func TestLTNGCacheEngine(t *testing.T) {
 		}
 	}
 
-	// delete idx
+	{ // delete - index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				IndexingKeys: [][]byte{bv.TertiaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexDeletionBehaviour: ltngenginemodels.IndexOnly,
+				},
+			}
+			_, err := ts.cacheEngine.DeleteItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+		}
+	}
+
+	{ // load & list indexes - from tertiary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.TertiaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+
+			pagination := &ltngenginemodels.Pagination{
+				PageID:   1,
+				PageSize: 10,
+			}
+			opts = &ltngenginemodels.IndexOpts{
+				ParentKey: bv.BsKey,
+				IndexProperties: ltngenginemodels.IndexProperties{
+					ListSearchPattern: ltngenginemodels.IndexingList,
+				},
+			}
+			fetchedItems, err := ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, pagination, opts)
+			assert.NoError(t, err)
+			assert.Len(t, fetchedItems.Items, 2)
+
+			var primary, secondary, tertiary bool
+			for _, item := range fetchedItems.Items {
+				if bytes.Equal(bv.BsKey, item.Value) {
+					primary = true
+				} else if bytes.Equal(bv.SecondaryIndexBs, item.Value) {
+					secondary = true
+				} else if bytes.Equal(bv.TertiaryIndexBs, item.Value) {
+					tertiary = true
+				}
+			}
+			assert.True(t, primary)
+			assert.True(t, secondary)
+			assert.False(t, tertiary)
+		}
+	}
+
+	// delete idx - ok
+	// load exp error - ok
 	// delete cascade by idx
 	// load
 	// list
