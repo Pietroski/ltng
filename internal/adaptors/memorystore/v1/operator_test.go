@@ -92,6 +92,38 @@ func TestLTNGCacheEngine(t *testing.T) {
 		}
 	}
 
+	{ // load - and computational
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.AndComputational,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+			require.Equal(t, bv.BsKey, fetchedItem.Value)
+		}
+	}
+
+	{ // load - or computational
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.OrComputational,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+			require.Equal(t, bv.BsKey, fetchedItem.Value)
+		}
+	}
+
 	{ // list
 		pagination := &ltngenginemodels.Pagination{
 			PageID:   1,
@@ -223,6 +255,212 @@ func TestLTNGCacheEngine(t *testing.T) {
 			assert.True(t, secondary)
 			assert.False(t, tertiary)
 		}
+	}
+
+	{ // upsert
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bv.BsKey,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs, bv.TertiaryIndexBs},
+			}
+			_, err := ts.cacheEngine.UpsertItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+		}
+	}
+
+	{ // load - from tertiary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.TertiaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+			require.Equal(t, bv.BsKey, fetchedItem.Key)
+		}
+	}
+
+	{ // upsert
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bv.BsKey,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+			}
+			_, err := ts.cacheEngine.UpsertItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+		}
+	}
+
+	{ // load & list indexes - from tertiary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.TertiaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+
+			pagination := &ltngenginemodels.Pagination{
+				PageID:   1,
+				PageSize: 10,
+			}
+			opts = &ltngenginemodels.IndexOpts{
+				ParentKey: bv.BsKey,
+				IndexProperties: ltngenginemodels.IndexProperties{
+					ListSearchPattern: ltngenginemodels.IndexingList,
+				},
+			}
+			fetchedItems, err := ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, pagination, opts)
+			assert.NoError(t, err)
+			assert.Len(t, fetchedItems.Items, 2)
+
+			var primary, secondary, tertiary bool
+			for _, item := range fetchedItems.Items {
+				if bytes.Equal(bv.BsKey, item.Value) {
+					primary = true
+				} else if bytes.Equal(bv.SecondaryIndexBs, item.Value) {
+					secondary = true
+				} else if bytes.Equal(bv.TertiaryIndexBs, item.Value) {
+					tertiary = true
+				}
+			}
+			assert.True(t, primary)
+			assert.True(t, secondary)
+			assert.False(t, tertiary)
+		}
+	}
+
+	{ // delete - cascade by index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexDeletionBehaviour: ltngenginemodels.CascadeByIdx,
+				},
+			}
+			_, err := ts.cacheEngine.DeleteItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.NoError(t, err)
+		}
+	}
+
+	{ // load
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+		}
+	}
+
+	{ // load - from parent key
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:    true,
+				ParentKey: bv.BsKey,
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+		}
+	}
+
+	{ // load - from primary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.BsKey},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+		}
+	}
+
+	{ // load - from secondary index
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.One,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+		}
+	}
+
+	{ // load - and computational
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.AndComputational,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			assert.Error(t, err)
+			require.Nil(t, fetchedItem)
+		}
+	}
+
+	{ // load - or computational
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(t, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.OrComputational,
+				},
+			}
+			fetchedItem, err := ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			require.Error(t, err)
+			require.Nil(t, fetchedItem)
+		}
+	}
+
+	{ // list
+		pagination := &ltngenginemodels.Pagination{
+			PageID:   1,
+			PageSize: 200,
+		}
+		opts := &ltngenginemodels.IndexOpts{
+			IndexProperties: ltngenginemodels.IndexProperties{
+				ListSearchPattern: ltngenginemodels.Default,
+			},
+		}
+		fetchedItems, err := ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, pagination, opts)
+		assert.NoError(t, err)
+		assert.Len(t, fetchedItems.Items, 0)
 	}
 
 	// delete idx - ok

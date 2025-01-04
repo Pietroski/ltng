@@ -29,13 +29,13 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	}
 
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), key},
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), item.Key},
 		[]byte(ltngenginemodels.BytesSliceSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
 	var indexingKeys [][]byte
 	_ = ltng.cache.Get(ctx, strIndexListKey, &indexingKeys, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return [][]byte{}, nil
 	})
 
 	for _, itemKey := range indexingKeys {
@@ -60,15 +60,15 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	}); err != nil {
 		return nil, nil
 	}
-	var deletedItemFromRelational []*ltngenginemodels.Item
+	var remainingItemFromRelational []*ltngenginemodels.Item
 	for _, v := range value {
 		if bytes.Equal(v.Key, item.Key) {
 			continue
 		}
 
-		deletedItemFromRelational = append(deletedItemFromRelational, v)
+		remainingItemFromRelational = append(remainingItemFromRelational, v)
 	}
-	if err := ltng.cache.Set(ctx, strRelationalKey, deletedItemFromRelational); err != nil {
+	if err := ltng.cache.Set(ctx, strRelationalKey, remainingItemFromRelational); err != nil {
 		return nil, err
 	}
 
@@ -220,7 +220,7 @@ func (ltng *LTNGCacheEngine) andComputationalSearch(
 
 	key := bytes.Split(indexKey, []byte(ltngenginemodels.BytesSliceSep))
 	return &ltngenginemodels.Item{
-		Key:   key[0],
+		Key:   key[1],
 		Value: value,
 	}, nil
 }
