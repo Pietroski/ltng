@@ -616,10 +616,9 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 				ParentKey:    bv.BsKey,
 				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
 			}
-			bd.CalcAvg(
-				bd.CalcElapsed(func() {
-					_, err = ts.cacheEngine.CreateItem(ts.ctx, dbMetaInfo, bv.Item, opts)
-				}))
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				_, err = ts.cacheEngine.CreateItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
 			require.NoError(b, err)
 		}
 		b.Logf("create: %s\n", bd.String())
@@ -632,10 +631,9 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 			var fetchedItem *ltngenginemodels.Item
 			var err error
 			opts := &ltngenginemodels.IndexOpts{}
-			bd.CalcAvg(
-				bd.CalcElapsed(func() {
-					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
-				}))
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
 			require.NoError(b, err)
 			require.Equal(b, bv.BsKey, fetchedItem.Key)
 		}
@@ -655,10 +653,9 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 					IndexSearchPattern: ltngenginemodels.One,
 				},
 			}
-			bd.CalcAvg(
-				bd.CalcElapsed(func() {
-					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
-				}))
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
 			require.NoError(b, err)
 			require.Equal(b, bv.BsKey, fetchedItem.Key)
 		}
@@ -678,10 +675,9 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 					IndexSearchPattern: ltngenginemodels.One,
 				},
 			}
-			bd.CalcAvg(
-				bd.CalcElapsed(func() {
-					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
-				}))
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
 			require.NoError(b, err)
 			require.Equal(b, bv.BsKey, fetchedItem.Key)
 		}
@@ -701,14 +697,57 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 					IndexSearchPattern: ltngenginemodels.One,
 				},
 			}
-			bd.CalcAvg(
-				bd.CalcElapsed(func() {
-					fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
-				}))
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
 			require.NoError(b, err)
 			require.Equal(b, bv.BsKey, fetchedItem.Key)
 		}
 		b.Logf("load - from secondary index: %s\n", bd.String())
+	}
+
+	{ // load - and computational
+		bd := testbench.New()
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.BsKey, bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.AndComputational,
+				},
+			}
+			var fetchedItem *ltngenginemodels.Item
+			var err error
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
+			require.NoError(b, err)
+			require.Equal(b, bv.BsKey, fetchedItem.Value)
+		}
+		b.Logf("load - and computational: %s\n", bd.String())
+	}
+
+	{ // load - or computational
+		bd := testbench.New()
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				IndexingKeys: [][]byte{bv.SecondaryIndexBs},
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexSearchPattern: ltngenginemodels.OrComputational,
+				},
+			}
+			var fetchedItem *ltngenginemodels.Item
+			var err error
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				fetchedItem, err = ts.cacheEngine.LoadItem(ts.ctx, dbMetaInfo, bv.Item, opts)
+			}))
+			require.NoError(b, err)
+			require.Equal(b, bv.BsKey, fetchedItem.Value)
+		}
+		b.Logf("load - or computational: %s\n", bd.String())
 	}
 
 	{ // list
@@ -719,7 +758,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 		}
 		opts := &ltngenginemodels.IndexOpts{
 			IndexProperties: ltngenginemodels.IndexProperties{
-				ListSearchPattern: ltngenginemodels.All,
+				ListSearchPattern: ltngenginemodels.Default,
 			},
 		}
 		var err error
@@ -738,6 +777,37 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 			assert.True(b, ok)
 		}
 
-		b.Logf("list: %s\n", bd.String())
+		b.Logf("list default: %s\n", bd.String())
+	}
+
+	{ // list
+		bd := testbench.New()
+		pagination := &ltngenginemodels.Pagination{
+			PageID:   1,
+			PageSize: 50,
+		}
+		opts := &ltngenginemodels.IndexOpts{
+			IndexProperties: ltngenginemodels.IndexProperties{
+				ListSearchPattern: ltngenginemodels.All,
+			},
+		}
+		var err error
+		var fetchedItems *ltngenginemodels.ListItemsResult
+		bd.CalcAvg(bd.CalcElapsed(func() {
+			fetchedItems, err = ts.cacheEngine.ListItems(ts.ctx, dbMetaInfo, pagination, opts)
+		}))
+
+		assert.NoError(b, err)
+		assert.Len(b, fetchedItems.Items, 50)
+		fetchedItemsMap := ltngenginemodels.IndexListToMap(fetchedItems.Items)
+
+		for _, user := range ts.users {
+			bv := GetUserBytesValues(b, ts.testsuite, user)
+			strKey := hex.EncodeToString(bv.Item.Key)
+			_, ok := fetchedItemsMap[strKey]
+			assert.True(b, ok)
+		}
+
+		b.Logf("list default: %s\n", bd.String())
 	}
 }
