@@ -117,24 +117,46 @@ func (e *LTNGEngine) deleteItem(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
+	//strItemKey := hex.EncodeToString(item.Key)
+	//
+	//lockKey := dbMetaInfo.LockName(strItemKey)
+	//e.opMtx.Lock(lockKey, struct{}{})
+	//defer e.opMtx.Unlock(lockKey)
+	//
+	//switch opts.IndexProperties.IndexDeletionBehaviour {
+	//case ltngenginemodels.Cascade:
+	//	return nil, e.deleteCascade(ctx, dbMetaInfo, item.Key)
+	//case ltngenginemodels.CascadeByIdx:
+	//	return nil, e.deleteCascadeByIdx(ctx, dbMetaInfo, item.Key)
+	//case ltngenginemodels.IndexOnly:
+	//	return nil, e.deleteIndexOnly(ctx, dbMetaInfo, item.Key)
+	//case ltngenginemodels.None:
+	//	fallthrough
+	//default:
+	//	return nil, fmt.Errorf("invalid index deletion behaviour")
+	//}
+
 	strItemKey := hex.EncodeToString(item.Key)
 
-	lockKey := dbMetaInfo.LockName(strItemKey)
-	e.opMtx.Lock(lockKey, struct{}{})
-	defer e.opMtx.Unlock(lockKey)
-
-	switch opts.IndexProperties.IndexDeletionBehaviour {
-	case ltngenginemodels.Cascade:
-		return nil, e.deleteCascade(ctx, dbMetaInfo, item.Key)
-	case ltngenginemodels.CascadeByIdx:
-		return nil, e.deleteCascadeByIdx(ctx, dbMetaInfo, item.Key)
-	case ltngenginemodels.IndexOnly:
-		return nil, e.deleteIndexOnly(ctx, dbMetaInfo, item.Key)
-	case ltngenginemodels.None:
-		fallthrough
-	default:
-		return nil, fmt.Errorf("invalid index deletion behaviour")
+	if _, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err != nil {
+		if _, err = os.Stat(ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)); os.IsNotExist(err) {
+			return nil, fmt.Errorf("file does not exist: %s: %v", dbMetaInfo.Path, err)
+		}
 	}
+
+	itemInfoData := &ltngenginemodels.ItemInfoData{
+		OpType:     ltngenginemodels.OpTypeDelete,
+		DBMetaInfo: dbMetaInfo,
+		Item:       item,
+		Opts:       opts,
+	}
+	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
+		return nil, err
+	}
+	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
+	_, _ = e.memoryStore.DeleteItem(ctx, dbMetaInfo, item, opts)
+
+	return item, nil
 }
 
 func (e *LTNGEngine) listItems(
