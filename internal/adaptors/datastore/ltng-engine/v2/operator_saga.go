@@ -675,10 +675,16 @@ func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 // #####################################################################################################################
 
 type (
+	deletionChannels struct {
+		*ltngenginemodels.OpChannels
+		ActionDelTmpFiles   *deleteItemInfoData
+		RollbackDelTmpFiles *deleteItemInfoData
+	}
+
 	deleteChannels struct {
-		deleteCascadeChannel   *ltngenginemodels.OpChannels
-		deleteCascadeByIndex   *ltngenginemodels.OpChannels
-		deleteIndexOnlyChannel *ltngenginemodels.OpChannels
+		deleteCascadeChannel   *deletionChannels
+		deleteCascadeByIndex   *deletionChannels
+		deleteIndexOnlyChannel *deletionChannels
 	}
 
 	temporaryDeletionPaths struct {
@@ -699,6 +705,14 @@ func makeDeleteChannels() *deleteChannels {
 		deleteCascadeByIndex:   ltngenginemodels.MakeOpChannels(),
 		deleteIndexOnlyChannel: ltngenginemodels.MakeOpChannels(),
 		deleteCascadeChannel:   ltngenginemodels.MakeOpChannels(),
+	}
+}
+
+func makeDeletionChannels() *deletionChannels {
+	return &deletionChannels{
+		OpChannels:          nil,
+		ActionDelTmpFiles:   nil,
+		RollbackDelTmpFiles: nil,
 	}
 }
 
@@ -783,10 +797,10 @@ func newDeleteCascadeSaga(ctx context.Context, deleteSaga *deleteSaga) *deleteCa
 		deleteSaga: deleteSaga,
 	}
 
-	go dcs.deleteMainKey(ctx)
-	go dcs.deleteIndexes(ctx)
-	go dcs.deleteIndexingList(ctx)
-	go dcs.deleteRelationalItem(ctx)
+	go dcs.deleteItemFromDiskOnThread(ctx)
+	go dcs.deleteIndexItemFromDiskOnThread(ctx)
+	go dcs.deleteIndexingListItemFromDiskOnThread(ctx)
+	go dcs.deleteRelationalItemFromDiskOnThread(ctx)
 	go dcs.deleteTemporaryRecords(ctx)
 
 	// TODO: add rollbacks
@@ -822,7 +836,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 ) {
 	createItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateItemOnDisk := itemInfoData.WithRespChan(createItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
+	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
@@ -832,12 +846,15 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 
 	createRelationalItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateRelationalItemOnDisk := itemInfoData.WithRespChan(createRelationalItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
+	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
 	err = <-createRelationalItemOnDiskRespSignal
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 	}
+
+	// TODO: delete temporary folder from disk
+
 	itemInfoData.RespSignal <- err
 }
 
@@ -851,9 +868,9 @@ func (s *deleteCascadeSaga) indexTrigger(
 	createIndexItemListOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateIndexItemListOnDisk := itemInfoData.WithRespChan(createIndexItemListOnDiskRespSignal)
 
-	s.opSaga.crudChannels.CreateChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
-	s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel <- itemInfoDataForCreateIndexItemOnDisk
-	s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel <- itemInfoDataForCreateIndexItemListOnDisk
+	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
+	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel <- itemInfoDataForCreateIndexItemOnDisk
+	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel <- itemInfoDataForCreateIndexItemListOnDisk
 
 	if err := ResponseAccumulator(
 		createItemOnDiskRespSignal,
@@ -868,7 +885,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 
 	createRelationalItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateRelationalItemOnDisk := itemInfoData.WithRespChan(createRelationalItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
+	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
 	err := <-createRelationalItemOnDiskRespSignal
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
@@ -926,26 +943,34 @@ func (s *deleteCascadeSaga) indexRollback(
 	itemInfoData.RespSignal <- nil
 }
 
-func (s *deleteCascadeSaga) deleteMainKey(_ context.Context) {
+func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel {
-		_ = itemInfoData
+		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeSaga) deleteIndexes(_ context.Context) {
-	//
+func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
+	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel {
+		itemInfoData.RespSignal <- nil
+	}
 }
 
-func (s *deleteCascadeSaga) deleteIndexingList(_ context.Context) {
-	//
+func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Context) {
+	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel {
+		itemInfoData.RespSignal <- nil
+	}
 }
 
-func (s *deleteCascadeSaga) deleteRelationalItem(_ context.Context) {
-	//
+func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(_ context.Context) {
+	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel {
+		itemInfoData.RespSignal <- nil
+	}
 }
 
 func (s *deleteCascadeSaga) deleteTemporaryRecords(_ context.Context) {
-	//
+	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles {
+		itemInfoData.RespSignal <- nil
+	}
 }
 
 type deleteCascadeByIdxSaga struct {
