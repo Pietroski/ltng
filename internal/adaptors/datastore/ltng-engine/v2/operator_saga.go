@@ -1548,3 +1548,5 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(_ context.Context) {
 		itemInfoData.RespSignal <- nil
 	}
 }
+
+// #####################################################################################################################
