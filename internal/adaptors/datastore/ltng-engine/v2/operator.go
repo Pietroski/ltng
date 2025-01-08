@@ -76,10 +76,11 @@ func (e *LTNGEngine) createItem(
 	}
 
 	itemInfoData := &ltngenginemodels.ItemInfoData{
-		OpType:     ltngenginemodels.OpTypeCreate,
-		DBMetaInfo: dbMetaInfo,
-		Item:       item,
-		Opts:       opts,
+		OpNatureType: ltngenginemodels.OpNatureTypeItem,
+		OpType:       ltngenginemodels.OpTypeCreate,
+		DBMetaInfo:   dbMetaInfo,
+		Item:         item,
+		Opts:         opts,
 	}
 	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err
@@ -97,10 +98,11 @@ func (e *LTNGEngine) upsertItem(
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
 	itemInfoData := &ltngenginemodels.ItemInfoData{
-		OpType:     ltngenginemodels.OpTypeUpsert,
-		DBMetaInfo: dbMetaInfo,
-		Item:       item,
-		Opts:       opts,
+		OpNatureType: ltngenginemodels.OpNatureTypeItem,
+		OpType:       ltngenginemodels.OpTypeUpsert,
+		DBMetaInfo:   dbMetaInfo,
+		Item:         item,
+		Opts:         opts,
 	}
 	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err
@@ -145,10 +147,11 @@ func (e *LTNGEngine) deleteItem(
 	}
 
 	itemInfoData := &ltngenginemodels.ItemInfoData{
-		OpType:     ltngenginemodels.OpTypeDelete,
-		DBMetaInfo: dbMetaInfo,
-		Item:       item,
-		Opts:       opts,
+		OpNatureType: ltngenginemodels.OpNatureTypeItem,
+		OpType:       ltngenginemodels.OpTypeDelete,
+		DBMetaInfo:   dbMetaInfo,
+		Item:         item,
+		Opts:         opts,
 	}
 	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err

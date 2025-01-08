@@ -94,12 +94,13 @@ type (
 	}
 
 	ItemInfoData struct {
-		Ctx        context.Context
-		OpType     OpType
-		DBMetaInfo *ManagerStoreMetaInfo
-		Item       *Item
-		Opts       *IndexOpts
-		RespSignal chan error
+		Ctx          context.Context
+		OpNatureType OpNatureType
+		OpType       OpType
+		DBMetaInfo   *ManagerStoreMetaInfo
+		Item         *Item
+		Opts         *IndexOpts
+		RespSignal   chan error
 	}
 
 	OpChannels struct {
@@ -121,6 +122,13 @@ type (
 		UpsertChannels *OpChannels
 		DeleteChannels *OpChannels
 	}
+)
+
+type OpNatureType string
+
+const (
+	OpNatureTypeStore OpNatureType = "store"
+	OpNatureTypeItem  OpNatureType = "item"
 )
 
 type OpType string
