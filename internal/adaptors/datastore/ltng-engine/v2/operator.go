@@ -28,7 +28,22 @@ func (e *LTNGEngine) loadItem(
 		return i, nil
 	}
 
-	return nil, fmt.Errorf("error item not found")
+	if !opts.HasIdx {
+		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true)
+	}
+
+	switch opts.IndexProperties.IndexSearchPattern {
+	case ltngenginemodels.AndComputational:
+		return e.andComputationalSearch(ctx, opts, dbMetaInfo)
+	case ltngenginemodels.OrComputational:
+		return e.orComputationalSearch(ctx, opts, dbMetaInfo)
+	case ltngenginemodels.One:
+		fallthrough
+	default:
+		return e.straightSearch(ctx, opts, dbMetaInfo)
+	}
+
+	// return nil, fmt.Errorf("error item not found")
 
 	//strItemKey := hex.EncodeToString(item.Key)
 	//lockKey := dbMetaInfo.LockName(strItemKey)
@@ -119,25 +134,6 @@ func (e *LTNGEngine) deleteItem(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	//strItemKey := hex.EncodeToString(item.Key)
-	//
-	//lockKey := dbMetaInfo.LockName(strItemKey)
-	//e.opMtx.Lock(lockKey, struct{}{})
-	//defer e.opMtx.Unlock(lockKey)
-	//
-	//switch opts.IndexProperties.IndexDeletionBehaviour {
-	//case ltngenginemodels.Cascade:
-	//	return nil, e.deleteCascade(ctx, dbMetaInfo, item.Key)
-	//case ltngenginemodels.CascadeByIdx:
-	//	return nil, e.deleteCascadeByIdx(ctx, dbMetaInfo, item.Key)
-	//case ltngenginemodels.IndexOnly:
-	//	return nil, e.deleteIndexOnly(ctx, dbMetaInfo, item.Key)
-	//case ltngenginemodels.None:
-	//	fallthrough
-	//default:
-	//	return nil, fmt.Errorf("invalid index deletion behaviour")
-	//}
-
 	strItemKey := hex.EncodeToString(item.Key)
 
 	if _, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err != nil {
@@ -195,9 +191,9 @@ func (e *LTNGEngine) listItems(
 	}
 }
 
-// LWCSU
+// LWSCU
 // LOCK
-// WRITE
-// CACHE
+// WRITE -- persist to process later
 // SIGNAL
+// CACHE
 // UNLOCK

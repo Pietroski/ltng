@@ -3,18 +3,20 @@ package v2
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"runtime"
+	"sync"
+
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
 	concurrentv1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1/concurrent"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-	"log"
-	"os"
-	"runtime"
-	"sync"
 )
 
 func newLTNGEngine(
@@ -80,9 +82,12 @@ func (e *LTNGEngine) close() {
 func (e *LTNGEngine) closeStores() {
 	for k, v := range e.storeFileMapping {
 		e.opMtx.Lock(k, v.FileData.Header.StoreInfo)
-		if err := v.File.Close(); err != nil {
-			log.Printf("error closing file from %s store: %v\n", k, err)
+		if !rw.IsFileClosed(v.File) {
+			if err := v.File.Close(); err != nil {
+				log.Printf("error closing file from %s store: %v\n", k, err)
+			}
 		}
+
 		delete(e.storeFileMapping, k)
 		e.opMtx.Unlock(k)
 	}
@@ -103,10 +108,15 @@ func (e *LTNGEngine) closeItems() {
 		runtime.Gosched()
 	}
 
+	for e.opSaga.pidRegister.CountNumber() != 0 {
+		runtime.Gosched()
+	}
+	//time.Sleep(time.Second)
 	//time.Sleep(500 * time.Millisecond)
 
 	//for k, v := range e.itemFileMapping {
 	//	e.opMtx.Lock(k, v.FileData.Header.StoreInfo)
+	// // TODO: check if it is not already closed
 	//	if err := v.File.Close(); err != nil {
 	//		log.Printf("error closing file from %s item store: %v\n", k, err)
 	//	}

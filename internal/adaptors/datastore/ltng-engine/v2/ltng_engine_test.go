@@ -3,6 +3,8 @@ package v2
 import (
 	"context"
 	"math"
+	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
+	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 )
@@ -368,9 +371,45 @@ func TestLTNGEngineFlow(t *testing.T) {
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
 					assert.NoError(t, err)
 					t.Log(u)
+
+					deleteOpts := &ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							IndexDeletionBehaviour: ltngenginemodels.Cascade,
+						},
+					}
+					_, err = ltngEngine.DeleteItem(ctx, databaseMetaInfo, item, deleteOpts)
+					assert.NoError(t, err)
+
+					{
+						// search by key
+						searchOpts = &ltngenginemodels.IndexOpts{}
+						loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+						assert.Error(t, err)
+						assert.Nil(t, loadedItem)
+
+						// search by key - parent key
+						searchOpts = &ltngenginemodels.IndexOpts{
+							HasIdx:    true,
+							ParentKey: item.Key,
+						}
+						loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+						assert.Error(t, err)
+						assert.Nil(t, loadedItem)
+
+						// search by index
+						searchOpts = &ltngenginemodels.IndexOpts{
+							HasIdx:       true,
+							ParentKey:    item.Key,
+							IndexingKeys: [][]byte{secondaryIndexBs},
+						}
+						loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+						assert.Error(t, err)
+						assert.Nil(t, loadedItem)
+					}
 				}
 
 				ltngEngine.close()
+				// time.Sleep(time.Second)
 			})
 
 			t.Run("standard", func(t *testing.T) {
@@ -1026,43 +1065,43 @@ func TestLTNGEngineFlow(t *testing.T) {
 				t.Log(u)
 			}
 
-			//// delete and search
-			//for _, tc := range testCases {
-			//	bvs := getValues(t, ts, tc.userData)
-			//
-			//	deleteOpts := &ltngenginemodels.IndexOpts{
-			//		IndexProperties: ltngenginemodels.IndexProperties{
-			//			IndexDeletionBehaviour: ltngenginemodels.Cascade,
-			//		},
-			//	}
-			//	_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
-			//	assert.NoError(t, err)
-			//
-			//	// search by key
-			//	searchOpts := &ltngenginemodels.IndexOpts{}
-			//	loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-			//	assert.Error(t, err)
-			//	assert.Nil(t, loadedItem)
-			//
-			//	// search by key - parent key
-			//	searchOpts = &ltngenginemodels.IndexOpts{
-			//		HasIdx:    true,
-			//		ParentKey: bvs.item.Key,
-			//	}
-			//	loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-			//	assert.Error(t, err)
-			//	assert.Nil(t, loadedItem)
-			//
-			//	// search by index
-			//	searchOpts = &ltngenginemodels.IndexOpts{
-			//		HasIdx:       true,
-			//		ParentKey:    bvs.item.Key,
-			//		IndexingKeys: [][]byte{bvs.secondaryIndexBs},
-			//	}
-			//	loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-			//	assert.Error(t, err)
-			//	assert.Nil(t, loadedItem)
-			//}
+			// delete and search
+			for _, tc := range testCases {
+				bvs := getValues(t, ts, tc.userData)
+
+				deleteOpts := &ltngenginemodels.IndexOpts{
+					IndexProperties: ltngenginemodels.IndexProperties{
+						IndexDeletionBehaviour: ltngenginemodels.Cascade,
+					},
+				}
+				_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
+				assert.NoError(t, err)
+
+				// search by key
+				searchOpts := &ltngenginemodels.IndexOpts{}
+				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				assert.Error(t, err)
+				assert.Nil(t, loadedItem)
+
+				//// search by key - parent key
+				//searchOpts = &ltngenginemodels.IndexOpts{
+				//	HasIdx:    true,
+				//	ParentKey: bvs.item.Key,
+				//}
+				//loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				//assert.Error(t, err)
+				//assert.Nil(t, loadedItem)
+				//
+				//// search by index
+				//searchOpts = &ltngenginemodels.IndexOpts{
+				//	HasIdx:       true,
+				//	ParentKey:    bvs.item.Key,
+				//	IndexingKeys: [][]byte{bvs.secondaryIndexBs},
+				//}
+				//loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				//assert.Error(t, err)
+				//assert.Nil(t, loadedItem)
+			}
 			//
 			//// list ops
 			//{
@@ -1098,7 +1137,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 			//		t.Log(string(item.Key), string(item.Value))
 			//	}
 			//}
-			
+
 			ts.ltngEngine.close()
 		})
 
@@ -1406,6 +1445,37 @@ func TestLTNGEngineFlow(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestReadFromFQ(t *testing.T) {
+	ctx := context.Background()
+	fq, err := filequeuev1.New(ctx,
+		filequeuev1.GenericFileQueueFilePath, filequeuev1.GenericFileQueueFileName)
+	require.NoError(t, err)
+
+	var counter int
+	for {
+		_, err = fq.Read(ctx)
+		if err != nil {
+			t.Log(err)
+			break
+		}
+
+		err = fq.Pop(ctx)
+		assert.NoError(t, err)
+
+		counter++
+	}
+	t.Log(counter)
+}
+
+func TestCheckFileCount(t *testing.T) {
+	bs, err := execx.Executor(exec.Command(
+		"sh", "-c",
+		"find .ltngdb/v1/stores/test-path -maxdepth 1 -type f | wc -l",
+	))
+	require.NoError(t, err)
+	t.Log(strings.TrimSpace(string(bs)))
 }
 
 func prepareTest(t *testing.T) context.Context {
