@@ -373,12 +373,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 					t.Log(u)
 
 					deleteOpts := &ltngenginemodels.IndexOpts{
+						HasIdx: true,
 						IndexProperties: ltngenginemodels.IndexProperties{
 							IndexDeletionBehaviour: ltngenginemodels.Cascade,
 						},
 					}
 					_, err = ltngEngine.DeleteItem(ctx, databaseMetaInfo, item, deleteOpts)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					{
 						// search by key
