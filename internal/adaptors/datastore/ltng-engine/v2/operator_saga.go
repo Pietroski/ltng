@@ -861,6 +861,18 @@ func newDeleteCascadeSaga(ctx context.Context, deleteSaga *deleteSaga) *deleteCa
 
 func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.InfoChannel {
+		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+		if _, err := s.deleteSaga.opSaga.e.memoryStore.LoadItem(ctx,
+			itemInfoData.DBMetaInfo, itemInfoData.Item, itemInfoData.Opts,
+		); err != nil {
+			if _, err = os.Stat(ltngenginemodels.GetDataFilepath(
+				itemInfoData.DBMetaInfo.Path, strItemKey),
+			); os.IsNotExist(err) {
+				// TODO: log fmt.Errorf("file does not exist: %s: %v", itemInfoData.DBMetaInfo.Path, err)
+				continue
+			}
+		}
+
 		temporaryDelPaths, err := s.deleteSaga.createTmpDeletionPaths(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
 		if err != nil {
 			itemInfoData.RespSignal <- err
@@ -1087,7 +1099,6 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(_ context.Context) {
 
 func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel {
-		//continue
 		for _, item := range itemInfoData.IndexList {
 			strItemKey := hex.EncodeToString(item.Value)
 
@@ -1123,7 +1134,6 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 
 func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexItemChannel {
-		continue
 		for _, item := range itemInfoData.IndexList {
 			strItemKey := hex.EncodeToString(item.Value)
 
@@ -1143,8 +1153,6 @@ func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(_ context.Context) {
 
 func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel {
-		itemInfoData.RespSignal <- nil
-		continue
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		if _, err := execx.MvFileExec(itemInfoData.Ctx,
 			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
@@ -1170,7 +1178,6 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Con
 
 func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexListItemChannel {
-		continue
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		if _, err := execx.MvFileExec(itemInfoData.Ctx,
 			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),

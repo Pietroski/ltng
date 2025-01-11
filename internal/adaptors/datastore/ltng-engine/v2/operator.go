@@ -134,14 +134,6 @@ func (e *LTNGEngine) deleteItem(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	strItemKey := hex.EncodeToString(item.Key)
-
-	if _, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err != nil {
-		if _, err = os.Stat(ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)); os.IsNotExist(err) {
-			return nil, fmt.Errorf("file does not exist: %s: %v", dbMetaInfo.Path, err)
-		}
-	}
-
 	itemInfoData := &ltngenginemodels.ItemInfoData{
 		OpNatureType: ltngenginemodels.OpNatureTypeItem,
 		OpType:       ltngenginemodels.OpTypeDelete,
