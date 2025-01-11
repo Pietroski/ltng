@@ -713,6 +713,7 @@ type (
 
 	deleteItemInfoData struct {
 		*ltngenginemodels.ItemInfoData
+		IndexList   []*ltngenginemodels.Item
 		TmpDelPaths *temporaryDeletionPaths
 	}
 )
@@ -918,6 +919,19 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 func (s *deleteCascadeSaga) indexTrigger(
 	_ context.Context, itemInfoData *deleteItemInfoData,
 ) {
+	indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
+		itemInfoData.Ctx,
+		itemInfoData.DBMetaInfo,
+		&ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
+	)
+	if err != nil {
+		// TODO: log
+		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
+		return
+	}
+	itemInfoData.IndexList = indexItemList
+
 	deleteItemFromDiskRespSignal := make(chan error, 1)
 	itemInfoDataActionItemChannel := itemInfoData.
 		withRespChan(deleteItemFromDiskRespSignal)
@@ -935,7 +949,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 	s.deleteSaga.deleteChannels.deleteCascadeChannel.
 		ActionIndexListItemChannel <- itemInfoDataForActionIndexListItemChannel
 
-	if err := ResponseAccumulator(
+	if err = ResponseAccumulator(
 		deleteItemFromDiskRespSignal,
 		deleteIndexItemFromDiskOnThreadRespSignal,
 		deleteIndexingListItemFromDiskOnThreadRespSignal,
@@ -951,7 +965,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		withRespChan(deleteRelationalItemFromDiskOnThreadRespSignal)
 	s.deleteSaga.deleteChannels.deleteCascadeChannel.
 		ActionRelationalItemChannel <- itemInfoDataForActionRelationalItemChannel
-	err := <-deleteRelationalItemFromDiskOnThreadRespSignal
+	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
@@ -1068,21 +1082,10 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(_ context.Context) {
 
 func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel {
-		itemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
-			itemInfoData.Ctx,
-			itemInfoData.DBMetaInfo,
-			&ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
-		)
-		if err != nil {
-			// TODO: log
-			itemInfoData.RespSignal <- err
-			return
-		}
-
-		for _, item := range itemList {
+		for _, item := range itemInfoData.IndexList {
 			strItemKey := hex.EncodeToString(item.Value)
 
-			if _, err = execx.MvFileExec(itemInfoData.Ctx,
+			if _, err := execx.MvFileExec(itemInfoData.Ctx,
 				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
 				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
 			); err != nil {
@@ -1094,6 +1097,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 			fileStats, ok := s.deleteSaga.opSaga.e.
 				itemFileMapping[itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)]
 			if ok {
+				// TODO:  isFileClosed?
 				_ = fileStats.File.Close()
 			}
 			delete(s.deleteSaga.opSaga.e.itemFileMapping,
@@ -1150,6 +1154,7 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Con
 		fileStats, ok := s.deleteSaga.opSaga.e.
 			itemFileMapping[itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey)]
 		if ok {
+			// TODO:  isFileClosed?
 			_ = fileStats.File.Close()
 		}
 		delete(s.deleteSaga.opSaga.e.itemFileMapping,
