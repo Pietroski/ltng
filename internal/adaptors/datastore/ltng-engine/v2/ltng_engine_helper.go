@@ -71,6 +71,10 @@ func (e *LTNGEngine) init(ctx context.Context) error {
 		return err
 	}
 
+	if err := e.fq.Init(); err != nil {
+		return fmt.Errorf("failed initializing file queue: %w", err)
+	}
+
 	return nil
 }
 
@@ -107,7 +111,6 @@ func (e *LTNGEngine) closeItems() {
 	for !e.fq.CheckAndClose() {
 		runtime.Gosched()
 	}
-
 	for e.opSaga.pidRegister.CountNumber() != 0 {
 		runtime.Gosched()
 	}

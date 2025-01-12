@@ -270,6 +270,12 @@ func IsFileClosed(file *os.File) bool {
 	return errors.Is(err, os.ErrClosed)
 }
 
+func OpenIfClosed(file *os.File) {
+	if IsFileClosed(file) {
+
+	}
+}
+
 func isFileClosed(f *os.File) bool {
 	if f == nil {
 		return true

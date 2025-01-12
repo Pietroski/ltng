@@ -271,23 +271,25 @@ func TestLTNGEngineFlow(t *testing.T) {
 					Name: "test-store",
 					Path: "test-path",
 				}
-				info, err := ltngEngine.CreateStore(ctx, dbInfo)
-				assert.NoError(t, err)
-				assert.NotNil(t, info)
+				{
+					info, err := ltngEngine.CreateStore(ctx, dbInfo)
+					assert.NoError(t, err)
+					assert.NotNil(t, info)
 
-				info, err = ltngEngine.LoadStore(ctx, dbInfo)
-				assert.NoError(t, err)
+					info, err = ltngEngine.LoadStore(ctx, dbInfo)
+					assert.NoError(t, err)
 
-				infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
-					PageID:   1,
-					PageSize: 5,
-				})
-				assert.NoError(t, err)
-				assert.Len(t, infos, 1)
-				t.Log(infos)
+					infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
+						PageID:   1,
+						PageSize: 5,
+					})
+					assert.NoError(t, err)
+					assert.Len(t, infos, 1)
+					t.Log(infos)
 
-				for _, info = range infos {
-					t.Log(info)
+					for _, info = range infos {
+						t.Log(info)
+					}
 				}
 
 				// #################################################################################### \\
@@ -371,7 +373,43 @@ func TestLTNGEngineFlow(t *testing.T) {
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
 					assert.NoError(t, err)
 					t.Log(u)
+				}
 
+				{
+					// list items - default search
+					items, err := ltngEngine.ListItems(
+						ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+						&ltngenginemodels.IndexOpts{
+							IndexProperties: ltngenginemodels.IndexProperties{
+								ListSearchPattern: ltngenginemodels.Default,
+							},
+						},
+					)
+					assert.NoError(t, err)
+					assert.Len(t, items.Items, 1)
+
+					for _, item = range items.Items {
+						t.Log(string(item.Key), string(item.Value))
+					}
+
+					// list items - search for all
+					items, err = ltngEngine.ListItems(
+						ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+						&ltngenginemodels.IndexOpts{
+							IndexProperties: ltngenginemodels.IndexProperties{
+								ListSearchPattern: ltngenginemodels.All,
+							},
+						},
+					)
+					assert.NoError(t, err)
+					assert.Len(t, items.Items, 1)
+
+					for _, item = range items.Items {
+						t.Log(string(item.Key), string(item.Value))
+					}
+				}
+
+				{
 					deleteOpts := &ltngenginemodels.IndexOpts{
 						HasIdx: true,
 						IndexProperties: ltngenginemodels.IndexProperties{
@@ -380,37 +418,70 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 					_, err = ltngEngine.DeleteItem(ctx, databaseMetaInfo, item, deleteOpts)
 					require.NoError(t, err)
+				}
 
-					{
-						// search by key
-						searchOpts = &ltngenginemodels.IndexOpts{}
-						loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-						assert.Error(t, err)
-						assert.Nil(t, loadedItem)
+				{
+					// search by key
+					searchOpts := &ltngenginemodels.IndexOpts{}
+					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+					assert.Error(t, err)
+					assert.Nil(t, loadedItem)
 
-						// search by key - parent key
-						searchOpts = &ltngenginemodels.IndexOpts{
-							HasIdx:    true,
-							ParentKey: item.Key,
-						}
-						loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-						assert.Error(t, err)
-						assert.Nil(t, loadedItem)
+					// search by key - parent key
+					searchOpts = &ltngenginemodels.IndexOpts{
+						HasIdx:    true,
+						ParentKey: item.Key,
+					}
+					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+					assert.Error(t, err)
+					assert.Nil(t, loadedItem)
 
-						// search by index
-						searchOpts = &ltngenginemodels.IndexOpts{
-							HasIdx:       true,
-							ParentKey:    item.Key,
-							IndexingKeys: [][]byte{secondaryIndexBs},
-						}
-						loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-						assert.Error(t, err)
-						assert.Nil(t, loadedItem)
+					// search by index
+					searchOpts = &ltngenginemodels.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    item.Key,
+						IndexingKeys: [][]byte{secondaryIndexBs},
+					}
+					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
+					assert.Error(t, err)
+					assert.Nil(t, loadedItem)
+				}
+
+				{
+					// list items - default search
+					items, err := ltngEngine.ListItems(
+						ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+						&ltngenginemodels.IndexOpts{
+							IndexProperties: ltngenginemodels.IndexProperties{
+								ListSearchPattern: ltngenginemodels.Default,
+							},
+						},
+					)
+					assert.NoError(t, err)
+					assert.Len(t, items.Items, 0)
+
+					for _, item = range items.Items {
+						t.Log(string(item.Key), string(item.Value))
+					}
+
+					// list items - search for all
+					items, err = ltngEngine.ListItems(
+						ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+						&ltngenginemodels.IndexOpts{
+							IndexProperties: ltngenginemodels.IndexProperties{
+								ListSearchPattern: ltngenginemodels.All,
+							},
+						},
+					)
+					assert.NoError(t, err)
+					assert.Len(t, items.Items, 0)
+
+					for _, item = range items.Items {
+						t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
 				ltngEngine.close()
-				// time.Sleep(time.Second)
 			})
 
 			t.Run("standard", func(t *testing.T) {
@@ -422,23 +493,25 @@ func TestLTNGEngineFlow(t *testing.T) {
 					Name: "test-store",
 					Path: "test-path",
 				}
-				info, err := ltngEngine.CreateStore(ctx, dbInfo)
-				assert.NoError(t, err)
-				assert.NotNil(t, info)
+				{
+					info, err := ltngEngine.CreateStore(ctx, dbInfo)
+					assert.NoError(t, err)
+					assert.NotNil(t, info)
 
-				info, err = ltngEngine.LoadStore(ctx, dbInfo)
-				assert.NoError(t, err)
+					info, err = ltngEngine.LoadStore(ctx, dbInfo)
+					assert.NoError(t, err)
 
-				infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
-					PageID:   1,
-					PageSize: 5,
-				})
-				assert.NoError(t, err)
-				assert.Len(t, infos, 1)
-				t.Log(infos)
+					infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
+						PageID:   1,
+						PageSize: 5,
+					})
+					assert.NoError(t, err)
+					assert.Len(t, infos, 1)
+					t.Log(infos)
 
-				for _, info = range infos {
-					t.Log(info)
+					for _, info = range infos {
+						t.Log(info)
+					}
 				}
 
 				// #################################################################################### \\
@@ -559,6 +632,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 
 				deleteOpts := &ltngenginemodels.IndexOpts{
+					HasIdx: true,
 					IndexProperties: ltngenginemodels.IndexProperties{
 						IndexDeletionBehaviour: ltngenginemodels.Cascade,
 					},
@@ -626,6 +700,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
+
+				ltngEngine.close()
 			})
 
 			t.Run("detect last opened at difference after closing", func(t *testing.T) {
@@ -773,7 +849,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				ltngEngine.close()
+				err = ltngEngine.Restart(ctx)
+				require.NoError(t, err)
 
 				{
 					// search by key
@@ -850,6 +927,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 
 				deleteOpts := &ltngenginemodels.IndexOpts{
+					HasIdx: true,
 					IndexProperties: ltngenginemodels.IndexProperties{
 						IndexDeletionBehaviour: ltngenginemodels.Cascade,
 					},
@@ -927,23 +1005,25 @@ func TestLTNGEngineFlow(t *testing.T) {
 				Name: "test-store",
 				Path: "test-path",
 			}
-			info, err := ts.ltngEngine.CreateStore(ts.ctx, dbInfo)
-			assert.NoError(t, err)
-			assert.NotNil(t, info)
+			{
+				info, err := ts.ltngEngine.CreateStore(ts.ctx, dbInfo)
+				assert.NoError(t, err)
+				assert.NotNil(t, info)
 
-			info, err = ts.ltngEngine.LoadStore(ts.ctx, dbInfo)
-			assert.NoError(t, err)
+				info, err = ts.ltngEngine.LoadStore(ts.ctx, dbInfo)
+				assert.NoError(t, err)
 
-			infos, err := ts.ltngEngine.ListStores(ts.ctx, &ltngenginemodels.Pagination{
-				PageID:   1,
-				PageSize: 5,
-			})
-			assert.NoError(t, err)
-			assert.Len(t, infos, 1)
-			t.Log(infos)
+				infos, err := ts.ltngEngine.ListStores(ts.ctx, &ltngenginemodels.Pagination{
+					PageID:   1,
+					PageSize: 5,
+				})
+				assert.NoError(t, err)
+				assert.Len(t, infos, 1)
+				t.Log(infos)
 
-			for _, info = range infos {
-				t.Log(info)
+				for _, info = range infos {
+					t.Log(info)
+				}
 			}
 
 			testCases := []struct {
@@ -973,6 +1053,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 			databaseMetaInfo := dbInfo.ManagerStoreMetaInfo()
 
+			// create ops
 			for _, tc := range testCases {
 				userData := tc.userData
 				t.Log(userData.Email)
@@ -984,44 +1065,44 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    bvs.item.Key,
 					IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
 				}
-				_, err = ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
+				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
 				assert.NoError(t, err)
 			}
 
-			//// list ops
-			//{
-			//	// list items - default search
-			//	items, err := ts.ltngEngine.ListItems(
-			//		ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-			//		&ltngenginemodels.IndexOpts{
-			//			IndexProperties: ltngenginemodels.IndexProperties{
-			//				ListSearchPattern: ltngenginemodels.Default,
-			//			},
-			//		},
-			//	)
-			//	assert.NoError(t, err)
-			//	assert.Len(t, items.Items, 2)
-			//
-			//	for _, item := range items.Items {
-			//		t.Log(string(item.Key), string(item.Value))
-			//	}
-			//
-			//	// list items - search for all
-			//	items, err = ts.ltngEngine.ListItems(
-			//		ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-			//		&ltngenginemodels.IndexOpts{
-			//			IndexProperties: ltngenginemodels.IndexProperties{
-			//				ListSearchPattern: ltngenginemodels.All,
-			//			},
-			//		},
-			//	)
-			//	assert.NoError(t, err)
-			//	assert.Len(t, items.Items, 2)
-			//
-			//	for _, item := range items.Items {
-			//		t.Log(string(item.Key), string(item.Value))
-			//	}
-			//}
+			// list ops
+			{
+				// list items - default search
+				items, err := ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							ListSearchPattern: ltngenginemodels.Default,
+						},
+					},
+				)
+				assert.NoError(t, err)
+				assert.Len(t, items.Items, 2)
+
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
+				}
+
+				// list items - search for all
+				items, err = ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							ListSearchPattern: ltngenginemodels.All,
+						},
+					},
+				)
+				assert.NoError(t, err)
+				assert.Len(t, items.Items, 2)
+
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
+				}
+			}
 
 			// search one by one
 			for _, tc := range testCases {
@@ -1071,11 +1152,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 				bvs := getValues(t, ts, tc.userData)
 
 				deleteOpts := &ltngenginemodels.IndexOpts{
+					HasIdx: true,
 					IndexProperties: ltngenginemodels.IndexProperties{
 						IndexDeletionBehaviour: ltngenginemodels.Cascade,
 					},
 				}
-				_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
+				_, err := ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
 				assert.NoError(t, err)
 
 				// search by key
@@ -1084,60 +1166,60 @@ func TestLTNGEngineFlow(t *testing.T) {
 				assert.Error(t, err)
 				assert.Nil(t, loadedItem)
 
-				//// search by key - parent key
-				//searchOpts = &ltngenginemodels.IndexOpts{
-				//	HasIdx:    true,
-				//	ParentKey: bvs.item.Key,
-				//}
-				//loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				//assert.Error(t, err)
-				//assert.Nil(t, loadedItem)
-				//
-				//// search by index
-				//searchOpts = &ltngenginemodels.IndexOpts{
-				//	HasIdx:       true,
-				//	ParentKey:    bvs.item.Key,
-				//	IndexingKeys: [][]byte{bvs.secondaryIndexBs},
-				//}
-				//loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				//assert.Error(t, err)
-				//assert.Nil(t, loadedItem)
+				// search by key - parent key
+				searchOpts = &ltngenginemodels.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.item.Key,
+				}
+				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				assert.Error(t, err)
+				assert.Nil(t, loadedItem)
+
+				// search by index
+				searchOpts = &ltngenginemodels.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.item.Key,
+					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
+				}
+				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				assert.Error(t, err)
+				assert.Nil(t, loadedItem)
 			}
-			//
-			//// list ops
-			//{
-			//	// list items - default search
-			//	items, err := ts.ltngEngine.ListItems(
-			//		ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-			//		&ltngenginemodels.IndexOpts{
-			//			IndexProperties: ltngenginemodels.IndexProperties{
-			//				ListSearchPattern: ltngenginemodels.Default,
-			//			},
-			//		},
-			//	)
-			//	assert.NoError(t, err)
-			//	assert.Len(t, items.Items, 0)
-			//
-			//	for _, item := range items.Items {
-			//		t.Log(string(item.Key), string(item.Value))
-			//	}
-			//
-			//	// list items - search for all
-			//	items, err = ts.ltngEngine.ListItems(
-			//		ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-			//		&ltngenginemodels.IndexOpts{
-			//			IndexProperties: ltngenginemodels.IndexProperties{
-			//				ListSearchPattern: ltngenginemodels.All,
-			//			},
-			//		},
-			//	)
-			//	assert.NoError(t, err)
-			//	assert.Len(t, items.Items, 0)
-			//
-			//	for _, item := range items.Items {
-			//		t.Log(string(item.Key), string(item.Value))
-			//	}
-			//}
+
+			// list ops
+			{
+				// list items - default search
+				items, err := ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							ListSearchPattern: ltngenginemodels.Default,
+						},
+					},
+				)
+				assert.NoError(t, err)
+				assert.Len(t, items.Items, 0)
+
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
+				}
+
+				// list items - search for all
+				items, err = ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							ListSearchPattern: ltngenginemodels.All,
+						},
+					},
+				)
+				assert.NoError(t, err)
+				assert.Len(t, items.Items, 0)
+
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
+				}
+			}
 
 			ts.ltngEngine.close()
 		})
@@ -1293,6 +1375,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				bvs := getValues(t, ts, tc.userData)
 
 				deleteOpts := &ltngenginemodels.IndexOpts{
+					HasIdx: true,
 					IndexProperties: ltngenginemodels.IndexProperties{
 						IndexDeletionBehaviour: ltngenginemodels.Cascade,
 					},

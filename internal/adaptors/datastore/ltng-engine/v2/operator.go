@@ -15,8 +15,6 @@ func (e *LTNGEngine) loadItem(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	//return e.caching.LoadItem(ctx, dbMetaInfo, item, opts)
-
 	strItemKey := hex.EncodeToString(item.Key)
 	lockKey := dbMetaInfo.LockName(strItemKey)
 	e.opMtx.Lock(lockKey, struct{}{})
@@ -42,36 +40,6 @@ func (e *LTNGEngine) loadItem(
 	default:
 		return e.straightSearch(ctx, opts, dbMetaInfo)
 	}
-
-	// return nil, fmt.Errorf("error item not found")
-
-	//strItemKey := hex.EncodeToString(item.Key)
-	//lockKey := dbMetaInfo.LockName(strItemKey)
-	//e.opMtx.Lock(lockKey, struct{}{})
-	//defer e.opMtx.Unlock(lockKey)
-	//
-	//if opts == nil {
-	//	return nil, nil
-	//}
-	//
-	//if i, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err == nil && i != nil {
-	//	return i, nil
-	//}
-	//
-	//if !opts.HasIdx {
-	//	return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, item, true)
-	//}
-	//
-	//switch opts.IndexProperties.IndexSearchPattern {
-	//case ltngenginemodels.AndComputational:
-	//	return e.andComputationalSearch(ctx, opts, dbMetaInfo)
-	//case ltngenginemodels.OrComputational:
-	//	return e.orComputationalSearch(ctx, opts, dbMetaInfo)
-	//case ltngenginemodels.One:
-	//	fallthrough
-	//default:
-	//	return e.straightSearch(ctx, opts, dbMetaInfo)
-	//}
 }
 
 func (e *LTNGEngine) createItem(
@@ -158,12 +126,13 @@ func (e *LTNGEngine) listItems(
 ) (*ltngenginemodels.ListItemsResult, error) {
 	relationalItemStore := dbMetaInfo.RelationalInfo()
 	lockKey := relationalItemStore.LockName(ltngenginemodels.RelationalDataStore)
-
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
-	if opts == nil {
-		return nil, nil
+	if i, err := e.memoryStore.ListItems(
+		ctx, dbMetaInfo, pagination, opts,
+	); err == nil && i != nil {
+		return i, nil
 	}
 
 	switch opts.IndexProperties.ListSearchPattern {

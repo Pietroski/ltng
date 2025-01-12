@@ -5,6 +5,7 @@ import (
 	"context"
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 	"golang.org/x/sys/unix"
 	"io"
 	"log"
@@ -399,4 +400,30 @@ func (fq *FileQueue) CheckAndClose() bool {
 	}
 
 	return false
+}
+
+func (fq *FileQueue) Init() error {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	if !rw.IsFileClosed(fq.file) {
+		return nil
+	}
+
+	file, err := os.OpenFile(fq.fullPath,
+		os.O_RDWR|os.O_CREATE|os.O_APPEND, dbFilePerm,
+	)
+	if err != nil {
+		return err
+	}
+	fq.file = file
+	fq.writer = bufio.NewWriter(fq.file)
+	fq.reader = bufio.NewReader(fq.file)
+
+	return nil
+}
+
+func (fq *FileQueue) Restart() error {
+	fq.CheckAndClose()
+	return fq.Init()
 }
