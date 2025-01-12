@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
@@ -31,29 +30,29 @@ func TestLTNGEngineFlow(t *testing.T) {
 					Name: "test-store",
 					Path: "test-path",
 				})
-				assert.NoError(t, err)
-				assert.NotNil(t, info)
+				require.NoError(t, err)
+				require.NotNil(t, info)
 				t.Log(info)
 
 				info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(info)
 
 				err = ltngEngine.DeleteStore(ctx, &ltngenginemodels.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
-				assert.Error(t, err)
-				assert.Nil(t, info)
+				require.Error(t, err)
+				require.Nil(t, info)
 				t.Log(info)
 			})
 
@@ -69,7 +68,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -77,7 +76,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -88,7 +87,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -96,8 +95,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						PageID:   1,
 						PageSize: 5,
 					})
-					assert.NoError(t, err)
-					assert.Len(t, infos, 1)
+					require.NoError(t, err)
+					require.Len(t, infos, 1)
 					t.Log(infos)
 
 					for _, info = range infos {
@@ -108,14 +107,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.Error(t, err)
-					assert.Nil(t, info)
+					require.Error(t, err)
+					require.Nil(t, info)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -133,7 +132,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -141,19 +140,19 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
 					err = ltngEngine.Restart(ctx)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					time.Sleep(1 * time.Second)
 
 					info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -161,8 +160,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						PageID:   1,
 						PageSize: 5,
 					})
-					assert.NoError(t, err)
-					assert.Len(t, infos, 1)
+					require.NoError(t, err)
+					require.Len(t, infos, 1)
 					t.Log(infos)
 
 					for _, info = range infos {
@@ -173,14 +172,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
-					assert.Error(t, err)
-					assert.Nil(t, info)
+					require.Error(t, err)
+					require.Nil(t, info)
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
@@ -199,21 +198,21 @@ func TestLTNGEngineFlow(t *testing.T) {
 				Name: "test-store",
 				Path: "test-path",
 			})
-			assert.NoError(t, err)
-			assert.NotNil(t, info)
+			require.NoError(t, err)
+			require.NotNil(t, info)
 
 			info, err = ltngEngine.CreateStore(ctx, &ltngenginemodels.StoreInfo{
 				Name: "test-another-store",
 				Path: "test-another-path",
 			})
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
 				PageID:   1,
 				PageSize: 5,
 			})
-			assert.NoError(t, err)
-			assert.Len(t, infos, 2)
+			require.NoError(t, err)
+			require.Len(t, infos, 2)
 			t.Log(infos)
 
 			for _, info = range infos {
@@ -224,25 +223,25 @@ func TestLTNGEngineFlow(t *testing.T) {
 				Name: "test-store",
 				Path: "test-path",
 			})
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			err = ltngEngine.DeleteStore(ctx, &ltngenginemodels.StoreInfo{
 				Name: "test-another-store",
 				Path: "test-another-path",
 			})
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			infos, err = ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
 				PageID:   1,
 				PageSize: 5,
 			})
-			assert.NoError(t, err)
-			assert.Len(t, infos, 0)
+			require.NoError(t, err)
+			require.Len(t, infos, 0)
 			t.Log(infos, err)
 
 			info, err = ltngEngine.LoadStore(ctx, ltngenginemodels.DBManagerStoreInfo.RelationalInfo())
-			assert.NoError(t, err)
-			assert.NotNil(t, info)
+			require.NoError(t, err)
+			require.NotNil(t, info)
 			t.Log(info)
 		})
 
@@ -256,7 +255,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				Name: "delete-inexistent-store",
 				Path: "delete-inexistent-path",
 			})
-			assert.Error(t, err)
+			require.Error(t, err)
 		})
 	})
 
@@ -273,18 +272,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 				{
 					info, err := ltngEngine.CreateStore(ctx, dbInfo)
-					assert.NoError(t, err)
-					assert.NotNil(t, info)
+					require.NoError(t, err)
+					require.NotNil(t, info)
 
 					info, err = ltngEngine.LoadStore(ctx, dbInfo)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
 						PageID:   1,
 						PageSize: 5,
 					})
-					assert.NoError(t, err)
-					assert.Len(t, infos, 1)
+					require.NoError(t, err)
+					require.Len(t, infos, 1)
 					t.Log(infos)
 
 					for _, info = range infos {
@@ -333,18 +332,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bsKey, secondaryIndexBs},
 				}
 				_, err = ltngEngine.CreateItem(ctx, databaseMetaInfo, item, createOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					var u user
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by key - parent key
@@ -353,11 +352,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by index
@@ -367,11 +366,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 				}
 
@@ -385,8 +384,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -401,8 +400,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -424,8 +423,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 
 					// search by key - parent key
 					searchOpts = &ltngenginemodels.IndexOpts{
@@ -433,8 +432,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 
 					// search by index
 					searchOpts = &ltngenginemodels.IndexOpts{
@@ -443,8 +442,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 				}
 
 				{
@@ -457,8 +456,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 0)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -473,8 +472,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 0)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -495,18 +494,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 				{
 					info, err := ltngEngine.CreateStore(ctx, dbInfo)
-					assert.NoError(t, err)
-					assert.NotNil(t, info)
+					require.NoError(t, err)
+					require.NotNil(t, info)
 
 					info, err = ltngEngine.LoadStore(ctx, dbInfo)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
 						PageID:   1,
 						PageSize: 5,
 					})
-					assert.NoError(t, err)
-					assert.Len(t, infos, 1)
+					require.NoError(t, err)
+					require.Len(t, infos, 1)
 					t.Log(infos)
 
 					for _, info = range infos {
@@ -555,18 +554,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bsKey, secondaryIndexBs},
 				}
 				_, err = ltngEngine.CreateItem(ctx, databaseMetaInfo, item, createOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					var u user
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by key - parent key
@@ -575,11 +574,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by index
@@ -589,11 +588,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 				}
 
@@ -607,8 +606,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -623,8 +622,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -638,14 +637,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 					},
 				}
 				_, err = ltngEngine.DeleteItem(ctx, databaseMetaInfo, item, deleteOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 
 					// search by key - parent key
 					searchOpts = &ltngenginemodels.IndexOpts{
@@ -653,8 +652,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 
 					// search by index
 					searchOpts = &ltngenginemodels.IndexOpts{
@@ -663,8 +662,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 				}
 
 				{
@@ -677,8 +676,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 0)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -693,8 +692,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 0)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -714,18 +713,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					Path: "test-path",
 				}
 				info, err := ltngEngine.CreateStore(ctx, dbInfo)
-				assert.NoError(t, err)
-				assert.NotNil(t, info)
+				require.NoError(t, err)
+				require.NotNil(t, info)
 
 				info, err = ltngEngine.LoadStore(ctx, dbInfo)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				infos, err := ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
 					PageID:   1,
 					PageSize: 5,
 				})
-				assert.NoError(t, err)
-				assert.Len(t, infos, 1)
+				require.NoError(t, err)
+				require.Len(t, infos, 1)
 				t.Log(infos)
 
 				for _, info = range infos {
@@ -773,18 +772,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bsKey, secondaryIndexBs},
 				}
 				_, err = ltngEngine.CreateItem(ctx, databaseMetaInfo, item, createOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					var u user
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by key - parent key
@@ -793,11 +792,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by index
@@ -807,11 +806,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 				}
 
@@ -825,8 +824,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -841,8 +840,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -856,12 +855,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					var u user
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by key - parent key
@@ -870,11 +869,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 
 					// search by index
@@ -884,11 +883,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.NoError(t, err)
-					assert.NotNil(t, loadedItem)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
 
 					err = ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					t.Log(u)
 				}
 
@@ -902,8 +901,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -918,8 +917,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 1)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -933,14 +932,16 @@ func TestLTNGEngineFlow(t *testing.T) {
 					},
 				}
 				_, err = ltngEngine.DeleteItem(ctx, databaseMetaInfo, item, deleteOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				{
+					time.Sleep(time.Millisecond * 500)
+
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 
 					// search by key - parent key
 					searchOpts = &ltngenginemodels.IndexOpts{
@@ -948,8 +949,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey: item.Key,
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 
 					// search by index
 					searchOpts = &ltngenginemodels.IndexOpts{
@@ -958,8 +959,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexingKeys: [][]byte{secondaryIndexBs},
 					}
 					loadedItem, err = ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
-					assert.Error(t, err)
-					assert.Nil(t, loadedItem)
+					require.Error(t, err)
+					require.Nil(t, loadedItem)
 				}
 
 				{
@@ -972,8 +973,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 0)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -988,8 +989,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 							},
 						},
 					)
-					assert.NoError(t, err)
-					assert.Len(t, items.Items, 0)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
 						t.Log(string(item.Key), string(item.Value))
@@ -1007,18 +1008,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 			}
 			{
 				info, err := ts.ltngEngine.CreateStore(ts.ctx, dbInfo)
-				assert.NoError(t, err)
-				assert.NotNil(t, info)
+				require.NoError(t, err)
+				require.NotNil(t, info)
 
 				info, err = ts.ltngEngine.LoadStore(ts.ctx, dbInfo)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				infos, err := ts.ltngEngine.ListStores(ts.ctx, &ltngenginemodels.Pagination{
 					PageID:   1,
 					PageSize: 5,
 				})
-				assert.NoError(t, err)
-				assert.Len(t, infos, 1)
+				require.NoError(t, err)
+				require.Len(t, infos, 1)
 				t.Log(infos)
 
 				for _, info = range infos {
@@ -1066,7 +1067,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
 				}
 				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// list ops
@@ -1080,8 +1081,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 2)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 2)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1096,8 +1097,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 2)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 2)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1111,12 +1112,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 				// search by key
 				searchOpts := &ltngenginemodels.IndexOpts{}
 				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.NoError(t, err)
-				assert.NotNil(t, loadedItem)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
 
 				var u user
 				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(u)
 
 				// search by key - parent key
@@ -1125,11 +1126,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey: bvs.item.Key,
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.NoError(t, err)
-				assert.NotNil(t, loadedItem)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
 
 				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(u)
 
 				// search by index
@@ -1139,11 +1140,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.NoError(t, err)
-				assert.NotNil(t, loadedItem)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
 
 				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(u)
 			}
 
@@ -1158,13 +1159,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 					},
 				}
 				_, err := ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				// search by key
 				searchOpts := &ltngenginemodels.IndexOpts{}
 				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 
 				// search by key - parent key
 				searchOpts = &ltngenginemodels.IndexOpts{
@@ -1172,8 +1173,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey: bvs.item.Key,
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 
 				// search by index
 				searchOpts = &ltngenginemodels.IndexOpts{
@@ -1182,8 +1183,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 			}
 
 			// list ops
@@ -1197,8 +1198,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 0)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1213,8 +1214,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 0)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1232,18 +1233,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 				Path: "test-path",
 			}
 			info, err := ts.ltngEngine.CreateStore(ts.ctx, dbInfo)
-			assert.NoError(t, err)
-			assert.NotNil(t, info)
+			require.NoError(t, err)
+			require.NotNil(t, info)
 
 			info, err = ts.ltngEngine.LoadStore(ts.ctx, dbInfo)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			infos, err := ts.ltngEngine.ListStores(ts.ctx, &ltngenginemodels.Pagination{
 				PageID:   1,
 				PageSize: 5,
 			})
-			assert.NoError(t, err)
-			assert.Len(t, infos, 1)
+			require.NoError(t, err)
+			require.Len(t, infos, 1)
 			t.Log(infos)
 
 			for _, info = range infos {
@@ -1289,7 +1290,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
 				}
 				_, err = ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// list ops
@@ -1303,8 +1304,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 2)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 2)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1319,8 +1320,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 2)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 2)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1334,12 +1335,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 				// search by key
 				searchOpts := &ltngenginemodels.IndexOpts{}
 				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.NoError(t, err)
-				assert.NotNil(t, loadedItem)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
 
 				var u user
 				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(u)
 
 				// search by key - parent key
@@ -1348,11 +1349,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey: bvs.item.Key,
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.NoError(t, err)
-				assert.NotNil(t, loadedItem)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
 
 				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(u)
 
 				// search by index
@@ -1362,11 +1363,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.NoError(t, err)
-				assert.NotNil(t, loadedItem)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
 
 				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				t.Log(u)
 			}
 
@@ -1381,13 +1382,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 					},
 				}
 				_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				// search by key
 				searchOpts := &ltngenginemodels.IndexOpts{}
 				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 
 				// search by key - parent key
 				searchOpts = &ltngenginemodels.IndexOpts{
@@ -1395,8 +1396,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey: bvs.item.Key,
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 
 				// search by index
 				searchOpts = &ltngenginemodels.IndexOpts{
@@ -1405,8 +1406,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 			}
 
 			// list ops
@@ -1420,8 +1421,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 0)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1436,8 +1437,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 0)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1471,8 +1472,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 				// search by key
 				searchOpts := &ltngenginemodels.IndexOpts{}
 				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 
 				// search by key - parent key
 				searchOpts = &ltngenginemodels.IndexOpts{
@@ -1480,8 +1481,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey: bvs.item.Key,
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 
 				// search by index
 				searchOpts = &ltngenginemodels.IndexOpts{
@@ -1490,8 +1491,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
 				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				assert.Error(t, err)
-				assert.Nil(t, loadedItem)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
 			}
 
 			{
@@ -1504,8 +1505,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 0)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1520,8 +1521,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						},
 					},
 				)
-				assert.NoError(t, err)
-				assert.Len(t, items.Items, 0)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
 				for _, item := range items.Items {
 					t.Log(string(item.Key), string(item.Value))
@@ -1546,7 +1547,7 @@ func TestReadFromFQ(t *testing.T) {
 		}
 
 		err = fq.Pop(ctx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		counter++
 	}
@@ -1584,7 +1585,7 @@ func assertLOFromHistory(t *testing.T, history []*ltngenginemodels.StoreInfo) {
 			differentLastOpenedCheck = true
 		}
 	}
-	assert.True(t, differentLastOpenedCheck)
+	require.True(t, differentLastOpenedCheck)
 }
 
 type (
@@ -1664,18 +1665,18 @@ func createTestStore(t *testing.T, ctx context.Context, ts *testSuite) *ltngengi
 		Path: "test-path",
 	}
 	info, err := ts.ltngEngine.CreateStore(ctx, dbInfo)
-	assert.NoError(t, err)
-	assert.NotNil(t, info)
+	require.NoError(t, err)
+	require.NotNil(t, info)
 
 	info, err = ts.ltngEngine.LoadStore(ctx, dbInfo)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	infos, err := ts.ltngEngine.ListStores(ctx, &ltngenginemodels.Pagination{
 		PageID:   1,
 		PageSize: 5,
 	})
-	assert.NoError(t, err)
-	assert.Len(t, infos, 1)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
 	t.Log(infos)
 
 	for _, info = range infos {

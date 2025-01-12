@@ -17,6 +17,7 @@ import (
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
 func newLTNGEngine(
@@ -31,15 +32,17 @@ func newLTNGEngine(
 	}
 
 	engine := &LTNGEngine{
-		opMtx:            lock.NewEngineLock(),
-		mtx:              new(sync.Mutex),
-		fq:               fq,
-		fileManager:      rw.NewFileManager(ctx),
-		memoryStore:      memorystorev1.New(ctx),
-		caching:          concurrentv1.New(ctx),
-		storeFileMapping: make(map[string]*ltngenginemodels.FileInfo),
-		itemFileMapping:  make(map[string]*ltngenginemodels.FileInfo),
-		serializer:       serializer.NewRawBinarySerializer(),
+		opMtx:       lock.NewEngineLock(),
+		mtx:         new(sync.RWMutex),
+		fq:          fq,
+		fileManager: rw.NewFileManager(ctx),
+		memoryStore: memorystorev1.New(ctx),
+		caching:     concurrentv1.New(ctx),
+		// make(map[string]*ltngenginemodels.FileInfo),
+		storeFileMapping: safe.NewGenericMap[*ltngenginemodels.FileInfo](),
+		// make(map[string]*ltngenginemodels.FileInfo),
+		itemFileMapping: safe.NewGenericMap[*ltngenginemodels.FileInfo](),
+		serializer:      serializer.NewRawBinarySerializer(),
 	}
 	options.ApplyOptions(engine, opts...)
 
@@ -84,6 +87,17 @@ func (e *LTNGEngine) close() {
 }
 
 func (e *LTNGEngine) closeStores() {
+	e.storeFileMapping.RangeAndDelete(
+		func(key string, value *ltngenginemodels.FileInfo) bool {
+			if !rw.IsFileClosed(value.File) {
+				if err := value.File.Close(); err != nil {
+					log.Printf("error closing file from %s store: %v\n", key, err)
+				}
+			}
+
+			return true
+		})
+
 	for k, v := range e.storeFileMapping {
 		e.opMtx.Lock(k, v.FileData.Header.StoreInfo)
 		if !rw.IsFileClosed(v.File) {
@@ -98,32 +112,21 @@ func (e *LTNGEngine) closeStores() {
 }
 
 func (e *LTNGEngine) closeItems() {
-	//isEmpty, err := e.fq.IsEmpty()
-	//if err == nil {
-	//	for !isEmpty {
-	//		isEmpty, err = e.fq.IsEmpty()
-	//		if err != nil {
-	//			break
-	//		}
-	//	}
-	//}
-
 	for !e.fq.CheckAndClose() {
 		runtime.Gosched()
 	}
 	for e.opSaga.pidRegister.CountNumber() != 0 {
 		runtime.Gosched()
 	}
-	//time.Sleep(time.Second)
-	//time.Sleep(500 * time.Millisecond)
 
-	//for k, v := range e.itemFileMapping {
-	//	e.opMtx.Lock(k, v.FileData.Header.StoreInfo)
-	// // TODO: check if it is not already closed
-	//	if err := v.File.Close(); err != nil {
-	//		log.Printf("error closing file from %s item store: %v\n", k, err)
-	//	}
-	//	delete(e.itemFileMapping, k)
-	//	e.opMtx.Unlock(k)
-	//}
+	for k, v := range e.itemFileMapping {
+		e.opMtx.Lock(k, struct{}{})
+		if !rw.IsFileClosed(v.File) {
+			if err := v.File.Close(); err != nil {
+				log.Printf("error closing file from %s item store: %v\n", k, err)
+			}
+		}
+		delete(e.itemFileMapping, k)
+		e.opMtx.Unlock(k)
+	}
 }

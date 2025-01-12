@@ -889,11 +889,8 @@ func (e *LTNGEngine) upsertRelationalData(
 	fileData *ltngenginemodels.FileData,
 	fi *ltngenginemodels.FileInfo,
 ) (err error) {
-	strKey := hex.EncodeToString(fileData.Key)
 	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
 	relationalPath := relationalInfo.Path
-	tmpFileInfo := fi.FileData.Header.StoreInfo.TmpRelationalInfo()
-	tmpFilePath := tmpFileInfo.Path
 	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
 
 	e.opMtx.Lock(relationalLockKey, struct{}{})
@@ -927,6 +924,9 @@ func (e *LTNGEngine) upsertRelationalData(
 	}
 
 	if !found {
+		if _, err = fi.File.Seek(0, 2); err != nil {
+			return fmt.Errorf("error seeking to file: %w", err)
+		}
 		if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, fi.File, fileData); err != nil {
 			return fmt.Errorf("error writing info into file %s: %w", fi.File.Name(), err)
 		}
@@ -939,14 +939,15 @@ func (e *LTNGEngine) upsertRelationalData(
 	}
 
 	var tmpFile *os.File
-	copyToTmpFile := func() error {
-		if err = os.MkdirAll(ltngenginemodels.GetDataPathWithSep(tmpFilePath), os.ModePerm); err != nil {
-			return fmt.Errorf("error creating tmp file directory: %w", err)
+	{
+		relationalTmpPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
+		if err = os.MkdirAll(relationalTmpPath, os.ModePerm); err != nil {
+			return fmt.Errorf("error creating tmp delete store item directory: %v", err)
 		}
 
 		tmpFile, err = os.OpenFile(
-			ltngenginemodels.GetDataFilepath(tmpFilePath, ltngenginemodels.RelationalDataStore),
-			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
+			ltngenginemodels.RawPathWithSepForFile(relationalTmpPath, ltngenginemodels.RelationalDataStore),
+			os.O_RDWR|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
 		)
 		if err != nil {
 			return err
@@ -969,80 +970,24 @@ func (e *LTNGEngine) upsertRelationalData(
 			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
 		}
 
-		if err = tmpFile.Close(); err != nil {
+		if err = tmpFile.Sync(); err != nil {
 			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
 		}
 
-		return nil
-	}
-	discardTmpFile := func() error {
-		if _, err = fi.File.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
+		if err = tmpFile.Close(); err != nil {
+			return fmt.Errorf("failed to close file - %s | err: %v", tmpFile.Name(), err)
 		}
 
-		if err = os.Remove(ltngenginemodels.GetDataFilepath(tmpFilePath, strKey)); err != nil {
-			return fmt.Errorf("error removing unecessary tmp %s relational file: %w", fi.FileData.Header.StoreInfo.Name, err)
+		if err = fi.File.Close(); err != nil {
+			return fmt.Errorf("failed to close file - %s | err: %v", tmpFile.Name(), err)
 		}
 
-		return nil
-	}
-
-	removeMainFile := func() error {
-		if err = os.Remove(ltngenginemodels.GetDataFilepath(relationalPath, strKey)); err != nil {
-			return fmt.Errorf("error removing %s relational item's file: %w", relationalPath, err)
-		}
-
-		return nil
-	}
-	reopenMainFile := func() error {
-		fi, err = e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-		if err != nil {
-			return fmt.Errorf(
-				"error re-opening %s item relational store: %w",
-				relationalPath, err)
-		}
-
-		e.itemFileMapping[relationalLockKey] = fi
-
-		return nil
-	}
-
-	operations := []*lo.Operation{
-		{
-			Action: &lo.Action{
-				Act:         copyToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: discardTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         removeMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: reopenMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-	}
-	if err = lo.New(operations...).Operate(); err != nil {
-		return err
-	}
-
-	{ // renaming tmp file
 		if err = os.Rename(
-			ltngenginemodels.GetDataFilepath(tmpFilePath, ltngenginemodels.RelationalDataStore),
+			ltngenginemodels.RawPathWithSepForFile(relationalTmpPath, ltngenginemodels.RelationalDataStore),
 			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore),
 		); err != nil {
 			return fmt.Errorf("error renaming tmp file: %w", err)
 		}
-
-		// TODO: log error
-		_ = os.RemoveAll(ltngenginemodels.GetDataPathWithSep(tmpFilePath))
 
 		var file *os.File
 		file, err = e.fileManager.OpenFile(ctx,
@@ -1051,10 +996,8 @@ func (e *LTNGEngine) upsertRelationalData(
 			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
 		}
 
-		if _, ok := e.itemFileMapping[relationalLockKey]; !ok {
-			e.itemFileMapping[relationalLockKey] = fi
-		}
 		fi.File = file
+		e.itemFileMapping[relationalLockKey] = fi
 		e.itemFileMapping[relationalLockKey].File = file
 	}
 
@@ -1076,7 +1019,6 @@ func (e *LTNGEngine) deleteRelationalData(
 	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
 	relationalPath := relationalInfo.Path
 	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
-	tmpFilePath := tmpDelPaths.relationalTmpDelPath
 
 	e.opMtx.Lock(relationalLockKey, struct{}{})
 	defer e.opMtx.Unlock(relationalLockKey)
@@ -1118,6 +1060,7 @@ func (e *LTNGEngine) deleteRelationalData(
 
 	var tmpFile *os.File
 	{
+		tmpFilePath := tmpDelPaths.relationalTmpDelPath
 		tmpFile, err = os.OpenFile(
 			ltngenginemodels.RawPathWithSepForFile(tmpFilePath, ltngenginemodels.RelationalDataStore),
 			os.O_RDWR|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,

@@ -9,6 +9,7 @@ import (
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
 type (
@@ -411,6 +412,7 @@ func (s *deleteCascadeSaga) indexRollback(
 func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel {
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+		lockStrKey := itemInfoData.DBMetaInfo.LockName(strItemKey)
 		if _, err := execx.MvFileExec(itemInfoData.Ctx,
 			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 			ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.tmpDelPath, strItemKey),
@@ -420,12 +422,15 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(_ context.Context) {
 			return
 		}
 
-		fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping[itemInfoData.DBMetaInfo.LockName(strItemKey)]
+		s.deleteSaga.opSaga.e.opMtx.Lock(lockStrKey, struct{}{})
+		fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping[lockStrKey]
 		if ok {
-			// TODO:  isFileClosed?
-			_ = fileStats.File.Close()
+			if !rw.IsFileClosed(fileStats.File) {
+				_ = fileStats.File.Close()
+			}
 		}
-		delete(s.deleteSaga.opSaga.e.itemFileMapping, itemInfoData.DBMetaInfo.LockName(strItemKey))
+		delete(s.deleteSaga.opSaga.e.itemFileMapping, lockStrKey)
+		s.deleteSaga.opSaga.e.opMtx.Unlock(lockStrKey)
 
 		itemInfoData.RespSignal <- nil
 	}
@@ -452,12 +457,16 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel {
 		for _, item := range itemInfoData.IndexList {
 			strItemKey := hex.EncodeToString(item.Value)
+			lockStrKey := itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)
 
+			s.deleteSaga.opSaga.e.opMtx.Lock(lockStrKey, struct{}{})
 			fileStats, ok := s.deleteSaga.opSaga.e.
-				itemFileMapping[itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)]
+				itemFileMapping[lockStrKey]
+			s.deleteSaga.opSaga.e.opMtx.Unlock(lockStrKey)
 			if ok {
-				// TODO:  isFileClosed?
-				_ = fileStats.File.Close()
+				if !rw.IsFileClosed(fileStats.File) {
+					_ = fileStats.File.Close()
+				}
 			}
 
 			if _, err := execx.MvFileExec(itemInfoData.Ctx,
@@ -469,14 +478,9 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 				break
 			}
 
-			//fileStats, ok := s.deleteSaga.opSaga.e.
-			//	itemFileMapping[itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)]
-			//if ok {
-			//	// TODO:  isFileClosed?
-			//	_ = fileStats.File.Close()
-			//}
-			delete(s.deleteSaga.opSaga.e.itemFileMapping,
-				itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey))
+			s.deleteSaga.opSaga.e.opMtx.Lock(lockStrKey, struct{}{})
+			delete(s.deleteSaga.opSaga.e.itemFileMapping, lockStrKey)
+			s.deleteSaga.opSaga.e.opMtx.Unlock(lockStrKey)
 		}
 
 		itemInfoData.RespSignal <- nil

@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 	"sync"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
@@ -19,7 +20,7 @@ import (
 type (
 	LTNGEngine struct {
 		opMtx *lock.EngineLock
-		mtx   *sync.Mutex
+		mtx   *sync.RWMutex
 
 		cache       go_cache.Cacher
 		memoryStore *memorystorev1.LTNGCacheEngine
@@ -31,8 +32,10 @@ type (
 		opSaga *opSaga
 		fq     *filequeuev1.FileQueue
 
-		storeFileMapping map[string]*ltngenginemodels.FileInfo
-		itemFileMapping  map[string]*ltngenginemodels.FileInfo
+		//storeFileMapping map[string]*ltngenginemodels.FileInfo
+		//itemFileMapping  map[string]*ltngenginemodels.FileInfo
+		storeFileMapping *safe.GenericMap[*ltngenginemodels.FileInfo]
+		itemFileMapping  *safe.GenericMap[*ltngenginemodels.FileInfo]
 	}
 )
 
