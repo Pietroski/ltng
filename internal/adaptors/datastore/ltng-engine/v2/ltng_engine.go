@@ -10,32 +10,24 @@ import (
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
-	concurrentv1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1/concurrent"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
-	go_cache "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/cache"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
 type (
 	LTNGEngine struct {
-		opMtx *lock.EngineLock
-		mtx   *sync.RWMutex
-
-		cache       go_cache.Cacher
-		memoryStore *memorystorev1.LTNGCacheEngine
-		caching     *concurrentv1.LTNGCacheEngine
-
+		opMtx       *lock.EngineLock
+		mtx         *sync.RWMutex
+		opSaga      *opSaga
 		serializer  serializer_models.Serializer
+		memoryStore *memorystorev1.LTNGCacheEngine
 		fileManager *rw.FileManager
+		fq          *filequeuev1.FileQueue
 
-		opSaga *opSaga
-		fq     *filequeuev1.FileQueue
-
-		//storeFileMapping map[string]*ltngenginemodels.FileInfo
-		//itemFileMapping  map[string]*ltngenginemodels.FileInfo
-		storeFileMapping *safe.GenericMap[*ltngenginemodels.FileInfo]
-		itemFileMapping  *safe.GenericMap[*ltngenginemodels.FileInfo]
+		storeFileMapping       *safe.GenericMap[*ltngenginemodels.FileInfo]
+		itemFileMapping        *safe.GenericMap[*ltngenginemodels.FileInfo]
+		markedAsDeletedMapping *safe.GenericMap[struct{}]
 	}
 )
 

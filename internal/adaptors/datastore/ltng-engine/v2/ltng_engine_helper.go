@@ -13,7 +13,6 @@ import (
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
-	concurrentv1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1/concurrent"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
@@ -32,17 +31,15 @@ func newLTNGEngine(
 	}
 
 	engine := &LTNGEngine{
-		opMtx:       lock.NewEngineLock(),
-		mtx:         new(sync.RWMutex),
-		fq:          fq,
-		fileManager: rw.NewFileManager(ctx),
-		memoryStore: memorystorev1.New(ctx),
-		caching:     concurrentv1.New(ctx),
-		// make(map[string]*ltngenginemodels.FileInfo),
-		storeFileMapping: safe.NewGenericMap[*ltngenginemodels.FileInfo](),
-		// make(map[string]*ltngenginemodels.FileInfo),
-		itemFileMapping: safe.NewGenericMap[*ltngenginemodels.FileInfo](),
-		serializer:      serializer.NewRawBinarySerializer(),
+		opMtx:                  lock.NewEngineLock(),
+		mtx:                    new(sync.RWMutex),
+		fq:                     fq,
+		fileManager:            rw.NewFileManager(ctx),
+		memoryStore:            memorystorev1.New(ctx),
+		storeFileMapping:       safe.NewGenericMap[*ltngenginemodels.FileInfo](),
+		itemFileMapping:        safe.NewGenericMap[*ltngenginemodels.FileInfo](),
+		markedAsDeletedMapping: safe.NewGenericMap[struct{}](),
+		serializer:             serializer.NewRawBinarySerializer(),
 	}
 	options.ApplyOptions(engine, opts...)
 
@@ -97,18 +94,6 @@ func (e *LTNGEngine) closeStores() {
 
 			return true
 		})
-
-	for k, v := range e.storeFileMapping {
-		e.opMtx.Lock(k, v.FileData.Header.StoreInfo)
-		if !rw.IsFileClosed(v.File) {
-			if err := v.File.Close(); err != nil {
-				log.Printf("error closing file from %s store: %v\n", k, err)
-			}
-		}
-
-		delete(e.storeFileMapping, k)
-		e.opMtx.Unlock(k)
-	}
 }
 
 func (e *LTNGEngine) closeItems() {
@@ -119,14 +104,13 @@ func (e *LTNGEngine) closeItems() {
 		runtime.Gosched()
 	}
 
-	for k, v := range e.itemFileMapping {
-		e.opMtx.Lock(k, struct{}{})
-		if !rw.IsFileClosed(v.File) {
-			if err := v.File.Close(); err != nil {
-				log.Printf("error closing file from %s item store: %v\n", k, err)
+	e.itemFileMapping.RangeAndDelete(func(key string, value *ltngenginemodels.FileInfo) bool {
+		if !rw.IsFileClosed(value.File) {
+			if err := value.File.Close(); err != nil {
+				log.Printf("error closing file from %s item store: %v\n", key, err)
 			}
 		}
-		delete(e.itemFileMapping, k)
-		e.opMtx.Unlock(k)
-	}
+
+		return true
+	})
 }

@@ -20,6 +20,10 @@ func (e *LTNGEngine) loadItem(
 	e.opMtx.Lock(lockKey, struct{}{})
 	defer e.opMtx.Unlock(lockKey)
 
+	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
+		return nil, fmt.Errorf("item %s is marked as deleted", item.Key)
+	}
+
 	if i, err := e.memoryStore.LoadItem(
 		ctx, dbMetaInfo, item, opts,
 	); err == nil && i != nil {
@@ -113,6 +117,7 @@ func (e *LTNGEngine) deleteItem(
 		return nil, err
 	}
 	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
+	e.markedAsDeletedMapping.Set(dbMetaInfo.LockName(hex.EncodeToString(item.Key)), struct{}{})
 	_, _ = e.memoryStore.DeleteItem(ctx, dbMetaInfo, item, opts)
 
 	return item, nil

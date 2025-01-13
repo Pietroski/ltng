@@ -38,7 +38,7 @@ func (e *LTNGEngine) createStore(
 			return fmt.Errorf("error creating %s store stats: %v", info.Name, err)
 		}
 		store = fi.FileData.Header.StoreInfo
-		e.storeFileMapping[info.Name] = fi
+		e.storeFileMapping.Set(info.Name, fi)
 
 		return nil
 	}
@@ -216,13 +216,13 @@ func (e *LTNGEngine) deleteStore(
 	e.opMtx.Lock(info.Name, struct{}{})
 	defer e.opMtx.Unlock(info.Name)
 
-	fileStats, ok := e.storeFileMapping[info.Name]
+	fileStats, ok := e.storeFileMapping.Get(info.Name)
 	if ok {
 		_ = fileStats.File.Close()
 	}
 
-	delete(e.storeFileMapping, info.Name)
-	delete(e.storeFileMapping, info.RelationalInfo().Name)
+	e.storeFileMapping.Delete(info.Name)
+	e.storeFileMapping.Delete(info.RelationalInfo().Name)
 
 	// create temporary deletion stats directory
 	if err := os.MkdirAll(

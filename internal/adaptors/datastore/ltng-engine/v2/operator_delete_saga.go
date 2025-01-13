@@ -422,15 +422,13 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(_ context.Context) {
 			return
 		}
 
-		s.deleteSaga.opSaga.e.opMtx.Lock(lockStrKey, struct{}{})
-		fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping[lockStrKey]
+		fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping.Get(lockStrKey)
 		if ok {
 			if !rw.IsFileClosed(fileStats.File) {
 				_ = fileStats.File.Close()
 			}
 		}
-		delete(s.deleteSaga.opSaga.e.itemFileMapping, lockStrKey)
-		s.deleteSaga.opSaga.e.opMtx.Unlock(lockStrKey)
+		s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
 
 		itemInfoData.RespSignal <- nil
 	}
@@ -459,10 +457,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 			strItemKey := hex.EncodeToString(item.Value)
 			lockStrKey := itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)
 
-			s.deleteSaga.opSaga.e.opMtx.Lock(lockStrKey, struct{}{})
-			fileStats, ok := s.deleteSaga.opSaga.e.
-				itemFileMapping[lockStrKey]
-			s.deleteSaga.opSaga.e.opMtx.Unlock(lockStrKey)
+			fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping.Get(lockStrKey)
 			if ok {
 				if !rw.IsFileClosed(fileStats.File) {
 					_ = fileStats.File.Close()
@@ -478,9 +473,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 				break
 			}
 
-			s.deleteSaga.opSaga.e.opMtx.Lock(lockStrKey, struct{}{})
-			delete(s.deleteSaga.opSaga.e.itemFileMapping, lockStrKey)
-			s.deleteSaga.opSaga.e.opMtx.Unlock(lockStrKey)
+			s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
 		}
 
 		itemInfoData.RespSignal <- nil
@@ -519,13 +512,12 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Con
 		}
 
 		fileStats, ok := s.deleteSaga.opSaga.e.
-			itemFileMapping[itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey)]
+			itemFileMapping.Get(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
 		if ok {
 			// TODO:  isFileClosed?
 			_ = fileStats.File.Close()
 		}
-		delete(s.deleteSaga.opSaga.e.itemFileMapping,
-			itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
+		s.deleteSaga.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
 
 		itemInfoData.RespSignal <- nil
 	}

@@ -50,7 +50,7 @@ func (e *LTNGEngine) createRelationalItemStore(
 		HeaderSize: uint32(len(bs)),
 		DataSize:   uint32(len(fileData.Data)),
 	}
-	e.itemFileMapping[info.RelationalInfo().LockName(ltngenginemodels.RelationalDataStore)] = fi
+	e.itemFileMapping.Set(info.RelationalInfo().LockName(ltngenginemodels.RelationalDataStore), fi)
 
 	return fi, nil
 }
@@ -64,14 +64,14 @@ func (e *LTNGEngine) loadItemFromMemoryOrDisk(
 	updateRelationalData bool,
 ) (*ltngenginemodels.Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
-	fi, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
+	fi, ok := e.itemFileMapping.Get(dbMetaInfo.LockName(strItemKey))
 	if !ok {
 		var err error
 		fi, err = e.loadItemFromDisk(ctx, dbMetaInfo, item, updateRelationalData)
 		if err != nil {
 			return nil, err
 		}
-		e.itemFileMapping[dbMetaInfo.LockName(strItemKey)] = fi
+		e.itemFileMapping.Set(dbMetaInfo.LockName(strItemKey), fi)
 
 		return &ltngenginemodels.Item{
 			Key:   fi.FileData.Key,
@@ -157,14 +157,14 @@ func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
 ) (*ltngenginemodels.FileInfo, error) {
 	relationalLockKey := dbMetaInfo.RelationalInfo().LockName(ltngenginemodels.RelationalDataStore)
-	fi, ok := e.itemFileMapping[relationalLockKey]
+	fi, ok := e.itemFileMapping.Get(relationalLockKey)
 	if !ok {
 		var err error
 		fi, err = e.loadRelationalItemStoreFromDisk(ctx, dbMetaInfo)
 		if err != nil {
 			return nil, err
 		}
-		e.itemFileMapping[relationalLockKey] = fi
+		e.itemFileMapping.Set(relationalLockKey, fi)
 
 		return fi, nil
 	}
@@ -342,6 +342,10 @@ func (e *LTNGEngine) listPaginatedItems(
 			return nil, err
 		}
 
+		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockName(hex.EncodeToString(fileData.Key))); ok {
+			continue
+		}
+
 		matchBox[idx] = &ltngenginemodels.Item{
 			Key:   fileData.Key,
 			Value: fileData.Data,
@@ -452,6 +456,10 @@ func (e *LTNGEngine) listAllItems(
 		var fileData ltngenginemodels.FileData
 		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
 			return nil, err
+		}
+
+		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockName(hex.EncodeToString(fileData.Key))); ok {
+			continue
 		}
 
 		matchBox = append(matchBox, &ltngenginemodels.Item{
@@ -571,163 +579,6 @@ func (e *LTNGEngine) upsertRelationalItemOnDisk(
 
 // #####################################################################################################################
 
-func (e *LTNGEngine) deleteCascade(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	key []byte,
-) error {
-	strItemKey := hex.EncodeToString(key)
-	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
-
-	delPaths, err := e.createTmpDeletionPaths(ctx, dbMetaInfo)
-	if err != nil {
-		return err
-	}
-
-	moveItemForDeletion := func() error {
-		if _, err = execx.MvFileExec(ctx, filePath,
-			ltngenginemodels.RawPathWithSepForFile(delPaths.tmpDelPath, strItemKey),
-		); err != nil {
-			return err
-		}
-
-		fileStats, ok := e.itemFileMapping[dbMetaInfo.LockName(strItemKey)]
-		if ok {
-			_ = fileStats.File.Close()
-		}
-		delete(e.itemFileMapping, dbMetaInfo.LockName(strItemKey))
-
-		return nil
-	}
-	recreateDeletedItem := func() error {
-		if _, err = execx.MvFileExec(ctx,
-			ltngenginemodels.RawPathWithSepForFile(delPaths.tmpDelPath, strItemKey), filePath,
-		); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	itemList, err := e.loadIndexingList(ctx, dbMetaInfo, &ltngenginemodels.IndexOpts{ParentKey: key})
-	if err != nil {
-		return err
-	}
-	moveIndexesToTmpFile := func() error {
-		for _, item := range itemList {
-			strItemKey := hex.EncodeToString(item.Value)
-
-			if _, err = execx.MvFileExec(ctx,
-				ltngenginemodels.GetDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),
-				ltngenginemodels.RawPathWithSepForFile(delPaths.indexTmpDelPath, strItemKey),
-			); err != nil {
-				return err
-			}
-
-			fileStats, ok := e.itemFileMapping[dbMetaInfo.IndexInfo().LockName(strItemKey)]
-			if ok {
-				_ = fileStats.File.Close()
-			}
-			delete(e.itemFileMapping, dbMetaInfo.IndexInfo().LockName(strItemKey))
-		}
-
-		return nil
-	}
-	recreateIndexes := func() error {
-		for _, item := range itemList {
-			if err = e.createItemOnDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
-				Key:   item.Value,
-				Value: key,
-			}); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	moveIndexListToTmpFile := func() error {
-		if _, err = execx.MvFileExec(ctx,
-			ltngenginemodels.GetDataFilepath(dbMetaInfo.IndexListInfo().Path, strItemKey),
-			ltngenginemodels.RawPathWithSepForFile(delPaths.indexListTmpDelPath, strItemKey),
-		); err != nil {
-			return err
-		}
-
-		fileStats, ok := e.itemFileMapping[dbMetaInfo.IndexListInfo().LockName(strItemKey)]
-		if ok {
-			_ = fileStats.File.Close()
-		}
-		delete(e.itemFileMapping, dbMetaInfo.IndexListInfo().LockName(strItemKey))
-
-		return nil
-	}
-	recreateIndexListFromTmpFile := func() error {
-		indexList := make([][]byte, len(itemList))
-		for i, item := range itemList {
-			indexList[i] = item.Value
-		}
-		idxList := bytes.Join(indexList, []byte(ltngenginemodels.BytesSep))
-		return e.createItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
-			Key:   key,
-			Value: idxList,
-		})
-	}
-
-	deleteFromRelationalData := func() error {
-		return e.deleteRelationalData(ctx, dbMetaInfo, &ltngenginemodels.Item{Key: key}, &temporaryDeletionPaths{})
-	}
-
-	operations := []*lo.Operation{
-		{
-			Action: &lo.Action{
-				Act:         moveItemForDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         moveIndexesToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateDeletedItem,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         moveIndexListToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateIndexes,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         deleteFromRelationalData,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateIndexListFromTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-	}
-	if err = lo.New(operations...).Operate(); err != nil {
-		return err
-	}
-
-	// deleteTmpFiles
-	if _, err = execx.DelDataStoreRawDirsExec(ctx, delPaths.tmpDelPath); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (e *LTNGEngine) deleteIndexOnly(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
@@ -837,7 +688,8 @@ func (e *LTNGEngine) deleteCascadeByIdx(
 		return err
 	}
 
-	return e.deleteCascade(ctx, dbMetaInfo, fileData.Data)
+	return nil
+	//return e.deleteCascade(ctx, dbMetaInfo, fileData.Data)
 }
 
 // #####################################################################################################################
@@ -997,8 +849,7 @@ func (e *LTNGEngine) upsertRelationalData(
 		}
 
 		fi.File = file
-		e.itemFileMapping[relationalLockKey] = fi
-		e.itemFileMapping[relationalLockKey].File = file
+		e.itemFileMapping.Set(relationalLockKey, fi)
 	}
 
 	return
@@ -1105,8 +956,7 @@ func (e *LTNGEngine) deleteRelationalData(
 		}
 
 		fi.File = file
-		e.itemFileMapping[relationalLockKey] = fi
-		e.itemFileMapping[relationalLockKey].File = file
+		e.itemFileMapping.Set(relationalLockKey, fi)
 	}
 
 	return

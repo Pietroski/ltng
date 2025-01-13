@@ -81,7 +81,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					t.Log(info)
 
 					ltngEngine.Close()
-					time.Sleep(1 * time.Second)
+					time.Sleep(time.Millisecond * 1_000)
 
 					info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 						Name: "test-store",
@@ -146,7 +146,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ltngEngine.Restart(ctx)
 					require.NoError(t, err)
-					time.Sleep(1 * time.Second)
+					time.Sleep(time.Millisecond * 1_000)
 
 					info, err = ltngEngine.LoadStore(ctx, &ltngenginemodels.StoreInfo{
 						Name: "test-store",
@@ -935,8 +935,6 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 
 				{
-					time.Sleep(time.Millisecond * 500)
-
 					// search by key
 					searchOpts := &ltngenginemodels.IndexOpts{}
 					loadedItem, err := ltngEngine.LoadItem(ctx, databaseMetaInfo, item, searchOpts)
@@ -1164,6 +1162,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				// search by key
 				searchOpts := &ltngenginemodels.IndexOpts{}
 				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				// t.Logf("key %s - value %s - err: %v", loadedItem.Key, loadedItem.Value, err)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 

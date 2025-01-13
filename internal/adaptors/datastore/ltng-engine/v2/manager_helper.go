@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 	"io"
 	"os"
 	"time"
 
+	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
 func (e *LTNGEngine) createDataPathOnDisk(
@@ -124,7 +124,7 @@ func (e *LTNGEngine) writeStatsStoreToFile(
 		HeaderSize: uint32(len(bs)),
 		DataSize:   uint32(len(fileData.Data)),
 	}
-	e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
+	e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 
 	return fi, nil
 }
@@ -135,7 +135,7 @@ func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 	ctx context.Context,
 	info *ltngenginemodels.StoreInfo,
 ) (*ltngenginemodels.FileInfo, error) {
-	value, ok := e.storeFileMapping[info.Name]
+	value, ok := e.storeFileMapping.Get(info.Name)
 	if !ok {
 		fi, err := e.loadStoreStatsFromDisk(ctx, info)
 		if err != nil {
@@ -144,7 +144,7 @@ func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 				info.Name, err)
 		}
 
-		e.storeFileMapping[info.Name] = fi
+		e.storeFileMapping.Set(info.Name, fi)
 
 		return fi, nil
 	}
@@ -189,7 +189,7 @@ func (e *LTNGEngine) loadStoreStatsFromDisk(
 func (e *LTNGEngine) loadRelationalStoreFromMemoryOrDisk(
 	ctx context.Context,
 ) (*ltngenginemodels.FileInfo, error) {
-	value, ok := e.storeFileMapping[ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name]
+	value, ok := e.storeFileMapping.Get(ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name)
 	if !ok {
 		fi, err := e.loadRelationalStoreStatsFromDisk(ctx)
 		if err != nil {
@@ -198,7 +198,7 @@ func (e *LTNGEngine) loadRelationalStoreFromMemoryOrDisk(
 				ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, err)
 		}
 
-		e.storeFileMapping[ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name] = fi
+		e.storeFileMapping.Set(ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, fi)
 
 		return fi, nil
 	}
@@ -363,7 +363,7 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 				fi.FileData.Header.StoreInfo.Name, err)
 		}
 
-		e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
+		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 
 		return nil
 	}
@@ -409,11 +409,8 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 			return fmt.Errorf("error opening %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
 		}
 
-		if _, ok := e.storeFileMapping[fi.FileData.Header.StoreInfo.Name]; !ok {
-			e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
-		}
 		fi.File = file
-		e.storeFileMapping[fi.FileData.Header.StoreInfo.Name].File = file
+		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 	}
 
 	return
@@ -534,7 +531,7 @@ func (e *LTNGEngine) updateRelationalStats(
 				fi.FileData.Header.StoreInfo.Name, err)
 		}
 
-		e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
+		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 
 		return nil
 	}
@@ -581,10 +578,7 @@ func (e *LTNGEngine) updateRelationalStats(
 		}
 
 		fi.File = file
-		if _, ok := e.storeFileMapping[fi.FileData.Header.StoreInfo.Name]; !ok {
-			e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
-		}
-		e.storeFileMapping[fi.FileData.Header.StoreInfo.Name].File = file
+		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 	}
 
 	return
@@ -706,7 +700,7 @@ func (e *LTNGEngine) upsertRelationalStats(
 			return fmt.Errorf("error re-opening %s manager relational store: %w", fi.FileData.Header.StoreInfo.Name, err)
 		}
 
-		e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
+		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 
 		return nil
 	}
@@ -752,11 +746,8 @@ func (e *LTNGEngine) upsertRelationalStats(
 			return fmt.Errorf("error opening %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
 		}
 
-		if _, ok := e.storeFileMapping[fi.FileData.Header.StoreInfo.Name]; !ok {
-			e.storeFileMapping[fi.FileData.Header.StoreInfo.Name] = fi
-		}
 		fi.File = file
-		e.storeFileMapping[fi.FileData.Header.StoreInfo.Name].File = file
+		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 	}
 
 	return
