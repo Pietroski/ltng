@@ -1,6 +1,7 @@
 # IDE's configs
 .idea
 .vscode
+.run
 
 # bagder-db default local manager directory
 .db
