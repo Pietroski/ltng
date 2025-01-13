@@ -59,6 +59,16 @@ func DelDirsWithoutSepExec(_ context.Context, filepath string) ([]byte, error) {
 				filepath, filepath, filepath)))
 }
 
+func DelDirsWithoutSepBothOSExec(_ context.Context, filepath string) ([]byte, error) {
+	// Using single quotes to prevent shell interpretation of special characters
+	cmd := fmt.Sprintf(`rm -rf '%[1]s/indexed' '%[1]s/indexed-list' '%[1]s/relational' && 
+        dir_count=$(find '%[1]s' -mindepth 1 -type d 2>/dev/null | wc -l | tr -d " \t\n") && 
+        [ "$dir_count" -eq 0 ] && 
+        rm -rf '%[1]s'`, filepath)
+
+	return Executor(exec.Command("sh", "-c", cmd))
+}
+
 func DelDataStoreRawDirsExec(_ context.Context, filepath string) ([]byte, error) {
 	return Executor(
 		exec.Command("sh", "-c",

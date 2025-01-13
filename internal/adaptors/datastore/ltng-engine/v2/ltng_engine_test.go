@@ -1562,6 +1562,13 @@ func TestCheckFileCount(t *testing.T) {
 	t.Log(strings.TrimSpace(string(bs)))
 }
 
+func TestPrepare(t *testing.T) {
+	ctx := prepareTest(t)
+	ltngEngine, err := New(ctx)
+	require.NoError(t, err)
+	_ = ltngEngine
+}
+
 func prepareTest(t *testing.T) context.Context {
 	ctx := context.Background()
 	_, err := execx.DelHardExec(ctx, ltngenginemodels.FQBasePath)

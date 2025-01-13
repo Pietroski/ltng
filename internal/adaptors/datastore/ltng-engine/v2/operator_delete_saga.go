@@ -577,7 +577,7 @@ func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(_ context.Conte
 
 func (s *deleteCascadeSaga) deleteTemporaryRecords(_ context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles {
-		_, err := execx.DelDirsWithoutSepExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
+		_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
 		if err != nil {
 			itemInfoData.RespSignal <- err
 			close(itemInfoData.RespSignal)
