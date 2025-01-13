@@ -330,6 +330,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 	}
 
 	deleteTemporaryRecordsFromDiskOnThreadRespSignal := make(chan error, 1)
+	defer close(deleteTemporaryRecordsFromDiskOnThreadRespSignal)
 	itemInfoDataForActionDelTmpFiles := itemInfoData.
 		withRespChan(deleteTemporaryRecordsFromDiskOnThreadRespSignal)
 	s.deleteSaga.deleteChannels.deleteCascadeChannel.
@@ -482,8 +483,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 			); err != nil {
 				// TODO: log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
-				break
+				continue
 			}
 
 			s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
@@ -505,8 +505,7 @@ func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(_ context.Context) {
 			); err != nil {
 				// TODO: log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
-				break
+				continue
 			}
 		}
 
@@ -580,12 +579,10 @@ func (s *deleteCascadeSaga) deleteTemporaryRecords(_ context.Context) {
 		_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
 		if err != nil {
 			itemInfoData.RespSignal <- err
-			close(itemInfoData.RespSignal)
 			continue
 		}
 
 		itemInfoData.RespSignal <- nil
-		close(itemInfoData.RespSignal)
 	}
 }
 

@@ -329,8 +329,8 @@ func (e *LTNGEngine) deleteStore(
 	}
 
 	deleteDataPath := func() error {
-		// delete all files from store directory // delExec
-		if bs, err := execx.DelStoreDirsExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
+		// delete all files from store directory // delExec // DelDirsWithoutSepBothOSExec <-> DelStoreDirsExec
+		if bs, err := execx.DelDirsWithoutSepBothOSExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
 			return fmt.Errorf("failed to delete %s data store - output: %s: %w", info.Name, bs, err)
 		}
 
