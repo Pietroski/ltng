@@ -55,8 +55,9 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("\nerror on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
 		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
 		return
 	}
 
@@ -67,8 +68,13 @@ func (s *upsertSaga) noIndexTrigger(
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
+		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
+		return
 	}
-	itemInfoData.RespSignal <- err
+
+	itemInfoData.RespSignal <- nil
+	close(itemInfoData.RespSignal)
 }
 
 func (s *upsertSaga) indexTrigger(
@@ -93,6 +99,7 @@ func (s *upsertSaga) indexTrigger(
 		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
 		return
 	}
 
@@ -103,8 +110,13 @@ func (s *upsertSaga) indexTrigger(
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
+		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
+		return
 	}
-	itemInfoData.RespSignal <- err
+
+	itemInfoData.RespSignal <- nil
+	close(itemInfoData.RespSignal)
 }
 
 func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData) {
@@ -126,7 +138,6 @@ func (s *upsertSaga) noIndexRollback(
 	if err != nil {
 		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
 	}
-	itemInfoData.RespSignal <- err
 }
 
 func (s *upsertSaga) indexRollback(
@@ -148,12 +159,8 @@ func (s *upsertSaga) indexRollback(
 		deleteIndexItemOnDiskRespSignal,
 		deleteIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("\nerror rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
-		itemInfoData.RespSignal <- err
-		return
+		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
 	}
-
-	itemInfoData.RespSignal <- nil
 }
 
 // upsertItemOnDiskOnThread stands for upsertItemOnDisk on thread.

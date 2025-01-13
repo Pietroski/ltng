@@ -51,6 +51,14 @@ func DelStoreDirsExec(_ context.Context, filepath string) ([]byte, error) {
 				filepath, filepath, filepath)))
 }
 
+func DelDirsWithoutSepExec(_ context.Context, filepath string) ([]byte, error) {
+	return Executor(
+		exec.Command("sh", "-c",
+			fmt.Sprintf(`rm -rf %s{indexed,indexed-list,relational} && 
+					[ $(find %s -mindepth 1 -type d | wc -l) -eq 0 ] && rm -rf %s`,
+				filepath, filepath, filepath)))
+}
+
 func DelDataStoreRawDirsExec(_ context.Context, filepath string) ([]byte, error) {
 	return Executor(
 		exec.Command("sh", "-c",

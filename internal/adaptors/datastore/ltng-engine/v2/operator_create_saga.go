@@ -56,6 +56,7 @@ func (s *createSaga) noIndexTrigger(
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
 		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
 		return
 	}
 
@@ -66,8 +67,13 @@ func (s *createSaga) noIndexTrigger(
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
+		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
+		return
 	}
-	itemInfoData.RespSignal <- err
+
+	itemInfoData.RespSignal <- nil
+	close(itemInfoData.RespSignal)
 }
 
 func (s *createSaga) indexTrigger(
@@ -92,6 +98,7 @@ func (s *createSaga) indexTrigger(
 		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
 		return
 	}
 
@@ -102,8 +109,13 @@ func (s *createSaga) indexTrigger(
 	if err != nil {
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
+		itemInfoData.RespSignal <- err
+		close(itemInfoData.RespSignal)
+		return
 	}
-	itemInfoData.RespSignal <- err
+
+	itemInfoData.RespSignal <- nil
+	close(itemInfoData.RespSignal)
 }
 
 func (s *createSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData) {
@@ -125,7 +137,6 @@ func (s *createSaga) noIndexRollback(
 	if err != nil {
 		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
 	}
-	//itemInfoData.RespSignal <- err
 }
 
 func (s *createSaga) indexRollback(
@@ -148,11 +159,7 @@ func (s *createSaga) indexRollback(
 		deleteIndexItemListOnDiskRespSignal,
 	); err != nil {
 		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
-		//itemInfoData.RespSignal <- err
-		return
 	}
-
-	//itemInfoData.RespSignal <- nil
 }
 
 // createItemOnDiskOnThread stands for createItemOnDisk on thread.
