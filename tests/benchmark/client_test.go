@@ -1,13 +1,14 @@
 package benchmark
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
-	"testing"
-
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
 

@@ -2,12 +2,13 @@ package ltngdb_controller_v1
 
 import (
 	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -17,7 +18,7 @@ func (c *Controller) DeleteStore(
 ) (*grpc_ltngdb.DeleteStoreResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	payload := &ltng_engine_v2.StoreInfo{
+	payload := &ltngenginemodels.StoreInfo{
 		Name: req.GetName(),
 		Path: req.GetPath(),
 	}

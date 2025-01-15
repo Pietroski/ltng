@@ -8,7 +8,7 @@ services:
     environment:
       LTNG_SERVER_NETWORK: tcp
       LTNG_SERVER_PORT: "50050"
-      LTNG_ENGINE: "LIGHTNING_ENGINE_V1"
+      LTNG_ENGINE: "LIGHTNING_ENGINE_V2"
     ports:
       - '50050:50050'
     volumes:

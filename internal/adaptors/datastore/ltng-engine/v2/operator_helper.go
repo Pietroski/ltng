@@ -665,7 +665,7 @@ func (e *LTNGEngine) deleteIndexOnly(
 
 	// deleteTmpFiles
 	if _, err = execx.DelDirsWithoutSepBothOSExec(ctx,
-		ltngenginemodels.DBTmpDelDataPath+ltngenginemodels.Sep+delPaths.tmpDelPath,
+		ltngenginemodels.DBTmpDelDataPath+delPaths.tmpDelPath,
 	); err != nil {
 		return err
 	}

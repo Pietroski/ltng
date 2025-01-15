@@ -2,14 +2,15 @@ package ltngdb_controller_v1
 
 import (
 	"context"
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine"
+	"time"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
+	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -19,7 +20,7 @@ func (c *Controller) ListStores(
 ) (*grpc_ltngdb.ListStoresResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	payload := &ltng_engine_models.Pagination{
+	payload := &ltngenginemodels.Pagination{
 		PageID:           req.GetPagination().GetPageId(),
 		PageSize:         req.GetPagination().GetPageSize(),
 		PaginationCursor: req.GetPagination().GetPaginationCursor(),

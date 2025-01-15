@@ -11,6 +11,7 @@ import (
 
 	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/badgerdb/v4"
 	ltngdb_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/ltngdb/v1"
+	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/ltngdb/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
@@ -45,10 +46,12 @@ func main() {
 	case common_model.BadgerDBV4EngineVersionType:
 		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
 	case common_model.LightningEngineV1EngineVersionType:
+		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder)
+	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder)
+		ltngdb_engine_v2.StartV2(ctx, cancelFn, cfg, logger, s, binder)
 	}
 }

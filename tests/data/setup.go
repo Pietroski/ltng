@@ -27,12 +27,12 @@ import (
 )
 
 const (
-	relativePath      = "../../../"
+	relativePath      = "../../"
 	dockerComposePath = "build/orchestrator/docker-compose-test.yml"
 )
 
 var (
-	LTNGDBEngineType   = fmt.Sprintf("LTNG_ENGINE=%s", common_model.LightningEngineV1EngineVersionType)
+	LTNGDBEngineType   = fmt.Sprintf("LTNG_ENGINE=%s", common_model.LightningEngineV2EngineVersionType)
 	BadgerDBEngineType = fmt.Sprintf("LTNG_ENGINE=%s", common_model.BadgerDBV4EngineVersionType)
 )
 
@@ -47,17 +47,13 @@ type TestBench interface {
 }
 
 func DockerComposeUp[T TestBench](tb T) {
-	//_, err := executor(exec.Command("sh", "-c",
-	//	fmt.Sprintf("%s docker compose -f %s up -d --build --remove-orphans",
-	//		engineType, relativePath+dockerComposePath),
-	//))
 	_, err := execx.Executor(exec.Command("sh", "-c",
 		fmt.Sprintf("docker compose -f %s up -d --build --remove-orphans",
 			relativePath+dockerComposePath),
 	))
 	require.NoError(tb, err)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	//// Add a wait for container health check
 	//err = waitForContainer(tb, "test-integration-ltng-db-node", 30*time.Second)
@@ -66,8 +62,9 @@ func DockerComposeUp[T TestBench](tb T) {
 
 func DockerComposeDown[T TestBench](tb T) {
 	tb.Cleanup(func() {
-		_, err := execx.Executor(exec.Command("docker", "compose",
-			"-f", relativePath+dockerComposePath, "down",
+		_, err := execx.Executor(exec.Command("sh", "-c",
+			fmt.Sprintf("docker compose -f %s down",
+				relativePath+dockerComposePath),
 		))
 		require.NoError(tb, err)
 	})
@@ -164,7 +161,7 @@ func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 
 	clientLTNG, err := ltng_client.New(ctx, &ltng_client.Params{
 		Address: "127.0.0.1:50050",
-		Engine:  common_model.LightningEngineV1EngineVersionType.String(),
+		Engine:  common_model.LightningEngineV2EngineVersionType.String(),
 	})
 	require.NoError(tb, err)
 

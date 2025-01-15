@@ -27,7 +27,7 @@ TRIMMED_STRING=$(trimmer "$PAYLOAD")
 echo "$TRIMMED_STRING"
 
 RESPONSE=$(grpcurl -d "$TRIMMED_STRING" \
-               -plaintext localhost:50051 management.Management/GetStore)
+               -plaintext localhost:50050 ltngdb.LightningDB/GetStore)
 
 function decoder() {
     echo "$1" | jq -r '.dbInfo'

@@ -2,14 +2,13 @@ package ltngdb_controller_v1
 
 import (
 	"context"
-	ltng_engine_models "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltng-engine"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
@@ -20,21 +19,21 @@ func (c *Controller) List(
 ) (*grpc_ltngdb.ListResponse, error) {
 	logger := c.logger.FromCtx(ctx)
 
-	dbMetaInfo := &ltng_engine_v2.ManagerStoreMetaInfo{
+	dbMetaInfo := &ltngenginemodels.ManagerStoreMetaInfo{
 		Name: req.GetDatabaseMetaInfo().GetDatabaseName(),
 		Path: req.GetDatabaseMetaInfo().GetDatabasePath(),
 	}
-	pagination := &ltng_engine_models.Pagination{
+	pagination := &ltngenginemodels.Pagination{
 		PageID:           req.GetPagination().GetPageId(),
 		PageSize:         req.GetPagination().GetPageSize(),
 		PaginationCursor: req.GetPagination().GetPaginationCursor(),
 	}
-	opts := &ltng_engine_v2.IndexOpts{
+	opts := &ltngenginemodels.IndexOpts{
 		HasIdx:       req.GetIndexOpts().GetHasIdx(),
 		ParentKey:    req.GetIndexOpts().GetParentKey(),
 		IndexingKeys: req.GetIndexOpts().GetIndexingKeys(),
-		IndexProperties: ltng_engine_v2.IndexProperties{
-			ListSearchPattern: ltng_engine_v2.ListSearchPattern(
+		IndexProperties: ltngenginemodels.IndexProperties{
+			ListSearchPattern: ltngenginemodels.ListSearchPattern(
 				req.GetIndexOpts().GetIndexingProperties().GetListSearchPattern(),
 			),
 		},

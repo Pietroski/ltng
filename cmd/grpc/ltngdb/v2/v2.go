@@ -1,0 +1,88 @@
+package ltngdb_engine_v1
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"os"
+
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
+	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	transporthandler "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler"
+
+	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
+	ltngdb_controller_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltng-engine/v2"
+	ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltng-engine/v2"
+)
+
+func StartV2(
+	ctx context.Context,
+	cancelFn context.CancelFunc,
+	cfg *ltng_node_config.Config,
+	logger go_logger.Logger,
+	s serializer_models.Serializer,
+	binder go_binder.Binder,
+) {
+	logger.Debugf("opening ltngdb engine")
+	engine, err := ltng_engine_v2.New(ctx)
+	if err != nil {
+		logger.Errorf(
+			"failed to open ltngdb engine",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+
+	controller, err := ltngdb_controller_v2.New(ctx,
+		ltngdb_controller_v2.WithConfig(cfg),
+		ltngdb_controller_v2.WithLogger(logger),
+		ltngdb_controller_v2.WithBinder(binder),
+		ltngdb_controller_v2.WithEngine(engine),
+	)
+	if err != nil {
+		logger.Errorf(
+			"error creating ltngdb controller",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+
+	listener, err := net.Listen(
+		cfg.Node.Server.Network,
+		fmt.Sprintf(":%v", cfg.Node.Server.Port),
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed creating net listener",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+
+	factory, err := ltngdb_factory_v2.New(ctx,
+		ltngdb_factory_v2.WithConfig(cfg),
+		ltngdb_factory_v2.WithListener(listener),
+		ltngdb_factory_v2.WithController(controller),
+		ltngdb_factory_v2.WithEngine(engine),
+	)
+	if err != nil {
+		logger.Errorf(
+			"error creating ltngdb factory",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+
+	h := transporthandler.NewHandler(
+		ctx, cancelFn, os.Exit, nil, logger, &transporthandler.Opts{Debug: true},
+	)
+	h.StartServers(transporthandler.ServerMapping{
+		"lightning-node-server-engine-v2": factory,
+	})
+}

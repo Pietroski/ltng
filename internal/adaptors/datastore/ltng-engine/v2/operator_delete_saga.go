@@ -365,7 +365,7 @@ func (s *deleteCascadeSaga) noIndexRollback(
 	s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackItemChannel <- itemInfoDataForRollbackItemChannel
 	err := <-recreateItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("\nerror rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
 	}
 
 	deleteTemporaryRecordsFromDiskOnThreadRespSignal := make(chan error, 1)

@@ -10,7 +10,7 @@ import (
 const (
 	FQBasePath    = ".ltngfq"
 	DBBasePath    = ".ltngdb"
-	DBBaseVersion = "/v1"
+	DBBaseVersion = "/v2"
 	DBDataPath    = "/stores"
 	DBStatsPath   = "/stores/stats"
 	Sep           = "/"

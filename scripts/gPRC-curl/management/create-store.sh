@@ -28,4 +28,4 @@ TRIMMED_STRING=$(trimmer "$PAYLOAD")
 echo "$TRIMMED_STRING"
 
 grpcurl -d "$TRIMMED_STRING" \
-    -plaintext localhost:50051 management.Management/CreateStore
+    -plaintext localhost:50050 ltngdb.LightningDB/CreateStore
