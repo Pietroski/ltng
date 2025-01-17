@@ -1,178 +1,135 @@
 package integration_test
 
 import (
-	"context"
-	"encoding/json"
-	"log"
-	"os"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
-
-	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
+	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
+	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
 
-const (
-	managerServerAddr  = "localhost:50051"
-	operatorServerAddr = "localhost:50052"
-
-	clientTestStore     = "tests-integration-client-test-store"
-	clientTestStorePath = "tests/integration/client_test_store"
+var (
+	users []*data.User
+	cts   *data.ClientTestSuite
 )
 
-func Test_LightningNode_ServerWithClient(t *testing.T) {
-	ctx := context.Background()
+func TestClients(t *testing.T) {
+	//_, err := ReadEnvFile(refToEnvFilename + envFilename)
+	//require.NoError(t, err)
+	//go func() {
+	//	grpc.Main()
+	//}()
 
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	}
+	time.Sleep(2 * time.Second)
 
-	managerConn, err := grpc.Dial(managerServerAddr, opts...)
-	require.NoError(t, err)
-	defer managerConn.Close()
+	users = data.GenerateRandomUsers(t, 50)
+	cts = data.InitClientTestSuite(t)
 
-	manager := grpc_ltngdb.NewLightningDBClient(managerConn)
+	//t.Log("Benchmark_LTNGDB_Client_Engine")
+	//testLTNGDBClient(t)
 
-	stores, err := manager.ListStores(ctx, &grpc_ltngdb.ListStoresRequest{
-		Pagination: &grpc_pagination.Pagination{
-			PageId:   1,
-			PageSize: 5,
-		},
-	})
-	require.NoError(t, err)
-	t.Log("stores ->", stores)
+	//t.Log("Benchmark_BadgerDB_Client_Engine")
+	//testBadgerDBClient(t)
 
-	createdStoreResp, err := manager.CreateStore(ctx, &grpc_ltngdb.CreateStoreRequest{
-		Name: clientTestStore,
-		Path: clientTestStorePath,
-	})
-	require.NoError(t, err)
-	t.Log("created store if it does not exist ->", createdStoreResp)
-
-	operatorConn, err := grpc.Dial(operatorServerAddr, opts...)
-	require.NoError(t, err)
-	defer managerConn.Close()
-
-	operator := grpc_ltngdb.NewLightningDBClient(operatorConn)
-
-	keyToStore := []byte("any-test-key")
-	valueToStore := []byte("any-test-value")
-
-	getResp, err := operator.Load(ctx, &grpc_ltngdb.LoadRequest{
-		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ltngdb.Item{Key: keyToStore},
-	})
-	require.Error(t, err)
-	t.Log("Get response string ->", getResp.String())
-	t.Log("Get response ->", string(getResp.GetValue()))
-
-	setResp, err := operator.Create(ctx, &grpc_ltngdb.CreateRequest{
-		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item: &grpc_ltngdb.Item{
-			Key:   keyToStore,
-			Value: valueToStore,
-		},
-	})
-	require.NoError(t, err)
-	t.Log("Set response ->", setResp.String())
-
-	getResp, err = operator.Load(ctx, &grpc_ltngdb.LoadRequest{
-		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ltngdb.Item{Key: keyToStore},
-	})
-	require.NoError(t, err)
-	t.Log("Get response ->", string(getResp.GetValue()))
-
-	listResp, err := operator.List(ctx, &grpc_ltngdb.ListRequest{
-		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Pagination: &grpc_pagination.Pagination{
-			PageId:   1,
-			PageSize: 5,
-		},
-	})
-	require.NoError(t, err)
-	IndentedListResp, err := json.MarshalIndent(listResp.GetItems(), "", "  ")
-	t.Log("List response ->", string(IndentedListResp))
-
-	deleteResp, err := operator.Delete(ctx, &grpc_ltngdb.DeleteRequest{
-		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Item:             &grpc_ltngdb.Item{Key: keyToStore},
-	})
-	require.NoError(t, err)
-	t.Log("Delete response ->", deleteResp.String())
-
-	listResp, err = operator.List(ctx, &grpc_ltngdb.ListRequest{
-		DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{DatabaseName: clientTestStore},
-		Pagination: &grpc_pagination.Pagination{
-			PageId:   1,
-			PageSize: 5,
-		},
-	})
-	require.NoError(t, err)
-	// require.Len(t, listResp.GetItems(), 5)
-	IndentedListResp, err = json.MarshalIndent(listResp.GetItems(), "", "  ")
-	t.Log("List response ->", string(IndentedListResp))
+	t.Log("Benchmark_LTNGDB_Client_Engine")
+	testLTNGDBClient(t)
 }
 
-func Test_LightningNode_ServerWithClient_TracingTest(t *testing.T) {
-	ctx := context.Background()
-
-	tracer := go_tracer.NewCtxTracer()
-
-	var err error
-	ctx, err = tracer.Trace(ctx)
-	if err != nil {
-		log.Fatalf("failed to create trace id: %v", err)
-		os.Exit(1)
-		return
+func testLTNGDBClient(t *testing.T) {
+	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
 	}
+	_, err := cts.LTNGDBClient.CreateStore(cts.Ctx, createStoreRequest)
+	require.NoError(t, err)
 
-	loggerPublishers := &go_logger.Publishers{}
-	loggerOpts := &go_logger.Opts{
-		Debug:   true,
-		Publish: false,
+	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
 	}
-	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
-	logger = logger.FromCtx(ctx)
+	store, err := cts.LTNGDBClient.GetStore(cts.Ctx, getStoreRequest)
+	require.NoError(t, err)
+	require.NotNil(t, store)
 
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	t.Run("CreateItem", func(t *testing.T) {
+		t.Log("CreateItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			createRequest := &grpc_ltngdb.CreateRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+				RetrialOpts: ltng_client.DefaultRetrialOpts,
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+}
+
+func testBadgerDBClient(t *testing.T) {
+	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
 	}
-
-	managerConn, err := grpc.Dial(managerServerAddr, opts...)
+	_, err := cts.BadgerDBClient.CreateStore(cts.Ctx, createStoreRequest)
 	require.NoError(t, err)
-	defer managerConn.Close()
 
-	manager := grpc_ltngdb.NewLightningDBClient(managerConn)
+	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	store, err := cts.BadgerDBClient.GetStore(cts.Ctx, getStoreRequest)
+	require.NoError(t, err)
+	require.NotNil(t, store)
 
-	stores, err := manager.ListStores(ctx, &grpc_ltngdb.ListStoresRequest{
-		Pagination: &grpc_pagination.Pagination{
-			PageId:   1,
-			PageSize: 5,
-		},
+	t.Run("CreateItem", func(t *testing.T) {
+		t.Log("CreateItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			createRequest := &grpc_ltngdb.CreateRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+				RetrialOpts: ltng_client.DefaultRetrialOpts,
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
 	})
-	require.NoError(t, err)
-	t.Log("stores ->", stores)
-
-	createdStoreResp, err := manager.CreateStore(ctx, &grpc_ltngdb.CreateStoreRequest{
-		Name: clientTestStore,
-		Path: clientTestStorePath,
-	})
-	require.NoError(t, err)
-	t.Log("created store if it does not exist ->", createdStoreResp)
-
-	stores, err = manager.ListStores(ctx, &grpc_ltngdb.ListStoresRequest{
-		Pagination: &grpc_pagination.Pagination{
-			PageId:   1,
-			PageSize: 5,
-		},
-	})
-	require.NoError(t, err)
-	t.Log("stores ->", stores)
 }

@@ -55,9 +55,12 @@ func DockerComposeUp[T TestBench](tb T) {
 
 	time.Sleep(2 * time.Second)
 
-	//// Add a wait for container health check
-	//err = waitForContainer(tb, "test-integration-ltng-db-node", 30*time.Second)
-	//require.NoError(tb, err)
+	// Add a wait for container health check
+	err = waitForContainer(tb, "test-integration-ltngdb-engine", 30*time.Second)
+	require.NoError(tb, err)
+
+	err = waitForContainer(tb, "test-integration-badgerdb-engine", 30*time.Second)
+	require.NoError(tb, err)
 }
 
 func DockerComposeDown[T TestBench](tb T) {
@@ -74,16 +77,19 @@ func DockerComposeDown[T TestBench](tb T) {
 func waitForContainer[T TestBench](tb T, containerName string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		cmd := exec.Command("docker", "inspect", "--format={{.State.Running}}", containerName)
-		output, err := cmd.Output()
-		if err == nil && strings.TrimSpace(string(output)) == "true" {
+		bs, err := execx.Executor(exec.Command("sh", "-c",
+			fmt.Sprintf("docker inspect --format='{{.State.Running}}' %s", containerName)))
+		tb.Logf("output: %s", bs)
+		if err == nil && strings.TrimSpace(string(bs)) == "true" {
 			// Optional: Add additional check for port readiness
-			if err := checkPortReady("localhost", "50050", 5*time.Second); err == nil {
+			if err = checkPortReady("localhost", "50050", 5*time.Second); err == nil {
 				return nil
 			}
 		}
+
 		time.Sleep(1 * time.Second)
 	}
+
 	return fmt.Errorf("container %s did not become ready within %v", containerName, timeout)
 }
 
@@ -151,11 +157,14 @@ const (
 )
 
 func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
-	DockerComposeUp(tb)
-	defer DockerComposeDown(tb)
+	//DockerComposeUp(tb)
+	//defer DockerComposeDown(tb)
 
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngdbBasePath)
+	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	require.NoError(tb, err)
+	_, err = execx.DelHardExec(ctx, ltngdbBasePath)
+	require.NoError(tb, err)
 	_, err = execx.DelHardExec(ctx, dbBasePath)
 	require.NoError(tb, err)
 
@@ -182,7 +191,9 @@ func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	ctx := context.Background()
 	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	require.NoError(tb, err)
 	_, err = execx.DelHardExec(ctx, ltngdbBasePath)
+	require.NoError(tb, err)
 	_, err = execx.DelHardExec(ctx, dbBasePath)
 	require.NoError(tb, err)
 

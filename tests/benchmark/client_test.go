@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
@@ -49,7 +50,7 @@ func Benchmark_LTNGDB_Client_Engine(b *testing.B) {
 
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(b, cts.TS(), user)
-			createRequest := &grpc_ltngdb.UpsertRequest{
+			createRequest := &grpc_ltngdb.CreateRequest{
 				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
 					DatabaseName: getStoreRequest.Name,
 					DatabasePath: getStoreRequest.Path,
@@ -66,7 +67,7 @@ func Benchmark_LTNGDB_Client_Engine(b *testing.B) {
 				RetrialOpts: ltng_client.DefaultRetrialOpts,
 			}
 			b.StartTimer()
-			_, err = cts.LTNGDBClient.Upsert(cts.Ctx, createRequest)
+			_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
 			b.StopTimer()
 			assert.NoError(b, err)
 			b.Log(b.Elapsed())
@@ -129,7 +130,7 @@ func Benchmark_BadgerDB_Client_Engine(b *testing.B) {
 
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(b, cts.TS(), user)
-			createRequest := &grpc_ltngdb.UpsertRequest{
+			createRequest := &grpc_ltngdb.CreateRequest{
 				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
 					DatabaseName: getStoreRequest.Name,
 					DatabasePath: getStoreRequest.Path,
@@ -146,7 +147,7 @@ func Benchmark_BadgerDB_Client_Engine(b *testing.B) {
 				RetrialOpts: ltng_client.DefaultRetrialOpts,
 			}
 			b.StartTimer()
-			_, err = cts.BadgerDBClient.Upsert(cts.Ctx, createRequest)
+			_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
 			b.StopTimer()
 			assert.NoError(b, err)
 			b.Log(b.Elapsed())
@@ -185,5 +186,113 @@ func Benchmark_BadgerDB_Client_Engine(b *testing.B) {
 
 	b.Run("DeleteItem", func(b *testing.B) {
 		b.Log("DeleteItem")
+	})
+}
+
+func TestClients(t *testing.T) {
+	users = data.GenerateRandomUsers(t, 50)
+	cts = data.InitClientTestSuite(t)
+
+	//t.Log("Benchmark_LTNGDB_Client_Engine")
+	//testLTNGDBClient(t)
+
+	t.Log("Benchmark_BadgerDB_Client_Engine")
+	testBadgerDBClient(t)
+
+	t.Log("Benchmark_LTNGDB_Client_Engine")
+	testLTNGDBClient(t)
+}
+
+func testLTNGDBClient(t *testing.T) {
+	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	_, err := cts.LTNGDBClient.CreateStore(cts.Ctx, createStoreRequest)
+	require.NoError(t, err)
+
+	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	store, err := cts.LTNGDBClient.GetStore(cts.Ctx, getStoreRequest)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	t.Run("CreateItem", func(t *testing.T) {
+		t.Log("CreateItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			createRequest := &grpc_ltngdb.CreateRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+				RetrialOpts: ltng_client.DefaultRetrialOpts,
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+}
+
+func testBadgerDBClient(t *testing.T) {
+	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	_, err := cts.BadgerDBClient.CreateStore(cts.Ctx, createStoreRequest)
+	require.NoError(t, err)
+
+	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	store, err := cts.BadgerDBClient.GetStore(cts.Ctx, getStoreRequest)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	t.Run("CreateItem", func(t *testing.T) {
+		t.Log("CreateItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			createRequest := &grpc_ltngdb.CreateRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+				RetrialOpts: ltng_client.DefaultRetrialOpts,
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
 	})
 }

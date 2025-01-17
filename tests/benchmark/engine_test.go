@@ -30,11 +30,8 @@ func BenchmarkAllEngines(b *testing.B) {
 	users = data.GenerateRandomUsers(b, 50)
 	ets = data.InitEngineTestSuite(b)
 
-	b.Log("Benchmark_LTNGDB_Engine")
-	benchmarkLTNGDBEngine(b)
-
-	b.Log("Benchmark_LTNGDB_Concurrent_Engine")
-	benchmarkLTNGDBConcurrentEngine(b)
+	b.Log("Benchmark_LTNGDB_Engine_V2")
+	benchmarkLTNGDBEngineV2(b)
 
 	b.Log("Benchmark_BadgerDB_Engine")
 	benchmarkBadgerDBEngine(b)
@@ -217,23 +214,17 @@ func benchmarkLTNGDBEngineV2(b *testing.B) {
 				ParentKey:    bvs.BsKey,
 				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
 			}
-			b.ResetTimer()
-			b.StartTimer()
-			_, err = ets.LTNGDBEngineV2.CreateItem(ets.Ctx, dbMetaInfo, item, opts)
-			b.StopTimer()
-			elapsed := b.Elapsed()
-			bd.CalcAvg(elapsed)
-			b.ResetTimer()
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				_, err = ets.LTNGDBEngineV2.CreateItem(ets.Ctx, dbMetaInfo, item, opts)
+			}))
 			assert.NoError(b, err)
 		}
-
-		b.Logf("%s", bd.String())
+		b.Log(bd)
 	}
 
-	//ets.LTNGDBEngineV2.Close()
-	//time.Sleep(500 * time.Millisecond)
-
 	{
+		bd := testbench.New()
+		bd.Count()
 		pagination := &ltngenginemodels.Pagination{
 			PageID:           1,
 			PageSize:         10,
@@ -244,12 +235,11 @@ func benchmarkLTNGDBEngineV2(b *testing.B) {
 				ListSearchPattern: ltngenginemodels.Default,
 			},
 		}
-		b.StartTimer()
-		_, err = ets.LTNGDBEngineV2.ListItems(ets.Ctx, dbMetaInfo, pagination, opts)
-		b.StopTimer()
+		bd.CalcAvg(bd.CalcElapsed(func() {
+			_, err = ets.LTNGDBEngineV2.ListItems(ets.Ctx, dbMetaInfo, pagination, opts)
+		}))
 		assert.NoError(b, err)
-		b.Log(b.Elapsed())
-		b.ResetTimer()
+		b.Log(bd)
 	}
 
 	ets.LTNGDBEngineV2.Close()
@@ -295,21 +285,18 @@ func benchmarkBadgerDBEngine(b *testing.B) {
 				ParentKey:    bvs.BsKey,
 				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
 			}
-			b.ResetTimer()
-			b.StartTimer()
-			err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
-				Create(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
-			b.StopTimer()
-			elapsed := b.Elapsed()
-			bd.CalcAvg(elapsed)
-			b.ResetTimer()
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
+					Create(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+			}))
 			assert.NoError(b, err)
 		}
-
-		b.Logf("%s", bd.String())
+		b.Log(bd)
 	}
 
 	{
+		bd := testbench.New()
+		bd.Count()
 		opts := &models_badgerdb_v4_operation.IndexOpts{
 			IndexProperties: models_badgerdb_v4_operation.IndexProperties{
 				ListSearchPattern: models_badgerdb_v4_operation.Default,
@@ -319,12 +306,11 @@ func benchmarkBadgerDBEngine(b *testing.B) {
 			PageID:   1,
 			PageSize: 10,
 		}
-		b.StartTimer()
-		_, err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).List(ets.Ctx, opts, pagination)
-		b.StopTimer()
+		bd.CalcAvg(bd.CalcElapsed(func() {
+			_, err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).List(ets.Ctx, opts, pagination)
+		}))
 		assert.NoError(b, err)
-		b.Log(b.Elapsed())
-		b.ResetTimer()
+		b.Log(bd)
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	chanLimit = 50 // 1 << 5
+	chanLimit = 1 << 8
 )
 
 type BenchData struct {
@@ -46,6 +46,11 @@ func (bd *BenchData) CalcAvg(elapsed time.Duration) {
 		if bd.max < elapsed {
 			bd.max = elapsed
 		}
+	}
+
+	if bd.avg == 0 {
+		bd.avg = elapsed
+		return
 	}
 
 	bd.avg = (bd.avg + elapsed) / 2

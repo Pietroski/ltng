@@ -1,7 +1,14 @@
-package main
+package integration_test
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strings"
+	"testing"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
@@ -15,6 +22,72 @@ import (
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
+
+func ReadEnvFile(filename string) (map[string]string, error) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, fmt.Errorf("file does not exist: %s: %v", filename, err)
+	}
+
+	envFile, err := os.OpenFile(filename, os.O_RDONLY, 0744)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = envFile.Close()
+	}()
+
+	envMapping := make(map[string]string)
+	envReader := bufio.NewReader(envFile)
+	for { // envReader.Buffered() > 0
+		line, err := envReader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+
+		line = strings.TrimSpace(line)
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			if len(parts) != 1 {
+				err = os.Setenv(strings.TrimSpace(parts[0]), "")
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		envMapping[key] = value
+		err = os.Setenv(key, value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return envMapping, nil
+}
+
+const (
+	refToEnvFilename = "../../"
+	envFilename      = ".local.env"
+)
+
+func TestMain(m *testing.M) {
+	_, err := ReadEnvFile(refToEnvFilename + envFilename)
+	if err != nil {
+		log.Fatalf("Error reading environment variables: %v", err)
+	}
+
+	main()
+
+	os.Exit(m.Run())
+}
 
 func main() {
 	ctx, cancelFn := context.WithCancel(context.Background())
