@@ -33,8 +33,8 @@ func TestClients(t *testing.T) {
 	//t.Log("Benchmark_LTNGDB_Client_Engine")
 	//testLTNGDBClient(t)
 
-	//t.Log("Benchmark_BadgerDB_Client_Engine")
-	//testBadgerDBClient(t)
+	t.Log("Benchmark_BadgerDB_Client_Engine")
+	testBadgerDBClient(t)
 
 	t.Log("Benchmark_LTNGDB_Client_Engine")
 	testLTNGDBClient(t)
