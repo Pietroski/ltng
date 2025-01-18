@@ -157,8 +157,8 @@ const (
 )
 
 func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
-	//DockerComposeUp(tb)
-	//defer DockerComposeDown(tb)
+	DockerComposeUp(tb)
+	defer DockerComposeDown(tb)
 
 	ctx := context.Background()
 	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
