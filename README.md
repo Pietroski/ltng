@@ -20,8 +20,8 @@ LTNG_ENGINE=default badgerV3 badgerV4 ltng_engine
 ## Lightning-Queue
 
 - can consume from:
-  - live stream
-  - historical stream
+    - live stream
+    - historical stream
 
 - a stream is created thought on how an event will be propagated (round-robin, fan out, etc...)
 
@@ -39,4 +39,31 @@ go test -v -race -run=TestClients ./tests/benchmark/...
 
 ```bash
 go test -v -race -run=BenchmarkAllEngines ./tests/benchmark/...
+```
+
+```bash
+timeout 15s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...'
+```
+
+```bash
+timeout 15s bash -c 'go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tests/benchmark/...'
+```
+
+```bash
+mkdir -p "./docs/outputs/$(date +'%y-%m-%d')" && \
+timeout 5s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...' && \
+timeout 5s bash -c 'go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tests/benchmark/...' \
+> "./docs/outputs/$(date +'%y-%m-%d/%H:%M:%S').txt"
+```
+
+```bash
+go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tests/benchmark/...
+```
+
+```bash
+go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...
+```
+
+```bash
+#
 ```
