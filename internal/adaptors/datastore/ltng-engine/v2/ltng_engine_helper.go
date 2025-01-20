@@ -47,9 +47,7 @@ func newLTNGEngine(
 		return nil, err
 	}
 
-	op := newOpSaga(ctx, engine)
-
-	engine.opSaga = op
+	//engine.opSaga = newOpSaga(ctx, engine)
 	return engine, nil
 }
 
@@ -74,6 +72,8 @@ func (e *LTNGEngine) init(ctx context.Context) error {
 	if err := e.fq.Init(); err != nil {
 		return fmt.Errorf("failed initializing file queue: %w", err)
 	}
+
+	e.opSaga = newOpSaga(ctx, e)
 
 	return nil
 }
@@ -113,4 +113,6 @@ func (e *LTNGEngine) closeItems() {
 
 		return true
 	})
+
+	e.opSaga.Close()
 }

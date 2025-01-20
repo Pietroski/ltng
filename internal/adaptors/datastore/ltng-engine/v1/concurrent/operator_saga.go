@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	off_thread "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/op/off-thread"
+	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 )
 
 func ResponseAccumulator(respSigChan ...chan error) error {
@@ -95,7 +95,7 @@ func (s *createSaga) ciidOnThread(
 	ctx context.Context,
 ) {
 	for v := range s.e.indexThreadOperatorChan {
-		op := off_thread.New("createIndexItemOnDisk")
+		op := concurrent.New("createIndexItemOnDisk")
 		for _, indexKey := range v.opts.IndexingKeys {
 			op.OpX(func() (any, error) {
 				if err := s.e.createIndexItemOnDisk(v.ctx, v.dbMetaInfo.IndexInfo(), &Item{

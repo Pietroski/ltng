@@ -3,83 +3,59 @@ package transporthandler
 import (
 	"context"
 	"fmt"
-	"log"
-	"os/signal"
-	"syscall"
+	"os"
+	"runtime"
+	"sync"
 	"time"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	handlers_model "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/handlers"
 	pprof_server "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/profiler/pprof-server"
 )
 
 func (h *handler) stopServers() {
 	for srvName, srv := range h.serverMapping {
-		//if srv == nil {
-		//	continue
-		//}
-
-		h.goPool.wg.Add(1)
-		go func(srvName string, srv handlers_model.Server) {
-			defer h.handleStopPanic()
-			defer h.goPool.wg.Done()
-
-			h.stopCall(srvName, srv)
-		}(srvName, srv)
+		h.logger.Infof(
+			"stopping server",
+			go_logger.Field{"server_name": srvName},
+		)
+		if srv != nil {
+			srv.Stop()
+		}
+		h.serverCount.Add(1)
+		h.logger.Infof(
+			"stopped server",
+			go_logger.Field{"server_name": srvName},
+		)
 	}
 }
 
-func (h *handler) stopCall(srvName string, srv handlers_model.Server) {
-	h.logger.Infof(
-		"stopping server",
-		go_logger.Field{"server_name": srvName},
-	)
-	srv.Stop()
-	h.logger.Infof(
-		"stopped server",
-		go_logger.Field{"server_name": srvName},
-	)
-}
-
 func (h *handler) makeSrvChan(srvLen int) {
-	srvLen++
+	//srvLen++
 	h.srvChan = srvChan{
-		stopSig:  makeStopSrvSig(),
-		errSig:   makeErrSrvSig(srvLen),
-		panicSig: makePanicSrvSig(srvLen),
+		stopSig: make(chan os.Signal),
+		errSig:  make(chan error, srvLen),
+
+		mtx: &sync.Mutex{},
 	}
 }
 
 func (h *handler) closeSrvSigChan() {
-	defer h.handleCloseChanPanic()
+	//defer h.handleCloseChanPanic()
 
 	h.logger.Infof("closing srv sig channel...")
-	if !isChanClosed(h.srvChan.stopSig) {
-		signal.Stop(h.srvChan.stopSig)
-		close(h.srvChan.stopSig)
-	}
+	h.srvChan.closeStopSigChannel()
+	h.srvChan.cleanStopSigChannel()
 	h.logger.Infof("srv sig channel successfully closed.")
 }
 
 func (h *handler) closeErrChan() {
-	defer h.handleCloseChanPanic()
+	//defer h.handleCloseChanPanic()
 
 	h.logger.Infof("closing error channel...")
-	if !isChanClosed(h.srvChan.errSig) {
-		close(h.srvChan.errSig)
-	}
+	h.srvChan.closeErrChannel()
+	h.srvChan.cleanErrorChannel()
 	h.logger.Infof("error channel successfully closed.")
-}
-
-func (h *handler) closePanicChan() {
-	defer h.handleCloseChanPanic()
-
-	h.logger.Infof("closing panic channel...")
-	if !isChanClosed(h.srvChan.panicSig) {
-		close(h.srvChan.panicSig)
-	}
-	h.logger.Infof("panic channel successfully closed.")
 }
 
 func (h *handler) handleCloseChanPanic() {
@@ -88,45 +64,56 @@ func (h *handler) handleCloseChanPanic() {
 			"recovering from close channel panic",
 			go_logger.Field{"panic": fmt.Sprintf("%v", r)},
 		)
-		h.goPool.gst.Trace()
-		h.osExit(2)
-		return
+
+		h.tracing.Trace()
 	}
 }
 
 func (h *handler) handleWaiting() {
 	h.logger.Infof("waiting for goroutines to stop")
-	h.goPool.wg.Wait()
+	for h.serverCount.Load() != uint32(len(h.serverMapping)) {
+		runtime.Gosched()
+	}
+	h.offThread.Wait()
 	h.logger.Infof("goroutines stopped")
+	h.tracing.Trace()
 }
 
 func (h *handler) handleErr(err error) {
+	defer h.handlePanic()
+
 	h.logger.Errorf(
 		"error from server",
 		go_logger.Field{"error": err},
 	)
-	if !isChanClosed(h.srvChan.errSig) {
-		h.srvChan.errSig <- err
-		h.logger.Errorf(
-			"post-err",
-			go_logger.Field{"error": err},
-		)
-	}
+	h.srvChan.handleErr(err)
+	h.logger.Errorf(
+		"post-err",
+		go_logger.Field{"error": err},
+	)
 }
 
 func (h *handler) handlePanic() {
 	if r := recover(); r != nil {
-		h.logger.Warningf(
-			"recovering from runtime panic",
+		h.logger.Warningf("recovering from runtime panic",
 			go_logger.Field{"panic": fmt.Sprintf("%v", r)},
 		)
-		if !isChanClosed(h.srvChan.panicSig) {
-			h.srvChan.panicSig <- true
-			h.logger.Warningf(
-				"post-panic",
-				go_logger.Field{"panic": fmt.Sprintf("%v", r)},
-			)
-		}
+		h.srvChan.handleErr(fmt.Errorf("recovering from runtime panic: %v", r))
+		h.logger.Warningf("recovered from runtime panic",
+			go_logger.Field{"panic": fmt.Sprintf("%v", r)},
+		)
+	}
+}
+
+func (h *handler) handleStartPanic() {
+	if r := recover(); r != nil {
+		h.logger.Warningf("recovering from runtime panic",
+			go_logger.Field{"panic": fmt.Sprintf("%v", r)},
+		)
+		h.srvChan.handleErr(fmt.Errorf("recovering from runtime panic: %v", r))
+		h.logger.Warningf("recovered from runtime panic",
+			go_logger.Field{"panic": fmt.Sprintf("%v", r)},
+		)
 	}
 }
 
@@ -137,10 +124,6 @@ func (h *handler) handleStopPanic() {
 			go_logger.Field{"panic": fmt.Sprintf("%v", r)},
 		)
 	}
-}
-
-func (h *handler) sigKill() {
-	_ = syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
 }
 
 func handleCtxGen(
@@ -176,6 +159,8 @@ func handleLogger(
 		},
 	)
 }
+
+// profiling
 
 func (h *handler) handlePprof(servers ServerMapping) ServerMapping {
 	if !h.options.Debug {
@@ -218,14 +203,49 @@ func (h *handler) stopProfiler() {
 	h.profiler.pprof.Stop()
 }
 
-func isChanClosed[T any](ch chan T) bool {
-	log.Println("analysing channel")
-	select {
-	case _, ok := <-ch:
-		log.Println("channel is:", ok)
-		return !ok
-	default:
-		log.Println("nothing from the channel")
-		return false
+// srvChan methods
+
+func (s *srvChan) handleErr(err error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	if s.isErrSigClosed {
+		return
+	}
+
+	s.errSig <- err
+}
+
+func (s *srvChan) closeErrChannel() {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	if s.isErrSigClosed {
+		return
+	}
+
+	close(s.errSig)
+}
+
+func (s *srvChan) cleanErrorChannel() {
+	for _ = range s.errSig {
+		//
+	}
+}
+
+func (s *srvChan) closeStopSigChannel() {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	if s.isStopSigClosed {
+		return
+	}
+
+	close(s.stopSig)
+}
+
+func (s *srvChan) cleanStopSigChannel() {
+	for _ = range s.stopSig {
+		//
 	}
 }

@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 	"sync"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
@@ -13,6 +12,7 @@ import (
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
 type (

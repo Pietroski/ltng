@@ -8,42 +8,102 @@ import (
 	"log"
 	"os"
 
+	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	off_thread "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/op/off-thread"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
 )
 
 type createSaga struct {
 	opSaga *opSaga
+	cancel context.CancelFunc
 }
 
 func newCreateSaga(ctx context.Context, opSaga *opSaga) *createSaga {
+	ctx, cancel := context.WithCancel(ctx)
 	cs := &createSaga{
 		opSaga: opSaga,
+		cancel: cancel,
 	}
 
-	go cs.createItemOnDiskOnThread(ctx)
-	go cs.createIndexItemOnDiskOnThread(ctx)
-	go cs.createIndexListItemOnDiskOnThread(ctx)
+	cs.opSaga.offThread.Op(func() {
+		cs.createItemOnDiskOnThread(ctx)
+	})
+	cs.opSaga.offThread.Op(func() {
+		cs.createIndexItemOnDiskOnThread(ctx)
+	})
+	cs.opSaga.offThread.Op(func() {
+		cs.createIndexListItemOnDiskOnThread(ctx)
+	})
+	cs.opSaga.offThread.Op(func() {
+		cs.createRelationalItemOnDiskOnThread(ctx)
+	})
+	cs.opSaga.offThread.Op(func() {
+		cs.deleteItemOnDiskOnThread(ctx)
+	})
+	cs.opSaga.offThread.Op(func() {
+		cs.deleteIndexItemFromDiskOnThread(ctx)
+	})
+	cs.opSaga.offThread.Op(func() {
+		cs.deleteIndexListItemFromDiskOnThread(ctx)
+	})
 
-	go cs.createRelationalItemOnDiskOnThread(ctx)
+	cs.opSaga.offThread.Op(func() {
+		cs.ListenAndTrigger(ctx)
+	})
 
-	go cs.deleteItemOnDiskOnThread(ctx)
-	go cs.deleteIndexItemFromDiskOnThread(ctx)
-	go cs.deleteIndexListItemFromDiskOnThread(ctx)
-
-	go cs.ListenAndTrigger(ctx)
+	//go cs.createItemOnDiskOnThread(ctx)
+	//go cs.createIndexItemOnDiskOnThread(ctx)
+	//go cs.createIndexListItemOnDiskOnThread(ctx)
+	//
+	//go cs.createRelationalItemOnDiskOnThread(ctx)
+	//
+	//go cs.deleteItemOnDiskOnThread(ctx)
+	//go cs.deleteIndexItemFromDiskOnThread(ctx)
+	//go cs.deleteIndexListItemFromDiskOnThread(ctx)
+	//
+	//go cs.ListenAndTrigger(ctx)
 
 	return cs
 }
 
 func (s *createSaga) ListenAndTrigger(ctx context.Context) {
-	for itemInfoData := range s.opSaga.crudChannels.CreateChannels.InfoChannel {
-		if !itemInfoData.Opts.HasIdx {
-			s.noIndexTrigger(ctx, itemInfoData)
-		} else {
-			s.indexTrigger(ctx, itemInfoData)
-		}
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.InfoChannel,
+		func(itemInfoData *ltngenginemodels.ItemInfoData) {
+			if !itemInfoData.Opts.HasIdx {
+				s.noIndexTrigger(ctx, itemInfoData)
+			} else {
+				s.indexTrigger(ctx, itemInfoData)
+			}
+		},
+	)
+	s.cancel()
+
+	//for {
+	//	select {
+	//	case <-ctx.Done():
+	//		log.Printf("context done for createSaga: %v", ctx.Err())
+	//
+	//		s.opSaga.crudChannels.CreateChannels.Close()
+	//		for itemInfoData := range s.opSaga.crudChannels.CreateChannels.InfoChannel {
+	//			s.listAndTrigger(ctx, itemInfoData)
+	//		}
+	//		s.cancel()
+	//
+	//		return
+	//	case itemInfoData := <-s.opSaga.crudChannels.CreateChannels.InfoChannel:
+	//		s.listAndTrigger(ctx, itemInfoData)
+	//	}
+	//}
+
+	//for itemInfoData := range s.opSaga.crudChannels.CreateChannels.InfoChannel {
+	//	if !itemInfoData.Opts.HasIdx {
+	//		s.noIndexTrigger(ctx, itemInfoData)
+	//	} else {
+	//		s.indexTrigger(ctx, itemInfoData)
+	//	}
+	//}
 }
 
 func (s *createSaga) noIndexTrigger(
@@ -164,109 +224,228 @@ func (s *createSaga) indexRollback(
 
 // createItemOnDiskOnThread stands for createItemOnDisk on thread.
 func (s *createSaga) createItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.ActionItemChannel {
-		err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for {
+	//	select {
+	//	case <-ctx.Done():
+	//		log.Printf("context done for createItemOnDiskOnThread: %v\n", ctx.Err())
+	//		for v := range s.opSaga.crudChannels.CreateChannels.ActionItemChannel {
+	//			err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+	//			v.RespSignal <- err
+	//			close(v.RespSignal)
+	//		}
+	//		log.Println("killing goroutine - createItemOnDiskOnThread")
+	//		return
+	//	case v := <-s.opSaga.crudChannels.CreateChannels.ActionItemChannel:
+	//		err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+	//		v.RespSignal <- err
+	//		close(v.RespSignal)
+	//	}
+	//}
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.ActionItemChannel {
+	//	err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *createSaga) deleteItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.RollbackItemChannel {
-		strItemKey := hex.EncodeToString(v.Item.Key)
-		filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-		err := os.Remove(filePath)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.RollbackItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			strItemKey := hex.EncodeToString(v.Item.Key)
+			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			err := os.Remove(filePath)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.RollbackItemChannel {
+	//	strItemKey := hex.EncodeToString(v.Item.Key)
+	//	filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+	//	err := os.Remove(filePath)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *createSaga) createIndexItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel {
-		op := off_thread.New("createIndexItemOnDisk")
-		for _, indexKey := range v.Opts.IndexingKeys {
-			op.OpX(func() (any, error) {
-				if err := s.opSaga.e.createItemOnDisk(v.Ctx,
-					v.DBMetaInfo.IndexInfo(),
-					&ltngenginemodels.Item{
-						Key:   indexKey,
-						Value: v.Opts.ParentKey,
-					},
-				); err != nil {
-					return nil, err
-				}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			op := concurrent.New("createIndexItemOnDisk")
+			for _, indexKey := range v.Opts.IndexingKeys {
+				op.OpX(func() (any, error) {
+					if err := s.opSaga.e.createItemOnDisk(v.Ctx,
+						v.DBMetaInfo.IndexInfo(),
+						&ltngenginemodels.Item{
+							Key:   indexKey,
+							Value: v.Opts.ParentKey,
+						},
+					); err != nil {
+						return nil, err
+					}
 
-				return nil, nil
-			})
-		}
-		err := op.WaitAndWrapErr()
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+					return nil, nil
+				})
+			}
+			err := op.WaitAndWrapErr()
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel {
+	//	op := concurrent.New("createIndexItemOnDisk")
+	//	for _, indexKey := range v.Opts.IndexingKeys {
+	//		op.OpX(func() (any, error) {
+	//			if err := s.opSaga.e.createItemOnDisk(v.Ctx,
+	//				v.DBMetaInfo.IndexInfo(),
+	//				&ltngenginemodels.Item{
+	//					Key:   indexKey,
+	//					Value: v.Opts.ParentKey,
+	//				},
+	//			); err != nil {
+	//				return nil, err
+	//			}
+	//
+	//			return nil, nil
+	//		})
+	//	}
+	//	err := op.WaitAndWrapErr()
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *createSaga) deleteIndexItemFromDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel {
-		var errAcc error
-		for _, indexKey := range v.Opts.IndexingKeys {
-			strItemKey := hex.EncodeToString(indexKey)
-			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
-			if err := os.Remove(filePath); err != nil {
-				if errAcc == nil {
-					errAcc = err
-				} else {
-					err = fmt.Errorf("%s: %w", errAcc, err)
-					errAcc = fmt.Errorf("error deleting item on database: %w", err)
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			var errAcc error
+			for _, indexKey := range v.Opts.IndexingKeys {
+				strItemKey := hex.EncodeToString(indexKey)
+				filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+				if err := os.Remove(filePath); err != nil {
+					if errAcc == nil {
+						errAcc = err
+					} else {
+						err = fmt.Errorf("%s: %w", errAcc, err)
+						errAcc = fmt.Errorf("error deleting item on database: %w", err)
+					}
 				}
 			}
-		}
-		v.RespSignal <- errAcc
-		close(v.RespSignal)
-	}
+			v.RespSignal <- errAcc
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel {
+	//	var errAcc error
+	//	for _, indexKey := range v.Opts.IndexingKeys {
+	//		strItemKey := hex.EncodeToString(indexKey)
+	//		filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+	//		if err := os.Remove(filePath); err != nil {
+	//			if errAcc == nil {
+	//				errAcc = err
+	//			} else {
+	//				err = fmt.Errorf("%s: %w", errAcc, err)
+	//				errAcc = fmt.Errorf("error deleting item on database: %w", err)
+	//			}
+	//		}
+	//	}
+	//	v.RespSignal <- errAcc
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *createSaga) createIndexListItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel {
-		err := s.opSaga.e.createItemOnDisk(ctx,
-			v.DBMetaInfo.IndexListInfo(),
-			&ltngenginemodels.Item{
-				Key:   v.Opts.ParentKey,
-				Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
-			},
-		)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			err := s.opSaga.e.createItemOnDisk(ctx,
+				v.DBMetaInfo.IndexListInfo(),
+				&ltngenginemodels.Item{
+					Key:   v.Opts.ParentKey,
+					Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
+				},
+			)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel {
+	//	err := s.opSaga.e.createItemOnDisk(ctx,
+	//		v.DBMetaInfo.IndexListInfo(),
+	//		&ltngenginemodels.Item{
+	//			Key:   v.Opts.ParentKey,
+	//			Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
+	//		},
+	//	)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *createSaga) deleteIndexListItemFromDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel {
-		strItemKey := hex.EncodeToString(v.Item.Key)
-		filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
-		err := os.Remove(filePath)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			strItemKey := hex.EncodeToString(v.Item.Key)
+			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+			err := os.Remove(filePath)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel {
+	//	strItemKey := hex.EncodeToString(v.Item.Key)
+	//	filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+	//	err := os.Remove(filePath)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *createSaga) createRelationalItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel {
-		err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel {
+	//	err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }

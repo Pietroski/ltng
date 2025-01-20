@@ -8,43 +8,86 @@ import (
 	"log"
 	"os"
 
+	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
-	off_thread "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/op/off-thread"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
 )
 
 type upsertSaga struct {
 	opSaga *opSaga
+	cancel context.CancelFunc
 }
 
 func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
+	ctx, cancel := context.WithCancel(ctx)
 	us := &upsertSaga{
 		opSaga: opSaga,
+		cancel: cancel,
 	}
 
-	go us.upsertItemOnDiskOnThread(ctx)
-	go us.upsertIndexItemOnDiskOnThread(ctx)
-	go us.upsertIndexListItemOnDiskOnThread(ctx)
+	us.opSaga.offThread.Op(func() {
+		us.upsertItemOnDiskOnThread(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
+		us.upsertIndexItemOnDiskOnThread(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
+		us.upsertIndexListItemOnDiskOnThread(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
+		us.upsertRelationalItemOnDiskOnThread(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
+		us.deleteItemOnDiskOnThread(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
+		us.deleteIndexItemFromDiskOnThread(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
+		us.deleteIndexListItemFromDiskOnThread(ctx)
+	})
 
-	go us.upsertRelationalItemOnDiskOnThread(ctx)
+	us.opSaga.offThread.Op(func() {
+		us.ListenAndTrigger(ctx)
+	})
 
-	go us.deleteItemOnDiskOnThread(ctx)
-	go us.deleteIndexItemFromDiskOnThread(ctx)
-	go us.deleteIndexListItemFromDiskOnThread(ctx)
-
-	go us.ListenAndTrigger(ctx)
+	//go us.upsertItemOnDiskOnThread(ctx)
+	//go us.upsertIndexItemOnDiskOnThread(ctx)
+	//go us.upsertIndexListItemOnDiskOnThread(ctx)
+	//
+	//go us.upsertRelationalItemOnDiskOnThread(ctx)
+	//
+	//go us.deleteItemOnDiskOnThread(ctx)
+	//go us.deleteIndexItemFromDiskOnThread(ctx)
+	//go us.deleteIndexListItemFromDiskOnThread(ctx)
+	//
+	//go us.ListenAndTrigger(ctx)
 
 	return us
 }
 
 func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
-	for itemInfoData := range s.opSaga.crudChannels.UpsertChannels.InfoChannel {
-		if !itemInfoData.Opts.HasIdx {
-			s.noIndexTrigger(ctx, itemInfoData)
-		} else {
-			s.indexTrigger(ctx, itemInfoData)
-		}
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.InfoChannel,
+		func(itemInfoData *ltngenginemodels.ItemInfoData) {
+			if !itemInfoData.Opts.HasIdx {
+				s.noIndexTrigger(ctx, itemInfoData)
+			} else {
+				s.indexTrigger(ctx, itemInfoData)
+			}
+		},
+	)
+	s.cancel()
+
+	//for itemInfoData := range s.opSaga.crudChannels.UpsertChannels.InfoChannel {
+	//	if !itemInfoData.Opts.HasIdx {
+	//		s.noIndexTrigger(ctx, itemInfoData)
+	//	} else {
+	//		s.indexTrigger(ctx, itemInfoData)
+	//	}
+	//}
 }
 
 func (s *upsertSaga) noIndexTrigger(
@@ -165,181 +208,354 @@ func (s *upsertSaga) indexRollback(
 
 // upsertItemOnDiskOnThread stands for upsertItemOnDisk on thread.
 func (s *upsertSaga) upsertItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.ActionItemChannel {
-		err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.ActionItemChannel {
+	//	err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *upsertSaga) deleteItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel {
-		strItemKey := hex.EncodeToString(v.Item.Key)
-		filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-		err := os.Remove(filePath)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			strItemKey := hex.EncodeToString(v.Item.Key)
+			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			err := os.Remove(filePath)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel {
+	//	strItemKey := hex.EncodeToString(v.Item.Key)
+	//	filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+	//	err := os.Remove(filePath)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel {
-		indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
-		if err != nil {
-			v.RespSignal <- err
-			close(v.RespSignal)
-			continue
-		}
-
-		op := off_thread.New("upsertIndexItemOnDisk")
-		op.OpX(func() (any, error) {
-			keysToSave := bytesop.CalRightDiff(
-				ltngenginemodels.IndexListToBytesList(indexingList),
-				v.Opts.IndexingKeys)
-
-			for _, indexKey := range keysToSave {
-				if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
-					v.DBMetaInfo.IndexInfo(),
-					&ltngenginemodels.Item{
-						Key:   indexKey,
-						Value: v.Opts.ParentKey,
-					},
-				); err != nil {
-					return nil, err
-				}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
+			if err != nil {
+				v.RespSignal <- err
+				close(v.RespSignal)
+				return
 			}
 
-			return nil, nil
-		})
-		op.OpX(func() (any, error) {
-			keysToDelete := bytesop.CalRightDiff(
-				v.Opts.IndexingKeys,
-				ltngenginemodels.IndexListToBytesList(indexingList))
+			op := concurrent.New("upsertIndexItemOnDisk")
+			op.OpX(func() (any, error) {
+				keysToSave := bytesop.CalRightDiff(
+					ltngenginemodels.IndexListToBytesList(indexingList),
+					v.Opts.IndexingKeys)
 
-			var errAcc error
-			for _, indexKey := range keysToDelete {
-				strItemKey := hex.EncodeToString(indexKey)
-				filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
-
-				if err := os.Remove(filePath); err != nil {
-					if errAcc == nil {
-						errAcc = err
-					} else {
-						err = fmt.Errorf("%s: %w", errAcc, err)
-						errAcc = fmt.Errorf("error deleting item on database: %w", err)
+				for _, indexKey := range keysToSave {
+					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
+						v.DBMetaInfo.IndexInfo(),
+						&ltngenginemodels.Item{
+							Key:   indexKey,
+							Value: v.Opts.ParentKey,
+						},
+					); err != nil {
+						return nil, err
 					}
 				}
-			}
 
-			return nil, nil
-		})
+				return nil, nil
+			})
+			op.OpX(func() (any, error) {
+				keysToDelete := bytesop.CalRightDiff(
+					v.Opts.IndexingKeys,
+					ltngenginemodels.IndexListToBytesList(indexingList))
 
-		err = op.WaitAndWrapErr()
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+				var errAcc error
+				for _, indexKey := range keysToDelete {
+					strItemKey := hex.EncodeToString(indexKey)
+					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+
+					if err := os.Remove(filePath); err != nil {
+						if errAcc == nil {
+							errAcc = err
+						} else {
+							err = fmt.Errorf("%s: %w", errAcc, err)
+							errAcc = fmt.Errorf("error deleting item on database: %w", err)
+						}
+					}
+				}
+
+				return nil, nil
+			})
+
+			err = op.WaitAndWrapErr()
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel {
+	//	indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
+	//	if err != nil {
+	//		v.RespSignal <- err
+	//		close(v.RespSignal)
+	//		continue
+	//	}
+	//
+	//	op := concurrent.New("upsertIndexItemOnDisk")
+	//	op.OpX(func() (any, error) {
+	//		keysToSave := bytesop.CalRightDiff(
+	//			ltngenginemodels.IndexListToBytesList(indexingList),
+	//			v.Opts.IndexingKeys)
+	//
+	//		for _, indexKey := range keysToSave {
+	//			if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
+	//				v.DBMetaInfo.IndexInfo(),
+	//				&ltngenginemodels.Item{
+	//					Key:   indexKey,
+	//					Value: v.Opts.ParentKey,
+	//				},
+	//			); err != nil {
+	//				return nil, err
+	//			}
+	//		}
+	//
+	//		return nil, nil
+	//	})
+	//	op.OpX(func() (any, error) {
+	//		keysToDelete := bytesop.CalRightDiff(
+	//			v.Opts.IndexingKeys,
+	//			ltngenginemodels.IndexListToBytesList(indexingList))
+	//
+	//		var errAcc error
+	//		for _, indexKey := range keysToDelete {
+	//			strItemKey := hex.EncodeToString(indexKey)
+	//			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+	//
+	//			if err := os.Remove(filePath); err != nil {
+	//				if errAcc == nil {
+	//					errAcc = err
+	//				} else {
+	//					err = fmt.Errorf("%s: %w", errAcc, err)
+	//					errAcc = fmt.Errorf("error deleting item on database: %w", err)
+	//				}
+	//			}
+	//		}
+	//
+	//		return nil, nil
+	//	})
+	//
+	//	err = op.WaitAndWrapErr()
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel {
-		indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
-		if err != nil {
-			v.RespSignal <- err
-			close(v.RespSignal)
-			continue
-		}
-
-		op := off_thread.New("upsertIndexItemOnDisk")
-		op.OpX(func() (any, error) {
-			keysToSave := bytesop.CalRightDiff(
-				v.Opts.IndexingKeys,
-				ltngenginemodels.IndexListToBytesList(indexingList))
-
-			for _, indexKey := range keysToSave {
-				if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
-					v.DBMetaInfo.IndexInfo(),
-					&ltngenginemodels.Item{
-						Key:   indexKey,
-						Value: v.Opts.ParentKey,
-					},
-				); err != nil {
-					return nil, err
-				}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
+			if err != nil {
+				v.RespSignal <- err
+				close(v.RespSignal)
+				return
 			}
 
-			return nil, nil
-		})
-		op.OpX(func() (any, error) {
-			keysToDelete := bytesop.CalRightDiff(
-				ltngenginemodels.IndexListToBytesList(indexingList),
-				v.Opts.IndexingKeys)
+			op := concurrent.New("upsertIndexItemOnDisk")
+			op.OpX(func() (any, error) {
+				keysToSave := bytesop.CalRightDiff(
+					v.Opts.IndexingKeys,
+					ltngenginemodels.IndexListToBytesList(indexingList))
 
-			var errAcc error
-			for _, indexKey := range keysToDelete {
-				strItemKey := hex.EncodeToString(indexKey)
-				filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
-
-				if err := os.Remove(filePath); err != nil {
-					if errAcc == nil {
-						errAcc = err
-					} else {
-						err = fmt.Errorf("%s: %w", errAcc, err)
-						errAcc = fmt.Errorf("error deleting item on database: %w", err)
+				for _, indexKey := range keysToSave {
+					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
+						v.DBMetaInfo.IndexInfo(),
+						&ltngenginemodels.Item{
+							Key:   indexKey,
+							Value: v.Opts.ParentKey,
+						},
+					); err != nil {
+						return nil, err
 					}
 				}
-			}
 
-			return nil, nil
-		})
+				return nil, nil
+			})
+			op.OpX(func() (any, error) {
+				keysToDelete := bytesop.CalRightDiff(
+					ltngenginemodels.IndexListToBytesList(indexingList),
+					v.Opts.IndexingKeys)
 
-		err = op.WaitAndWrapErr()
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+				var errAcc error
+				for _, indexKey := range keysToDelete {
+					strItemKey := hex.EncodeToString(indexKey)
+					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+
+					if err := os.Remove(filePath); err != nil {
+						if errAcc == nil {
+							errAcc = err
+						} else {
+							err = fmt.Errorf("%s: %w", errAcc, err)
+							errAcc = fmt.Errorf("error deleting item on database: %w", err)
+						}
+					}
+				}
+
+				return nil, nil
+			})
+
+			err = op.WaitAndWrapErr()
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel {
+	//	indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
+	//	if err != nil {
+	//		v.RespSignal <- err
+	//		close(v.RespSignal)
+	//		continue
+	//	}
+	//
+	//	op := concurrent.New("upsertIndexItemOnDisk")
+	//	op.OpX(func() (any, error) {
+	//		keysToSave := bytesop.CalRightDiff(
+	//			v.Opts.IndexingKeys,
+	//			ltngenginemodels.IndexListToBytesList(indexingList))
+	//
+	//		for _, indexKey := range keysToSave {
+	//			if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
+	//				v.DBMetaInfo.IndexInfo(),
+	//				&ltngenginemodels.Item{
+	//					Key:   indexKey,
+	//					Value: v.Opts.ParentKey,
+	//				},
+	//			); err != nil {
+	//				return nil, err
+	//			}
+	//		}
+	//
+	//		return nil, nil
+	//	})
+	//	op.OpX(func() (any, error) {
+	//		keysToDelete := bytesop.CalRightDiff(
+	//			ltngenginemodels.IndexListToBytesList(indexingList),
+	//			v.Opts.IndexingKeys)
+	//
+	//		var errAcc error
+	//		for _, indexKey := range keysToDelete {
+	//			strItemKey := hex.EncodeToString(indexKey)
+	//			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+	//
+	//			if err := os.Remove(filePath); err != nil {
+	//				if errAcc == nil {
+	//					errAcc = err
+	//				} else {
+	//					err = fmt.Errorf("%s: %w", errAcc, err)
+	//					errAcc = fmt.Errorf("error deleting item on database: %w", err)
+	//				}
+	//			}
+	//		}
+	//
+	//		return nil, nil
+	//	})
+	//
+	//	err = op.WaitAndWrapErr()
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel {
-		err := s.opSaga.e.upsertItemOnDisk(ctx,
-			v.DBMetaInfo.IndexListInfo(),
-			&ltngenginemodels.Item{
-				Key:   v.Opts.ParentKey,
-				Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
-			},
-		)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			err := s.opSaga.e.upsertItemOnDisk(ctx,
+				v.DBMetaInfo.IndexListInfo(),
+				&ltngenginemodels.Item{
+					Key:   v.Opts.ParentKey,
+					Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
+				},
+			)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel {
+	//	err := s.opSaga.e.upsertItemOnDisk(ctx,
+	//		v.DBMetaInfo.IndexListInfo(),
+	//		&ltngenginemodels.Item{
+	//			Key:   v.Opts.ParentKey,
+	//			Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
+	//		},
+	//	)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel {
-		strItemKey := hex.EncodeToString(v.Item.Key)
-		filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
-		err := os.Remove(filePath)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			strItemKey := hex.EncodeToString(v.Item.Key)
+			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+			err := os.Remove(filePath)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel {
+	//	strItemKey := hex.EncodeToString(v.Item.Key)
+	//	filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+	//	err := os.Remove(filePath)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }
 
 func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
-	_ context.Context,
+	ctx context.Context,
 ) {
-	for v := range s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel {
-		err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
-		v.RespSignal <- err
-		close(v.RespSignal)
-	}
+	ctxrunner.RunWithCancellation(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel,
+		func(v *ltngenginemodels.ItemInfoData) {
+			err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+			v.RespSignal <- err
+			close(v.RespSignal)
+		},
+	)
+
+	//for v := range s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel {
+	//	err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+	//	v.RespSignal <- err
+	//	close(v.RespSignal)
+	//}
 }

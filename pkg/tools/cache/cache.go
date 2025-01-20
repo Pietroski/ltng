@@ -7,10 +7,9 @@ import (
 	"strings"
 	"sync"
 
+	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-
-	off_thread "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/op/off-thread"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -30,7 +29,7 @@ type (
 		logger go_logger.Logger
 		store  *sync.Map
 
-		operator off_thread.Operator
+		operator concurrent.Operator
 	}
 )
 
@@ -42,7 +41,7 @@ func New(opts ...options.Option) *InMemoryCache {
 				Publish: false,
 			}),
 		store:    new(sync.Map),
-		operator: off_thread.New("cache"),
+		operator: concurrent.New("cache"),
 	}
 	options.ApplyOptions(cacher, opts...)
 

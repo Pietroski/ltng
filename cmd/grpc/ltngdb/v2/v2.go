@@ -25,7 +25,7 @@ func StartV2(
 	s serializer_models.Serializer,
 	binder go_binder.Binder,
 ) {
-	logger.Debugf("opening ltngdb engine")
+	logger.Debugf("opening ltngdb engine v2")
 	engine, err := ltng_engine_v2.New(ctx)
 	if err != nil {
 		logger.Errorf(

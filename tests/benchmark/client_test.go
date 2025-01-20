@@ -193,9 +193,6 @@ func TestClients(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 50)
 	cts = data.InitClientTestSuite(t)
 
-	//t.Log("Benchmark_LTNGDB_Client_Engine")
-	//testLTNGDBClient(t)
-
 	t.Log("Benchmark_BadgerDB_Client_Engine")
 	testBadgerDBClient(t)
 

@@ -124,6 +124,19 @@ type (
 	}
 )
 
+func (opChan *OpChannels) Close() {
+	close(opChan.QueueChannel)
+	close(opChan.InfoChannel)
+	close(opChan.ActionItemChannel)
+	close(opChan.RollbackItemChannel)
+	close(opChan.ActionIndexItemChannel)
+	close(opChan.RollbackIndexItemChannel)
+	close(opChan.ActionIndexListItemChannel)
+	close(opChan.RollbackIndexListItemChannel)
+	close(opChan.ActionRelationalItemChannel)
+	close(opChan.RollbackRelationalItemChannel)
+}
+
 type OpNatureType string
 
 const (

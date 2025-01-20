@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
 	"log"
 	"os"
 
@@ -96,13 +97,16 @@ type (
 	deleteSaga struct {
 		opSaga         *opSaga
 		deleteChannels *deleteChannels
+		cancel         context.CancelFunc
 	}
 )
 
 func newDeleteSaga(ctx context.Context, opSaga *opSaga) *deleteSaga {
+	ctx, cancel := context.WithCancel(ctx)
 	ds := &deleteSaga{
 		opSaga:         opSaga,
 		deleteChannels: makeDeleteChannels(),
+		cancel:         cancel,
 	}
 
 	newDeleteCascadeSaga(ctx, ds)
@@ -114,7 +118,26 @@ func newDeleteSaga(ctx context.Context, opSaga *opSaga) *deleteSaga {
 	return ds
 }
 
-func (s *deleteSaga) ListenAndTrigger(_ context.Context) {
+func (s *deleteSaga) ListenAndTrigger(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.opSaga.crudChannels.DeleteChannels.InfoChannel,
+	//	func(itemInfoData *ltngenginemodels.ItemInfoData) {
+	//		switch itemInfoData.Opts.IndexProperties.IndexDeletionBehaviour {
+	//		case ltngenginemodels.IndexOnly:
+	//			s.deleteChannels.deleteIndexOnlyChannel.InfoChannel <- &deleteItemInfoData{ItemInfoData: itemInfoData}
+	//		case ltngenginemodels.CascadeByIdx:
+	//			s.deleteChannels.deleteCascadeByIndex.InfoChannel <- &deleteItemInfoData{ItemInfoData: itemInfoData}
+	//		case ltngenginemodels.Cascade:
+	//			s.deleteChannels.deleteCascadeChannel.InfoChannel <- &deleteItemInfoData{ItemInfoData: itemInfoData}
+	//		case ltngenginemodels.None:
+	//			fallthrough
+	//		default:
+	//			itemInfoData.RespSignal <- fmt.Errorf("invalid index deletion behaviour")
+	//		}
+	//	},
+	//)
+	//s.cancel()
+
 	for itemInfoData := range s.opSaga.crudChannels.DeleteChannels.InfoChannel {
 		switch itemInfoData.Opts.IndexProperties.IndexDeletionBehaviour {
 		case ltngenginemodels.IndexOnly:
@@ -167,12 +190,44 @@ func (s *deleteSaga) createTmpDeletionPaths(
 
 type deleteCascadeSaga struct {
 	deleteSaga *deleteSaga
+	cancel     context.CancelFunc
 }
 
 func newDeleteCascadeSaga(ctx context.Context, deleteSaga *deleteSaga) *deleteCascadeSaga {
+	ctx, cancel := context.WithCancel(ctx)
 	dcs := &deleteCascadeSaga{
 		deleteSaga: deleteSaga,
+		cancel:     cancel,
 	}
+
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.deleteItemFromDiskOnThread(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.deleteIndexItemFromDiskOnThread(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.deleteIndexingListItemFromDiskOnThread(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.deleteRelationalItemFromDiskOnThread(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.deleteTemporaryRecords(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.recreateItemOnDiskOnThread(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.recreateIndexItemOnDiskOnThread(ctx)
+	//})
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.recreateIndexListItemOnDiskOnThread(ctx)
+	//})
+	//
+	//dcs.deleteSaga.opSaga.offThread.Op(func() {
+	//	dcs.ListenAndTrigger(ctx)
+	//})
 
 	go dcs.deleteItemFromDiskOnThread(ctx)
 	go dcs.deleteIndexItemFromDiskOnThread(ctx)
@@ -191,6 +246,40 @@ func newDeleteCascadeSaga(ctx context.Context, deleteSaga *deleteSaga) *deleteCa
 }
 
 func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.InfoChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+	//		if _, err := s.deleteSaga.opSaga.e.memoryStore.LoadItem(ctx,
+	//			itemInfoData.DBMetaInfo, itemInfoData.Item, itemInfoData.Opts,
+	//		); err != nil {
+	//			if _, err = os.Stat(ltngenginemodels.GetDataFilepath(
+	//				itemInfoData.DBMetaInfo.Path, strItemKey),
+	//			); os.IsNotExist(err) {
+	//				// TODO: log fmt.Errorf("file does not exist: %s: %v", itemInfoData.DBMetaInfo.Path, err)
+	//				itemInfoData.RespSignal <- err
+	//				close(itemInfoData.RespSignal)
+	//				return
+	//			}
+	//		}
+	//
+	//		temporaryDelPaths, err := s.deleteSaga.createTmpDeletionPaths(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
+	//		if err != nil {
+	//			itemInfoData.RespSignal <- err
+	//			close(itemInfoData.RespSignal)
+	//			return
+	//		}
+	//		itemInfoData.TmpDelPaths = temporaryDelPaths
+	//
+	//		if !itemInfoData.Opts.HasIdx {
+	//			s.noIndexTrigger(ctx, itemInfoData)
+	//		} else {
+	//			s.indexTrigger(ctx, itemInfoData)
+	//		}
+	//	},
+	//)
+	//s.cancel()
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.InfoChannel {
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		if _, err := s.deleteSaga.opSaga.e.memoryStore.LoadItem(ctx,
@@ -418,7 +507,35 @@ func (s *deleteCascadeSaga) indexRollback(
 	}
 }
 
-func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+	//		lockStrKey := itemInfoData.DBMetaInfo.LockName(strItemKey)
+	//		if _, err := execx.MvFileExec(itemInfoData.Ctx,
+	//			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+	//			ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.tmpDelPath, strItemKey),
+	//		); err != nil {
+	//			// log
+	//			itemInfoData.RespSignal <- err
+	//			close(itemInfoData.RespSignal)
+	//			return
+	//		}
+	//
+	//		fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping.Get(lockStrKey)
+	//		if ok {
+	//			if !rw.IsFileClosed(fileStats.File) {
+	//				_ = fileStats.File.Close()
+	//			}
+	//		}
+	//		s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
+	//
+	//		itemInfoData.RespSignal <- nil
+	//		close(itemInfoData.RespSignal)
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel {
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		lockStrKey := itemInfoData.DBMetaInfo.LockName(strItemKey)
@@ -445,7 +562,27 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(_ context.Context) {
 	}
 }
 
-func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(_ context.Context) {
+func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackItemChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+	//		filePath := ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
+	//
+	//		if _, err := execx.MvFileExec(itemInfoData.Ctx, ltngenginemodels.RawPathWithSepForFile(
+	//			itemInfoData.TmpDelPaths.tmpDelPath, strItemKey), filePath,
+	//		); err != nil {
+	//			// log
+	//			itemInfoData.RespSignal <- err
+	//			close(itemInfoData.RespSignal)
+	//			return
+	//		}
+	//
+	//		itemInfoData.RespSignal <- nil
+	//		close(itemInfoData.RespSignal)
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackItemChannel {
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		filePath := ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
@@ -464,7 +601,38 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(_ context.Context) {
 	}
 }
 
-func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		for _, item := range itemInfoData.IndexList {
+	//			strItemKey := hex.EncodeToString(item.Value)
+	//			lockStrKey := itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)
+	//
+	//			fileStats, ok := s.deleteSaga.opSaga.e.itemFileMapping.Get(lockStrKey)
+	//			if ok {
+	//				if !rw.IsFileClosed(fileStats.File) {
+	//					_ = fileStats.File.Close()
+	//				}
+	//			}
+	//
+	//			if _, err := execx.MvFileExec(itemInfoData.Ctx,
+	//				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
+	//				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
+	//			); err != nil {
+	//				// TODO: log
+	//				itemInfoData.RespSignal <- err
+	//				continue
+	//			}
+	//
+	//			s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
+	//		}
+	//
+	//		itemInfoData.RespSignal <- nil
+	//		close(itemInfoData.RespSignal)
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel {
 		for _, item := range itemInfoData.IndexList {
 			strItemKey := hex.EncodeToString(item.Value)
@@ -494,27 +662,75 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
 	}
 }
 
-func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(_ context.Context) {
-	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexItemChannel {
-		for _, item := range itemInfoData.IndexList {
-			strItemKey := hex.EncodeToString(item.Value)
+func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(ctx context.Context) {
+	ctxrunner.RunWithCancellation(ctx,
+		s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexItemChannel,
+		func(itemInfoData *deleteItemInfoData) {
+			for _, item := range itemInfoData.IndexList {
+				strItemKey := hex.EncodeToString(item.Value)
 
-			if _, err := execx.MvFileExec(itemInfoData.Ctx,
-				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
-				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
-			); err != nil {
-				// TODO: log
-				itemInfoData.RespSignal <- err
-				continue
+				if _, err := execx.MvFileExec(itemInfoData.Ctx,
+					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
+					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
+				); err != nil {
+					// TODO: log
+					itemInfoData.RespSignal <- err
+					continue
+				}
 			}
-		}
 
-		itemInfoData.RespSignal <- nil
-		close(itemInfoData.RespSignal)
-	}
+			itemInfoData.RespSignal <- nil
+			close(itemInfoData.RespSignal)
+		},
+	)
+
+	//for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexItemChannel {
+	//	for _, item := range itemInfoData.IndexList {
+	//		strItemKey := hex.EncodeToString(item.Value)
+	//
+	//		if _, err := execx.MvFileExec(itemInfoData.Ctx,
+	//			ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
+	//			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
+	//		); err != nil {
+	//			// TODO: log
+	//			itemInfoData.RespSignal <- err
+	//			continue
+	//		}
+	//	}
+	//
+	//	itemInfoData.RespSignal <- nil
+	//	close(itemInfoData.RespSignal)
+	//}
 }
 
-func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+	//		if _, err := execx.MvFileExec(itemInfoData.Ctx,
+	//			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
+	//			ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexListTmpDelPath, strItemKey),
+	//		); err != nil {
+	//			// TODO: log
+	//			itemInfoData.RespSignal <- err
+	//			close(itemInfoData.RespSignal)
+	//			return
+	//		}
+	//
+	//		fileStats, ok := s.deleteSaga.opSaga.e.
+	//			itemFileMapping.Get(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
+	//		if ok {
+	//			// TODO:  isFileClosed?
+	//			_ = fileStats.File.Close()
+	//		}
+	//		s.deleteSaga.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
+	//
+	//		itemInfoData.RespSignal <- nil
+	//		close(itemInfoData.RespSignal)
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel {
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		if _, err := execx.MvFileExec(itemInfoData.Ctx,
@@ -540,7 +756,26 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(_ context.Con
 	}
 }
 
-func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(_ context.Context) {
+func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexListItemChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+	//		if _, err := execx.MvFileExec(itemInfoData.Ctx,
+	//			ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
+	//			ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexListTmpDelPath, strItemKey),
+	//		); err != nil {
+	//			// TODO: log
+	//			itemInfoData.RespSignal <- err
+	//			close(itemInfoData.RespSignal)
+	//			return
+	//		}
+	//
+	//		itemInfoData.RespSignal <- nil
+	//		close(itemInfoData.RespSignal)
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexListItemChannel {
 		strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 		if _, err := execx.MvFileExec(itemInfoData.Ctx,
@@ -558,7 +793,24 @@ func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(_ context.Contex
 	}
 }
 
-func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		err := s.deleteSaga.opSaga.e.deleteRelationalData(
+	//			itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Item, itemInfoData.TmpDelPaths)
+	//		if err != nil {
+	//			log.Println("deleteRelationalItemFromDiskOnThread:", err)
+	//			itemInfoData.RespSignal <- err
+	//			close(itemInfoData.RespSignal)
+	//			return
+	//		}
+	//
+	//		itemInfoData.RespSignal <- nil
+	//		close(itemInfoData.RespSignal)
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel {
 		err := s.deleteSaga.opSaga.e.deleteRelationalData(
 			itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Item, itemInfoData.TmpDelPaths)
@@ -574,7 +826,20 @@ func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(_ context.Conte
 	}
 }
 
-func (s *deleteCascadeSaga) deleteTemporaryRecords(_ context.Context) {
+func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
+	//ctxrunner.RunWithCancellation(ctx,
+	//	s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles,
+	//	func(itemInfoData *deleteItemInfoData) {
+	//		_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
+	//		if err != nil {
+	//			itemInfoData.RespSignal <- err
+	//			return
+	//		}
+	//
+	//		itemInfoData.RespSignal <- nil
+	//	},
+	//)
+
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles {
 		_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
 		if err != nil {
@@ -632,7 +897,7 @@ func (s *deleteCascadeByIdxSaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *deleteCascadeByIdxSaga) noIndexTrigger(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	deleteItemFromDiskRespSignal := make(chan error, 1)
 	itemInfoDataActionItemChannel := itemInfoData.
@@ -672,7 +937,7 @@ func (s *deleteCascadeByIdxSaga) noIndexTrigger(
 }
 
 func (s *deleteCascadeByIdxSaga) indexTrigger(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	deleteItemFromDiskRespSignal := make(chan error, 1)
 	itemInfoDataActionItemChannel := itemInfoData.
@@ -737,7 +1002,7 @@ func (s *deleteCascadeByIdxSaga) RollbackTrigger(ctx context.Context, itemInfoDa
 }
 
 func (s *deleteCascadeByIdxSaga) noIndexRollback(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	recreateItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForRollbackItemChannel := itemInfoData.withRespChan(recreateItemOnDiskRespSignal)
@@ -750,7 +1015,7 @@ func (s *deleteCascadeByIdxSaga) noIndexRollback(
 }
 
 func (s *deleteCascadeByIdxSaga) indexRollback(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	recreateItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForRollbackItemChannel := itemInfoData.
@@ -782,49 +1047,49 @@ func (s *deleteCascadeByIdxSaga) indexRollback(
 	//itemInfoData.RespSignal <- nil
 }
 
-func (s *deleteCascadeByIdxSaga) deleteItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) deleteItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.ActionItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) recreateItemOnDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) recreateItemOnDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.RollbackItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) deleteIndexItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.ActionIndexItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) recreateIndexItemOnDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) recreateIndexItemOnDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.RollbackIndexItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) deleteIndexingListItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) deleteIndexingListItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.ActionIndexListItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) recreateIndexListItemOnDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) recreateIndexListItemOnDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.RollbackIndexListItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) deleteRelationalItemFromDiskOnThread(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) deleteRelationalItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.ActionRelationalItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteCascadeByIdxSaga) deleteTemporaryRecords(_ context.Context) {
+func (s *deleteCascadeByIdxSaga) deleteTemporaryRecords(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteCascadeByIndex.ActionDelTmpFiles {
 		itemInfoData.RespSignal <- nil
 	}
@@ -876,7 +1141,7 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *deleteIdxOnlySaga) noIndexTrigger(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	deleteItemFromDiskRespSignal := make(chan error, 1)
 	itemInfoDataActionItemChannel := itemInfoData.
@@ -916,7 +1181,7 @@ func (s *deleteIdxOnlySaga) noIndexTrigger(
 }
 
 func (s *deleteIdxOnlySaga) indexTrigger(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	deleteItemFromDiskRespSignal := make(chan error, 1)
 	itemInfoDataActionItemChannel := itemInfoData.
@@ -981,7 +1246,7 @@ func (s *deleteIdxOnlySaga) RollbackTrigger(ctx context.Context, itemInfoData *d
 }
 
 func (s *deleteIdxOnlySaga) noIndexRollback(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	recreateItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForRollbackItemChannel := itemInfoData.withRespChan(recreateItemOnDiskRespSignal)
@@ -994,7 +1259,7 @@ func (s *deleteIdxOnlySaga) noIndexRollback(
 }
 
 func (s *deleteIdxOnlySaga) indexRollback(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	recreateItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForRollbackItemChannel := itemInfoData.
@@ -1026,49 +1291,49 @@ func (s *deleteIdxOnlySaga) indexRollback(
 	itemInfoData.RespSignal <- nil
 }
 
-func (s *deleteIdxOnlySaga) deleteItemFromDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) deleteItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) recreateItemOnDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) recreateItemOnDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.RollbackItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionIndexItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.RollbackIndexItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) deleteIndexingListItemFromDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) deleteIndexingListItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionIndexListItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) recreateIndexListItemOnDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) recreateIndexListItemOnDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.RollbackIndexListItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) deleteRelationalItemFromDiskOnThread(_ context.Context) {
+func (s *deleteIdxOnlySaga) deleteRelationalItemFromDiskOnThread(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionRelationalItemChannel {
 		itemInfoData.RespSignal <- nil
 	}
 }
 
-func (s *deleteIdxOnlySaga) deleteTemporaryRecords(_ context.Context) {
+func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 	for itemInfoData := range s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionDelTmpFiles {
 		itemInfoData.RespSignal <- nil
 	}
