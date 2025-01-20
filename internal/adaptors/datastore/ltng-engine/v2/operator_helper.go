@@ -673,25 +673,6 @@ func (e *LTNGEngine) deleteIndexOnly(
 	return nil
 }
 
-func (e *LTNGEngine) deleteCascadeByIdx(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	key []byte,
-) error {
-	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{Key: key}, true)
-	if err != nil {
-		return err
-	}
-
-	var fileData ltngenginemodels.FileData
-	if err = e.serializer.Deserialize(item.Value, &fileData); err != nil {
-		return err
-	}
-
-	return nil
-	//return e.deleteCascade(ctx, dbMetaInfo, fileData.Data)
-}
-
 // #####################################################################################################################
 
 type tmpDelPaths struct {
