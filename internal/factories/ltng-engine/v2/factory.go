@@ -2,10 +2,9 @@ package ltngdb_factory_v1
 
 import (
 	"context"
-	"net"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"net"
 
 	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
@@ -64,6 +63,13 @@ func (s *Factory) handle() {
 
 	// Register reflection service on gRPC server.
 	reflection.Register(grpcServer)
+
+	//go func() {
+	//	for {
+	//		time.Sleep(time.Second)
+	//		log.Printf("Server state: %v", grpcServer.GetServiceInfo())
+	//	}
+	//}()
 
 	s.server = grpcServer
 }

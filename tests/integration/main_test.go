@@ -5,10 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
-	"testing"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
@@ -78,20 +76,24 @@ const (
 	envFilename      = ".local.env"
 )
 
-func TestMain(m *testing.M) {
-	_, err := ReadEnvFile(refToEnvFilename + envFilename)
-	if err != nil {
-		log.Fatalf("Error reading environment variables: %v", err)
-	}
+//func TestMain(m *testing.M) {
+//	_, err := ReadEnvFile(refToEnvFilename + envFilename)
+//	if err != nil {
+//		log.Fatalf("Error reading environment variables: %v", err)
+//	}
+//
+//	offThread := concurrent.New("TestMain")
+//	offThread.Op(func() {
+//		main()
+//	})
+//	offThread.Wait()
+//
+//	os.Exit(m.Run())
+//}
 
-	main()
-
-	os.Exit(m.Run())
-}
-
-func main() {
-	ctx, cancelFn := context.WithCancel(context.Background())
-	defer cancelFn()
+func main(ctx context.Context, cancel context.CancelFunc) {
+	//ctx, cancelFn := context.WithCancel(context.Background())
+	//defer cancelFn()
 
 	var err error
 	loggerPublishers := &go_logger.Publishers{}
@@ -118,14 +120,18 @@ func main() {
 
 	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
+		badgerdb_engine_v4.StartV4(ctx, cancel, cfg, logger, s, binder, func(code int) {
+			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
+		})
 	case common_model.LightningEngineV1EngineVersionType:
-		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder)
+		ltngdb_engine_v1.StartV1(ctx, cancel, cfg, logger, s, binder)
 	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdb_engine_v2.StartV2(ctx, cancelFn, cfg, logger, s, binder)
+		ltngdb_engine_v2.StartV2(ctx, cancel, cfg, logger, s, binder, func(code int) {
+			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
+		})
 	}
 }

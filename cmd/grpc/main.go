@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
@@ -45,7 +46,7 @@ func main() {
 
 	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder)
+		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
 	case common_model.LightningEngineV1EngineVersionType:
 		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder)
 	case common_model.LightningEngineV2EngineVersionType:
@@ -53,6 +54,6 @@ func main() {
 	case common_model.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdb_engine_v2.StartV2(ctx, cancelFn, cfg, logger, s, binder)
+		ltngdb_engine_v2.StartV2(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
 	}
 }

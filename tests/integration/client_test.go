@@ -1,13 +1,19 @@
 package integration_test
 
 import (
+	"context"
+	"log"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
+	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
@@ -19,22 +25,36 @@ var (
 )
 
 func TestClients(t *testing.T) {
-	//_, err := ReadEnvFile(refToEnvFilename + envFilename)
-	//require.NoError(t, err)
-	//go func() {
-	//	grpc.Main()
-	//}()
+	t.Log("TestLTNGDBClient")
+	TestLTNGDBClient(t)
 
-	time.Sleep(2 * time.Second)
+	t.Log("TestBadgerDBClient")
+	TestBadgerDBClient(t)
+}
+
+func TestLTNGDBClient(t *testing.T) {
+	data.CleanupDirectories(t)
+
+	_, err := ReadEnvFile(refToEnvFilename + envFilename)
+	if err != nil {
+		log.Fatalf("Error reading environment variables: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	offThread := concurrent.New("TestMain")
+	offThread.Op(func() {
+		main(ctx, cancel)
+	})
+	defer offThread.Wait()
+	defer func() {
+		time.Sleep(time.Millisecond * 500)
+		cancel()
+	}()
+
+	time.Sleep(time.Millisecond * 500)
 
 	users = data.GenerateRandomUsers(t, 50)
-	cts = data.InitClientTestSuite(t)
-
-	//t.Log("Benchmark_LTNGDB_Client_Engine")
-	//testLTNGDBClient(t)
-
-	t.Log("Benchmark_BadgerDB_Client_Engine")
-	testBadgerDBClient(t)
+	cts = data.InitLocalClientTestSuite(t, common_model.LightningEngineV2EngineVersionType)
 
 	t.Log("Benchmark_LTNGDB_Client_Engine")
 	testLTNGDBClient(t)
@@ -85,6 +105,37 @@ func testLTNGDBClient(t *testing.T) {
 		}
 		t.Log(tb)
 	})
+}
+
+func TestBadgerDBClient(t *testing.T) {
+	data.CleanupDirectories(t)
+
+	var err error
+	err = os.Setenv("LTNG_ENGINE", common_model.BadgerDBV4EngineVersionType.String())
+	require.NoError(t, err)
+	err = os.Setenv("LTNG_SERVER_PORT", "50051")
+	require.NoError(t, err)
+	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	offThread := concurrent.New("TestMain")
+	offThread.Op(func() {
+		main(ctx, cancel)
+	})
+	defer offThread.Wait()
+	defer func() {
+		time.Sleep(time.Millisecond * 500)
+		cancel()
+	}()
+
+	time.Sleep(time.Millisecond * 500)
+
+	users = data.GenerateRandomUsers(t, 50)
+	cts = data.InitLocalClientTestSuite(t, common_model.BadgerDBV4EngineVersionType)
+
+	t.Log("Benchmark_BadgerDB_Client_Engine")
+	testBadgerDBClient(t)
 }
 
 func testBadgerDBClient(t *testing.T) {

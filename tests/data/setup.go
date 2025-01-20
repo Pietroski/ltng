@@ -161,13 +161,6 @@ func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 	defer DockerComposeDown(tb)
 
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
-	require.NoError(tb, err)
-	_, err = execx.DelHardExec(ctx, ltngdbBasePath)
-	require.NoError(tb, err)
-	_, err = execx.DelHardExec(ctx, dbBasePath)
-	require.NoError(tb, err)
-
 	clientLTNG, err := ltng_client.New(ctx, &ltng_client.Params{
 		Address: "127.0.0.1:50050",
 		Engine:  common_model.LightningEngineV2EngineVersionType.String(),
@@ -186,6 +179,33 @@ func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 		LTNGDBClient:   clientLTNG,
 		BadgerDBClient: clientBadger,
 	}
+}
+
+func InitLocalClientTestSuite[T TestBench](tb T, engineType common_model.EngineVersionType) *ClientTestSuite {
+	ctx := context.Background()
+	clientTestSuite := &ClientTestSuite{
+		Ctx:        ctx,
+		Serializer: serializer.NewRawBinarySerializer(),
+	}
+
+	switch engineType {
+	case common_model.LightningEngineV2EngineVersionType:
+		clientLTNG, err := ltng_client.New(ctx, &ltng_client.Params{
+			Address: "127.0.0.1:50050",
+			Engine:  common_model.LightningEngineV2EngineVersionType.String(),
+		})
+		require.NoError(tb, err)
+		clientTestSuite.LTNGDBClient = clientLTNG
+	case common_model.BadgerDBV4EngineVersionType:
+		clientBadger, err := ltng_client.New(ctx, &ltng_client.Params{
+			Address: "127.0.0.1:50051",
+			Engine:  common_model.BadgerDBV4EngineVersionType.String(),
+		})
+		require.NoError(tb, err)
+		clientTestSuite.BadgerDBClient = clientBadger
+	}
+
+	return clientTestSuite
 }
 
 func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
@@ -236,4 +256,14 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 			Operator: badgerDBEngineOperator,
 		},
 	}
+}
+
+func CleanupDirectories[T TestBench](tb T) {
+	ctx := context.Background()
+	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	require.NoError(tb, err)
+	_, err = execx.DelHardExec(ctx, ltngdbBasePath)
+	require.NoError(tb, err)
+	_, err = execx.DelHardExec(ctx, dbBasePath)
+	require.NoError(tb, err)
 }

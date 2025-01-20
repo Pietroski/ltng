@@ -3,10 +3,8 @@ package badgerdb_engine_v4
 import (
 	"context"
 	"fmt"
-	"net"
-	"os"
-
 	"github.com/dgraph-io/badger/v4"
+	"net"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
@@ -27,6 +25,7 @@ func StartV4(
 	logger go_logger.Logger,
 	s serializer_models.Serializer,
 	binder go_binder.Binder,
+	exitter func(code int),
 ) {
 	logger.Debugf("opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
@@ -119,7 +118,7 @@ func StartV4(
 	}
 
 	h := transporthandler.NewHandler(
-		ctx, cancelFn, os.Exit, nil, logger, &transporthandler.Opts{Debug: true},
+		ctx, cancelFn, exitter, nil, logger, &transporthandler.Opts{Debug: true},
 	)
 	h.StartServers(transporthandler.ServerMapping{
 		"lightning-node-badger-db-engine-v4": factory,
