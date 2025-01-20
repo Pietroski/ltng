@@ -3,17 +3,19 @@ package filequeuev1
 import (
 	"bufio"
 	"context"
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
-	"golang.org/x/sys/unix"
 	"io"
 	"log"
 	"os"
 	"sync"
 
+	"golang.org/x/sys/unix"
+
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
 const truncateLimit = 1 << 14

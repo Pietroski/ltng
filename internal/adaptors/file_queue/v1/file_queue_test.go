@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
-	off_thread "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/op/off-thread"
 )
 
 type TestData struct {
@@ -201,7 +201,7 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
 
-	op := off_thread.New("file_queue")
+	op := concurrent.New("file_queue")
 	limit := 50
 	for idx := 0; idx < limit; idx++ {
 		//op.OpX(func() (any, error) {
@@ -266,7 +266,7 @@ func TestFileQueueConcurrent(t *testing.T) {
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
 
-	op := off_thread.New("file_queue")
+	op := concurrent.New("file_queue")
 	limit := 50
 	for idx := 0; idx < limit; idx++ {
 		op.OpX(func() (any, error) {
@@ -275,7 +275,7 @@ func TestFileQueueConcurrent(t *testing.T) {
 				IntField:  10,
 				BoolField: true,
 			}
-			err = fq.Write(ctx, testData)
+			err := fq.Write(ctx, testData)
 			require.NoError(t, err)
 
 			time.Sleep(time.Millisecond * 100)
@@ -470,7 +470,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
 
-		op := off_thread.New("file_queue")
+		op := concurrent.New("file_queue")
 		limit := 50
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
@@ -512,7 +512,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
 
-		op := off_thread.New("file_queue")
+		op := concurrent.New("file_queue")
 		limit := 50
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
@@ -557,7 +557,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
 
-		op := off_thread.New("file_queue")
+		op := concurrent.New("file_queue")
 		limit := 50
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
@@ -608,7 +608,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 			BoolField: true,
 		}
 
-		op := off_thread.New("file_queue")
+		op := concurrent.New("file_queue")
 		limit := 50
 
 		canRead := make(chan struct{}, limit)
@@ -687,7 +687,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 			BoolField: true,
 		}
 
-		op := off_thread.New("file_queue")
+		op := concurrent.New("file_queue")
 		limit := 50
 
 		canRead := make(chan struct{}, limit)

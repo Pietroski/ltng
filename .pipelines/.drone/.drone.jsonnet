@@ -38,15 +38,13 @@ local dockerSocketVolume() = {
 };
 
 local unit_tests_cmd = [
-  'go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)',
+  'go clean -testcache',
+  'go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)',
 ];
 
 local integraiton_tests_cmd = [
-  'make docker-compose-up-tests-integration-ltng-db',
   'go clean -testcache',
-  "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-  'go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)',
-  'make docker-compose-down-tests-integration-ltng-db',
+  'go test -race $(go list ./... | grep -v /playground/)',
 ];
 
 local unit_tests_suite_cmd = std.flattenArrays([

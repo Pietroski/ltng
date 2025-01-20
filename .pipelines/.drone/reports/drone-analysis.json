@@ -14,7 +14,8 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
+        "go clean -testcache",
+        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -49,11 +50,8 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
-        "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
-        "make docker-compose-down-tests-integration-ltng-db"
+        "go test -race $(go list ./... | grep -v /playground/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -96,7 +94,8 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
+        "go clean -testcache",
+        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -129,11 +128,8 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
-        "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
-        "make docker-compose-down-tests-integration-ltng-db"
+        "go test -race $(go list ./... | grep -v /playground/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -208,7 +204,8 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)"
+        "go clean -testcache",
+        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -241,11 +238,8 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "make docker-compose-up-tests-integration-ltng-db",
         "go clean -testcache",
-        "export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)",
-        "go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)",
-        "make docker-compose-down-tests-integration-ltng-db"
+        "go test -race $(go list ./... | grep -v /playground/)"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {

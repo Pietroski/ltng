@@ -35,6 +35,12 @@ start-local-ltngdb:
 stop-local-ltngdb:
 	docker compose -f ./build/orchestrator/docker-compose.yml down
 
+start-local-test-ltngdb:
+	DOCKER_BUILDKIT=0 docker compose -f ./build/orchestrator/docker-compose-test.yml up -d --build
+
+stop-local-test-ltngdb:
+	docker compose -f ./build/orchestrator/docker-compose-test.yml down
+
 #########################################################################################################################
 #
 #remote-build-ltng-db-node-image:

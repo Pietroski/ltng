@@ -40,11 +40,9 @@ run: export-envs
 	@go run cmd/badgerdb/grpc/main.go
 
 full-local-test:
-	DOCKER_BUILDKIT=0 make docker-compose-up-tests-integration-ltng-db
+	DOCKER_BUILDKIT=0 make start-local-test-ltngdb
 	go clean -testcache
-	export $(grep -v '^#' ./tests/integration/lightning-db/.tests.integration.ltng.db.env | xargs)
-	go test -race $(go list ./... | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/)
-	make docker-compose-down-tests-integration-ltng-db
+	go test -race $(go list ./... | grep -v /playground/) || make stop-local-test-ltngdb
 
 TYPE:=goroutine
 pprof-serve:
