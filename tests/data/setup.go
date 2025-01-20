@@ -42,6 +42,8 @@ type TestBench interface {
 	Cleanup(f func())
 	Errorf(format string, args ...interface{})
 	FailNow()
+	Fatalf(format string, args ...any)
+	Fatal(args ...any)
 	Logf(format string, args ...interface{})
 	Log(args ...interface{})
 }
@@ -266,4 +268,20 @@ func CleanupDirectories[T TestBench](tb T) {
 	require.NoError(tb, err)
 	_, err = execx.DelHardExec(ctx, dbBasePath)
 	require.NoError(tb, err)
+}
+
+func CleanupProcesses[T TestBench](tb T) {
+	bs, err := execx.Executor(exec.Command("sh", "-c", "lsof -ti:50000-51000 | xargs kill -9"))
+	require.NoError(tb, err)
+	tb.Logf("Cleaning up processes: %s", bs)
+}
+
+func SetTestDeadline[T TestBench](tb T) {
+	timeout := time.Second * 5
+	deadline := time.Now().Add(timeout)
+	tb.Cleanup(func() {
+		if time.Now().After(deadline) {
+			tb.Fatal("test timed out")
+		}
+	})
 }

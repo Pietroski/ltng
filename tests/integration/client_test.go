@@ -25,6 +25,8 @@ var (
 )
 
 func TestClients(t *testing.T) {
+	data.CleanupProcesses(t)
+
 	t.Log("TestLTNGDBClient")
 	TestLTNGDBClient(t)
 
@@ -183,4 +185,8 @@ func testBadgerDBClient(t *testing.T) {
 		}
 		t.Log(tb)
 	})
+}
+
+func TestCleanupProcesses(t *testing.T) {
+	data.CleanupProcesses(t)
 }

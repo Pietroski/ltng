@@ -51,7 +51,8 @@ timeout 15s bash -c 'go clean -testcache && go test -v -race -run=^$ -bench=Benc
 
 ```bash
 mkdir -p "./docs/outputs/$(date +'%y-%m-%d')" && \
-timeout 5s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...' && \
+timeout 5s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...' \
+> "./docs/outputs/$(date +'%y-%m-%d/%H:%M:%S').txt" && \
 timeout 5s bash -c 'go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tests/benchmark/...' \
 > "./docs/outputs/$(date +'%y-%m-%d/%H:%M:%S').txt"
 ```
