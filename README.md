@@ -66,5 +66,9 @@ go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...
 ```
 
 ```bash
+# go clean -testcache && go test -v -race -run=TestClients ./tests/benchmark/...
+```
+
+```bash
 #
 ```
