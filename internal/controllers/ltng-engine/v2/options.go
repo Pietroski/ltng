@@ -1,4 +1,4 @@
-package ltngdb_controller_v1
+package ltngdb_controller_v2
 
 import (
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"

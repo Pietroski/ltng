@@ -3,9 +3,10 @@ package ltng_client
 import (
 	"context"
 	"fmt"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
+	"time"
 
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
@@ -40,21 +41,22 @@ func New(
 	}
 
 	client := &ltng{}
-
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // TODO: add cert opts
-		//grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                10 * time.Second,
+			Timeout:             2 * time.Second,
+			PermitWithoutStream: true,
+		}),
 	}
-
 	grpcClientConn, err := grpc.NewClient(params.Address, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	client.ltngDBClientConn = grpcClientConn
-
 	lightningDBClient := grpc_ltngdb.NewLightningDBClient(grpcClientConn)
-
+	client.ltngDBClientConn = grpcClientConn
 	client.LightningDBClient = lightningDBClient
 
 	//log.Printf("Connection state: %s", grpcClientConn.GetState().String())
@@ -86,8 +88,6 @@ func New(
 	//if err != nil {
 	//	return nil, fmt.Errorf("failed to check ltng's engine: %v", err)
 	//}
-
-	//time.Sleep(time.Second * 1)
 
 	return client, nil
 }

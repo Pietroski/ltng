@@ -23,7 +23,7 @@ var (
 	cts   *data.ClientTestSuite
 )
 
-func TestClients(t *testing.T) {
+func TestClientsLocally(t *testing.T) {
 	//data.CleanupProcesses(t)
 
 	t.Log("TestLTNGDBClient")

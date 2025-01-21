@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
+	"google.golang.org/grpc"
 )
 
 func TestNetworkLatency(t *testing.T) {
@@ -43,20 +43,20 @@ func TestNetworkLatency(t *testing.T) {
 
 func waitForContainers(t testing.TB, ctx context.Context) {
 	t.Log("Waiting for containers to be ready...")
-	maxRetries := 10 // Increased retries
+	maxRetries := 10           // Increased retries
 	backoff := 3 * time.Second // Increased backoff
 
 	for i := 0; i < maxRetries; i++ {
 		// Check both containers
 		cmd1 := exec.Command("docker", "inspect", "--format", "{{.State.Running}}", "test-integration-ltngdb-engine")
 		cmd2 := exec.Command("docker", "inspect", "--format", "{{.State.Running}}", "test-integration-badgerdb-engine")
-		
+
 		out1, err1 := cmd1.Output()
 		out2, err2 := cmd2.Output()
-		
-		if err1 != nil || err2 != nil || 
-		   strings.TrimSpace(string(out1)) != "true" || 
-		   strings.TrimSpace(string(out2)) != "true" {
+
+		if err1 != nil || err2 != nil ||
+			strings.TrimSpace(string(out1)) != "true" ||
+			strings.TrimSpace(string(out2)) != "true" {
 			t.Logf("Attempt %d: Containers not running yet, waiting %v...", i+1, backoff)
 			time.Sleep(backoff)
 			continue
@@ -82,7 +82,7 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 				Path: "health-check-store",
 			})
 			conn1.Close()
-			
+
 			if err == nil || strings.Contains(err.Error(), "already exists") {
 				t.Log("LTNG service is ready and responding")
 				return
@@ -100,7 +100,7 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 				Path: "health-check-store",
 			})
 			conn2.Close()
-			
+
 			if err == nil || strings.Contains(err.Error(), "already exists") {
 				t.Log("BadgerDB service is ready and responding")
 				return
@@ -108,7 +108,7 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 			t.Logf("BadgerDB service not responding: %v", err)
 		}
 
-		t.Logf("Attempt %d: Services not ready, waiting %v... (LTNG err: %v, BadgerDB err: %v)", 
+		t.Logf("Attempt %d: Services not ready, waiting %v... (LTNG err: %v, BadgerDB err: %v)",
 			i+1, backoff, err1, err2)
 		time.Sleep(backoff)
 	}
@@ -126,44 +126,44 @@ func measureContainerLatency(tb testing.TB, containerName string, port int) (tim
 	// Use localhost since we're exposing the port
 	addr := net.JoinHostPort("localhost", fmt.Sprintf("%d", port))
 	start := time.Now()
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	
+
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 	}
-	
+
 	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect to container: %v", err)
 	}
 	defer conn.Close()
-	
+
 	return time.Since(start), nil
 }
 
 func measureLocalLatency(tb testing.TB, port int) (time.Duration, error) {
 	addr := net.JoinHostPort("localhost", fmt.Sprintf("%d", port))
 	start := time.Now()
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	
+
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 	}
-	
+
 	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect locally: %v", err)
 	}
 	defer conn.Close()
-	
+
 	return time.Since(start), nil
 }
 
@@ -178,7 +178,7 @@ func BenchmarkNetworkLatency(b *testing.B) {
 			b.ReportMetric(float64(latency.Nanoseconds())/1e6, "ms/op")
 		}
 	})
-	
+
 	b.Run("LocalLatency", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			latency, err := measureLocalLatency(b, 50050)

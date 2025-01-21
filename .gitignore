@@ -8,6 +8,8 @@
 .ltngdb
 .ltngfq
 .ltngfs
+.ltngdb-docker-ltngdb-engine
+.ltngdb-docker-badgerdb-engine
 
 .ltng_database
 .ltng_file_queue

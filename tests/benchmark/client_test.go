@@ -190,15 +190,17 @@ func Benchmark_BadgerDB_Client_Engine(b *testing.B) {
 	})
 }
 
-func TestClients(t *testing.T) {
+func TestClientsWithinDocker(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 50)
 	cts = data.InitClientTestSuite(t)
 
-	t.Log("Benchmark_BadgerDB_Client_Engine")
-	testBadgerDBClient(t)
+	t.Run("Benchmark_LTNGDB_Client_Engine", func(t *testing.T) {
+		testLTNGDBClient(t)
+	})
 
-	t.Log("Benchmark_LTNGDB_Client_Engine")
-	testLTNGDBClient(t)
+	t.Run("Benchmark_BadgerDB_Client_Engine", func(t *testing.T) {
+		testBadgerDBClient(t)
+	})
 
 	// Run network latency tests
 	t.Run("NetworkLatency", func(t *testing.T) {
@@ -211,9 +213,9 @@ func testLTNGDBClient(t *testing.T) {
 	defer func() {
 		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
 	}()
-	
+
 	// Profiling is now handled at the TestClients level
-	
+
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
 		Path: "user-store",
@@ -265,9 +267,9 @@ func testBadgerDBClient(t *testing.T) {
 	defer func() {
 		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
 	}()
-	
+
 	// Profiling is now handled at the TestClients level
-	
+
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
 		Path: "user-store",

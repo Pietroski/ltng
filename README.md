@@ -42,7 +42,7 @@ go test -v -race -run=BenchmarkAllEngines ./tests/benchmark/...
 ```
 
 ```bash
-timeout 15s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...'
+timeout 15s bash -c 'go clean -testcache && go test -v -race -run=TestClientsLocally ./tests/integration/...'
 ```
 
 ```bash
@@ -53,7 +53,7 @@ timeout 15s bash -c 'go clean -testcache && go test -v -race -run=^$ -bench=Benc
 mkdir -p "./docs/outputs/$(date +'%y-%m-%d')" && \
 timeout 5s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...' \
 > "./docs/outputs/$(date +'%y-%m-%d/%H:%M:%S').txt" && \
-timeout 5s bash -c 'go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tests/benchmark/...' \
+timeout 5s bash -c 'go clean -testcache && go test -v -race -run=TestClientsWithinDocker ./tests/benchmark/...' \
 > "./docs/outputs/$(date +'%y-%m-%d/%H:%M:%S').txt"
 ```
 
@@ -62,11 +62,15 @@ go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tes
 ```
 
 ```bash
-go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...
+go clean -testcache && go test -v -race -run=^$ -bench=BenchmarkAllEngines ./tests/benchmark/...
 ```
 
 ```bash
-# go clean -testcache && go test -v -race -run=TestClients ./tests/benchmark/...
+go clean -testcache && go test -v -race -run=TestClientsLocally ./tests/integration/...
+```
+
+```bash
+go clean -testcache && go test -v -race -run=TestClientsWithinDocker ./tests/benchmark/...
 ```
 
 ```bash

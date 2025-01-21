@@ -13,7 +13,7 @@ services:
       - '50050:50050'
       - '7001:7001'  # pprof port
     volumes:
-      - test-integration-ltngdb-engine-volume:/var/lib/lightning-db-node/data
+      - ../../.ltngdb-docker-ltngdb-engine:/var/lib/lightning-db-node/data
 
   test-integration-badgerdb-engine:
     container_name: 'test-integration-badgerdb-engine'
@@ -29,10 +29,4 @@ services:
       - '50051:50051'
       - '7002:7001'  # pprof port (mapped to different host port to avoid conflict)
     volumes:
-      - test-integration-badgerdb-engine-volume:/var/lib/lightning-db-node/data
-
-volumes:
-  test-integration-ltngdb-engine-volume:
-    driver: local
-  test-integration-badgerdb-engine-volume:
-    driver: local
+      - ../../.ltngdb-docker-badgerdb-engine:/var/lib/lightning-db-node/data

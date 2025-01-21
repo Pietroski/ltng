@@ -1,4 +1,4 @@
-package ltngdb_factory_v1
+package ltngdb_factory_v2
 
 import (
 	"net"

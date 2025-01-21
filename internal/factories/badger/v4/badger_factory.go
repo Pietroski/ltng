@@ -3,8 +3,10 @@ package badgerdb_factory_v4
 import (
 	"context"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
 	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
@@ -44,9 +46,19 @@ func (s *Factory) handle() {
 		grpc.ChainUnaryInterceptor(
 			go_tracer_middleware.NewGRPCUnaryTracerServerMiddleware(),
 		),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle:     15 * time.Second,
+			MaxConnectionAge:      30 * time.Second,
+			MaxConnectionAgeGrace: 5 * time.Second,
+			Time:                  5 * time.Second,
+			Timeout:               1 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             5 * time.Second,
+			PermitWithoutStream: true,
+		}),
 	}
 	grpcServer := grpc.NewServer(grpcOpts...)
-
 	grpc_ltngdb.RegisterLightningDBServer(grpcServer, s.controller)
 
 	// Register reflection service on gRPC server.

@@ -1,4 +1,4 @@
-package ltngdb_controller_v1
+package ltngdb_controller_v2
 
 import (
 	"context"
