@@ -3,7 +3,6 @@ package ltng_client
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -52,14 +51,14 @@ func New(
 		return nil, err
 	}
 
-	log.Printf("Connection state: %s", grpcClientConn.GetState().String())
-
 	client.ltngDBClientConn = grpcClientConn
 
 	lightningDBClient := grpc_ltngdb.NewLightningDBClient(grpcClientConn)
 
 	client.LightningDBClient = lightningDBClient
 
+	//log.Printf("Connection state: %s", grpcClientConn.GetState().String())
+	//
 	//// Monitor connection state changes
 	//go func() {
 	//	for {
