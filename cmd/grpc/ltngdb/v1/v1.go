@@ -81,6 +81,7 @@ func StartV1(
 
 	transporthandler.New(ctx, cancelFn,
 		transporthandler.WithExiter(exiter),
+		transporthandler.WithPprofServer(ctx),
 		transporthandler.WithServers(transporthandler.ServerMapping{
 			"lightning-node-server-engine-v1": factory,
 		}),

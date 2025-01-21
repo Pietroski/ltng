@@ -11,6 +11,7 @@ services:
       LTNG_ENGINE: "LIGHTNING_ENGINE_V2"
     ports:
       - '50050:50050'
+      - '7001:7001'  # pprof port
     volumes:
       - test-integration-ltngdb-engine-volume:/var/lib/lightning-db-node/data
 
@@ -26,6 +27,7 @@ services:
       LTNG_ENGINE: "BADGER_DB_ENGINE_V4"
     ports:
       - '50051:50051'
+      - '7002:7001'  # pprof port (mapped to different host port to avoid conflict)
     volumes:
       - test-integration-badgerdb-engine-volume:/var/lib/lightning-db-node/data
 

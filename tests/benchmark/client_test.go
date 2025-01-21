@@ -1,7 +1,13 @@
 package benchmark
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/pprof"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +22,33 @@ import (
 var (
 	users []*data.User
 	cts   *data.ClientTestSuite
+	profileDir = filepath.Join("docs", "profiles")
 )
+
+func setupProfiles(t testing.TB, testName string) (*os.File, *os.File) {
+	err := os.MkdirAll(profileDir, 0755)
+	require.NoError(t, err)
+
+	cpuFile, err := os.Create(filepath.Join(profileDir, fmt.Sprintf("%s-cpu.prof", testName)))
+	require.NoError(t, err)
+	err = pprof.StartCPUProfile(cpuFile)
+	require.NoError(t, err)
+
+	runtime.GC()
+	memFile, err := os.Create(filepath.Join(profileDir, fmt.Sprintf("%s-mem.prof", testName)))
+	require.NoError(t, err)
+	err = pprof.WriteHeapProfile(memFile)
+	require.NoError(t, err)
+
+	return cpuFile, memFile
+}
+
+func measureNetworkLatency(t testing.TB, operation func() error) (time.Duration, error) {
+	start := time.Now()
+	err := operation()
+	latency := time.Since(start)
+	return latency, err
+}
 
 func BenchmarkAllClients(b *testing.B) {
 	users = data.GenerateRandomUsers(b, 50)
@@ -193,14 +225,41 @@ func TestClients(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 50)
 	cts = data.InitClientTestSuite(t)
 
+	// Setup profiling for BadgerDB
+	cpuBadger, memBadger := setupProfiles(t, "badgerdb")
+	defer cpuBadger.Close()
+	defer pprof.StopCPUProfile()
+
 	t.Log("Benchmark_BadgerDB_Client_Engine")
 	testBadgerDBClient(t)
 
+	// Write final memory profile for BadgerDB
+	pprof.WriteHeapProfile(memBadger)
+	memBadger.Close()
+
+	// Setup profiling for LTNGDB
+	cpuLTNG, memLTNG := setupProfiles(t, "ltngdb")
+	defer cpuLTNG.Close()
+	defer pprof.StopCPUProfile()
+
 	t.Log("Benchmark_LTNGDB_Client_Engine")
 	testLTNGDBClient(t)
+
+	// Write final memory profile for LTNGDB
+	pprof.WriteHeapProfile(memLTNG)
+	memLTNG.Close()
+
+	// Run network latency tests
+	t.Run("NetworkLatency", func(t *testing.T) {
+		TestNetworkLatency(t)
+	})
 }
 
 func testLTNGDBClient(t *testing.T) {
+	startTime := time.Now()
+	defer func() {
+		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
+	}()
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
 		Path: "user-store",
@@ -248,6 +307,10 @@ func testLTNGDBClient(t *testing.T) {
 }
 
 func testBadgerDBClient(t *testing.T) {
+	startTime := time.Now()
+	defer func() {
+		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
+	}()
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
 		Path: "user-store",

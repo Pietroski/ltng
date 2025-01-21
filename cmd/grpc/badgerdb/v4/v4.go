@@ -119,6 +119,7 @@ func StartV4(
 
 	transporthandler.New(ctx, cancelFn,
 		transporthandler.WithExiter(exitter),
+		transporthandler.WithPprofServer(ctx),
 		transporthandler.WithServers(transporthandler.ServerMapping{
 			"lightning-node-badger-db-engine-v4": factory,
 		}),
