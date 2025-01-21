@@ -40,10 +40,18 @@ go-build:
 run: export-envs
 	@go run cmd/badgerdb/grpc/main.go
 
-full-local-test:
-	DOCKER_BUILDKIT=0 make start-local-test-ltngdb
+unit-tests:
 	go clean -testcache
-	go test -race $(go list ./... | grep -v /playground/) || make stop-local-test-ltngdb
+	go test -race $$(go list ./... | grep -v /tests/ | grep -v /playground/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/)
+
+integration-tests:
+	# implement me!
+
+full-local-test:
+	DOCKER_BUILDKIT=0 make start-local-test-ltngdb \
+	go clean -testcache \
+	go test -race $$(go list ./... | grep -v /tests/ | grep -v /schemas/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/) || \
+	make stop-local-test-ltngdb
 
 TYPE:=goroutine
 pprof-serve:

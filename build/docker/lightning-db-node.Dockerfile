@@ -27,12 +27,6 @@ go build -mod=vendor -ldflags="-w -s" -o lightning-db-node cmd/grpc/main.go
 # GOOS=darwin \
 # GOARCH=arm64 \
 
-#go build \
-#-installsuffix 'static' \
-#-o lightning-db-node cmd/badgerdb/grpc/main.go
-
-# ENTRYPOINT ["./lightning-db-node"]
-
 ################################
 # STEP 2 build a smaller image #
 ################################
