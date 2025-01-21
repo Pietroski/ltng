@@ -2,6 +2,7 @@ package benchmark
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -198,9 +199,21 @@ func TestClients(t *testing.T) {
 
 	t.Log("Benchmark_LTNGDB_Client_Engine")
 	testLTNGDBClient(t)
+
+	// Run network latency tests
+	t.Run("NetworkLatency", func(t *testing.T) {
+		TestNetworkLatency(t)
+	})
 }
 
 func testLTNGDBClient(t *testing.T) {
+	startTime := time.Now()
+	defer func() {
+		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
+	}()
+	
+	// Profiling is now handled at the TestClients level
+	
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
 		Path: "user-store",
@@ -248,6 +261,13 @@ func testLTNGDBClient(t *testing.T) {
 }
 
 func testBadgerDBClient(t *testing.T) {
+	startTime := time.Now()
+	defer func() {
+		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
+	}()
+	
+	// Profiling is now handled at the TestClients level
+	
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
 		Path: "user-store",
