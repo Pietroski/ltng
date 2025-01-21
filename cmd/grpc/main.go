@@ -48,7 +48,7 @@ func main() {
 	case common_model.BadgerDBV4EngineVersionType:
 		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
 	case common_model.LightningEngineV1EngineVersionType:
-		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder)
+		ltngdb_engine_v1.StartV1(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
 	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:

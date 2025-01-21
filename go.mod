@@ -11,6 +11,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	gitlab.com/pietroski-software-company/devex/golang/concurrent v0.0.1
 	gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1
+	gitlab.com/pietroski-software-company/devex/golang/transporthandler v0.0.2
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
 	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.18
 	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
@@ -18,7 +19,6 @@ require (
 	gitlab.com/pietroski-software-company/tools/options/go-opts v0.0.2
 	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13
 	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
-	gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.13
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.29
 	go.uber.org/mock v0.5.0
 	golang.org/x/sys v0.29.0
@@ -45,7 +45,7 @@ require (
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.28.0 // indirect
+	golang.org/x/tools v0.29.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241219192143-6b3ec007d9bb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -28,6 +28,7 @@ env-check-ltng-db-node:
 ## generates mocks
 mock-generate:
 	go get go.uber.org/mock/mockgen
+	go get github.com/maxbrunsfeld/counterfeiter/v6
 	go mod vendor
 	go generate ./...
 	go mod tidy

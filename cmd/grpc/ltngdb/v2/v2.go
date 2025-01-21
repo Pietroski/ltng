@@ -6,9 +6,9 @@ import (
 	"net"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/devex/golang/transporthandler"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	transporthandler "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
@@ -23,7 +23,7 @@ func StartV2(
 	logger go_logger.Logger,
 	s serializer_models.Serializer,
 	binder go_binder.Binder,
-	exitter func(code int),
+	exiter func(code int),
 ) {
 	logger.Debugf("opening ltngdb engine v2")
 	engine, err := ltng_engine_v2.New(ctx)
@@ -79,10 +79,10 @@ func StartV2(
 		return
 	}
 
-	h := transporthandler.NewHandler(
-		ctx, cancelFn, exitter, nil, logger, &transporthandler.Opts{Debug: true},
-	)
-	h.StartServers(transporthandler.ServerMapping{
-		"lightning-node-server-engine-v2": factory,
-	})
+	transporthandler.New(ctx, cancelFn,
+		transporthandler.WithExiter(exiter),
+		transporthandler.WithServers(transporthandler.ServerMapping{
+			"lightning-node-server-engine-v2": factory,
+		}),
+	).StartServers()
 }

@@ -1,4 +1,4 @@
-package tracer
+package models
 
 type (
 	Tracer interface {

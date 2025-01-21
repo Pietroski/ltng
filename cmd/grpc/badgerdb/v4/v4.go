@@ -7,9 +7,9 @@ import (
 	"net"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/devex/golang/transporthandler"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	transporthandler "gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
@@ -117,10 +117,10 @@ func StartV4(
 		return
 	}
 
-	h := transporthandler.NewHandler(
-		ctx, cancelFn, exitter, nil, logger, &transporthandler.Opts{Debug: true},
-	)
-	h.StartServers(transporthandler.ServerMapping{
-		"lightning-node-badger-db-engine-v4": factory,
-	})
+	transporthandler.New(ctx, cancelFn,
+		transporthandler.WithExiter(exitter),
+		transporthandler.WithServers(transporthandler.ServerMapping{
+			"lightning-node-badger-db-engine-v4": factory,
+		}),
+	).StartServers()
 }

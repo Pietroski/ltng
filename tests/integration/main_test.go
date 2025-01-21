@@ -124,7 +124,9 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
 		})
 	case common_model.LightningEngineV1EngineVersionType:
-		ltngdb_engine_v1.StartV1(ctx, cancel, cfg, logger, s, binder)
+		ltngdb_engine_v1.StartV1(ctx, cancel, cfg, logger, s, binder, func(code int) {
+			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
+		})
 	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:

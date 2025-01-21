@@ -1,4 +1,4 @@
-package pprof_server
+package factories
 
 import (
 	"context"
@@ -8,10 +8,13 @@ import (
 	"time"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 )
 
 const (
-	contextCanceledErrMsg = "context canceled"
+	contextCanceledErrMsg     = "context canceled"
+	DefaultPprofServerPort    = "7001"
+	DefaultPprofServerNameKey = "internal-pprof-server"
 )
 
 type (
@@ -29,23 +32,23 @@ type (
 
 func NewPProfServer(
 	ctx context.Context,
-	logger go_logger.Logger,
-
-	name, pprofServerPort string,
-	defaultTimeouts time.Duration,
+	opts ...options.Option,
 ) *PProfServer {
-	if defaultTimeouts == 0 {
-		defaultTimeouts = time.Second * 30
-	}
-
 	s := &PProfServer{
 		ctx:             ctx,
-		name:            name,
-		pprofServerPort: pprofServerPort,
-		defaultTimeouts: defaultTimeouts,
+		name:            DefaultPprofServerNameKey,
+		pprofServerPort: DefaultPprofServerPort,
+		defaultTimeouts: time.Second * 30,
 
-		logger: logger,
+		logger: go_logger.NewGoLogger(ctx,
+			&go_logger.Publishers{},
+			&go_logger.Opts{
+				Debug:   true,
+				Publish: false,
+			},
+		),
 	}
+	options.ApplyOptions(s, opts...)
 
 	s.handle()
 
@@ -55,7 +58,7 @@ func NewPProfServer(
 func (svr *PProfServer) handle() {
 	mux := http.NewServeMux()
 	server := &http.Server{
-		Addr:    svr.pprofServerPort,
+		Addr:    fmt.Sprintf(":%s", svr.pprofServerPort),
 		Handler: mux,
 
 		ReadTimeout:       svr.defaultTimeouts,

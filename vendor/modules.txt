@@ -96,6 +96,12 @@ gitlab.com/pietroski-software-company/devex/golang/concurrent
 gitlab.com/pietroski-software-company/devex/golang/serializer
 gitlab.com/pietroski-software-company/devex/golang/serializer/internal/bytesx
 gitlab.com/pietroski-software-company/devex/golang/serializer/models
+# gitlab.com/pietroski-software-company/devex/golang/transporthandler v0.0.2
+## explicit; go 1.23.5
+gitlab.com/pietroski-software-company/devex/golang/transporthandler
+gitlab.com/pietroski-software-company/devex/golang/transporthandler/internal/factories
+gitlab.com/pietroski-software-company/devex/golang/transporthandler/internal/tools/stacktracer
+gitlab.com/pietroski-software-company/devex/golang/transporthandler/models
 # gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder
@@ -128,13 +134,6 @@ gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/s
 # gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer
-# gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2 v2.0.13
-## explicit; go 1.23.5
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/handlers
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/models/tracer
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/handler
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/profiler/pprof-server
-gitlab.com/pietroski-software-company/tools/transport-handler/go-transport-handler/v2/pkg/tools/tracer/stack
 # gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.29
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/parsers/strings
@@ -183,7 +182,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.28.0
+# golang.org/x/tools v0.29.0
 ## explicit; go 1.22.0
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata

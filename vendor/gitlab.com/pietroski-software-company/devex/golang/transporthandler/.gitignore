@@ -1,0 +1,34 @@
+# IDEs configs
+.idea/
+.vscode/
+
+# vendor
+#vendor/
+
+# envs
+.env
+.env.local
+.env.test
+.env.qa
+.env.production
+
+# builds
+build
+
+# cover profile
+cover.out
+cover-all.out
+
+# profiling data
+*.pprof
+profiling
+!mocks/profiling
+# profiling docs
+!docs/reports/profiling
+
+# general local generated reports
+*.pdf
+
+# report files
+#drone-analysis
+#drone-analysis.json
