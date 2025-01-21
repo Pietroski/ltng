@@ -24,7 +24,7 @@ var (
 )
 
 func TestClients(t *testing.T) {
-	data.CleanupProcesses(t)
+	//data.CleanupProcesses(t)
 
 	t.Log("TestLTNGDBClient")
 	TestLTNGDBClient(t)
@@ -34,8 +34,6 @@ func TestClients(t *testing.T) {
 }
 
 func TestLTNGDBClient(t *testing.T) {
-	data.CleanupDirectories(t)
-
 	var err error
 	err = os.Setenv("LTNG_ENGINE", common_model.LightningEngineV2EngineVersionType.String())
 	require.NoError(t, err)
@@ -112,8 +110,6 @@ func testLTNGDBClient(t *testing.T) {
 }
 
 func TestBadgerDBClient(t *testing.T) {
-	data.CleanupDirectories(t)
-
 	var err error
 	err = os.Setenv("LTNG_ENGINE", common_model.BadgerDBV4EngineVersionType.String())
 	require.NoError(t, err)
@@ -187,8 +183,4 @@ func testBadgerDBClient(t *testing.T) {
 		}
 		t.Log(tb)
 	})
-}
-
-func TestCleanupProcesses(t *testing.T) {
-	data.CleanupProcesses(t)
 }
