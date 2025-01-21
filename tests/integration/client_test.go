@@ -2,7 +2,6 @@ package integration_test
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -37,10 +36,13 @@ func TestClients(t *testing.T) {
 func TestLTNGDBClient(t *testing.T) {
 	data.CleanupDirectories(t)
 
-	_, err := ReadEnvFile(refToEnvFilename + envFilename)
-	if err != nil {
-		log.Fatalf("Error reading environment variables: %v", err)
-	}
+	var err error
+	err = os.Setenv("LTNG_ENGINE", common_model.LightningEngineV2EngineVersionType.String())
+	require.NoError(t, err)
+	err = os.Setenv("LTNG_SERVER_PORT", "50050")
+	require.NoError(t, err)
+	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
+	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	offThread := concurrent.New("TestMain")

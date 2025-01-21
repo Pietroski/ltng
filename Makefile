@@ -65,10 +65,10 @@ raw-bench-report:
 	DATEDIR=$$(date +'%y-%m-%d'); \
 	mkdir -p "./docs/outputs/$$DATEDIR" && \
 	printf "CLIENT RESULTS\n\n" > "./docs/outputs/$$TIMESTAMP.txt" && \
-	timeout 5s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...' \
+	timeout 15s bash -c 'go clean -testcache && go test -v -race -run=TestClients ./tests/integration/...' \
 	>> "./docs/outputs/$$TIMESTAMP.txt" || true && \
 	printf "\n\nENGINE RESULTS\n\n" >> "./docs/outputs/$$TIMESTAMP.txt" && \
-	timeout 5s bash -c 'go clean -testcache && go test -v -race -run=BenchmarkAllEngines -bench=BenchmarkAllEngines ./tests/benchmark/...' \
+	timeout 15s bash -c 'go clean -testcache && go test -v -race -run=BenchmarkAllEngines -bench=BenchmarkAllEngines ./tests/benchmark/...' \
 	>> "./docs/outputs/$$TIMESTAMP.txt" || true
 
 raw-testbench-report.sh:
