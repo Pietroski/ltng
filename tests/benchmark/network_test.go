@@ -1,7 +1,6 @@
 package benchmark
 
 import (
-	"context"
 	"net"
 	"testing"
 	"time"
