@@ -19,13 +19,6 @@ var (
 	cts   *data.ClientTestSuite
 )
 
-func measureNetworkLatency(t testing.TB, operation func() error) (time.Duration, error) {
-	start := time.Now()
-	err := operation()
-	latency := time.Since(start)
-	return latency, err
-}
-
 func BenchmarkAllClients(b *testing.B) {
 	users = data.GenerateRandomUsers(b, 50)
 	cts = data.InitClientTestSuite(b)

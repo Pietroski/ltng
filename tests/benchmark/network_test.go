@@ -115,6 +115,13 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 	t.Fatal("Containers failed to become ready")
 }
 
+func measureNetworkLatency(t testing.TB, operation func() error) (time.Duration, error) {
+	start := time.Now()
+	err := operation()
+	latency := time.Since(start)
+	return latency, err
+}
+
 func measureContainerLatency(tb testing.TB, containerName string, port int) (time.Duration, error) {
 	// Use localhost since we're exposing the port
 	addr := net.JoinHostPort("localhost", fmt.Sprintf("%d", port))
