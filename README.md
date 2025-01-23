@@ -5,12 +5,11 @@ However, Lightning-DB is a graph database which has as its engine, Badger-DB and
 
 LTNG_ENGINE=default badgerV3 badgerV4 ltng_engine
 
-
 [//]: # (###############)
 
-#Ltng-Eco
+## Ltng-Eco
 
-# Lightning - Ecosystem
+## Lightning - Ecosystem
 
 - Lightning-DB
 - Lightning-Cache
@@ -20,10 +19,12 @@ LTNG_ENGINE=default badgerV3 badgerV4 ltng_engine
 ## Lightning-Queue
 
 - can consume from:
-    - live stream
-    - historical stream
+  - live stream
+  - historical stream
 
 - a stream is created thought on how an event will be propagated (round-robin, fan out, etc...)
+
+## Useful command list
 
 ```bash
 docker compose -f build/orchestrator/docker-compose-test.yml up -d --build --remove-orphans

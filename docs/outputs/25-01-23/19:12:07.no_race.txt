@@ -1,0 +1,1721 @@
+|TESTS|
+
+
+
+|NO_RACE_TESTS|
+
+
+
+|LOCAL_CLIENT_RESULTS|
+
+=== RUN   TestClientsLocally
+    client_test.go:29: TestLTNGDBClient
+2025/01/23 19:12:08 
+--------------------------------------------------
+message-trace-id: 4f6c968a-458f-4e90-b084-32d63ebc4e7f
+message-trace-created-at: 2025-01-23 19:12:08.068452 -0300 -03 m=+0.011790293
+message: [34m[DEBUG]: opening ltngdb engine v2[0m
+--------------------------------------------------
+isFileClosed: err: <nil>
+2025/01/23 19:12:08 tracer - goroutine count: 38
+2025/01/23 19:12:08 
+--------------------------------------------------
+message-trace-id: e09d68c7-d294-4b92-9ae3-a9a448e2c587
+message-trace-created-at: 2025-01-23 19:12:08.07271 -0300 -03 m=+0.016048126
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:08 
+--------------------------------------------------
+message-trace-id: 2855ab3b-44d0-4e72-a3bf-dd375f6617a1
+message-trace-created-at: 2025-01-23 19:12:08.072768 -0300 -03 m=+0.016106210
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:08 
+--------------------------------------------------
+message-trace-id: 60c51d14-e9ca-4450-8136-ad83069ce0c4
+message-trace-created-at: 2025-01-23 19:12:08.072808 -0300 -03 m=+0.016146460
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/01/23 19:12:08 
+--------------------------------------------------
+message-trace-id: 6620fc5a-f6da-4101-93d0-45ea79c1c431
+message-trace-created-at: 2025-01-23 19:12:08.072854 -0300 -03 m=+0.016192501
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/01/23 19:12:08 
+--------------------------------------------------
+message-trace-id: 3f41369e-a94e-4999-acc1-970febebef5e
+message-trace-created-at: 2025-01-23 19:12:08.072861 -0300 -03 m=+0.016198960
+message: [0m[INFO]: starting pprof's HTTP server[0m
+fields:
+{
+  "port": "7001"
+}
+--------------------------------------------------
+    client_test.go:61: Benchmark_LTNGDB_Client_Engine
+=== RUN   TestClientsLocally/CreateItem
+    client_test.go:82: CreateItem
+    client_test.go:108: 
+        min: 362.167µs
+        max: 5.032625ms
+        avg: 375.925µs
+        
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 98d8abc5-17b5-4a15-bee0-814d38da2171
+message-trace-created-at: 2025-01-23 19:12:09.131893 -0300 -03 m=+1.075223418
+message: [33m[WARN]: ctx server sig!![0m
+fields:
+{
+  "context": {},
+  "error": {}
+}
+--------------------------------------------------
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 context done: context canceled
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: cbac36f6-c28c-4c4e-962f-e123be4aa520
+message-trace-created-at: 2025-01-23 19:12:09.132033 -0300 -03 m=+1.075363418
+message: [33m[WARN]: err server sig!![0m
+fields:
+{
+  "error": null
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: e29876ed-f25b-4d65-a26b-267906590173
+message-trace-created-at: 2025-01-23 19:12:09.132443 -0300 -03 m=+1.075774085
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: e0ad77a7-0aae-4302-897f-3de98e129e4c
+message-trace-created-at: 2025-01-23 19:12:09.132566 -0300 -03 m=+1.075897001
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: da5083b0-b5e0-4497-a6da-199d7fdf57aa
+message-trace-created-at: 2025-01-23 19:12:09.132622 -0300 -03 m=+1.075952251
+message: [0m[INFO]: cancelling all contexts[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 66dac5e2-fb0a-417e-9341-dfac7a54ea4b
+message-trace-created-at: 2025-01-23 19:12:09.132691 -0300 -03 m=+1.076021418
+message: [0m[INFO]: all contexts cancelled[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 29d74091-d01c-4b88-81fb-ec7e704791e0
+message-trace-created-at: 2025-01-23 19:12:09.132737 -0300 -03 m=+1.076067376
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 86ac0075-3928-44ea-ad61-1706d42e11db
+message-trace-created-at: 2025-01-23 19:12:09.132791 -0300 -03 m=+1.076122126
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 39f9c9ba-b401-4404-a8a2-0fe02898c22f
+message-trace-created-at: 2025-01-23 19:12:09.13284 -0300 -03 m=+1.076170585
+message: [0m[INFO]: shutting down servers[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 8561d29e-b427-449e-98d9-3da67ea7ca12
+message-trace-created-at: 2025-01-23 19:12:09.132928 -0300 -03 m=+1.076258251
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 7b009eb8-8fb0-40ed-8e47-6b62a32e581d
+message-trace-created-at: 2025-01-23 19:12:09.133184 -0300 -03 m=+1.076515085
+message: [0m[INFO]: HTTP server ListenAndServe shutdown ok[0m
+fields:
+{
+  "name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: bf9135f4-b16e-4afd-854b-f60830927725
+message-trace-created-at: 2025-01-23 19:12:09.133229 -0300 -03 m=+1.076559168
+message: [31m[ERROR]: error from server[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 428ec07d-6186-420e-96ed-8d32ab7ec46c
+message-trace-created-at: 2025-01-23 19:12:09.13328 -0300 -03 m=+1.076611085
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 5400c95a-dfc0-4349-8d5f-d3f07d3c6e8b
+message-trace-created-at: 2025-01-23 19:12:09.133308 -0300 -03 m=+1.076639043
+message: [31m[ERROR]: post-err[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: ccf2db35-c662-476d-9657-64562e9aa528
+message-trace-created-at: 2025-01-23 19:12:09.133351 -0300 -03 m=+1.076681335
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: e65a3d4c-d8d1-47dc-a03b-66d1e71687ad
+message-trace-created-at: 2025-01-23 19:12:09.134827 -0300 -03 m=+1.078157918
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 4c77092d-afa0-49ab-a74d-1c95953dce63
+message-trace-created-at: 2025-01-23 19:12:09.13491 -0300 -03 m=+1.078240501
+message: [0m[INFO]: waiting for servers to shut down[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 2ec04738-02b4-4b11-9b16-f3cb867c1489
+message-trace-created-at: 2025-01-23 19:12:09.134962 -0300 -03 m=+1.078292751
+message: [0m[INFO]: waiting for goroutines to stop[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: f467d30f-a5cf-4b46-b07e-f1a10ef6e2d1
+message-trace-created-at: 2025-01-23 19:12:09.135017 -0300 -03 m=+1.078347793
+message: [0m[INFO]: goroutines stopped[0m
+--------------------------------------------------
+2025/01/23 19:12:09 tracer - goroutine count: 8
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 9d78fcda-b9ca-43a0-8f84-3fc3f7d367b5
+message-trace-created-at: 2025-01-23 19:12:09.135078 -0300 -03 m=+1.078409001
+message: [0m[INFO]: all servers shut down[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 3e08cd52-42b4-40cc-bcca-673a742f5ba7
+message-trace-created-at: 2025-01-23 19:12:09.135199 -0300 -03 m=+1.078529626
+message: [0m[INFO]: closing channels[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 76dec933-9d97-42ca-a88a-b6b6a7b7e224
+message-trace-created-at: 2025-01-23 19:12:09.135241 -0300 -03 m=+1.078571168
+message: [0m[INFO]: closing error channel...[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 5694c46e-3949-49cf-940b-246dc9eb6f51
+message-trace-created-at: 2025-01-23 19:12:09.135285 -0300 -03 m=+1.078615418
+message: [0m[INFO]: error channel successfully closed[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: e81edf11-9249-4991-a4b6-3e95de01db86
+message-trace-created-at: 2025-01-23 19:12:09.135326 -0300 -03 m=+1.078656626
+message: [0m[INFO]: cleaning error channel...[0m
+--------------------------------------------------
+cleaning error channel
+error from cleaning error channel: error starting server internal-pprof-server: http: Server closed
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: b4992dc1-cfd8-4bfd-9217-aa5ae09eb9b6
+message-trace-created-at: 2025-01-23 19:12:09.135409 -0300 -03 m=+1.078739501
+message: [0m[INFO]: error channel successfully cleaned[0m
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: cceafe99-a9e7-4de2-aafc-cec7f6cdb5d4
+message-trace-created-at: 2025-01-23 19:12:09.135463 -0300 -03 m=+1.078793210
+message: [0m[INFO]: all channels closed[0m
+--------------------------------------------------
+2025/01/23 19:12:09 tracer - goroutine count: 8
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 4f6c968a-458f-4e90-b084-32d63ebc4e7f
+message-trace-created-at: 2025-01-23 19:12:08.068452 -0300 -03 m=+0.011790293
+message: [34m[DEBUG]: os.Exit[0m
+fields:
+{
+  "code": 0
+}
+--------------------------------------------------
+=== NAME  TestClientsLocally
+    client_test.go:32: TestBadgerDBClient
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [34m[DEBUG]: opening badger local manager[0m
+--------------------------------------------------
+badger 2025/01/23 19:12:09 INFO: All 5 tables opened in 1ms
+badger 2025/01/23 19:12:09 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:09 INFO: Set nextTxnTs to 132
+badger 2025/01/23 19:12:09 INFO: Deleting empty file: .db/internal/local/management/v4/000043.vlog
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [34m[DEBUG]: starting badger instances[0m
+--------------------------------------------------
+badger 2025/01/23 19:12:09 INFO: All 2 tables opened in 0s
+badger 2025/01/23 19:12:09 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:09 INFO: Set nextTxnTs to 1800
+badger 2025/01/23 19:12:09 INFO: Deleting empty file: .db/internal/local/management/v4/user-store/000043.vlog
+badger 2025/01/23 19:12:09 INFO: All 2 tables opened in 0s
+badger 2025/01/23 19:12:09 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:09 INFO: Set nextTxnTs to 1800
+badger 2025/01/23 19:12:09 INFO: Deleting empty file: .db/internal/local/management/v4/user-store/indexed/000043.vlog
+badger 2025/01/23 19:12:09 INFO: All 2 tables opened in 0s
+badger 2025/01/23 19:12:09 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:09 INFO: Set nextTxnTs to 1800
+badger 2025/01/23 19:12:09 INFO: Deleting empty file: .db/internal/local/management/v4/user-store/indexed-list/000043.vlog
+2025/01/23 19:12:09 tracer - goroutine count: 72
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 0f7143c3-8277-4ad7-aef9-1ffa74da5831
+message-trace-created-at: 2025-01-23 19:12:09.195877 -0300 -03 m=+1.139207126
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 4610bfab-c038-4dbb-bee4-f4868a80ec44
+message-trace-created-at: 2025-01-23 19:12:09.195968 -0300 -03 m=+1.139298460
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 41546366-44ab-432c-a574-b7b5fc9599a1
+message-trace-created-at: 2025-01-23 19:12:09.196034 -0300 -03 m=+1.139364001
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: d2aac7ce-4ea7-40ea-89b9-041ca749d5ff
+message-trace-created-at: 2025-01-23 19:12:09.196023 -0300 -03 m=+1.139353085
+message: [0m[INFO]: starting pprof's HTTP server[0m
+fields:
+{
+  "port": "7001"
+}
+--------------------------------------------------
+2025/01/23 19:12:09 
+--------------------------------------------------
+message-trace-id: 53c2a98a-c7e0-4ee8-9d88-62ce6d961423
+message-trace-created-at: 2025-01-23 19:12:09.196109 -0300 -03 m=+1.139439126
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+    client_test.go:137: Benchmark_BadgerDB_Client_Engine
+=== RUN   TestClientsLocally/CreateItem#01
+    client_test.go:158: CreateItem
+    client_test.go:184: 
+        min: 551.917µs
+        max: 1.63125ms
+        avg: 700.582µs
+        
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: e4c6d463-660f-4831-894d-d0553c7c211a
+message-trace-created-at: 2025-01-23 19:12:10.19517 -0300 -03 m=+2.138493168
+message: [33m[WARN]: ctx server sig!![0m
+fields:
+{
+  "context": {},
+  "error": {}
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 60ac49c5-f518-4560-9c57-c811de5d3de6
+message-trace-created-at: 2025-01-23 19:12:10.195303 -0300 -03 m=+2.138626043
+message: [33m[WARN]: err server sig!![0m
+fields:
+{
+  "error": null
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 11713fc0-552a-4508-b5bf-df1bbc7e72c7
+message-trace-created-at: 2025-01-23 19:12:10.195364 -0300 -03 m=+2.138687251
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 8d933fd5-6245-4fd0-9efe-2a05d9a4cb23
+message-trace-created-at: 2025-01-23 19:12:10.195423 -0300 -03 m=+2.138746585
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: fd065497-9301-4a45-a105-b38e1d7d1915
+message-trace-created-at: 2025-01-23 19:12:10.195462 -0300 -03 m=+2.138785293
+message: [0m[INFO]: cancelling all contexts[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: adb61fff-d567-4984-9db4-23af9c896148
+message-trace-created-at: 2025-01-23 19:12:10.195511 -0300 -03 m=+2.138834543
+message: [0m[INFO]: all contexts cancelled[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 84cb3944-8acb-4acb-af50-b07df99d9335
+message-trace-created-at: 2025-01-23 19:12:10.195553 -0300 -03 m=+2.138876168
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: fd27605c-6028-425f-ba8c-0d4fd2432721
+message-trace-created-at: 2025-01-23 19:12:10.195588 -0300 -03 m=+2.138911210
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 1356bc7d-4a99-4edc-8690-b6e0a5a12020
+message-trace-created-at: 2025-01-23 19:12:10.195622 -0300 -03 m=+2.138945001
+message: [0m[INFO]: shutting down servers[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: b651571c-1230-4abf-931e-c409601be16a
+message-trace-created-at: 2025-01-23 19:12:10.195668 -0300 -03 m=+2.138991293
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: dced5de0-4be8-47a4-b61f-a2d2c469ba1c
+message-trace-created-at: 2025-01-23 19:12:10.195877 -0300 -03 m=+2.139199960
+message: [0m[INFO]: HTTP server ListenAndServe shutdown ok[0m
+fields:
+{
+  "name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 501a6791-22cf-4683-95c0-9796861bd61b
+message-trace-created-at: 2025-01-23 19:12:10.195882 -0300 -03 m=+2.139204835
+message: [31m[ERROR]: error from server[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 79893ac5-8d9c-4809-8e3a-f138cfddeb92
+message-trace-created-at: 2025-01-23 19:12:10.195943 -0300 -03 m=+2.139266001
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 521e6f3d-7fc2-4c29-ab6b-dc3288c3aa7c
+message-trace-created-at: 2025-01-23 19:12:10.195963 -0300 -03 m=+2.139285793
+message: [31m[ERROR]: post-err[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 9d02d01b-d6e3-4082-9d1f-01bc1d1307aa
+message-trace-created-at: 2025-01-23 19:12:10.196003 -0300 -03 m=+2.139326168
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [34m[DEBUG]: closing badger-db instances[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [0m[INFO]: traversing sync map[0m
+fields:
+{
+  "key": "user-store",
+  "value": {
+    "name": "user-store",
+    "path": "user-store",
+    "createdAt": "2025-01-21T16:21:33.500549-03:00",
+    "lastOpenedAt": "2025-01-23T19:12:09.160823-03:00",
+    "db": {}
+  }
+}
+--------------------------------------------------
+badger 2025/01/23 19:12:10 INFO: Lifetime L0 stalled for: 0s
+badger 2025/01/23 19:12:10 INFO: 
+Level 0 [ ]: NumTables: 02. Size: 11 KiB of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 01. Size: 193 KiB of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [0m[INFO]: traversing sync map[0m
+fields:
+{
+  "key": "user-store-indexed",
+  "value": {
+    "name": "user-store-indexed",
+    "path": "user-store/indexed",
+    "createdAt": "2025-01-21T16:21:33.500553-03:00",
+    "lastOpenedAt": "2025-01-23T19:12:09.17259-03:00",
+    "db": {}
+  }
+}
+--------------------------------------------------
+badger 2025/01/23 19:12:10 INFO: Lifetime L0 stalled for: 0s
+badger 2025/01/23 19:12:10 INFO: 
+Level 0 [ ]: NumTables: 02. Size: 8.5 KiB of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 01. Size: 148 KiB of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [0m[INFO]: traversing sync map[0m
+fields:
+{
+  "key": "user-store-indexed-list",
+  "value": {
+    "name": "user-store-indexed-list",
+    "path": "user-store/indexed-list",
+    "createdAt": "2025-01-21T16:21:33.500554-03:00",
+    "lastOpenedAt": "2025-01-23T19:12:09.186042-03:00",
+    "db": {}
+  }
+}
+--------------------------------------------------
+badger 2025/01/23 19:12:10 INFO: Lifetime L0 stalled for: 0s
+badger 2025/01/23 19:12:10 INFO: 
+Level 0 [ ]: NumTables: 02. Size: 5.9 KiB of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 01. Size: 94 KiB of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [34m[DEBUG]: closing badger-db manager[0m
+--------------------------------------------------
+badger 2025/01/23 19:12:10 INFO: Lifetime L0 stalled for: 0s
+badger 2025/01/23 19:12:10 INFO: 
+Level 0 [ ]: NumTables: 05. Size: 1.9 KiB of 0 B. Score: 1.00->100.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 01. Size: 380 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: c1625fa1-1b08-4858-bb5e-bb69531ebf57
+message-trace-created-at: 2025-01-23 19:12:10.279929 -0300 -03 m=+2.223252001
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 6413c0f4-fda3-49a0-b4f4-92e3b48e6414
+message-trace-created-at: 2025-01-23 19:12:10.279978 -0300 -03 m=+2.223300918
+message: [0m[INFO]: waiting for servers to shut down[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 9c5f2912-c170-4be6-9539-4773affaa49b
+message-trace-created-at: 2025-01-23 19:12:10.280019 -0300 -03 m=+2.223341168
+message: [0m[INFO]: waiting for goroutines to stop[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ab646356-3759-45cb-87f7-738bf9e2a434
+message-trace-created-at: 2025-01-23 19:12:10.280045 -0300 -03 m=+2.223367335
+message: [0m[INFO]: goroutines stopped[0m
+--------------------------------------------------
+2025/01/23 19:12:10 tracer - goroutine count: 14
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 162f402c-fd51-4ab8-a134-eee93540ecc4
+message-trace-created-at: 2025-01-23 19:12:10.28012 -0300 -03 m=+2.223442210
+message: [0m[INFO]: all servers shut down[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 2bd5e39a-ff0b-49b5-a6c1-b26f5de143e5
+message-trace-created-at: 2025-01-23 19:12:10.280161 -0300 -03 m=+2.223483126
+message: [0m[INFO]: closing channels[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 1c433247-0acf-4b33-85dd-166d456924b1
+message-trace-created-at: 2025-01-23 19:12:10.280189 -0300 -03 m=+2.223511376
+message: [0m[INFO]: closing error channel...[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 63b941be-974b-42e0-ad89-6469f3e7b6fb
+message-trace-created-at: 2025-01-23 19:12:10.280217 -0300 -03 m=+2.223539835
+message: [0m[INFO]: error channel successfully closed[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 78290c6a-8feb-49be-ae0c-be3fad048cff
+message-trace-created-at: 2025-01-23 19:12:10.280246 -0300 -03 m=+2.223568251
+message: [0m[INFO]: cleaning error channel...[0m
+--------------------------------------------------
+cleaning error channel
+error from cleaning error channel: error starting server internal-pprof-server: http: Server closed
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 6648ec3d-ec9b-4ffb-92f3-dfe4dd618bf8
+message-trace-created-at: 2025-01-23 19:12:10.280285 -0300 -03 m=+2.223608043
+message: [0m[INFO]: error channel successfully cleaned[0m
+--------------------------------------------------
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: 187a2f93-36a6-4d36-8258-65dffd4eec83
+message-trace-created-at: 2025-01-23 19:12:10.280311 -0300 -03 m=+2.223633793
+message: [0m[INFO]: all channels closed[0m
+--------------------------------------------------
+2025/01/23 19:12:10 tracer - goroutine count: 13
+2025/01/23 19:12:10 
+--------------------------------------------------
+message-trace-id: ad3e2044-71a4-42e9-91c1-b7d1bf013fa9
+message-trace-created-at: 2025-01-23 19:12:09.135943 -0300 -03 m=+1.079273835
+message: [34m[DEBUG]: os.Exit[0m
+fields:
+{
+  "code": 0
+}
+--------------------------------------------------
+--- PASS: TestClientsLocally (2.21s)
+    --- PASS: TestClientsLocally/CreateItem (0.04s)
+    --- PASS: TestClientsLocally/CreateItem#01 (0.04s)
+PASS
+ok  	gitlab.com/pietroski-software-company/lightning-db/tests/integration	3.529s
+
+
+|DOCKER_CLIENT_RESULTS|
+
+=== RUN   TestClientsWithinDocker
+/bin/sh -c docker compose -f ../../build/orchestrator/docker-compose-test.yml up -d --build --remove-orphans
+/bin/sh -c docker inspect --format='{{.State.Running}}' test-integration-ltngdb-engine
+    setup.go:84: output: true
+/bin/sh -c docker inspect --format='{{.State.Running}}' test-integration-badgerdb-engine
+    setup.go:84: output: true
+=== RUN   TestClientsWithinDocker/Benchmark_LTNGDB_Client_Engine
+=== RUN   TestClientsWithinDocker/Benchmark_LTNGDB_Client_Engine/CreateItem
+    client_test.go:235: CreateItem
+    client_test.go:261: 
+        min: 469.458µs
+        max: 5.294709ms
+        avg: 599.578µs
+        
+=== NAME  TestClientsWithinDocker/Benchmark_LTNGDB_Client_Engine
+    client_test.go:214: Total LTNGDB test duration: 77.1935ms
+=== RUN   TestClientsWithinDocker/Benchmark_BadgerDB_Client_Engine
+=== RUN   TestClientsWithinDocker/Benchmark_BadgerDB_Client_Engine/CreateItem
+    client_test.go:289: CreateItem
+    client_test.go:315: 
+        min: 347.417µs
+        max: 1.374833ms
+        avg: 574.574µs
+        
+=== NAME  TestClientsWithinDocker/Benchmark_BadgerDB_Client_Engine
+    client_test.go:268: Total BadgerDB test duration: 57.633125ms
+=== RUN   TestClientsWithinDocker/NetworkLatency
+    network_test.go:45: Waiting for containers to be ready...
+    network_test.go:87: LTNG service is ready and responding
+    network_test.go:26: LTNG Docker container latency: 1.274291ms
+    network_test.go:31: LTNG local latency: 1.157625ms
+    network_test.go:36: BadgerDB Docker container latency: 1.278917ms
+    network_test.go:41: BadgerDB local latency: 1.330542ms
+/bin/sh -c docker compose -f ../../build/orchestrator/docker-compose-test.yml down
+--- PASS: TestClientsWithinDocker (9.56s)
+    --- PASS: TestClientsWithinDocker/Benchmark_LTNGDB_Client_Engine (0.08s)
+        --- PASS: TestClientsWithinDocker/Benchmark_LTNGDB_Client_Engine/CreateItem (0.05s)
+    --- PASS: TestClientsWithinDocker/Benchmark_BadgerDB_Client_Engine (0.06s)
+        --- PASS: TestClientsWithinDocker/Benchmark_BadgerDB_Client_Engine/CreateItem (0.03s)
+    --- PASS: TestClientsWithinDocker/NetworkLatency (0.04s)
+PASS
+ok  	gitlab.com/pietroski-software-company/lightning-db/tests/benchmark	10.845s
+
+
+|ENGINE_RESULTS|
+
+goos: darwin
+goarch: arm64
+pkg: gitlab.com/pietroski-software-company/lightning-db/tests/benchmark
+cpu: Apple M2 Max
+BenchmarkAllEngines
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 55.834µs
+        max: 153.125µs
+        avg: 78.249µs
+        
+    engine_test.go:242: 
+        min: 13.167µs
+        max: 13.167µs
+        avg: 13.167µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+isFileClosed: err: <nil>
+2025/01/23 19:12:23 context done: context canceled
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 184.375µs
+        max: 308.625µs
+        avg: 208.566µs
+        
+    engine_test.go:313: 
+        min: 381.875µs
+        max: 381.875µs
+        avg: 381.875µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 46.542µs
+        max: 131.167µs
+        avg: 50.982µs
+        
+    engine_test.go:242: 
+        min: 9.375µs
+        max: 9.375µs
+        avg: 9.375µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+2025/01/23 19:12:23 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:23 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:23 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:23 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 166.75µs
+        max: 378.5µs
+        avg: 177.742µs
+        
+    engine_test.go:313: 
+        min: 425.042µs
+        max: 425.042µs
+        avg: 425.042µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 42.542µs
+        max: 116µs
+        avg: 56.43µs
+        
+    engine_test.go:242: 
+        min: 9.625µs
+        max: 9.625µs
+        avg: 9.625µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 179.208µs
+        max: 283.458µs
+        avg: 201.412µs
+        
+    engine_test.go:313: 
+        min: 439.458µs
+        max: 439.458µs
+        avg: 439.458µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 41.417µs
+        max: 93.583µs
+        avg: 51.122µs
+        
+    engine_test.go:242: 
+        min: 9.958µs
+        max: 9.958µs
+        avg: 9.958µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 172.459µs
+        max: 295.709µs
+        avg: 204.408µs
+        
+    engine_test.go:313: 
+        min: 447.417µs
+        max: 447.417µs
+        avg: 447.417µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 48.708µs
+        max: 110.75µs
+        avg: 57.088µs
+        
+    engine_test.go:242: 
+        min: 8.75µs
+        max: 8.75µs
+        avg: 8.75µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 170.25µs
+        max: 324.875µs
+        avg: 191.128µs
+        
+    engine_test.go:313: 
+        min: 383.042µs
+        max: 383.042µs
+        avg: 383.042µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 48.25µs
+        max: 115.459µs
+        avg: 67.733µs
+        
+    engine_test.go:242: 
+        min: 10.167µs
+        max: 10.167µs
+        avg: 10.167µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 190.917µs
+        max: 324.917µs
+        avg: 224.036µs
+        
+    engine_test.go:313: 
+        min: 538.292µs
+        max: 538.292µs
+        avg: 538.292µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 42.417µs
+        max: 110.542µs
+        avg: 51.09µs
+        
+    engine_test.go:242: 
+        min: 9.042µs
+        max: 9.042µs
+        avg: 9.042µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 177.792µs
+        max: 326.125µs
+        avg: 248.931µs
+        
+    engine_test.go:313: 
+        min: 413.333µs
+        max: 413.333µs
+        avg: 413.333µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 41.5µs
+        max: 99.875µs
+        avg: 54.133µs
+        
+    engine_test.go:242: 
+        min: 10.209µs
+        max: 10.209µs
+        avg: 10.209µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 177.083µs
+        max: 280.5µs
+        avg: 211.326µs
+        
+    engine_test.go:313: 
+        min: 412.875µs
+        max: 412.875µs
+        avg: 412.875µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:24 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:24 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:24 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 41.459µs
+        max: 120.75µs
+        avg: 43.241µs
+        
+    engine_test.go:242: 
+        min: 9.208µs
+        max: 9.208µs
+        avg: 9.208µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+2025/01/23 19:12:24 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 158.917µs
+        max: 263.459µs
+        avg: 183.711µs
+        
+    engine_test.go:313: 
+        min: 389.5µs
+        max: 389.5µs
+        avg: 389.5µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 43.334µs
+        max: 98.917µs
+        avg: 47.975µs
+        
+    engine_test.go:242: 
+        min: 12.209µs
+        max: 12.209µs
+        avg: 12.209µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 149µs
+        max: 251.75µs
+        avg: 183.392µs
+        
+    engine_test.go:313: 
+        min: 545.291µs
+        max: 545.291µs
+        avg: 545.291µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 42.667µs
+        max: 133.542µs
+        avg: 46.405µs
+        
+    engine_test.go:242: 
+        min: 9.375µs
+        max: 9.375µs
+        avg: 9.375µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 153µs
+        max: 275.25µs
+        avg: 178.01µs
+        
+    engine_test.go:313: 
+        min: 366.833µs
+        max: 366.833µs
+        avg: 366.833µs
+        
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+isFileClosed: err: <nil>
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:33: Benchmark_LTNGDB_Engine_V2
+    engine_test.go:201: CreateItem
+    engine_test.go:222: 
+        min: 40.333µs
+        max: 122.667µs
+        avg: 50.455µs
+        
+    engine_test.go:242: 
+        min: 8.875µs
+        max: 8.875µs
+        avg: 8.875µs
+        
+isFileClosed: err: <nil>
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+2025/01/23 19:12:25 context done: context canceled
+isFileClosed: err: <nil>
+isFileClosed: err: <nil>
+    engine_test.go:36: Benchmark_BadgerDB_Engine
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+badger 2025/01/23 19:12:25 INFO: All 0 tables opened in 0s
+badger 2025/01/23 19:12:25 INFO: Discard stats nextEmptySlot: 0
+badger 2025/01/23 19:12:25 INFO: Set nextTxnTs to 0
+    engine_test.go:273: CreateItem
+    engine_test.go:294: 
+        min: 155.208µs
+        max: 279.291µs
+        avg: 192.887µs
+        
+    engine_test.go:313: 
+        min: 350.625µs
+        max: 350.625µs
+        avg: 350.625µs
+        
+BenchmarkAllEngines-12    	1000000000	         0.1530 ns/op
+PASS
+ok  	gitlab.com/pietroski-software-company/lightning-db/tests/benchmark	3.237s
