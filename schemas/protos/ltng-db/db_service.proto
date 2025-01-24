@@ -6,42 +6,184 @@ option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/
 import "common/queries/config/engine.proto";
 import "ltng-db/manager_messages.proto";
 import "ltng-db/operator_messages.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Lightning-DB API";
+    version: "v1.3.1";
+    contact: {
+      name: "Pietroski Software Company LTDA";
+      url: "https://www.pietroski.xyz";
+      email: "pietroskisoftwarecompany@gmail.com";
+    };
+  };
+};
 
 service LightningDB {
   // CreateStore
-  rpc CreateStore(CreateStoreRequest) returns(CreateStoreResponse);
+  rpc CreateStore(CreateStoreRequest) returns(CreateStoreResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/create_store"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to create a new store in the Lightning database"
+      summary: "Create a new store"
+    };
+  }
   // DeleteStore
-  rpc DeleteStore(DeleteStoreRequest) returns(DeleteStoreResponse);
+  rpc DeleteStore(DeleteStoreRequest) returns(DeleteStoreResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/delete_store"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to delete an existing store from the Lightning database"
+      summary: "Delete a store"
+    };
+  }
   // GetStore
-  rpc GetStore(GetStoreRequest) returns(GetStoreResponse);
+  rpc GetStore(GetStoreRequest) returns(GetStoreResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/get_store"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to retrieve information about a specific store"
+      summary: "Get store information"
+    };
+  }
   // ListStores
-  rpc ListStores(ListStoresRequest) returns(ListStoresResponse);
+  rpc ListStores(ListStoresRequest) returns(ListStoresResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/list_stores"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to list all available stores in the Lightning database"
+      summary: "List all stores"
+    };
+  }
 
   // RestartLightningNode
   rpc RestartLightningNode(RestartLightningNodeRequest)
-      returns(RestartLightningNodeResponse);
+      returns(RestartLightningNodeResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/restart"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to restart the Lightning database node"
+      summary: "Restart database node"
+    };
+  }
   // ShutdownLightningNode
   rpc ShutdownLightningNode(ShutdownLightningNodeRequest)
-      returns(ShutdownLightningNodeResponse);
+      returns(ShutdownLightningNodeResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/shutdown"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to gracefully shutdown the Lightning database node"
+      summary: "Shutdown database node"
+    };
+  }
   // CheckLightingNodeEngine
   rpc CheckLightingNodeEngine(common.queries.config.CheckEngineRequest)
-      returns(common.queries.config.CheckEngineResponse);
+      returns(common.queries.config.CheckEngineResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/check_engine_version"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to check the version of the Lightning database engine"
+      summary: "Check database engine version"
+    };
+  }
 
   // Create
-  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Create(CreateRequest) returns (CreateResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/create_item"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to create a new item in the database"
+      summary: "Create new item"
+    };
+  }
   // Upsert
-  rpc Upsert(UpsertRequest) returns (UpsertResponse);
+  rpc Upsert(UpsertRequest) returns (UpsertResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/upsert_item"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to create or update an item in the database"
+      summary: "Create or update item"
+    };
+  }
   // Delete
-  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/delete_item"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to delete an item from the database"
+      summary: "Delete item"
+    };
+  }
   // Load
-  rpc Load(LoadRequest) returns (LoadResponse);
+  rpc Load(LoadRequest) returns (LoadResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/load_item"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to load an item from the database by its key"
+      summary: "Load item by key"
+    };
+  }
   // List
-  rpc List(ListRequest) returns (ListResponse);
+  rpc List(ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      post: "/ltng_db/v1/list_items"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to list items from the database"
+      summary: "List items"
+    };
+  }
 
   // ListIndexingKeys
   rpc ListIndexingKeys(ListValuesFromIndexingKeysRequest)
-      returns (ListValuesFromIndexingKeysResponse);
+      returns (ListValuesFromIndexingKeysResponse) {
+    option deprecated = true;
+    option (google.api.http) = {
+      post: "/ltng_db/v1/list_indexing_keys"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "[DEPRECATED] Use this endpoint to list all indexing keys in the database"
+      summary: "[DEPRECATED] List indexing keys"
+    };
+  }
   // ListValuesFromIndexingKeys
   rpc ListValuesFromIndexingKeys(ListValuesFromIndexingKeysRequest)
-      returns (ListValuesFromIndexingKeysResponse);
+      returns (ListValuesFromIndexingKeysResponse) {
+    option deprecated = true;
+    option (google.api.http) = {
+      post: "/ltng_db/v1/list_values_from_indexing_keys"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "[DEPRECATED] Use this endpoint to list values associated with specific indexing keys"
+      summary: "[DEPRECATED] List values by indexing keys"
+    };
+  }
 }

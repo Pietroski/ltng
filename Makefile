@@ -18,7 +18,8 @@
 #export
 
 export-envs:
-	@export $(xargs <./.env)
+	set -a && source ./.env && set +a
+	# @export $(xargs <./.env)
 
 ## check envs from environment
 env-check-ltng-db-node:

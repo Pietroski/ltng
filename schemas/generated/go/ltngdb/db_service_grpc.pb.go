@@ -64,8 +64,10 @@ type LightningDBClient interface {
 	Load(ctx context.Context, in *LoadRequest, opts ...grpc.CallOption) (*LoadResponse, error)
 	// List
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// Deprecated: Do not use.
 	// ListIndexingKeys
 	ListIndexingKeys(ctx context.Context, in *ListValuesFromIndexingKeysRequest, opts ...grpc.CallOption) (*ListValuesFromIndexingKeysResponse, error)
+	// Deprecated: Do not use.
 	// ListValuesFromIndexingKeys
 	ListValuesFromIndexingKeys(ctx context.Context, in *ListValuesFromIndexingKeysRequest, opts ...grpc.CallOption) (*ListValuesFromIndexingKeysResponse, error)
 }
@@ -198,6 +200,7 @@ func (c *lightningDBClient) List(ctx context.Context, in *ListRequest, opts ...g
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *lightningDBClient) ListIndexingKeys(ctx context.Context, in *ListValuesFromIndexingKeysRequest, opts ...grpc.CallOption) (*ListValuesFromIndexingKeysResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListValuesFromIndexingKeysResponse)
@@ -208,6 +211,7 @@ func (c *lightningDBClient) ListIndexingKeys(ctx context.Context, in *ListValues
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *lightningDBClient) ListValuesFromIndexingKeys(ctx context.Context, in *ListValuesFromIndexingKeysRequest, opts ...grpc.CallOption) (*ListValuesFromIndexingKeysResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListValuesFromIndexingKeysResponse)
@@ -246,8 +250,10 @@ type LightningDBServer interface {
 	Load(context.Context, *LoadRequest) (*LoadResponse, error)
 	// List
 	List(context.Context, *ListRequest) (*ListResponse, error)
+	// Deprecated: Do not use.
 	// ListIndexingKeys
 	ListIndexingKeys(context.Context, *ListValuesFromIndexingKeysRequest) (*ListValuesFromIndexingKeysResponse, error)
+	// Deprecated: Do not use.
 	// ListValuesFromIndexingKeys
 	ListValuesFromIndexingKeys(context.Context, *ListValuesFromIndexingKeysRequest) (*ListValuesFromIndexingKeysResponse, error)
 	mustEmbedUnimplementedLightningDBServer()

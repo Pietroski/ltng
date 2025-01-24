@@ -734,11 +734,25 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 		func(itemInfoData *deleteItemInfoData) {
 			temporaryDelPaths, err := s.deleteSaga.createTmpDeletionPaths(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
 			if err != nil {
+				// TODO: log
 				itemInfoData.RespSignal <- err
 				close(itemInfoData.RespSignal)
 				return
 			}
 			itemInfoData.TmpDelPaths = temporaryDelPaths
+
+			indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
+				itemInfoData.Ctx,
+				itemInfoData.DBMetaInfo,
+				&ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
+			)
+			if err != nil {
+				// TODO: log
+				itemInfoData.RespSignal <- err
+				close(itemInfoData.RespSignal)
+				return
+			}
+			itemInfoData.IndexList = indexItemList
 
 			s.indexTrigger(ctx, itemInfoData)
 		},

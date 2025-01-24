@@ -1,8 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "ltng-db/db_service.proto",
-    "version": "version not set"
+    "title": "Lightning-DB API",
+    "version": "v1.3.1",
+    "contact": {
+      "name": "Pietroski Software Company LTDA",
+      "url": "https://www.pietroski.xyz",
+      "email": "pietroskisoftwarecompany@gmail.com"
+    }
   },
   "tags": [
     {
@@ -15,7 +20,484 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/ltng_db/v1/check_engine_version": {
+      "post": {
+        "summary": "Check database engine version",
+        "description": "Use this endpoint to check the version of the Lightning database engine",
+        "operationId": "LightningDB_CheckLightingNodeEngine",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/configCheckEngineResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/configCheckEngineRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/create_item": {
+      "post": {
+        "summary": "Create new item",
+        "description": "Use this endpoint to create a new item in the database",
+        "operationId": "LightningDB_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbCreateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbCreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/create_store": {
+      "post": {
+        "summary": "Create a new store",
+        "description": "Use this endpoint to create a new store in the Lightning database",
+        "operationId": "LightningDB_CreateStore",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbCreateStoreResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbCreateStoreRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/delete_item": {
+      "post": {
+        "summary": "Delete item",
+        "description": "Use this endpoint to delete an item from the database",
+        "operationId": "LightningDB_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbDeleteResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbDeleteRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/delete_store": {
+      "post": {
+        "summary": "Delete a store",
+        "description": "Use this endpoint to delete an existing store from the Lightning database",
+        "operationId": "LightningDB_DeleteStore",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbDeleteStoreResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbDeleteStoreRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/get_store": {
+      "post": {
+        "summary": "Get store information",
+        "description": "Use this endpoint to retrieve information about a specific store",
+        "operationId": "LightningDB_GetStore",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbGetStoreResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbGetStoreRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/list_indexing_keys": {
+      "post": {
+        "summary": "[DEPRECATED] List indexing keys",
+        "description": "[DEPRECATED] Use this endpoint to list all indexing keys in the database",
+        "operationId": "LightningDB_ListIndexingKeys",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbListValuesFromIndexingKeysResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbListValuesFromIndexingKeysRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/list_items": {
+      "post": {
+        "summary": "List items",
+        "description": "Use this endpoint to list items from the database",
+        "operationId": "LightningDB_List",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbListRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/list_stores": {
+      "post": {
+        "summary": "List all stores",
+        "description": "Use this endpoint to list all available stores in the Lightning database",
+        "operationId": "LightningDB_ListStores",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbListStoresResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbListStoresRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/list_values_from_indexing_keys": {
+      "post": {
+        "summary": "[DEPRECATED] List values by indexing keys",
+        "description": "[DEPRECATED] Use this endpoint to list values associated with specific indexing keys",
+        "operationId": "LightningDB_ListValuesFromIndexingKeys",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbListValuesFromIndexingKeysResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbListValuesFromIndexingKeysRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/load_item": {
+      "post": {
+        "summary": "Load item by key",
+        "description": "Use this endpoint to load an item from the database by its key",
+        "operationId": "LightningDB_Load",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbLoadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbLoadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/restart": {
+      "post": {
+        "summary": "Restart database node",
+        "description": "Use this endpoint to restart the Lightning database node",
+        "operationId": "LightningDB_RestartLightningNode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbRestartLightningNodeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbRestartLightningNodeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/shutdown": {
+      "post": {
+        "summary": "Shutdown database node",
+        "description": "Use this endpoint to gracefully shutdown the Lightning database node",
+        "operationId": "LightningDB_ShutdownLightningNode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbShutdownLightningNodeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbShutdownLightningNodeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    },
+    "/ltng_db/v1/upsert_item": {
+      "post": {
+        "summary": "Create or update item",
+        "description": "Use this endpoint to create or update an item in the database",
+        "operationId": "LightningDB_Upsert",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngdbUpsertResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngdbUpsertRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningDB"
+        ]
+      }
+    }
+  },
   "definitions": {
     "IndexPropertiesIndexDeletionBehaviour": {
       "type": "string",
@@ -45,6 +527,14 @@
       ],
       "default": "DEFAULT"
     },
+    "configCheckEngineRequest": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string"
+        }
+      }
+    },
     "configCheckEngineResponse": {
       "type": "object",
       "properties": {
@@ -53,9 +543,39 @@
         }
       }
     },
+    "ltngdbCreateRequest": {
+      "type": "object",
+      "properties": {
+        "databaseMetaInfo": {
+          "$ref": "#/definitions/ltngdbDatabaseMetaInfo"
+        },
+        "item": {
+          "$ref": "#/definitions/ltngdbItem"
+        },
+        "indexOpts": {
+          "$ref": "#/definitions/ltngdbIndexOpts"
+        },
+        "retrialOpts": {
+          "$ref": "#/definitions/ltngdbRetrialOpts"
+        }
+      },
+      "title": "CreateRequest"
+    },
     "ltngdbCreateResponse": {
       "type": "object",
       "title": "CreateResponse"
+    },
+    "ltngdbCreateStoreRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "title": "CreateStoreRequest"
     },
     "ltngdbCreateStoreResponse": {
       "type": "object",
@@ -101,13 +621,55 @@
         }
       }
     },
+    "ltngdbDeleteRequest": {
+      "type": "object",
+      "properties": {
+        "databaseMetaInfo": {
+          "$ref": "#/definitions/ltngdbDatabaseMetaInfo"
+        },
+        "item": {
+          "$ref": "#/definitions/ltngdbItem"
+        },
+        "indexOpts": {
+          "$ref": "#/definitions/ltngdbIndexOpts"
+        },
+        "retrialOpts": {
+          "$ref": "#/definitions/ltngdbRetrialOpts"
+        }
+      },
+      "title": "DeleteRequest"
+    },
     "ltngdbDeleteResponse": {
       "type": "object",
       "title": "DeleteResponse"
     },
+    "ltngdbDeleteStoreRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "title": "DeleteStoreRequest"
+    },
     "ltngdbDeleteStoreResponse": {
       "type": "object",
       "title": "DeleteStoreResponse"
+    },
+    "ltngdbGetStoreRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "title": "GetStoreRequest"
     },
     "ltngdbGetStoreResponse": {
       "type": "object",
@@ -167,6 +729,21 @@
         }
       }
     },
+    "ltngdbListRequest": {
+      "type": "object",
+      "properties": {
+        "databaseMetaInfo": {
+          "$ref": "#/definitions/ltngdbDatabaseMetaInfo"
+        },
+        "indexOpts": {
+          "$ref": "#/definitions/ltngdbIndexOpts"
+        },
+        "pagination": {
+          "$ref": "#/definitions/searchPagination"
+        }
+      },
+      "title": "ListRequest"
+    },
     "ltngdbListResponse": {
       "type": "object",
       "properties": {
@@ -183,6 +760,15 @@
       },
       "title": "ListResponse"
     },
+    "ltngdbListStoresRequest": {
+      "type": "object",
+      "properties": {
+        "pagination": {
+          "$ref": "#/definitions/searchPagination"
+        }
+      },
+      "title": "ListStoresRequest"
+    },
     "ltngdbListStoresResponse": {
       "type": "object",
       "properties": {
@@ -195,6 +781,18 @@
         }
       },
       "title": "ListStoresResponse"
+    },
+    "ltngdbListValuesFromIndexingKeysRequest": {
+      "type": "object",
+      "properties": {
+        "databaseMetaInfo": {
+          "$ref": "#/definitions/ltngdbDatabaseMetaInfo"
+        },
+        "indexOpts": {
+          "$ref": "#/definitions/ltngdbIndexOpts"
+        }
+      },
+      "title": "ListValuesFromIndexingKeysRequest"
     },
     "ltngdbListValuesFromIndexingKeysResponse": {
       "type": "object",
@@ -209,6 +807,21 @@
       },
       "title": "ListValuesFromIndexingKeysResponse"
     },
+    "ltngdbLoadRequest": {
+      "type": "object",
+      "properties": {
+        "databaseMetaInfo": {
+          "$ref": "#/definitions/ltngdbDatabaseMetaInfo"
+        },
+        "item": {
+          "$ref": "#/definitions/ltngdbItem"
+        },
+        "indexOpts": {
+          "$ref": "#/definitions/ltngdbIndexOpts"
+        }
+      },
+      "title": "LoadRequest"
+    },
     "ltngdbLoadResponse": {
       "type": "object",
       "properties": {
@@ -218,6 +831,10 @@
         }
       },
       "title": "LoadResponse"
+    },
+    "ltngdbRestartLightningNodeRequest": {
+      "type": "object",
+      "title": "RestartLightningNodeRequest"
     },
     "ltngdbRestartLightningNodeResponse": {
       "type": "object",
@@ -235,9 +852,31 @@
         }
       }
     },
+    "ltngdbShutdownLightningNodeRequest": {
+      "type": "object",
+      "title": "ShutdownLightningNodeRequest"
+    },
     "ltngdbShutdownLightningNodeResponse": {
       "type": "object",
       "title": "ShutdownLightningNodeResponse"
+    },
+    "ltngdbUpsertRequest": {
+      "type": "object",
+      "properties": {
+        "databaseMetaInfo": {
+          "$ref": "#/definitions/ltngdbDatabaseMetaInfo"
+        },
+        "item": {
+          "$ref": "#/definitions/ltngdbItem"
+        },
+        "indexOpts": {
+          "$ref": "#/definitions/ltngdbIndexOpts"
+        },
+        "retrialOpts": {
+          "$ref": "#/definitions/ltngdbRetrialOpts"
+        }
+      },
+      "title": "UpsertRequest"
     },
     "ltngdbUpsertResponse": {
       "type": "object",
