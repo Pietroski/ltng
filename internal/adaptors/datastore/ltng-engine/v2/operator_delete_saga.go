@@ -583,8 +583,9 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.C
 			fileStats, ok := s.deleteSaga.opSaga.e.
 				itemFileMapping.Get(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
 			if ok {
-				// TODO:  isFileClosed?
-				_ = fileStats.File.Close()
+				if !rw.IsFileClosed(fileStats.File) {
+					_ = fileStats.File.Close()
+				}
 			}
 			s.deleteSaga.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
 

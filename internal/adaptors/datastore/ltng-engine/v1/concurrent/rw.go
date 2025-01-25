@@ -263,31 +263,6 @@ func (e *LTNGEngine) writeToRelationalFileWithNoSeek(
 
 // #####################################################################################################################
 
-func isFileClosed(file *os.File) bool {
-	_, err := file.Stat()
-	return errors.Is(err, os.ErrClosed)
-}
-
-// #####################################################################################################################
-
-type (
-	fileWriter struct {
-		file       *os.File
-		serializer serializermodels.Serializer
-	}
-)
-
-func newFileWriter(
-	ctx context.Context, fi *fileInfo,
-) (*fileWriter, error) {
-	return &fileWriter{
-		file:       fi.File,
-		serializer: serializer.NewRawBinarySerializer(),
-	}, nil
-}
-
-// #####################################################################################################################
-
 type (
 	fileReader struct {
 		file       *os.File

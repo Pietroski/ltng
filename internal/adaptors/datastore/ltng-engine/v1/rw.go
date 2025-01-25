@@ -3,14 +3,10 @@ package v1
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"time"
-
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 )
@@ -267,31 +263,6 @@ func (e *LTNGEngine) writeToRelationalFileWithNoSeek(
 	}
 
 	return bs, nil
-}
-
-// #####################################################################################################################
-
-func isFileClosed(file *os.File) bool {
-	_, err := file.Stat()
-	return errors.Is(err, os.ErrClosed)
-}
-
-// #####################################################################################################################
-
-type (
-	fileWriter struct {
-		file       *os.File
-		serializer serializermodels.Serializer
-	}
-)
-
-func newFileWriter(
-	ctx context.Context, fi *fileInfo,
-) (*fileWriter, error) {
-	return &fileWriter{
-		file:       fi.File,
-		serializer: serializer.NewRawBinarySerializer(),
-	}, nil
 }
 
 // #####################################################################################################################

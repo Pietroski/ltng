@@ -266,22 +266,8 @@ func IsFileClosed(file *os.File) bool {
 	}
 
 	_, err := file.Stat()
-	fmt.Printf("isFileClosed: err: %v\n", err)
+	// fmt.Printf("isFileClosed: err: %v\n", err)
 	return errors.Is(err, os.ErrClosed)
-}
-
-func OpenIfClosed(file *os.File) {
-	if IsFileClosed(file) {
-
-	}
-}
-
-func isFileClosed(f *os.File) bool {
-	if f == nil {
-		return true
-	}
-	_, err := f.Stat()
-	return err != nil && err.Error() == "file already closed"
 }
 
 // #####################################################################################################################

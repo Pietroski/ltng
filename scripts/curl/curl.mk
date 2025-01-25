@@ -9,6 +9,9 @@ test-http-create-store:
 test-http-get-store:
 	./scripts/curl/operations/get-store.sh
 
+test-http-list-stores:
+	./scripts/curl/operations/list-stores.sh
+
 # item tests
 ########################################################################################################################
 

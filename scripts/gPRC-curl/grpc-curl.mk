@@ -4,10 +4,13 @@
 ########################################################################################################################
 
 test-create-store:
-	./scripts/gPRC-curl/management/create-store.sh
+	./scripts/gPRC-curl/operations/create-store.sh
 
 test-get-store:
-	./scripts/gPRC-curl/management/get-store.sh
+	./scripts/gPRC-curl/operations/get-store.sh
+
+test-list-stores:
+	./scripts/gPRC-curl/operations/list-stores.sh
 
 # item tests
 ########################################################################################################################

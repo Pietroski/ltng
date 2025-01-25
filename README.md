@@ -77,3 +77,40 @@ go clean -testcache && go test -v -race -run=TestClientsWithinDocker ./tests/ben
 ```bash
 #
 ```
+
+```json
+{
+  "database_meta_info": {
+        "database_name": "test"
+    },
+    "item": {
+        "key": "email@email.com",
+        "value": {
+            "email": "email@email.com",
+            "username": "email",
+            "password": "asdffdsa"
+        }
+    },
+    "index_opts": {
+        "has_idx": true,
+        "parent_key": "email@email.com",
+        "indexing_keys": ["email", "email@email.com"]
+    },
+  "retrial_opts": {
+    "retrial_on_error": false,
+    "retrial_count": 0
+  }
+}
+```
+
+```json
+{
+  "database_meta_info": {
+    "database_name": "test",
+    "database_path": "test"
+  },
+  "item": {
+    "key": "email@email.com"
+  }
+}
+```

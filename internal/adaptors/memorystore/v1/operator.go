@@ -97,7 +97,7 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	strIndexListKey := hex.EncodeToString(indexListKey)
 	var indexingKeys [][]byte
 	_ = ltng.cache.Get(ctx, strIndexListKey, &indexingKeys, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return [][]byte{}, nil
 	})
 
 	keysToSave := bytesop.CalRightDiff(indexingKeys, opts.IndexingKeys)
