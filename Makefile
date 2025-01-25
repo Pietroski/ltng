@@ -44,16 +44,11 @@ run: export-envs
 
 unit-tests:
 	go clean -testcache
-	go test -race $$(go list ./... | grep -v /tests/ | grep -v /playground/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/)
+	go test -v -race -cover $$(go list ./... | grep -v /tests/ | grep -v /playground/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/)
 
 integration-tests:
-	# implement me!
-
-full-local-test:
-	DOCKER_BUILDKIT=0 make start-local-test-ltngdb \
-	go clean -testcache \
-	go test -race $$(go list ./... | grep -v /tests/ | grep -v /schemas/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/) || \
-	make stop-local-test-ltngdb
+	go clean -testcache
+	go test -v -race -cover ./tests/...
 
 TYPE:=goroutine
 pprof-serve:

@@ -24,7 +24,7 @@ var (
 )
 
 func TestClientsLocally(t *testing.T) {
-	//data.CleanupProcesses(t)
+	data.CleanupDirectories(t)
 
 	t.Log("TestLTNGDBClient")
 	TestLTNGDBClient(t)
@@ -40,6 +40,8 @@ func TestLTNGDBClient(t *testing.T) {
 	err = os.Setenv("LTNG_SERVER_PORT", "50050")
 	require.NoError(t, err)
 	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
+	require.NoError(t, err)
+	err = os.Setenv("LTNG_UI_ADDR", "8080")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -116,6 +118,8 @@ func TestBadgerDBClient(t *testing.T) {
 	err = os.Setenv("LTNG_SERVER_PORT", "50051")
 	require.NoError(t, err)
 	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
+	require.NoError(t, err)
+	err = os.Setenv("LTNG_UI_ADDR", "8081")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())

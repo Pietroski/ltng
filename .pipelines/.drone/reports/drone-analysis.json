@@ -14,8 +14,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go clean -testcache",
-        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)"
+        "make unit-tests"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -50,8 +49,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go clean -testcache",
-        "go test -race $(go list ./... | grep -v /playground/)"
+        "make integration-tests"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -94,8 +92,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go clean -testcache",
-        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)"
+        "make unit-tests"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -128,8 +125,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go clean -testcache",
-        "go test -race $(go list ./... | grep -v /playground/)"
+        "make integration-tests"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -204,8 +200,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go clean -testcache",
-        "go test -race $(go list ./... | grep -v /integration/ | grep -v /tests/ | grep -v /mocks/ | grep -v /schemas/ | grep -v /benchmark/ | grep -v /playground/)"
+        "make unit-tests"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -238,8 +233,7 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
-        "go clean -testcache",
-        "go test -race $(go list ./... | grep -v /playground/)"
+        "make integration-tests"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {

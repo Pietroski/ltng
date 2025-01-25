@@ -3,14 +3,10 @@ package v1
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"time"
-
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 )

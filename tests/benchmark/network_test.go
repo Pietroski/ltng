@@ -10,11 +10,17 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
+	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
 
 func TestNetworkLatency(t *testing.T) {
+	data.DockerComposeUp(t)
+	defer data.DockerComposeDown(t)
+
 	// Wait for containers to be ready with increased timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -67,13 +73,12 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 		defer cancel()
 
 		opts := []grpc.DialOption{
-			grpc.WithInsecure(),
-			grpc.WithBlock(),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 		}
 
 		// Check LTNG service
-		conn1, err1 := grpc.DialContext(ctx, "localhost:50050", opts...)
+		conn1, err1 := grpc.NewClient("localhost:50050", opts...)
 		if err1 == nil {
 			// Try a simple gRPC call to verify service is responding
 			client := grpc_ltngdb.NewLightningDBClient(conn1)
@@ -81,7 +86,7 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 				Name: "health-check-store",
 				Path: "health-check-store",
 			})
-			conn1.Close()
+			_ = conn1.Close()
 
 			if err == nil || strings.Contains(err.Error(), "already exists") {
 				t.Log("LTNG service is ready and responding")
@@ -91,7 +96,7 @@ func waitForContainers(t testing.TB, ctx context.Context) {
 		}
 
 		// Check BadgerDB service
-		conn2, err2 := grpc.DialContext(ctx, "localhost:50051", opts...)
+		conn2, err2 := grpc.NewClient("localhost:50051", opts...)
 		if err2 == nil {
 			// Try a simple gRPC call to verify service is responding
 			client := grpc_ltngdb.NewLightningDBClient(conn2)

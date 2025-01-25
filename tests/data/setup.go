@@ -101,11 +101,12 @@ func checkPortReady(host, port string, timeout time.Duration) error {
 	for time.Now().Before(deadline) {
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), time.Second)
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+
 	return fmt.Errorf("port %s:%s not ready within timeout", host, port)
 }
 

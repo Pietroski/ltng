@@ -13,6 +13,7 @@ services:
     ports:
       - '50050:50050'
       - '7001:7001'  # pprof port
+      - '8080:8080'
     volumes:
       - ../../.ltngdb-docker-ltngdb-engine:/var/lib/lightning-db-node/data
 
@@ -30,5 +31,6 @@ services:
     ports:
       - '50051:50051'
       - '7002:7001'  # pprof port (mapped to different host port to avoid conflict)
+      - '8081:8081'
     volumes:
       - ../../.ltngdb-docker-badgerdb-engine:/var/lib/lightning-db-node/data

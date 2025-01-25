@@ -201,11 +201,6 @@ func TestClientsWithinDocker(t *testing.T) {
 	t.Run("Benchmark_BadgerDB_Client_Engine", func(t *testing.T) {
 		testBadgerDBClient(t)
 	})
-
-	// Run network latency tests
-	t.Run("NetworkLatency", func(t *testing.T) {
-		TestNetworkLatency(t)
-	})
 }
 
 func testLTNGDBClient(t *testing.T) {
