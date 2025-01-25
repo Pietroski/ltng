@@ -1,0 +1,55 @@
+--------------------------------------------------
+isFileClosed: err: <nil>
+2025/01/24 21:08:18
+--------------------------------------------------
+message-trace-id: ed134bf6-5374-416c-902b-819c51b4ce79
+message-trace-created-at: 2025-01-24 21:08:18.378386 -0300 -03 m=+221.968184459
+message: [ERROR]: error loading item
+fields:
+{
+  "err": "error openning to read whole file .ltngdb/v2/stores//746573742d6b65790a.ptk: file does not exist: .ltngdb/v2/stores//746573742d6b65790a.ptk: stat .ltngdb/v2/stores//746573742d6b65790a.ptk: no such file or directory"
+}
+--------------------------------------------------
+2025/01/24 21:15:12 error on trigger action itemInfoData relational: &{context.Background item create 0x140006162e0 0x1400054a4c0 0x14000a00690 0x14000288a80}: error creating postman-test-db-relational relational store: file does not exist: stat .ltngdb/v2/stores//relational/relational-data-store.ptk: no such file or directory
+2025/01/24 21:15:12 error accumulating item info data from file queue: error creating postman-test-db-relational relational store: file does not exist: stat .ltngdb/v2/stores//relational/relational-data-store.ptk: no such file or directory
+2025/01/24 21:15:41
+--------------------------------------------------
+message-trace-id: b88be864-0971-4139-88df-7f408d3d0f13
+message-trace-created-at: 2025-01-24 21:15:41.162808 -0300 -03 m=+664.761194209
+message: [ERROR]: error loading item
+fields:
+{
+  "err": "error openning to read whole file .ltngdb/v2/stores//746573742d6b65790a.ptk: file does not exist: .ltngdb/v2/stores//746573742d6b65790a.ptk: stat .ltngdb/v2/stores//746573742d6b65790a.ptk: no such file or directory"
+}
+--------------------------------------------------
+2025/01/24 21:16:14
+--------------------------------------------------
+message-trace-id: d1cdfdb0-d113-4312-a8d5-cca9022df03b
+message-trace-created-at: 2025-01-24 21:16:14.757809 -0300 -03 m=+698.356845001
+message: [ERROR]: error loading item
+fields:
+{
+  "err": "error openning to read whole file .ltngdb/v2/stores//746573742d6b65790a.ptk: file does not exist: .ltngdb/v2/stores//746573742d6b65790a.ptk: stat .ltngdb/v2/stores//746573742d6b65790a.ptk: no such file or directory"
+}
+--------------------------------------------------
+2025/01/24 21:16:25
+--------------------------------------------------
+message-trace-id: 6588591d-70bf-4b56-b8bf-400d37eb3c6f
+message-trace-created-at: 2025-01-24 21:16:25.806753 -0300 -03 m=+709.406002709
+message: [ERROR]: error loading item
+fields:
+{
+  "err": "error openning to read whole file .ltngdb/v2/stores//746573742d6b65790a.ptk: file does not exist: .ltngdb/v2/stores//746573742d6b65790a.ptk: stat .ltngdb/v2/stores//746573742d6b65790a.ptk: no such file or directory"
+}
+--------------------------------------------------
+
+
+
+
+
+
+
+isFileClosed: err: <nil>
+2025/01/24 21:19:10 error on trigger action itemInfoData: &{context.Background item create 0x14000658980 0x140005c4980 0x14000784cd0 0x1400068e2a0}: error opening/creating a truncated file at .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk: error opening .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk file: open .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk: no such file or directory: error opening/creating a truncated file at .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk: error opening .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk file: open .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk: no such file or directory
+2025/01/24 21:19:10 error rolling back trigger for itemInfoData: &{context.Background item create 0x14000658980 0x140005c4980 0x14000784cd0 0x1400068e2a0}: remove .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk: no such file or directory: remove .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk: no such file or directory
+2025/01/24 21:19:10 error accumulating item info data from file queue: error opening/creating a truncated file at .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk: error opening .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk file: open .ltngdb/v2/stores//indexed-list/746573742d6b65790a.ptk: no such file or directory: error opening/creating a truncated file at .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk: error opening .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk file: open .ltngdb/v2/stores//indexed/5b6447567a644331725a586b4b2c6447567a64433170626d526c65416f3d2c595735766447686c636931305a584e304c576c755a47563443673d3d5d0a.ptk: no such file or directory

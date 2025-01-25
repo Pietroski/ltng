@@ -45,6 +45,7 @@ github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway/internal/genga
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/internal/genopenapi
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
+github.com/grpc-ecosystem/grpc-gateway/v2/runtime
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
 # github.com/klauspost/compress v1.17.11
 ## explicit; go 1.21
@@ -210,6 +211,7 @@ golang.org/x/tools/internal/versions
 ## explicit; go 1.22
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
+google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/api/visibility
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20250124145028-65684f501c47
 ## explicit; go 1.22
@@ -237,6 +239,7 @@ google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/experimental/stats
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/grpclog/internal
+google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancer/gracefulswitch
@@ -325,8 +328,10 @@ google.golang.org/protobuf/types/dynamicpb
 google.golang.org/protobuf/types/gofeaturespb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
+google.golang.org/protobuf/types/known/fieldmaskpb
 google.golang.org/protobuf/types/known/structpb
 google.golang.org/protobuf/types/known/timestamppb
+google.golang.org/protobuf/types/known/wrapperspb
 google.golang.org/protobuf/types/pluginpb
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit

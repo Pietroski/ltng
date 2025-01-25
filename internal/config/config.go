@@ -8,6 +8,7 @@ type (
 	Node struct {
 		Engine *Engine `validation:"required"`
 		Server *Server `validation:"required"`
+		UI     *UI     `validation:"required"`
 	}
 
 	Engine struct {
@@ -17,5 +18,9 @@ type (
 	Server struct {
 		Network string `env-name:"LTNG_SERVER_NETWORK" validation:"required"`
 		Port    string `env-name:"LTNG_SERVER_PORT" validation:"required"`
+	}
+
+	UI struct {
+		Port string `env-name:"LTNG_UI_ADDR" validation:"required"`
 	}
 )

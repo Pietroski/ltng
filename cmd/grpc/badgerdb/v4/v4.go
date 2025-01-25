@@ -3,8 +3,9 @@ package badgerdb_engine_v4
 import (
 	"context"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
 	"net"
+
+	"github.com/dgraph-io/badger/v4"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/devex/golang/transporthandler"
@@ -15,7 +16,7 @@ import (
 	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	badgerdb_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/badger/v4"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/factories/badger/v4"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/factories/gRPC/badger/v4"
 )
 
 func StartV4(

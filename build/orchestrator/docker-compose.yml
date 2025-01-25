@@ -10,6 +10,7 @@ services:
     ports:
       - '7001:7001'
       - '50050:50050'
+      - '8080:8080'
     volumes:
       - lightning-db-node-local-db:/var/lib/lightning-db-node/data
 

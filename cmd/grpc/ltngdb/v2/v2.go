@@ -13,7 +13,8 @@ import (
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	ltngdb_controller_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltng-engine/v2"
-	ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltng-engine/v2"
+	ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/gRPC/ltng-engine/v2"
+	http_ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/http/ltng-engine/v2"
 )
 
 func StartV2(
@@ -64,6 +65,19 @@ func StartV2(
 		return
 	}
 
+	httpListener, err := net.Listen(
+		cfg.Node.Server.Network,
+		fmt.Sprintf(":%v", cfg.Node.UI.Port),
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed creating http net listener",
+			go_logger.Mapper("err", err.Error()),
+		)
+
+		return
+	}
+
 	factory, err := ltngdb_factory_v2.New(ctx,
 		ltngdb_factory_v2.WithConfig(cfg),
 		ltngdb_factory_v2.WithListener(listener),
@@ -79,11 +93,26 @@ func StartV2(
 		return
 	}
 
+	httpFactory, err := http_ltngdb_factory_v2.New(ctx,
+		http_ltngdb_factory_v2.WithConfig(cfg),
+		http_ltngdb_factory_v2.WithLogger(logger),
+		http_ltngdb_factory_v2.WithListener(httpListener),
+	)
+	if err != nil {
+		logger.Errorf(
+			"error initialising http ltngdb server factory",
+			go_logger.Field{"error": err.Error()},
+		)
+
+		return
+	}
+
 	transporthandler.New(ctx, cancelFn,
 		transporthandler.WithExiter(exiter),
 		transporthandler.WithPprofServer(ctx),
 		transporthandler.WithServers(transporthandler.ServerMapping{
-			"lightning-node-server-engine-v2": factory,
+			"lightning-node-server-engine-v2":    factory,
+			"lightning-node-server-engine-v2-ui": httpFactory,
 		}),
 	).StartServers()
 }

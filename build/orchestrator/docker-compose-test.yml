@@ -9,6 +9,7 @@ services:
       LTNG_SERVER_NETWORK: tcp
       LTNG_SERVER_PORT: "50050"
       LTNG_ENGINE: "LIGHTNING_ENGINE_V2"
+      LTNG_UI_ADDR: "8080"
     ports:
       - '50050:50050'
       - '7001:7001'  # pprof port
@@ -25,6 +26,7 @@ services:
       LTNG_SERVER_NETWORK: tcp
       LTNG_SERVER_PORT: "50051"
       LTNG_ENGINE: "BADGER_DB_ENGINE_V4"
+      LTNG_UI_ADDR: "8081"
     ports:
       - '50051:50051'
       - '7002:7001'  # pprof port (mapped to different host port to avoid conflict)
