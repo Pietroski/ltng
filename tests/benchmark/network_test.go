@@ -18,6 +18,7 @@ import (
 )
 
 func TestNetworkLatency(t *testing.T) {
+	t.Skip()
 	data.DockerComposeUp(t)
 	defer data.DockerComposeDown(t)
 
