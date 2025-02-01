@@ -55,6 +55,6 @@ PAYLOAD='{
 TRIMMED_STRING=$(trimmer "$PAYLOAD")
 
 curl -X POST \
-    http://localhost:8080/ltng_db/v1/create_item \
+    http://localhost:7070/ltng_db/v1/create_item \
     -H "Content-Type: application/json" \
     -d "$TRIMMED_STRING"

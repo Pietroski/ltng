@@ -52,12 +52,12 @@ func New(
 					Port:    "50050",
 				},
 				UI: &ltng_node_config.UI{
-					Port: "8080",
+					Port: "7070",
 				},
 			},
 		},
 		grpcServerAddress: "127.0.0.1:50050",
-		httpServerAddress: "127.0.0.1:8080",
+		httpServerAddress: "127.0.0.1:7070",
 	}
 	options.ApplyOptions(factory, opts...)
 

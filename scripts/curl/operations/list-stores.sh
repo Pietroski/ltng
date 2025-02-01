@@ -26,7 +26,7 @@ TRIMMED_STRING=$(trimmer "$PAYLOAD")
 echo "$TRIMMED_STRING"
 
 RESPONSE=$(curl -X POST \
-    http://localhost:8080/ltng_db/v1/list_stores \
+    http://localhost:7070/ltng_db/v1/list_stores \
     -H "Content-Type: application/json" \
     -d "$TRIMMED_STRING")
 

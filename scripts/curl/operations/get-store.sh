@@ -7,7 +7,7 @@ PAYLOAD='{
 TRIMMED_STRING=$(echo "$PAYLOAD" | tr -d '\n' | tr -d ' ')
 
 RESPONSE=$(curl -X POST \
- http://localhost:8080/ltng_db/v1/get_store \
+ http://localhost:7070/ltng_db/v1/get_store \
  -H "Content-Type: application/json" \
  -d "$TRIMMED_STRING")
 

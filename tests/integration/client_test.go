@@ -41,7 +41,7 @@ func TestLTNGDBClient(t *testing.T) {
 	require.NoError(t, err)
 	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_UI_ADDR", "8080")
+	err = os.Setenv("LTNG_UI_ADDR", "7070")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -119,7 +119,7 @@ func TestBadgerDBClient(t *testing.T) {
 	require.NoError(t, err)
 	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_UI_ADDR", "8081")
+	err = os.Setenv("LTNG_UI_ADDR", "7071")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
