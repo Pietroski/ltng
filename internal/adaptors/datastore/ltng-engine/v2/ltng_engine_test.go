@@ -1015,8 +1015,6 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
-
-				ts.ltngEngine.close()
 			})
 
 			t.Run("for multiple items", func(t *testing.T) {
