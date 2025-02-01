@@ -121,8 +121,6 @@ func newDeleteSaga(ctx context.Context, opSaga *opSaga) *deleteSaga {
 	newDeleteCascadeByIdxSaga(ctx, ds)
 	newDeleteIdxOnlySaga(ctx, ds)
 
-	//go ds.ListenAndTrigger(ctx)
-
 	return ds
 }
 

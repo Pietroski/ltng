@@ -62,8 +62,6 @@ func newOpSaga(ctx context.Context, e *LTNGEngine) *opSaga {
 		op.ListenAndTrigger(ctx)
 	})
 
-	// go op.ListenAndTrigger(ctx)
-
 	newCreateSaga(ctx, op)
 	newUpsertSaga(ctx, op)
 	newDeleteSaga(ctx, op)
@@ -79,62 +77,6 @@ func (op *opSaga) ListenAndTrigger(ctx context.Context) {
 		},
 	)
 	op.cancel() // TODO: not necessary?
-
-	//for {
-	//	select {
-	//	case <-ctx.Done():
-	//		log.Printf("context done: %v\n", ctx.Err())
-	//		op.crudChannels.OpSagaChannel.Close()
-	//		for _ = range op.crudChannels.OpSagaChannel.QueueChannel {
-	//			op.listenAndTrigger(ctx)
-	//		}
-	//		log.Println("killing goroutines - opSaga")
-	//
-	//		//op.crudChannels.CreateChannels.Close()
-	//		//op.crudChannels.UpsertChannels.Close()
-	//		//op.crudChannels.DeleteChannels.Close()
-	//
-	//		return
-	//	case _ = <-op.crudChannels.OpSagaChannel.QueueChannel:
-	//		op.listenAndTrigger(ctx)
-	//	}
-	//}
-
-	//for _ = range op.crudChannels.OpSagaChannel.QueueChannel {
-	//	op.pidRegister.Count()
-	//	bs, err := op.fq.ReadFromCursor(ctx)
-	//	if err != nil {
-	//		log.Printf("error reading item from file queue: %v\n", err)
-	//		continue
-	//	}
-	//
-	//	var itemInfoData ltngenginemodels.ItemInfoData
-	//	if err = op.e.serializer.Deserialize(bs, &itemInfoData); err != nil {
-	//		log.Printf("error deserializing item info data from file queue: %v", err)
-	//		continue
-	//	}
-	//
-	//	respSignalChan := make(chan error)
-	//	itemInfoData.RespSignal = respSignalChan
-	//	itemInfoData.Ctx = context.Background()
-	//
-	//	switch itemInfoData.OpType {
-	//	case ltngenginemodels.OpTypeCreate:
-	//		op.crudChannels.CreateChannels.InfoChannel <- &itemInfoData
-	//	case ltngenginemodels.OpTypeUpsert:
-	//		op.crudChannels.UpsertChannels.InfoChannel <- &itemInfoData
-	//	case ltngenginemodels.OpTypeDelete:
-	//		op.crudChannels.DeleteChannels.InfoChannel <- &itemInfoData
-	//	default:
-	//		log.Printf("unknown op type: %v", itemInfoData.OpType)
-	//		continue
-	//	}
-	//
-	//	if err = ResponseAccumulator(respSignalChan); err != nil {
-	//		log.Printf("error accumulating item info data from file queue: %v", err)
-	//	}
-	//	op.pidRegister.CountEnd()
-	//}
 }
 
 func (op *opSaga) listenAndTrigger(ctx context.Context) {
