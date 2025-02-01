@@ -25,3 +25,26 @@ func (rwb *RetryWithBackOff) RetryWithBackoff(fn func() error) error {
 
 	return err
 }
+
+//func RetryWithBackoff(
+//	maxRetryCount int,
+//	initialBackoffDuration time.Duration,
+//	backoffIncreaseFactor time.Duration,
+//) func(fn func() error) error {
+//	return func(fn func() error) error {
+//		count := 1
+//		wait := initialBackoffDuration
+//
+//		err := fn()
+//		for err != nil && count < maxRetryCount {
+//			time.Sleep(wait)
+//			count++
+//			err = fn()
+//			if err != nil {
+//				wait *= backoffIncreaseFactor
+//			}
+//		}
+//
+//		return err
+//	}
+//}

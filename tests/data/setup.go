@@ -161,7 +161,7 @@ const (
 
 func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 	DockerComposeUp(tb)
-	defer DockerComposeDown(tb)
+	DockerComposeDown(tb)
 
 	ctx := context.Background()
 	clientLTNG, err := ltng_client.New(ctx, &ltng_client.Params{
@@ -213,12 +213,7 @@ func InitLocalClientTestSuite[T TestBench](tb T, engineType common_model.EngineV
 
 func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
-	require.NoError(tb, err)
-	_, err = execx.DelHardExec(ctx, ltngdbBasePath)
-	require.NoError(tb, err)
-	_, err = execx.DelHardExec(ctx, dbBasePath)
-	require.NoError(tb, err)
+	CleanupDirectories(tb)
 
 	ltngDBEngine, err := ltng_engine_v1.New(ctx)
 	require.NoError(tb, err)
