@@ -18,7 +18,7 @@ import (
 )
 
 func TestNetworkLatency(t *testing.T) {
-	t.Skip()
+	t.Skip("allow it to run only locally")
 	data.DockerComposeUp(t)
 	defer data.DockerComposeDown(t)
 

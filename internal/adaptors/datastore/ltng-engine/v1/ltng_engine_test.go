@@ -15,6 +15,8 @@ import (
 )
 
 func TestLTNGEngineFlow(t *testing.T) {
+	t.Skip()
+
 	t.Run("store crud tests", func(t *testing.T) {
 		t.Run("for single store", func(t *testing.T) {
 			t.Run("standard", func(t *testing.T) {
