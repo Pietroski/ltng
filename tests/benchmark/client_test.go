@@ -191,7 +191,7 @@ func Benchmark_BadgerDB_Client_Engine(b *testing.B) {
 }
 
 func TestClientsWithinDocker(t *testing.T) {
-	users = data.GenerateRandomUsers(t, 50)
+	users = data.GenerateRandomUsers(t, 150)
 	cts = data.InitClientTestSuite(t)
 
 	t.Run("Benchmark_LTNGDB_Client_Engine", func(t *testing.T) {

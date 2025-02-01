@@ -840,355 +840,180 @@ func TestLTNGEngineFlow(t *testing.T) {
 		})
 
 		t.Run("for multiple items", func(t *testing.T) {
-			t.Run("for multiple items new engine", func(t *testing.T) {
-				ts := initTestSuite(t)
-				dbInfo := createTestStore(t, ts.ctx, ts)
-				userCount := 10
-				userList := generateTestUsers(t, userCount)
-				databaseMetaInfo := dbInfo.ManagerStoreMetaInfo()
+			ts := initTestSuite(t)
+			dbInfo := createTestStore(t, ts.ctx, ts)
+			userCount := 10
+			userList := generateTestUsers(t, userCount)
+			databaseMetaInfo := dbInfo.ManagerStoreMetaInfo()
 
-				// create ops
-				for _, userData := range userList {
+			// create ops
+			for _, userData := range userList {
 
-					t.Log(userData.Email)
+				t.Log(userData.Email)
 
-					bvs := getValues(t, ts, userData)
+				bvs := getValues(t, ts, userData)
 
-					createOpts := &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bvs.item.Key,
-						IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
-					}
-					_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
-					require.NoError(t, err)
+				createOpts := &ltngenginemodels.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.item.Key,
+					IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
 				}
+				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
+				require.NoError(t, err)
+			}
 
-				// list ops
-				{
-					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.Default,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, userCount)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-
-					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.All,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, userCount)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-				}
-
-				// search one by one
-				for _, userData := range userList {
-					bvs := getValues(t, ts, userData)
-
-					// search by key
-					searchOpts := &ltngenginemodels.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.NoError(t, err)
-					require.NotNil(t, loadedItem)
-
-					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					require.NoError(t, err)
-					t.Log(u)
-
-					// search by key - parent key
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:    true,
-						ParentKey: bvs.item.Key,
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.NoError(t, err)
-					require.NotNil(t, loadedItem)
-
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					require.NoError(t, err)
-					t.Log(u)
-
-					// search by index
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bvs.item.Key,
-						IndexingKeys: [][]byte{bvs.secondaryIndexBs},
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.NoError(t, err)
-					require.NotNil(t, loadedItem)
-
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					require.NoError(t, err)
-					t.Log(u)
-				}
-
-				// delete and search
-				for _, userData := range userList {
-					bvs := getValues(t, ts, userData)
-
-					deleteOpts := &ltngenginemodels.IndexOpts{
-						HasIdx: true,
+			// list ops
+			{
+				// list items - default search
+				items, err := ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
 						IndexProperties: ltngenginemodels.IndexProperties{
-							IndexDeletionBehaviour: ltngenginemodels.Cascade,
+							ListSearchPattern: ltngenginemodels.Default,
 						},
-					}
-					_, err := ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
-					require.NoError(t, err)
+					},
+				)
+				require.NoError(t, err)
+				require.Len(t, items.Items, userCount)
 
-					// search by key
-					searchOpts := &ltngenginemodels.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					// t.Logf("key %s - value %s - err: %v", loadedItem.Key, loadedItem.Value, err)
-					require.Error(t, err)
-					require.Nil(t, loadedItem)
-
-					// search by key - parent key
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:    true,
-						ParentKey: bvs.item.Key,
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.Error(t, err)
-					require.Nil(t, loadedItem)
-
-					// search by index
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bvs.item.Key,
-						IndexingKeys: [][]byte{bvs.secondaryIndexBs},
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.Error(t, err)
-					require.Nil(t, loadedItem)
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
 				}
 
-				// list ops
-				{
-					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.Default,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, 0)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-
-					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.All,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, 0)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-				}
-			})
-
-			t.Run("for multiple items", func(t *testing.T) {
-				ts := initTestSuite(t)
-				dbInfo := createTestStore(t, ts.ctx, ts)
-				userCount := 10
-				userList := generateTestUsers(t, userCount)
-				databaseMetaInfo := dbInfo.ManagerStoreMetaInfo()
-
-				for _, userData := range userList {
-					t.Log(userData.Email)
-					bvs := getValues(t, ts, userData)
-
-					createOpts := &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bvs.item.Key,
-						IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
-					}
-					_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
-					require.NoError(t, err)
-				}
-
-				// list ops
-				{
-					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.Default,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, userCount)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-
-					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.All,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, userCount)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-				}
-
-				// search one by one
-				for _, userData := range userList {
-					bvs := getValues(t, ts, userData)
-
-					// search by key
-					searchOpts := &ltngenginemodels.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.NoError(t, err)
-					require.NotNil(t, loadedItem)
-
-					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					require.NoError(t, err)
-					t.Log(u)
-
-					// search by key - parent key
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:    true,
-						ParentKey: bvs.item.Key,
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.NoError(t, err)
-					require.NotNil(t, loadedItem)
-
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					require.NoError(t, err)
-					t.Log(u)
-
-					// search by index
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bvs.item.Key,
-						IndexingKeys: [][]byte{bvs.secondaryIndexBs},
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.NoError(t, err)
-					require.NotNil(t, loadedItem)
-
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
-					require.NoError(t, err)
-					t.Log(u)
-				}
-
-				// delete and search
-				for _, userData := range userList {
-					bvs := getValues(t, ts, userData)
-
-					deleteOpts := &ltngenginemodels.IndexOpts{
-						HasIdx: true,
+				// list items - search for all
+				items, err = ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
 						IndexProperties: ltngenginemodels.IndexProperties{
-							IndexDeletionBehaviour: ltngenginemodels.Cascade,
+							ListSearchPattern: ltngenginemodels.All,
 						},
-					}
-					_, err := ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
-					require.NoError(t, err)
+					},
+				)
+				require.NoError(t, err)
+				require.Len(t, items.Items, userCount)
 
-					// search by key
-					searchOpts := &ltngenginemodels.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.Error(t, err)
-					require.Nil(t, loadedItem)
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
+				}
+			}
 
-					// search by key - parent key
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:    true,
-						ParentKey: bvs.item.Key,
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.Error(t, err)
-					require.Nil(t, loadedItem)
+			// search one by one
+			for _, userData := range userList {
+				bvs := getValues(t, ts, userData)
 
-					// search by index
-					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    bvs.item.Key,
-						IndexingKeys: [][]byte{bvs.secondaryIndexBs},
-					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-					require.Error(t, err)
-					require.Nil(t, loadedItem)
+				// search by key
+				searchOpts := &ltngenginemodels.IndexOpts{}
+				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
+
+				var u user
+				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+				require.NoError(t, err)
+				t.Log(u)
+
+				// search by key - parent key
+				searchOpts = &ltngenginemodels.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.item.Key,
+				}
+				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
+
+				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+				require.NoError(t, err)
+				t.Log(u)
+
+				// search by index
+				searchOpts = &ltngenginemodels.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.item.Key,
+					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
+				}
+				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				require.NoError(t, err)
+				require.NotNil(t, loadedItem)
+
+				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+				require.NoError(t, err)
+				t.Log(u)
+			}
+
+			// delete and search
+			for _, userData := range userList {
+				bvs := getValues(t, ts, userData)
+
+				deleteOpts := &ltngenginemodels.IndexOpts{
+					HasIdx: true,
+					IndexProperties: ltngenginemodels.IndexProperties{
+						IndexDeletionBehaviour: ltngenginemodels.Cascade,
+					},
+				}
+				_, err := ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
+				require.NoError(t, err)
+
+				// search by key
+				searchOpts := &ltngenginemodels.IndexOpts{}
+				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				// t.Logf("key %s - value %s - err: %v", loadedItem.Key, loadedItem.Value, err)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
+
+				// search by key - parent key
+				searchOpts = &ltngenginemodels.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.item.Key,
+				}
+				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
+
+				// search by index
+				searchOpts = &ltngenginemodels.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.item.Key,
+					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
+				}
+				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				require.Error(t, err)
+				require.Nil(t, loadedItem)
+			}
+
+			// list ops
+			{
+				// list items - default search
+				items, err := ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							ListSearchPattern: ltngenginemodels.Default,
+						},
+					},
+				)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
+
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
 				}
 
-				// list ops
-				{
-					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.Default,
-							},
+				// list items - search for all
+				items, err = ts.ltngEngine.ListItems(
+					ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+					&ltngenginemodels.IndexOpts{
+						IndexProperties: ltngenginemodels.IndexProperties{
+							ListSearchPattern: ltngenginemodels.All,
 						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, 0)
+					},
+				)
+				require.NoError(t, err)
+				require.Len(t, items.Items, 0)
 
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
-
-					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
-						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
-						&ltngenginemodels.IndexOpts{
-							IndexProperties: ltngenginemodels.IndexProperties{
-								ListSearchPattern: ltngenginemodels.All,
-							},
-						},
-					)
-					require.NoError(t, err)
-					require.Len(t, items.Items, 0)
-
-					for _, item := range items.Items {
-						t.Log(string(item.Key), string(item.Value))
-					}
+				for _, item := range items.Items {
+					t.Log(string(item.Key), string(item.Value))
 				}
-			})
+			}
 		})
 
 		t.Run("for inexistent item", func(t *testing.T) {

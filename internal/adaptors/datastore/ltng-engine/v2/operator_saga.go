@@ -76,7 +76,7 @@ func (op *opSaga) ListenAndTrigger(ctx context.Context) {
 			op.listenAndTrigger(ctx)
 		},
 	)
-	op.cancel() // TODO: not necessary?
+	op.cancel()
 }
 
 func (op *opSaga) listenAndTrigger(ctx context.Context) {
