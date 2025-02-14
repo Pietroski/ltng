@@ -50,6 +50,14 @@ integration-tests:
 	go clean -testcache
 	go test -v -race -cover ./tests/...
 
+arm-unit-tests:
+	go clean -testcache
+	go test -v -cover $$(go list ./... | grep -v /tests/ | grep -v /playground/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/)
+
+arm-integration-tests:
+	go clean -testcache
+	go test -v -cover ./tests/...
+
 TYPE:=goroutine
 pprof-serve:
 	@go tool pprof -http=":7002" "http://localhost:7001/debug/pprof/$(TYPE)"
