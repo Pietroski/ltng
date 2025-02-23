@@ -50,14 +50,6 @@ integration-tests:
 	go clean -testcache
 	go test -v -race -cover ./tests/...
 
-arm-unit-tests:
-	go clean -testcache
-	go test -v -cover $$(go list ./... | grep -v /tests/ | grep -v /playground/ | grep -v /schemas/ | grep -v /mocks/ | grep -v /fakes/)
-
-arm-integration-tests:
-	go clean -testcache
-	go test -v -cover ./tests/...
-
 TYPE:=goroutine
 pprof-serve:
 	@go tool pprof -http=":7002" "http://localhost:7001/debug/pprof/$(TYPE)"
@@ -70,15 +62,15 @@ raw-bench-report:
 	mkdir -p "./docs/outputs/$$DATEDIR" && \
 	printf "|TESTS|\n\n" >>"./docs/outputs/$$TIMESTAMP.race.txt" && \
 	printf "\n\n|RACE_TESTS|\n\n" >>"./docs/outputs/$$TIMESTAMP.race.txt" && \
+	printf "\n\n|ENGINE_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.race.txt" && \
+    timeout 50s bash -c 'go clean -testcache && go test -v -race -run=TestEngines ./tests/integration/...' \
+    >> "./docs/outputs/$$TIMESTAMP.race.txt" || true && \
 	printf "\n\n|LOCAL_CLIENT_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.race.txt" && \
 	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=TestClientsLocally ./tests/integration/...' \
 	>> "./docs/outputs/$$TIMESTAMP.race.txt" || true && \
 	printf "\n\n|DOCKER_CLIENT_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.race.txt" && \
-	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=TestClientsWithinDocker ./tests/benchmark/...' \
-  	>> "./docs/outputs/$$TIMESTAMP.race.txt" || true && \
-	printf "\n\n|ENGINE_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.race.txt" && \
-	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=BenchmarkAllEngines -bench=BenchmarkAllEngines ./tests/benchmark/...' \
-	>> "./docs/outputs/$$TIMESTAMP.race.txt" || true
+	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=TestClientsWithinDocker ./tests/integration/...' \
+  	>> "./docs/outputs/$$TIMESTAMP.race.txt" || true
 
 raw-bench-report-no-race:
 	@TIMESTAMP=$$(date +'%y-%m-%d/%H:%M:%S'); \
@@ -86,14 +78,14 @@ raw-bench-report-no-race:
 	mkdir -p "./docs/outputs/$$DATEDIR" && \
 	printf "|TESTS|\n\n" >>"./docs/outputs/$$TIMESTAMP.no_race.txt" && \
 	printf "\n\n|NO_RACE_TESTS|\n\n" >>"./docs/outputs/$$TIMESTAMP.no_race.txt" && \
+	printf "\n\n|ENGINE_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.no_race.txt" && \
+    timeout 50s bash -c 'go clean -testcache && go test -v -run=TestEngines ./tests/integration/...' \
+    >> "./docs/outputs/$$TIMESTAMP.no_race.txt" || true && \
 	printf "\n\n|LOCAL_CLIENT_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.no_race.txt" && \
-	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=TestClientsLocally ./tests/integration/...' \
+	timeout 50s bash -c 'go clean -testcache && go test -v -run=TestClientsLocally ./tests/integration/...' \
 	>> "./docs/outputs/$$TIMESTAMP.no_race.txt" || true && \
 	printf "\n\n|DOCKER_CLIENT_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.no_race.txt" && \
-	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=TestClientsWithinDocker ./tests/benchmark/...' \
-	>> "./docs/outputs/$$TIMESTAMP.no_race.txt" || true && \
-	printf "\n\n|ENGINE_RESULTS|\n\n" >> "./docs/outputs/$$TIMESTAMP.no_race.txt" && \
-	timeout 50s bash -c 'go clean -testcache && go test -v -race -run=BenchmarkAllEngines -bench=BenchmarkAllEngines ./tests/benchmark/...' \
+	timeout 50s bash -c 'go clean -testcache && go test -v -run=TestClientsWithinDocker ./tests/integration/...' \
 	>> "./docs/outputs/$$TIMESTAMP.no_race.txt" || true
 
 raw-testbench-report.sh:

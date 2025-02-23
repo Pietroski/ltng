@@ -1,0 +1,939 @@
+|TESTS|
+
+
+
+|NO_RACE_TESTS|
+
+
+
+|ENGINE_RESULTS|
+
+=== RUN   TestEngines
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+badger 2025/02/23 18:28:29 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:29 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:29 INFO: Set nextTxnTs to 0
+    engine_test.go:31: testLTNGDBEngineV2
+    engine_test.go:52: CreateItem
+    engine_test.go:72: 
+        min: 12.834µs
+        max: 89.25µs
+        avg: 16.244µs
+        
+    engine_test.go:76: ListItems
+    engine_test.go:93: 
+        min: 3.084µs
+        max: 3.084µs
+        avg: 3.084µs
+        
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+2025/02/23 18:28:29 context done: context canceled
+    engine_test.go:34: testBadgerDBEngine
+badger 2025/02/23 18:28:29 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:29 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:29 INFO: Set nextTxnTs to 0
+badger 2025/02/23 18:28:29 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:29 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:29 INFO: Set nextTxnTs to 0
+badger 2025/02/23 18:28:29 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:29 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:29 INFO: Set nextTxnTs to 0
+    engine_test.go:117: CreateItem
+    engine_test.go:137: 
+        min: 17.25µs
+        max: 40.708µs
+        avg: 31.495µs
+        
+    engine_test.go:141: ListItems
+    engine_test.go:157: 
+        min: 66.666µs
+        max: 66.666µs
+        avg: 66.666µs
+        
+--- PASS: TestEngines (0.16s)
+PASS
+ok  	gitlab.com/pietroski-software-company/lightning-db/tests/integration	0.693s
+
+
+|LOCAL_CLIENT_RESULTS|
+
+=== RUN   TestClientsLocally
+/bin/rm -rf .ltngfq
+/bin/rm -rf .ltngdb
+/bin/rm -rf .db
+    client_test.go:29: TestLTNGDBClient
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: 6eed9b48-ef26-48a8-bb6f-baf07bb42f46
+message-trace-created-at: 2025-02-23 18:28:30.257499 -0300 -03 m=+0.037603251
+message: [34m[DEBUG]: opening ltngdb engine v2[0m
+--------------------------------------------------
+2025/02/23 18:28:30 tracer - goroutine count: 41
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: 00ab70aa-ee21-4456-b592-a52e31610a8b
+message-trace-created-at: 2025-02-23 18:28:30.261373 -0300 -03 m=+0.041476418
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2-ui"
+}
+--------------------------------------------------
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: 6fe1a3d5-94ff-44da-b9cb-e38eed108443
+message-trace-created-at: 2025-02-23 18:28:30.261386 -0300 -03 m=+0.041490251
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2-ui"
+}
+--------------------------------------------------
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: b461a5f4-c9a8-4954-b4c7-698ab81e9fa4
+message-trace-created-at: 2025-02-23 18:28:30.261391 -0300 -03 m=+0.041495001
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: d930111f-570d-4e5b-b001-798e862c0944
+message-trace-created-at: 2025-02-23 18:28:30.261396 -0300 -03 m=+0.041499376
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: 0782bba7-6065-444b-a9fc-6cc81c22ceda
+message-trace-created-at: 2025-02-23 18:28:30.2614 -0300 -03 m=+0.041503376
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: e98a0f4d-bac9-4e64-82b6-ba3813e5511b
+message-trace-created-at: 2025-02-23 18:28:30.261403 -0300 -03 m=+0.041507251
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/02/23 18:28:30 
+--------------------------------------------------
+message-trace-id: 4774e324-aeaa-4c0a-aba3-bc9858d3f8ea
+message-trace-created-at: 2025-02-23 18:28:30.261628 -0300 -03 m=+0.041731751
+message: [0m[INFO]: starting pprof's HTTP server[0m
+fields:
+{
+  "port": "7001"
+}
+--------------------------------------------------
+    client_test.go:63: Test_LTNGDB_Client_Engine
+=== RUN   TestClientsLocally/CreateItem
+    client_test.go:89: CreateItem
+    client_test.go:115: 
+        min: 127.584µs
+        max: 870.417µs
+        avg: 195.101µs
+        
+=== NAME  TestClientsLocally
+    client_test.go:70: Total BadgerDB test duration: 19.980208ms
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 0027aa03-7b34-495d-9f81-138399e609b5
+message-trace-created-at: 2025-02-23 18:28:31.288738 -0300 -03 m=+1.068839293
+message: [33m[WARN]: ctx server sig!![0m
+fields:
+{
+  "context": {},
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:31 context done: context canceled
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 4a8769ca-c1b0-45ac-9135-0ffee9caf4fa
+message-trace-created-at: 2025-02-23 18:28:31.288876 -0300 -03 m=+1.068977751
+message: [33m[WARN]: err server sig!![0m
+fields:
+{
+  "error": null
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: aeefece6-853c-4185-a5f6-2b478f1fa3e2
+message-trace-created-at: 2025-02-23 18:28:31.288894 -0300 -03 m=+1.068995668
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 1a7db9e2-8234-4b1c-9174-1f91a82c5968
+message-trace-created-at: 2025-02-23 18:28:31.288939 -0300 -03 m=+1.069040835
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: f4b21de5-52eb-4b0f-ad89-6d3123b36213
+message-trace-created-at: 2025-02-23 18:28:31.288953 -0300 -03 m=+1.069054543
+message: [0m[INFO]: cancelling all contexts[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 414e5bab-e15f-472e-9703-30141ebb1819
+message-trace-created-at: 2025-02-23 18:28:31.288966 -0300 -03 m=+1.069067585
+message: [0m[INFO]: all contexts cancelled[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: ddd7a976-3b73-46cc-9225-5df48a7e4049
+message-trace-created-at: 2025-02-23 18:28:31.288978 -0300 -03 m=+1.069079376
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: c9c060c3-d2be-4a5b-8360-33826ee8ff71
+message-trace-created-at: 2025-02-23 18:28:31.289015 -0300 -03 m=+1.069116293
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: cc9ec60c-6d22-4e53-b926-891170295525
+message-trace-created-at: 2025-02-23 18:28:31.289029 -0300 -03 m=+1.069130418
+message: [0m[INFO]: shutting down servers[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: a09e0db6-b34e-452c-af14-61876c25fda7
+message-trace-created-at: 2025-02-23 18:28:31.289048 -0300 -03 m=+1.069149043
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 5aa7a44a-6318-413a-91a5-2dfe13fad428
+message-trace-created-at: 2025-02-23 18:28:31.289237 -0300 -03 m=+1.069338335
+message: [31m[ERROR]: error from server[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 1bcd08fd-56b8-4464-924e-6e0ee504a6c9
+message-trace-created-at: 2025-02-23 18:28:31.28926 -0300 -03 m=+1.069360960
+message: [31m[ERROR]: post-err[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: fbd43355-6622-4ab4-9262-6a5b1044b2b7
+message-trace-created-at: 2025-02-23 18:28:31.289299 -0300 -03 m=+1.069400043
+message: [0m[INFO]: HTTP server ListenAndServe shutdown ok[0m
+fields:
+{
+  "name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: ff09413a-1bf5-46cc-9b7d-29a95cc71229
+message-trace-created-at: 2025-02-23 18:28:31.289341 -0300 -03 m=+1.069442501
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: a5e2b54f-9df9-488c-a4bd-18c9bacd8617
+message-trace-created-at: 2025-02-23 18:28:31.28937 -0300 -03 m=+1.069470876
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 6a5ab2ff-b78e-4828-9a86-85b7a57f62f6
+message-trace-created-at: 2025-02-23 18:28:31.290662 -0300 -03 m=+1.070763376
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 210c51c7-177c-432e-bddc-1d001cd029b6
+message-trace-created-at: 2025-02-23 18:28:31.29068 -0300 -03 m=+1.070780918
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2-ui"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 98a7841e-cc06-4e58-99a4-21bf6909b798
+message-trace-created-at: 2025-02-23 18:28:31.290711 -0300 -03 m=+1.070812168
+message: [31m[ERROR]: error from server[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 1b7f47f6-5a68-4964-b446-cb78761ef97a
+message-trace-created-at: 2025-02-23 18:28:31.290725 -0300 -03 m=+1.070826668
+message: [31m[ERROR]: error from server[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 59701813-c5b9-4d0f-a0b0-49694b9f1ad8
+message-trace-created-at: 2025-02-23 18:28:31.290729 -0300 -03 m=+1.070830501
+message: [31m[ERROR]: post-err[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+error print because error channel is already closed: error starting server lightning-node-server-engine-v2-ui: accept tcp [::]:7070: use of closed network connection
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 9d727150-899e-4c4a-99f7-ac1c85772086
+message-trace-created-at: 2025-02-23 18:28:31.290742 -0300 -03 m=+1.070843751
+message: [31m[ERROR]: post-err[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: dd6a5111-756b-452d-b976-18f2dc0bbcf4
+message-trace-created-at: 2025-02-23 18:28:31.290774 -0300 -03 m=+1.070875626
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "lightning-node-server-engine-v2-ui"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: a3cf1109-4dcc-4650-85fa-8821001bc56d
+message-trace-created-at: 2025-02-23 18:28:31.29079 -0300 -03 m=+1.070891626
+message: [0m[INFO]: waiting for servers to shut down[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: b8310d45-7382-4082-ad90-40ad955d0863
+message-trace-created-at: 2025-02-23 18:28:31.290798 -0300 -03 m=+1.070899335
+message: [0m[INFO]: waiting for goroutines to stop[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 35d1c398-654a-405b-9330-8c0015ee14ed
+message-trace-created-at: 2025-02-23 18:28:31.290806 -0300 -03 m=+1.070907126
+message: [0m[INFO]: goroutines stopped[0m
+--------------------------------------------------
+2025/02/23 18:28:31 tracer - goroutine count: 8
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 0eab74b4-b809-4c25-8096-984fc0916b60
+message-trace-created-at: 2025-02-23 18:28:31.290816 -0300 -03 m=+1.070917126
+message: [0m[INFO]: all servers shut down[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: f8664da4-5cf8-4036-a6eb-ade03ecae906
+message-trace-created-at: 2025-02-23 18:28:31.290822 -0300 -03 m=+1.070923626
+message: [0m[INFO]: closing channels[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: a0b5a09e-a450-43b8-8fc8-6d61dcac629d
+message-trace-created-at: 2025-02-23 18:28:31.290829 -0300 -03 m=+1.070930168
+message: [0m[INFO]: closing error channel...[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 7e9fd2ec-dc9a-4d05-8314-3f2be2d4c565
+message-trace-created-at: 2025-02-23 18:28:31.290835 -0300 -03 m=+1.070936668
+message: [0m[INFO]: error channel successfully closed[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: c31fc2e2-77cd-44ec-b795-bc8cbeabffa2
+message-trace-created-at: 2025-02-23 18:28:31.290841 -0300 -03 m=+1.070942668
+message: [0m[INFO]: cleaning error channel...[0m
+--------------------------------------------------
+cleaning error channel
+error from cleaning error channel: error starting server internal-pprof-server: http: Server closed
+error from cleaning error channel: error starting server lightning-node-server-engine-v2: accept tcp [::]:50050: use of closed network connection
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: b2f175f4-8a8a-44ad-ba5c-41967332eb2e
+message-trace-created-at: 2025-02-23 18:28:31.290853 -0300 -03 m=+1.070954501
+message: [0m[INFO]: error channel successfully cleaned[0m
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: afc527be-f950-4a04-b252-3da4f13e5c95
+message-trace-created-at: 2025-02-23 18:28:31.29086 -0300 -03 m=+1.070960960
+message: [0m[INFO]: all channels closed[0m
+--------------------------------------------------
+2025/02/23 18:28:31 tracer - goroutine count: 8
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 6eed9b48-ef26-48a8-bb6f-baf07bb42f46
+message-trace-created-at: 2025-02-23 18:28:30.257499 -0300 -03 m=+0.037603251
+message: [34m[DEBUG]: os.Exit[0m
+fields:
+{
+  "code": 0
+}
+--------------------------------------------------
+    client_test.go:32: TestBadgerDBClient
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [34m[DEBUG]: opening badger local manager[0m
+--------------------------------------------------
+badger 2025/02/23 18:28:31 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:31 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:31 INFO: Set nextTxnTs to 0
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [34m[DEBUG]: starting badger instances[0m
+--------------------------------------------------
+2025/02/23 18:28:31 tracer - goroutine count: 24
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 93f5f427-bb02-4300-b10f-7ac6f8f250e7
+message-trace-created-at: 2025-02-23 18:28:31.32325 -0300 -03 m=+1.103350960
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: f8a49045-3a2e-4caf-9a41-506ab86286ee
+message-trace-created-at: 2025-02-23 18:28:31.323264 -0300 -03 m=+1.103365501
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 59966feb-11eb-4ff5-b572-10e4bb41e526
+message-trace-created-at: 2025-02-23 18:28:31.323272 -0300 -03 m=+1.103372918
+message: [0m[INFO]: starting server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 2b7f8ade-616d-4306-9f83-b39812389777
+message-trace-created-at: 2025-02-23 18:28:31.323278 -0300 -03 m=+1.103378751
+message: [0m[INFO]: started server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/02/23 18:28:31 
+--------------------------------------------------
+message-trace-id: 956f14d0-ab53-4865-b4bd-7accc64f4f33
+message-trace-created-at: 2025-02-23 18:28:31.323309 -0300 -03 m=+1.103410376
+message: [0m[INFO]: starting pprof's HTTP server[0m
+fields:
+{
+  "port": "7001"
+}
+--------------------------------------------------
+    client_test.go:146: Test_BadgerDB_Client_Engine
+badger 2025/02/23 18:28:31 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:31 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:31 INFO: Set nextTxnTs to 0
+badger 2025/02/23 18:28:31 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:31 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:31 INFO: Set nextTxnTs to 0
+badger 2025/02/23 18:28:31 INFO: All 0 tables opened in 0s
+badger 2025/02/23 18:28:31 INFO: Discard stats nextEmptySlot: 0
+badger 2025/02/23 18:28:31 INFO: Set nextTxnTs to 0
+=== RUN   TestClientsLocally/CreateItem#01
+    client_test.go:172: CreateItem
+    client_test.go:198: 
+        min: 128.917µs
+        max: 310.333µs
+        avg: 162.763µs
+        
+=== NAME  TestClientsLocally
+    client_test.go:153: Total BadgerDB test duration: 76.124583ms
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 58c098f8-5125-49b6-a793-636ca43dbc53
+message-trace-created-at: 2025-02-23 18:28:32.374026 -0300 -03 m=+2.154124626
+message: [33m[WARN]: ctx server sig!![0m
+fields:
+{
+  "context": {},
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 068212f5-226a-4e3a-a603-2fde7e6b886f
+message-trace-created-at: 2025-02-23 18:28:32.374064 -0300 -03 m=+2.154163210
+message: [33m[WARN]: ctx server sig!![0m
+fields:
+{
+  "context": {},
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 7d013768-9de4-474f-ac74-bf45d2df5e53
+message-trace-created-at: 2025-02-23 18:28:32.374074 -0300 -03 m=+2.154172835
+message: [33m[WARN]: err server sig!![0m
+fields:
+{
+  "error": null
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: ed0b7f62-711f-4e1e-bc07-aa1879418f47
+message-trace-created-at: 2025-02-23 18:28:32.37408 -0300 -03 m=+2.154178418
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: c12a04f9-7ad5-47ff-a4bd-eb682b55a9a8
+message-trace-created-at: 2025-02-23 18:28:32.374096 -0300 -03 m=+2.154194335
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: ffcb815b-0fc6-461a-a4fe-e9467dae3698
+message-trace-created-at: 2025-02-23 18:28:32.374121 -0300 -03 m=+2.154219710
+message: [0m[INFO]: cancelling all contexts[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: be26b2cf-142f-4ee1-9c0a-fefbf19d5ec7
+message-trace-created-at: 2025-02-23 18:28:32.374133 -0300 -03 m=+2.154232085
+message: [0m[INFO]: all contexts cancelled[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 9eeb192a-e844-4015-92ed-8c3aeea109b9
+message-trace-created-at: 2025-02-23 18:28:32.374139 -0300 -03 m=+2.154237543
+message: [0m[INFO]: sending SIGKILL[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 4818ea28-f768-4f46-b3c9-36aaddee4dbe
+message-trace-created-at: 2025-02-23 18:28:32.374149 -0300 -03 m=+2.154247460
+message: [0m[INFO]: SIGKILL sent[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 19849a28-c5e5-4f68-9bba-12d87c27ae7d
+message-trace-created-at: 2025-02-23 18:28:32.374155 -0300 -03 m=+2.154253293
+message: [0m[INFO]: shutting down servers[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: b1befe97-ceba-4c5b-b3d0-74370c9bd67e
+message-trace-created-at: 2025-02-23 18:28:32.374165 -0300 -03 m=+2.154263335
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 8caef8e1-f709-469f-b062-022117e9598e
+message-trace-created-at: 2025-02-23 18:28:32.374257 -0300 -03 m=+2.154356168
+message: [31m[ERROR]: error from server[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+error print because error channel is already closed: error starting server internal-pprof-server: http: Server closed
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: f8ac351e-d88e-4e8f-a6ac-0144918f0051
+message-trace-created-at: 2025-02-23 18:28:32.374268 -0300 -03 m=+2.154366876
+message: [31m[ERROR]: post-err[0m
+fields:
+{
+  "error": {}
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 575d410e-8656-489e-8243-2ef016ac46fb
+message-trace-created-at: 2025-02-23 18:28:32.374328 -0300 -03 m=+2.154427001
+message: [0m[INFO]: HTTP server ListenAndServe shutdown ok[0m
+fields:
+{
+  "name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: d73df35b-6925-40cc-a541-0137d7957a17
+message-trace-created-at: 2025-02-23 18:28:32.374365 -0300 -03 m=+2.154464210
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "internal-pprof-server"
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: e0387ca7-c638-4a73-b614-978901b55d1e
+message-trace-created-at: 2025-02-23 18:28:32.374375 -0300 -03 m=+2.154474043
+message: [0m[INFO]: stopping server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [34m[DEBUG]: closing badger-db instances[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [0m[INFO]: traversing sync map[0m
+fields:
+{
+  "key": "user-store-indexed-list",
+  "value": {
+    "name": "user-store-indexed-list",
+    "path": "user-store/indexed-list",
+    "createdAt": "2025-02-23T18:28:31.798666-03:00",
+    "lastOpenedAt": "2025-02-23T18:28:31.798666-03:00",
+    "db": {}
+  }
+}
+--------------------------------------------------
+badger 2025/02/23 18:28:32 INFO: Lifetime L0 stalled for: 0s
+badger 2025/02/23 18:28:32 INFO: 
+Level 0 [ ]: NumTables: 01. Size: 3.0 KiB of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [0m[INFO]: traversing sync map[0m
+fields:
+{
+  "key": "user-store",
+  "value": {
+    "name": "user-store",
+    "path": "user-store",
+    "createdAt": "2025-02-23T18:28:31.798664-03:00",
+    "lastOpenedAt": "2025-02-23T18:28:31.798664-03:00",
+    "db": {}
+  }
+}
+--------------------------------------------------
+badger 2025/02/23 18:28:32 INFO: Lifetime L0 stalled for: 0s
+badger 2025/02/23 18:28:32 INFO: 
+Level 0 [ ]: NumTables: 01. Size: 5.5 KiB of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [0m[INFO]: traversing sync map[0m
+fields:
+{
+  "key": "user-store-indexed",
+  "value": {
+    "name": "user-store-indexed",
+    "path": "user-store/indexed",
+    "createdAt": "2025-02-23T18:28:31.798665-03:00",
+    "lastOpenedAt": "2025-02-23T18:28:31.798665-03:00",
+    "db": {}
+  }
+}
+--------------------------------------------------
+badger 2025/02/23 18:28:32 INFO: Lifetime L0 stalled for: 0s
+badger 2025/02/23 18:28:32 INFO: 
+Level 0 [ ]: NumTables: 01. Size: 4.2 KiB of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [34m[DEBUG]: closing badger-db manager[0m
+--------------------------------------------------
+badger 2025/02/23 18:28:32 INFO: Lifetime L0 stalled for: 0s
+badger 2025/02/23 18:28:32 INFO: 
+Level 0 [ ]: NumTables: 01. Size: 354 B of 0 B. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 64 MiB
+Level 1 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 2 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 3 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 4 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 5 [ ]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level 6 [B]: NumTables: 00. Size: 0 B of 10 MiB. Score: 0.00->0.00 StaleData: 0 B Target FileSize: 2.0 MiB
+Level Done
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: debc4334-556a-4370-9ec7-1f28f15ce48b
+message-trace-created-at: 2025-02-23 18:28:32.428813 -0300 -03 m=+2.208911626
+message: [0m[INFO]: stopped server[0m
+fields:
+{
+  "server_name": "lightning-node-badger-db-engine-v4"
+}
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: cbf8d9e6-adbc-4bbd-9a7f-29e02f3e96bd
+message-trace-created-at: 2025-02-23 18:28:32.428831 -0300 -03 m=+2.208930001
+message: [0m[INFO]: waiting for servers to shut down[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: ca21df99-74b9-4927-bcbd-f9fd708d61f5
+message-trace-created-at: 2025-02-23 18:28:32.428837 -0300 -03 m=+2.208935751
+message: [0m[INFO]: waiting for goroutines to stop[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bbd9acbb-9ff2-4998-bd2a-f5f96e2c8e4a
+message-trace-created-at: 2025-02-23 18:28:32.428843 -0300 -03 m=+2.208941835
+message: [0m[INFO]: goroutines stopped[0m
+--------------------------------------------------
+2025/02/23 18:28:32 tracer - goroutine count: 14
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 21d87de4-42f7-4f54-902e-514a683af040
+message-trace-created-at: 2025-02-23 18:28:32.428858 -0300 -03 m=+2.208956376
+message: [0m[INFO]: all servers shut down[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 5535bdb0-7211-4c03-9df9-3394226d211a
+message-trace-created-at: 2025-02-23 18:28:32.428863 -0300 -03 m=+2.208961168
+message: [0m[INFO]: closing channels[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 2acfdb88-d0b7-499f-84ac-b8cac4e5875f
+message-trace-created-at: 2025-02-23 18:28:32.428868 -0300 -03 m=+2.208966126
+message: [0m[INFO]: closing error channel...[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: a25c080c-ad9d-47ac-a910-1eb4592c0882
+message-trace-created-at: 2025-02-23 18:28:32.428873 -0300 -03 m=+2.208971876
+message: [0m[INFO]: error channel successfully closed[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: b3c0a9cc-b821-46e4-93d8-fc14a3d05412
+message-trace-created-at: 2025-02-23 18:28:32.428879 -0300 -03 m=+2.208977460
+message: [0m[INFO]: cleaning error channel...[0m
+--------------------------------------------------
+cleaning error channel
+error from cleaning error channel: <nil>
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: cb6dfebc-e7dd-4090-bf1c-2c496e2d7550
+message-trace-created-at: 2025-02-23 18:28:32.428891 -0300 -03 m=+2.208989293
+message: [0m[INFO]: error channel successfully cleaned[0m
+--------------------------------------------------
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: 448b15aa-8488-42f9-a01f-d2089d026f4d
+message-trace-created-at: 2025-02-23 18:28:32.428896 -0300 -03 m=+2.208994168
+message: [0m[INFO]: all channels closed[0m
+--------------------------------------------------
+2025/02/23 18:28:32 tracer - goroutine count: 14
+2025/02/23 18:28:32 
+--------------------------------------------------
+message-trace-id: bde4f940-dff1-4cc0-83c3-43b8793383db
+message-trace-created-at: 2025-02-23 18:28:31.29101 -0300 -03 m=+1.071111043
+message: [34m[DEBUG]: os.Exit[0m
+fields:
+{
+  "code": 0
+}
+--------------------------------------------------
+--- PASS: TestClientsLocally (2.20s)
+    --- PASS: TestClientsLocally/CreateItem (0.01s)
+    --- PASS: TestClientsLocally/CreateItem#01 (0.01s)
+PASS
+ok  	gitlab.com/pietroski-software-company/lightning-db/tests/integration	2.486s
+
+
+|DOCKER_CLIENT_RESULTS|
+
+=== RUN   TestClientsWithinDocker
+/bin/sh -c docker compose -f ../../build/orchestrator/docker-compose-test.yml up -d --build --remove-orphans
+/bin/sh -c docker inspect --format='{{.State.Running}}' test-integration-ltngdb-engine
+    setup.go:84: output: true
+/bin/sh -c docker inspect --format='{{.State.Running}}' test-integration-badgerdb-engine
+    setup.go:84: output: true
+=== RUN   TestClientsWithinDocker/Test_LTNGDB_Client_Engine_Within_Docker
+=== RUN   TestClientsWithinDocker/Test_LTNGDB_Client_Engine_Within_Docker/CreateItem
+    client_test.go:239: CreateItem
+    client_test.go:265: 
+        min: 182.541µs
+        max: 4.925917ms
+        avg: 215.941µs
+        
+=== NAME  TestClientsWithinDocker/Test_LTNGDB_Client_Engine_Within_Docker
+    client_test.go:218: Total LTNGDB test duration: 114.419334ms
+=== RUN   TestClientsWithinDocker/Test_BadgerDB_Client_Engine_Within_Docker
+=== RUN   TestClientsWithinDocker/Test_BadgerDB_Client_Engine_Within_Docker/CreateItem
+    client_test.go:293: CreateItem
+    client_test.go:319: 
+        min: 152.25µs
+        max: 1.285583ms
+        avg: 278.85µs
+        
+=== NAME  TestClientsWithinDocker/Test_BadgerDB_Client_Engine_Within_Docker
+    client_test.go:272: Total BadgerDB test duration: 75.729125ms
+/bin/sh -c docker compose -f ../../build/orchestrator/docker-compose-test.yml down
+--- PASS: TestClientsWithinDocker (15.60s)
+    --- PASS: TestClientsWithinDocker/Test_LTNGDB_Client_Engine_Within_Docker (0.11s)
+        --- PASS: TestClientsWithinDocker/Test_LTNGDB_Client_Engine_Within_Docker/CreateItem (0.08s)
+    --- PASS: TestClientsWithinDocker/Test_BadgerDB_Client_Engine_Within_Docker (0.08s)
+        --- PASS: TestClientsWithinDocker/Test_BadgerDB_Client_Engine_Within_Docker/CreateItem (0.04s)
+PASS
+ok  	gitlab.com/pietroski-software-company/lightning-db/tests/integration	15.892s

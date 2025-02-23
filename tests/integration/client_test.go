@@ -23,127 +23,6 @@ var (
 	cts   *data.ClientTestSuite
 )
 
-func TestClientsWithinDocker(t *testing.T) {
-	users = data.GenerateRandomUsers(t, 150)
-	cts = data.InitClientTestSuite(t)
-
-	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
-		testLTNGDBClientWithinDocker(t)
-	})
-
-	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
-		testBadgerDBClientWithinDocker(t)
-	})
-}
-
-func testLTNGDBClientWithinDocker(t *testing.T) {
-	startTime := time.Now()
-	defer func() {
-		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
-	}()
-
-	// Profiling is now handled at the TestClients level
-
-	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
-		Name: "user-store",
-		Path: "user-store",
-	}
-	_, err := cts.LTNGDBClient.CreateStore(cts.Ctx, createStoreRequest)
-	require.NoError(t, err)
-
-	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
-		Name: "user-store",
-		Path: "user-store",
-	}
-	store, err := cts.LTNGDBClient.GetStore(cts.Ctx, getStoreRequest)
-	require.NoError(t, err)
-	require.NotNil(t, store)
-
-	t.Run("CreateItem", func(t *testing.T) {
-		t.Log("CreateItem")
-
-		tb := testbench.New()
-		for _, user := range users {
-			bvs := data.GetUserBytesValues(t, cts.TS(), user)
-			createRequest := &grpc_ltngdb.CreateRequest{
-				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
-					DatabaseName: getStoreRequest.Name,
-					DatabasePath: getStoreRequest.Path,
-				},
-				Item: &grpc_ltngdb.Item{
-					Key:   bvs.BsKey,
-					Value: bvs.BsValue,
-				},
-				IndexOpts: &grpc_ltngdb.IndexOpts{
-					HasIdx:       true,
-					ParentKey:    bvs.BsKey,
-					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
-				},
-				RetrialOpts: ltng_client.DefaultRetrialOpts,
-			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
-				_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
-			}))
-			assert.NoError(t, err)
-		}
-		t.Log(tb)
-	})
-}
-
-func testBadgerDBClientWithinDocker(t *testing.T) {
-	startTime := time.Now()
-	defer func() {
-		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
-	}()
-
-	// Profiling is now handled at the TestClients level
-
-	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
-		Name: "user-store",
-		Path: "user-store",
-	}
-	_, err := cts.BadgerDBClient.CreateStore(cts.Ctx, createStoreRequest)
-	require.NoError(t, err)
-
-	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
-		Name: "user-store",
-		Path: "user-store",
-	}
-	store, err := cts.BadgerDBClient.GetStore(cts.Ctx, getStoreRequest)
-	require.NoError(t, err)
-	require.NotNil(t, store)
-
-	t.Run("CreateItem", func(t *testing.T) {
-		t.Log("CreateItem")
-
-		tb := testbench.New()
-		for _, user := range users {
-			bvs := data.GetUserBytesValues(t, cts.TS(), user)
-			createRequest := &grpc_ltngdb.CreateRequest{
-				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
-					DatabaseName: getStoreRequest.Name,
-					DatabasePath: getStoreRequest.Path,
-				},
-				Item: &grpc_ltngdb.Item{
-					Key:   bvs.BsKey,
-					Value: bvs.BsValue,
-				},
-				IndexOpts: &grpc_ltngdb.IndexOpts{
-					HasIdx:       true,
-					ParentKey:    bvs.BsKey,
-					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
-				},
-				RetrialOpts: ltng_client.DefaultRetrialOpts,
-			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
-				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
-			}))
-			assert.NoError(t, err)
-		}
-		t.Log(tb)
-	})
-}
-
 func TestClientsLocally(t *testing.T) {
 	data.CleanupDirectories(t)
 
@@ -188,7 +67,7 @@ func TestLTNGDBClient(t *testing.T) {
 func testLTNGDBClient(t *testing.T) {
 	startTime := time.Now()
 	defer func() {
-		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
+		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
 	}()
 
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
@@ -273,6 +152,127 @@ func testBadgerDBClient(t *testing.T) {
 	defer func() {
 		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
 	}()
+
+	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	_, err := cts.BadgerDBClient.CreateStore(cts.Ctx, createStoreRequest)
+	require.NoError(t, err)
+
+	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	store, err := cts.BadgerDBClient.GetStore(cts.Ctx, getStoreRequest)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	t.Run("CreateItem", func(t *testing.T) {
+		t.Log("CreateItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			createRequest := &grpc_ltngdb.CreateRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+				RetrialOpts: ltng_client.DefaultRetrialOpts,
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+}
+
+func TestClientsWithinDocker(t *testing.T) {
+	users = data.GenerateRandomUsers(t, 150)
+	cts = data.InitClientTestSuite(t)
+
+	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testLTNGDBClientWithinDocker(t)
+	})
+
+	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testBadgerDBClientWithinDocker(t)
+	})
+}
+
+func testLTNGDBClientWithinDocker(t *testing.T) {
+	startTime := time.Now()
+	defer func() {
+		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
+	}()
+
+	// Profiling is now handled at the TestClients level
+
+	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	_, err := cts.LTNGDBClient.CreateStore(cts.Ctx, createStoreRequest)
+	require.NoError(t, err)
+
+	getStoreRequest := &grpc_ltngdb.GetStoreRequest{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	store, err := cts.LTNGDBClient.GetStore(cts.Ctx, getStoreRequest)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	t.Run("CreateItem", func(t *testing.T) {
+		t.Log("CreateItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			createRequest := &grpc_ltngdb.CreateRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+				RetrialOpts: ltng_client.DefaultRetrialOpts,
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+}
+
+func testBadgerDBClientWithinDocker(t *testing.T) {
+	startTime := time.Now()
+	defer func() {
+		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
+	}()
+
+	// Profiling is now handled at the TestClients level
 
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
