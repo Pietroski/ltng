@@ -523,7 +523,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
-				
+
 				{
 					deleteOpts := &ltngenginemodels.IndexOpts{
 						HasIdx:       true,
@@ -555,8 +555,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					// search by index
 					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx:       true,
-						ParentKey:    item.Key,
+						HasIdx: true,
+						// ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
 					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)

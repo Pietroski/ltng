@@ -117,7 +117,9 @@ func (e *LTNGEngine) deleteItem(
 		return nil, err
 	}
 	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
-	e.markedAsDeletedMapping.Set(dbMetaInfo.LockName(hex.EncodeToString(item.Key)), struct{}{})
+	if opts.IndexProperties.IndexDeletionBehaviour != ltngenginemodels.IndexOnly {
+		e.markedAsDeletedMapping.Set(dbMetaInfo.LockName(hex.EncodeToString(item.Key)), struct{}{})
+	}
 	_, _ = e.memoryStore.DeleteItem(ctx, dbMetaInfo, item, opts)
 
 	return item, nil

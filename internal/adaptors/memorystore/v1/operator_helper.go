@@ -117,23 +117,23 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 		return nil, fmt.Errorf("invalid indexing key relation")
 	}
 
-	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey}, // opts.IndexingKeys[0]
-		[]byte(ltngenginemodels.BytesSliceSep),
-	)
-	strKey := hex.EncodeToString(key)
-
-	var keyValue []byte
-	if err := ltng.cache.Get(ctx, strKey, &keyValue, nil); err != nil {
-		return nil, err
+	for _, indexKey := range opts.IndexingKeys {
+		key := bytes.Join(
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), indexKey},
+			[]byte(ltngenginemodels.BytesSliceSep),
+		)
+		strKey := hex.EncodeToString(key)
+		_ = ltng.cache.Del(ctx, strKey)
 	}
 
+	keyValue := opts.ParentKey
 	indexingKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), keyValue},
 		[]byte(ltngenginemodels.BytesSliceSep),
 	)
-	var indexingList [][]byte
 	indexingStrKey := hex.EncodeToString(indexingKey)
+
+	var indexingList [][]byte
 	if err := ltng.cache.Get(ctx, indexingStrKey, &indexingList, nil); err != nil {
 		return nil, err
 	}
@@ -152,9 +152,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 		}
 		newIndexingList = append(newIndexingList, v)
 	}
-
 	_ = ltng.cache.Set(ctx, indexingStrKey, newIndexingList)
-	_ = ltng.cache.Del(ctx, strKey)
 
 	return nil, nil
 }
