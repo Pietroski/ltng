@@ -553,13 +553,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					// search by index
 					searchOpts = &ltngenginemodels.IndexOpts{
-						HasIdx: true,
-						// ParentKey:    item.Key,
+						HasIdx:       true,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
+						IndexProperties: ltngenginemodels.IndexProperties{
+							IndexSearchPattern: ltngenginemodels.AndComputational,
+						},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, nil, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 				}

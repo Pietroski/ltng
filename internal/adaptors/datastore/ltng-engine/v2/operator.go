@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 
@@ -15,19 +16,26 @@ func (e *LTNGEngine) loadItem(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	strItemKey := hex.EncodeToString(item.Key)
-	lockKey := dbMetaInfo.LockName(strItemKey)
-	e.opMtx.Lock(lockKey, struct{}{})
-	defer e.opMtx.Unlock(lockKey)
+	//strItemKey := hex.EncodeToString(item.Key)
+	//lockKey := dbMetaInfo.LockName(strItemKey)
+	//e.opMtx.Lock(lockKey, struct{}{})
+	//defer e.opMtx.Unlock(lockKey)
+	//
+	//if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
+	//	return nil, fmt.Errorf("item %s is marked as deleted", item.Key)
+	//}
+	//
+	//if i, err := e.memoryStore.LoadItem(
+	//	ctx, dbMetaInfo, item, opts,
+	//); err == nil && i != nil {
+	//	return i, nil
+	//}
 
-	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
-		return nil, fmt.Errorf("item %s is marked as deleted", item.Key)
-	}
-
-	if i, err := e.memoryStore.LoadItem(
-		ctx, dbMetaInfo, item, opts,
-	); err == nil && i != nil {
+	i, err := e.searchMemoryFirst(ctx, dbMetaInfo, item, opts)
+	if err == nil {
 		return i, nil
+	} else if errors.Is(err, itemMarkedAsDeletedErr) {
+		return nil, err
 	}
 
 	if !opts.HasIdx {
@@ -118,7 +126,12 @@ func (e *LTNGEngine) deleteItem(
 	}
 	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
 	if opts.IndexProperties.IndexDeletionBehaviour != ltngenginemodels.IndexOnly {
+		// TODO: after deleting the file, we need to delete it from here.
 		e.markedAsDeletedMapping.Set(dbMetaInfo.LockName(hex.EncodeToString(item.Key)), struct{}{})
+	} else if opts.IndexProperties.IndexDeletionBehaviour == ltngenginemodels.IndexOnly {
+		for _, indexKey := range opts.IndexingKeys {
+			e.markedAsDeletedMapping.Set(dbMetaInfo.IndexInfo().LockName(hex.EncodeToString(indexKey)), struct{}{})
+		}
 	}
 	_, _ = e.memoryStore.DeleteItem(ctx, dbMetaInfo, item, opts)
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -209,6 +210,91 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 }
 
 // #####################################################################################################################
+
+var itemMarkedAsDeletedErr = errors.New("item marked as deleted")
+
+func (e *LTNGEngine) searchMemoryFirst(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.Item, error) {
+	if item != nil {
+		return e.searchMemoryByKeyOrParentKey(ctx, dbMetaInfo, item, opts)
+	} else if opts != nil {
+		if opts.ParentKey != nil {
+			return e.searchMemoryByKeyOrParentKey(ctx, dbMetaInfo, item, opts)
+		}
+
+		if opts.HasIdx && len(opts.IndexingKeys) > 0 {
+			return e.searchMemoryByIndex(ctx, dbMetaInfo, item, opts)
+		}
+	}
+
+	return nil, fmt.Errorf("invalid search filter - item and opts are null")
+}
+
+func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.Item, error) {
+	var strItemKey string
+	if item != nil {
+		strItemKey = hex.EncodeToString(item.Key)
+	} else if opts != nil && opts.ParentKey != nil {
+		strItemKey = hex.EncodeToString(opts.ParentKey)
+	} else {
+		return nil, fmt.Errorf("invalid search filter - item and opts are null")
+	}
+
+	lockKey := dbMetaInfo.LockName(strItemKey)
+	//e.opMtx.Lock(lockKey, struct{}{})
+	//defer e.opMtx.Unlock(lockKey)
+
+	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
+		return nil, fmt.Errorf("item %v|%v is marked as deleted: %w", item, opts, itemMarkedAsDeletedErr)
+	}
+
+	if i, err := e.memoryStore.LoadItem(
+		ctx, dbMetaInfo, item, opts,
+	); err == nil && i != nil {
+		return i, nil
+	}
+
+	return nil, fmt.Errorf("no items in memory")
+}
+
+func (e *LTNGEngine) searchMemoryByIndex(
+	ctx context.Context,
+	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
+	item *ltngenginemodels.Item,
+	opts *ltngenginemodels.IndexOpts,
+) (*ltngenginemodels.Item, error) {
+	for _, indexItem := range opts.IndexingKeys {
+		strItemKey := hex.EncodeToString(indexItem)
+		lockKey := dbMetaInfo.IndexInfo().LockName(strItemKey)
+		// e.opMtx.Lock(lockKey, struct{}{})
+
+		_, ok := e.markedAsDeletedMapping.Get(lockKey)
+		if ok {
+			// e.opMtx.Unlock(lockKey)
+			return nil, fmt.Errorf("item %s is marked as deleted: %w", indexItem, itemMarkedAsDeletedErr)
+		}
+		// e.opMtx.Unlock(lockKey)
+
+		if i, err := e.memoryStore.LoadItem(
+			ctx, dbMetaInfo, &ltngenginemodels.Item{
+				Key: indexItem,
+			}, opts,
+		); err == nil && i != nil {
+			return i, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no items in memory")
+}
 
 // straightSearch finds the value from the index store with the [0] index list item;
 // that found value is the key to the (main) store that holds value that needs to be returned

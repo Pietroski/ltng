@@ -643,10 +643,16 @@ func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
 			_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
 			if err != nil {
 				itemInfoData.RespSignal <- err
+				close(itemInfoData.RespSignal)
 				return
 			}
 
+			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
+			lockKey := itemInfoData.DBMetaInfo.LockName(strItemKey)
+			s.deleteSaga.opSaga.e.markedAsDeletedMapping.Delete(lockKey)
+
 			itemInfoData.RespSignal <- nil
+			close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -743,7 +749,7 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 			indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
 				itemInfoData.Ctx,
 				itemInfoData.DBMetaInfo,
-				&ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
+				itemInfoData.Opts, // &ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
 			)
 			if err != nil {
 				// TODO: log
@@ -970,6 +976,15 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 				itemInfoData.RespSignal <- errors.WithStack(err)
 				close(itemInfoData.RespSignal)
 				return
+			}
+
+			for _, item := range itemInfoData.IndexList {
+				strItemKey := hex.EncodeToString(item.Key)
+				lockKey := itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)
+
+				// s.deleteSaga.opSaga.e.opMtx.Lock(lockKey, struct{}{})
+				s.deleteSaga.opSaga.e.markedAsDeletedMapping.Delete(lockKey)
+				// s.deleteSaga.opSaga.e.opMtx.Unlock(lockKey)
 			}
 
 			itemInfoData.RespSignal <- nil

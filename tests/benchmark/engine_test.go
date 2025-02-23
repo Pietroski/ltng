@@ -349,3 +349,137 @@ func TestCheckFileCount(t *testing.T) {
 	require.NoError(t, err)
 	t.Log(strings.TrimSpace(string(bs)))
 }
+
+func TestEngines(t *testing.T) {
+	users = data.GenerateRandomUsers(t, 50)
+	ets = data.InitEngineTestSuite(t)
+
+	t.Log("testLTNGDBEngineV2")
+	testLTNGDBEngineV2(t)
+
+	t.Log("testBadgerDBEngine")
+	testBadgerDBEngine(t)
+}
+
+func testLTNGDBEngineV2(t *testing.T) {
+	storeInfo := &ltngenginemodels.StoreInfo{
+		Name: "user-store",
+		Path: "user-store",
+	}
+	dbMetaInfo := storeInfo.ManagerStoreMetaInfo()
+	_, err := ets.LTNGDBEngineV2.CreateStore(ets.Ctx, storeInfo)
+	require.NoError(t, err)
+
+	store, err := ets.LTNGDBEngineV2.LoadStore(ets.Ctx, storeInfo)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	{
+		t.Log("CreateItem")
+
+		bd := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, ets.TS(), user)
+
+			item := &ltngenginemodels.Item{
+				Key:   bvs.BsKey,
+				Value: bvs.BsValue,
+			}
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bvs.BsKey,
+				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+			}
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				_, err = ets.LTNGDBEngineV2.CreateItem(ets.Ctx, dbMetaInfo, item, opts)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(bd)
+	}
+
+	{
+		t.Log("ListItems")
+
+		bd := testbench.New()
+		pagination := &ltngenginemodels.Pagination{
+			PageID:           1,
+			PageSize:         10,
+			PaginationCursor: 0,
+		}
+		opts := &ltngenginemodels.IndexOpts{
+			IndexProperties: ltngenginemodels.IndexProperties{
+				ListSearchPattern: ltngenginemodels.Default,
+			},
+		}
+		bd.CalcAvg(bd.CalcElapsed(func() {
+			_, err = ets.LTNGDBEngineV2.ListItems(ets.Ctx, dbMetaInfo, pagination, opts)
+		}))
+		assert.NoError(t, err)
+		t.Log(bd)
+	}
+
+	ets.LTNGDBEngineV2.Close()
+}
+
+func testBadgerDBEngine(t *testing.T) {
+	dbInfo := &models_badgerdb_v4_management.DBInfo{
+		Name:         "user-store",
+		Path:         "user-store",
+		CreatedAt:    time.Now(),
+		LastOpenedAt: time.Now(),
+	}
+
+	dbMemoryInfo := dbInfo.InfoToMemoryInfo(ets.BadgerDBEngine.DB)
+
+	err := ets.BadgerDBEngine.Manager.CreateStore(ets.Ctx, dbInfo)
+	require.NoError(t, err)
+
+	store, err := ets.BadgerDBEngine.Manager.GetDBInfo(ets.Ctx, dbInfo.Name)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	{
+		t.Log("CreateItem")
+
+		bd := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, ets.TS(), user)
+			item := &models_badgerdb_v4_operation.Item{
+				Key:   bvs.BsKey,
+				Value: bvs.BsValue,
+			}
+			opts := &models_badgerdb_v4_operation.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bvs.BsKey,
+				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+			}
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
+					Create(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(bd)
+	}
+
+	{
+		t.Log("ListItems")
+
+		bd := testbench.New()
+		opts := &models_badgerdb_v4_operation.IndexOpts{
+			IndexProperties: models_badgerdb_v4_operation.IndexProperties{
+				ListSearchPattern: models_badgerdb_v4_operation.Default,
+			},
+		}
+		pagination := &models_badgerdb_v4_management.Pagination{
+			PageID:   1,
+			PageSize: 10,
+		}
+		bd.CalcAvg(bd.CalcElapsed(func() {
+			_, err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).List(ets.Ctx, opts, pagination)
+		}))
+		assert.NoError(t, err)
+		t.Log(bd)
+	}
+}
