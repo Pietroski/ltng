@@ -250,9 +250,6 @@ func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
 	}
 
 	lockKey := dbMetaInfo.LockName(strItemKey)
-	//e.opMtx.Lock(lockKey, struct{}{})
-	//defer e.opMtx.Unlock(lockKey)
-
 	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
 		return nil, fmt.Errorf("item %v|%v is marked as deleted: %w", item, opts, itemMarkedAsDeletedErr)
 	}
@@ -269,20 +266,16 @@ func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
 func (e *LTNGEngine) searchMemoryByIndex(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
+	_ *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
 	for _, indexItem := range opts.IndexingKeys {
 		strItemKey := hex.EncodeToString(indexItem)
 		lockKey := dbMetaInfo.IndexInfo().LockName(strItemKey)
-		// e.opMtx.Lock(lockKey, struct{}{})
-
 		_, ok := e.markedAsDeletedMapping.Get(lockKey)
 		if ok {
-			// e.opMtx.Unlock(lockKey)
 			return nil, fmt.Errorf("item %s is marked as deleted: %w", indexItem, itemMarkedAsDeletedErr)
 		}
-		// e.opMtx.Unlock(lockKey)
 
 		if i, err := e.memoryStore.LoadItem(
 			ctx, dbMetaInfo, &ltngenginemodels.Item{

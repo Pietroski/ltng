@@ -981,10 +981,7 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 			for _, item := range itemInfoData.IndexList {
 				strItemKey := hex.EncodeToString(item.Key)
 				lockKey := itemInfoData.DBMetaInfo.IndexInfo().LockName(strItemKey)
-
-				// s.deleteSaga.opSaga.e.opMtx.Lock(lockKey, struct{}{})
 				s.deleteSaga.opSaga.e.markedAsDeletedMapping.Delete(lockKey)
-				// s.deleteSaga.opSaga.e.opMtx.Unlock(lockKey)
 			}
 
 			itemInfoData.RespSignal <- nil
