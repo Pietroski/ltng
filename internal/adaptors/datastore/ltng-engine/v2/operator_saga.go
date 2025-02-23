@@ -15,15 +15,19 @@ import (
 
 func ResponseAccumulator(respSigChan ...chan error) error {
 	var err error
+	op := concurrent.New("responseAccumulator")
 	for _, sigChan := range respSigChan {
-		sigErr := <-sigChan
-		if sigErr != nil {
-			if err == nil {
-				err = sigErr
-			} else {
-				err = fmt.Errorf("%s: %w", sigErr, err)
+		op.OpX(func() (any, error) {
+			sigErr := <-sigChan
+			if sigErr != nil {
+				return nil, sigErr
 			}
-		}
+
+			return nil, nil
+		})
+	}
+	if err = op.WaitAndWrapErr(); err != nil {
+		return fmt.Errorf("responseAccumulator: %w", err)
 	}
 
 	return err

@@ -113,12 +113,12 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	item *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	if opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
-		return nil, fmt.Errorf("invalid indexing key")
+	if opts.ParentKey == nil || opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
+		return nil, fmt.Errorf("invalid indexing key relation")
 	}
 
 	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
+		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey}, // opts.IndexingKeys[0]
 		[]byte(ltngenginemodels.BytesSliceSep),
 	)
 	strKey := hex.EncodeToString(key)
@@ -140,7 +140,14 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 
 	var newIndexingList [][]byte
 	for _, v := range indexingList {
-		if bytes.Equal(v, opts.IndexingKeys[0]) {
+		addToIndexingList := true
+		for _, indexItem := range opts.IndexingKeys {
+			if bytes.Equal(v, indexItem) {
+				addToIndexingList = false
+			}
+		}
+
+		if !addToIndexingList {
 			continue
 		}
 		newIndexingList = append(newIndexingList, v)

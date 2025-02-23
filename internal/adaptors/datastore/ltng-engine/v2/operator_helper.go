@@ -10,8 +10,6 @@ import (
 	"time"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -575,102 +573,6 @@ func (e *LTNGEngine) upsertRelationalItemOnDisk(
 	}
 
 	return e.upsertRelationalData(ctx, dbMetaInfo, fileData, fi)
-}
-
-// #####################################################################################################################
-
-func (e *LTNGEngine) deleteIndexOnly(
-	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	key []byte,
-) error {
-	strItemKey := hex.EncodeToString(key)
-
-	delPaths, err := e.createTmpDeletionPaths(ctx, dbMetaInfo)
-	if err != nil {
-		return err
-	}
-
-	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{Key: key}, true)
-	if err != nil {
-		return err
-	}
-
-	var fileData ltngenginemodels.FileData
-	if err = e.serializer.Deserialize(item.Value, &fileData); err != nil {
-		return err
-	}
-
-	itemList, err := e.loadIndexingList(ctx, dbMetaInfo, &ltngenginemodels.IndexOpts{ParentKey: fileData.Data})
-	if err != nil {
-		return err
-	}
-
-	moveIndexesToTmpFile := func() error {
-		if _, err = execx.MvFileExec(ctx,
-			ltngenginemodels.GetDataFilepath(dbMetaInfo.IndexInfo().Path, strItemKey),
-			ltngenginemodels.GetTmpDelDataFilePath(delPaths.indexTmpDelPath, strItemKey),
-		); err != nil {
-			return err
-		}
-
-		return nil
-	}
-	recreateIndexes := func() error {
-		return e.createItemOnDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{
-			Key:   fileData.Data,
-			Value: key,
-		})
-	}
-
-	updateIndexList := func() error {
-		var newIndexList [][]byte
-		for _, item = range itemList {
-			if bytes.Equal(item.Value, key) {
-				continue
-			}
-
-			newIndexList = append(newIndexList, item.Value)
-		}
-
-		newIndexListBs := bytes.Join(newIndexList, []byte(ltngenginemodels.BytesSep))
-
-		return e.upsertItemOnDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
-			Key:   key,
-			Value: newIndexListBs,
-		})
-	}
-
-	operations := []*lo.Operation{
-		{
-			Action: &lo.Action{
-				Act:         moveIndexesToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         updateIndexList,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: recreateIndexes,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-	}
-	if err = lo.New(operations...).Operate(); err != nil {
-		return err
-	}
-
-	// deleteTmpFiles
-	if _, err = execx.DelDirsWithoutSepBothOSExec(ctx,
-		ltngenginemodels.DBTmpDelDataPath+delPaths.tmpDelPath,
-	); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // #####################################################################################################################
