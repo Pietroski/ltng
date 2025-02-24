@@ -321,7 +321,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 	if err != nil {
 		// TODO: log
 		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
+		//close(itemInfoData.RespSignal)
 		return
 	}
 	itemInfoData.IndexList = indexItemList
@@ -351,7 +351,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
+		//close(itemInfoData.RespSignal)
 		return
 	}
 
@@ -365,7 +365,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
+		//close(itemInfoData.RespSignal)
 		return
 	}
 
@@ -380,12 +380,12 @@ func (s *deleteCascadeSaga) indexTrigger(
 		log.Printf("error on trigger action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
+		//close(itemInfoData.RespSignal)
 		return
 	}
 
 	itemInfoData.RespSignal <- err
-	close(itemInfoData.RespSignal)
+	//close(itemInfoData.RespSignal)
 }
 
 func (s *deleteCascadeSaga) RollbackTrigger(ctx context.Context, itemInfoData *deleteItemInfoData) {
@@ -470,7 +470,7 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
 			); err != nil {
 				// log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
@@ -483,7 +483,7 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
 			s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -500,12 +500,12 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(ctx context.Context) {
 			); err != nil {
 				// log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -538,7 +538,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -561,7 +561,7 @@ func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -577,7 +577,7 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.C
 			); err != nil {
 				// TODO: log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
@@ -591,7 +591,7 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.C
 			s.deleteSaga.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockName(strItemKey))
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -607,12 +607,12 @@ func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(ctx context.Cont
 			); err != nil {
 				// TODO: log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -626,12 +626,12 @@ func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(ctx context.Con
 			if err != nil {
 				log.Println("deleteRelationalItemFromDiskOnThread:", err)
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -643,7 +643,7 @@ func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
 			_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
 			if err != nil {
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
@@ -652,7 +652,7 @@ func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
 			s.deleteSaga.opSaga.e.markedAsDeletedMapping.Delete(lockKey)
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -741,7 +741,7 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 			if err != nil {
 				// TODO: log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 			itemInfoData.TmpDelPaths = temporaryDelPaths
@@ -754,7 +754,7 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 			if err != nil {
 				// TODO: log
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 			itemInfoData.IndexList = indexItemList
@@ -776,7 +776,7 @@ func (s *deleteIdxOnlySaga) indexTrigger(
 	if err != nil {
 		// TODO: log
 		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
+		//close(itemInfoData.RespSignal)
 		return
 	}
 	itemInfoData.IndexList = indexItemList
@@ -861,7 +861,7 @@ func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 				); err != nil {
 					// TODO: log
 					itemInfoData.RespSignal <- err
-					close(itemInfoData.RespSignal)
+					//close(itemInfoData.RespSignal)
 					continue
 				}
 
@@ -869,7 +869,7 @@ func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -892,7 +892,7 @@ func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -928,12 +928,12 @@ func (s *deleteIdxOnlySaga) updateIndexingListItemFromDiskOnThread(ctx context.C
 				})
 			if err != nil {
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -956,12 +956,12 @@ func (s *deleteIdxOnlySaga) rollbackIndexListItemOnDiskOnThread(ctx context.Cont
 				})
 			if err != nil {
 				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }
@@ -974,7 +974,7 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 				ltngenginemodels.DBTmpDelDataPath+itemInfoData.TmpDelPaths.tmpDelPath,
 			); err != nil {
 				itemInfoData.RespSignal <- errors.WithStack(err)
-				close(itemInfoData.RespSignal)
+				//close(itemInfoData.RespSignal)
 				return
 			}
 
@@ -985,7 +985,7 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 			}
 
 			itemInfoData.RespSignal <- nil
-			close(itemInfoData.RespSignal)
+			//close(itemInfoData.RespSignal)
 		},
 	)
 }

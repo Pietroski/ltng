@@ -110,23 +110,25 @@ func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
+	_ *ltngenginemodels.Item,
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
-	if opts.ParentKey == nil || opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
+	if opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
 		return nil, fmt.Errorf("invalid indexing key relation")
 	}
 
-	for _, indexKey := range opts.IndexingKeys {
-		key := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), indexKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
-		)
-		strKey := hex.EncodeToString(key)
-		_ = ltng.cache.Del(ctx, strKey)
+	secondaryKey := bytes.Join(
+		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
+		[]byte(ltngenginemodels.BytesSliceSep),
+	)
+	secondaryStrKey := hex.EncodeToString(secondaryKey)
+
+	var mainKey []byte
+	if err := ltng.cache.Get(ctx, secondaryStrKey, &mainKey, nil); err != nil {
+		return nil, err
 	}
 
-	keyValue := opts.ParentKey
+	keyValue := mainKey
 	indexingKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), keyValue},
 		[]byte(ltngenginemodels.BytesSliceSep),
@@ -151,6 +153,15 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 			continue
 		}
 		newIndexingList = append(newIndexingList, v)
+	}
+
+	for _, indexKey := range opts.IndexingKeys {
+		key := bytes.Join(
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), indexKey},
+			[]byte(ltngenginemodels.BytesSliceSep),
+		)
+		strKey := hex.EncodeToString(key)
+		_ = ltng.cache.Del(ctx, strKey)
 	}
 	_ = ltng.cache.Set(ctx, indexingStrKey, newIndexingList)
 
