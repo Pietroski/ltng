@@ -24,7 +24,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "unit-tests-suite-non-master",
       "when": {
         "branch": {
@@ -59,7 +59,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "integration-tests-suite-non-master",
       "network_mode": "host",
       "privileged": true,
@@ -102,7 +102,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "unit-tests-suite-master",
       "when": {
         "branch": [
@@ -135,7 +135,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "integration-tests-suite-master",
       "network_mode": "host",
       "privileged": true,
@@ -177,7 +177,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "gitlab-push",
       "when": {
         "branch": [
@@ -210,7 +210,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "unit-tests-suite-tagging",
       "when": {
         "branch": [
@@ -243,7 +243,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "integration-tests-suite-tagging",
       "network_mode": "host",
       "privileged": true,
@@ -285,7 +285,7 @@
           "from_secret": "GITLAB_USERNAME"
         }
       },
-      "image": "pietroski/alpine-docker-golang:v0.0.4",
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
       "name": "gitlab-tag",
       "when": {
         "branch": [
