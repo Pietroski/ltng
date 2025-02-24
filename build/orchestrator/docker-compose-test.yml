@@ -10,7 +10,7 @@ services:
       LTNG_SERVER_PORT: "50050"
       LTNG_ENGINE: "LIGHTNING_ENGINE_V2"
       LTNG_UI_ADDR: "7070"
-      GOMAXPROCS: 1024
+      GOMAXPROCS: 2048
     ports:
       - "50050:50050"
       - "7001:7001" # pprof port
