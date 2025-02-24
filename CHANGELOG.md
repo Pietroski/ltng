@@ -1,9 +1,106 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - [gitlab/main, github/main] - chore: repo reorg
+ - chore: repo update
+ - chore: deps version bump
+ - fix: tests
+ - docs: extra output doc
+ - chore: benchmark removal because integration tests already contain benchmark evaluation
+ - chore: removed commented code
+ - feat: delete index only
+ - wip: delete index only
+ - wip: delete index only
+ - refactor: configs
+ - refactor: removed unecessary benchmarks
+ - refactor: unit tests
+ - refactor: http server port
+ - refactor: skiped test comment
+ - fix: unit tests
+ - chore: comments removal
+ - refactor: tests
+ - fix: integration test pass frequency
+ - fix: tests and pipelines
+ - chore: repo, code, scripts reorg
+ - feat: http gateway added to UI and manual curl tests
+ - refactor; proto files and openapi notation
+ - refactor: removed comments from ltng engine v2
+ - docs: updated docs
+ - docs: added reports directory
+ - chore: repo reorg
+ - refactor: pkg names, configs, test results, test namings, docs
+ - Merge pull request #2 from Pietroski/devin/1737477540-add-pprof-profiling
+ - docs: add performance analysis report with profiling data
+ - refactor: move measureNetworkLatency to network_test.go and include analysis.md
+ - test: improve network latency test stability
+ - chore: remove unused context import
+ - fix: handle errors properly in network latency tests
+ - feat: add pprof profiling support
+ - docs: readme.md
+ - refactor: test data cleanup
+ - refactor: set env
+ - fix: integration tests context cancellation
+ - test: fix and created testbench report automation for integration tests and engine benchmarks
+ - docs: added test output for both integration client and engine tests
+ - fix: pipeline test commands
+ - fix: integration concurrent test locally
+ - refactor: remoted legacy integration tests
+ - wip: refactor ltng engine delete index only
+ - refactor: repo deps update and goroutine graceful kill
+ - fix: ltng engine v2 tests
+ - docs: small commands
+ - wip: ltng client tests
+ - wip: ltng client tests
+ - wip ltng engine tests
+ - feat: wip ltng client tests
+ - wip: ltng engine
+ - feat: retrier
+ - fix: unix find command
+ - wip: ltng engine
+ - wip: ltng engine
+ - chore: gitignore
+ - wip: ltng engine
+ - wip: ltng engine
+ - wip: ltng engine
+ - wip: ltng engine
+ - wip: delete item ltng engine
+ - wip: ltng engine
+ - wip: ltng engine
+ - wip: ltng engine - delete
+ - wip: ltng engine
+ - wip: ltng engine
+ - wip: delete operation for ltng engine
+ - wip: ltng engine
+ - wip: delete ops - ltng engine
+ - wip: ltng cache engine
+ - wip: ltng cache engine tests
+ - wip: tests for ltng cache engine
+ - wip: ltng cache engine tests
+ - wip: ltng cache engine
+ - wip: ltng cache engine tests
+ - wip: ltng cache engine tests
+ - wip: ltng cache engine tests
+ - wip: ltng cache engine
+ - wip: ltng cache engine
+ - wip: ltng op engine
+ - wip: ltng operator engine
+ - wip: ltng engine
+ - wip: ltng engine
+ - wip: ltng concurrent engine
+ - refactor: ltng-db massive engine refactor
+ - wip: ltng-db engine operator
+ - wip: ltng db engine operator
+ - wip: ltng db engine operator
+ - wip: ltng-db engine operator
+ - wip: ltng engine
+ - whip: ltng engine manager
+ - wip: ltng-engine
+ - wip: ltng-engine
+ - chore: deps bump
+ - wip: internal engine
  
 # [v1.3.1]
- - [gitlab/main] - chore: docker image version bump
+ - chore: docker image version bump
  
 # [v1.3.0]
  - Merge pull request 'feat/badgerdb-v4' - [#2] from feat/badgerdb-v4 into main
