@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.4.0]
  - [gitlab/main, github/main] - chore: repo reorg
  - chore: repo update
  - chore: deps version bump
