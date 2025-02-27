@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	search "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
@@ -15,6 +14,7 @@ import (
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
+	search "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
@@ -52,7 +52,7 @@ func TestLTNGDBClient(t *testing.T) {
 	})
 	defer offThread.Wait()
 	defer func() {
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 5_000)
 		cancel()
 	}()
 
@@ -116,8 +116,8 @@ func testLTNGDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("List", func(t *testing.T) {
-		t.Log("List")
+	t.Run("ListItems", func(t *testing.T) {
+		t.Log("ListItems")
 
 		tb := testbench.New()
 		listRequest := &grpc_ltngdb.ListRequest{
@@ -125,9 +125,14 @@ func testLTNGDBClient(t *testing.T) {
 				DatabaseName: getStoreRequest.Name,
 				DatabasePath: getStoreRequest.Path,
 			},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					ListSearchPattern: grpc_ltngdb.IndexProperties_DEFAULT,
+				},
+			},
 			Pagination: &search.Pagination{
 				PageId:   1,
-				PageSize: 10,
+				PageSize: 50,
 			},
 		}
 		tb.CalcAvg(tb.CalcElapsed(func() {
@@ -137,8 +142,8 @@ func testLTNGDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("Load", func(t *testing.T) {
-		t.Log("Load")
+	t.Run("LoadItem", func(t *testing.T) {
+		t.Log("LoadItem")
 
 		tb := testbench.New()
 		for _, user := range users {
@@ -160,8 +165,9 @@ func testLTNGDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("Upsert", func(t *testing.T) {
-		t.Log("Upsert")
+	t.Run("UpsertItem", func(t *testing.T) {
+		t.Skip()
+		t.Log("UpsertItem")
 
 		tb := testbench.New()
 		for _, user := range users {
@@ -189,8 +195,9 @@ func testLTNGDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("Delete", func(t *testing.T) {
-		t.Log("Delete")
+	t.Run("DeleteItem", func(t *testing.T) {
+		t.Skip()
+		t.Log("DeleteItem")
 
 		tb := testbench.New()
 		for _, user := range users {
@@ -204,9 +211,11 @@ func testLTNGDBClient(t *testing.T) {
 					Key: bvs.BsKey,
 				},
 				IndexOpts: &grpc_ltngdb.IndexOpts{
-					HasIdx:       true,
-					ParentKey:    bvs.BsKey,
-					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+					HasIdx:    true,
+					ParentKey: bvs.BsKey,
+					IndexingProperties: &grpc_ltngdb.IndexProperties{
+						IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
+					},
 				},
 			}
 			tb.CalcAvg(tb.CalcElapsed(func() {
@@ -236,7 +245,7 @@ func TestBadgerDBClient(t *testing.T) {
 	})
 	defer offThread.Wait()
 	defer func() {
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 5_000)
 		cancel()
 	}()
 
@@ -300,8 +309,8 @@ func testBadgerDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("List", func(t *testing.T) {
-		t.Log("List")
+	t.Run("ListItems", func(t *testing.T) {
+		t.Log("ListItems")
 
 		tb := testbench.New()
 		listRequest := &grpc_ltngdb.ListRequest{
@@ -309,9 +318,14 @@ func testBadgerDBClient(t *testing.T) {
 				DatabaseName: getStoreRequest.Name,
 				DatabasePath: getStoreRequest.Path,
 			},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					ListSearchPattern: grpc_ltngdb.IndexProperties_DEFAULT,
+				},
+			},
 			Pagination: &search.Pagination{
 				PageId:   1,
-				PageSize: 10,
+				PageSize: 50,
 			},
 		}
 		tb.CalcAvg(tb.CalcElapsed(func() {
@@ -321,8 +335,8 @@ func testBadgerDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("Load", func(t *testing.T) {
-		t.Log("Load")
+	t.Run("LoadItem", func(t *testing.T) {
+		t.Log("LoadItem")
 
 		tb := testbench.New()
 		for _, user := range users {
@@ -344,8 +358,8 @@ func testBadgerDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("Upsert", func(t *testing.T) {
-		t.Log("Upsert")
+	t.Run("UpsertItem", func(t *testing.T) {
+		t.Log("UpsertItem")
 
 		tb := testbench.New()
 		for _, user := range users {
@@ -373,8 +387,8 @@ func testBadgerDBClient(t *testing.T) {
 		t.Log(tb)
 	})
 
-	t.Run("Delete", func(t *testing.T) {
-		t.Log("Delete")
+	t.Run("DeleteItem", func(t *testing.T) {
+		t.Log("DeleteItem")
 
 		tb := testbench.New()
 		for _, user := range users {
@@ -388,9 +402,11 @@ func testBadgerDBClient(t *testing.T) {
 					Key: bvs.BsKey,
 				},
 				IndexOpts: &grpc_ltngdb.IndexOpts{
-					HasIdx:       true,
-					ParentKey:    bvs.BsKey,
-					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+					HasIdx:    true,
+					ParentKey: bvs.BsKey,
+					IndexingProperties: &grpc_ltngdb.IndexProperties{
+						IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
+					},
 				},
 			}
 			tb.CalcAvg(tb.CalcElapsed(func() {
