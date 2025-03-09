@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"log"
 	"os"
 
@@ -208,8 +209,15 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			err := os.Remove(filePath)
-			v.RespSignal <- err
+			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.Path, strItemKey)
+
+			if _, err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
+				v.RespSignal <- err
+				close(v.RespSignal)
+				return
+			}
+
+			v.RespSignal <- nil
 			close(v.RespSignal)
 		},
 	)
@@ -368,8 +376,15 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
-			err := os.Remove(filePath)
-			v.RespSignal <- err
+			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+
+			if _, err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
+				v.RespSignal <- err
+				close(v.RespSignal)
+				return
+			}
+
+			v.RespSignal <- nil
 			close(v.RespSignal)
 		},
 	)
@@ -387,3 +402,6 @@ func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 		},
 	)
 }
+
+// TODO: add a fn to revert upsertRelationalItemOnDiskOnThread? Probably no!
+// TODO: add clean up method
