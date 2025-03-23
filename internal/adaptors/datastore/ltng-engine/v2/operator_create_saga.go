@@ -77,7 +77,7 @@ func (s *createSaga) noIndexTrigger(
 	s.opSaga.crudChannels.CreateChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger create action itemInfoData: %+v: %v\n", itemInfoData, err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -88,7 +88,7 @@ func (s *createSaga) noIndexTrigger(
 	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
 	err = <-createRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger create action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -118,7 +118,7 @@ func (s *createSaga) indexTrigger(
 		createIndexItemOnDiskRespSignal,
 		createIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger create indexed action itemInfoData: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -130,7 +130,7 @@ func (s *createSaga) indexTrigger(
 	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
 	err := <-createRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger create indexed action itemInfoData relational: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)

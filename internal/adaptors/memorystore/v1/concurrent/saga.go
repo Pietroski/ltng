@@ -120,7 +120,7 @@ func (s *createSaga) noIndexTrigger(
 
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger action itemInfoData: %+v: %v\n", itemInfoData, err)
 	}
 	itemInfoData.RespSignal <- err
 	close(itemInfoData.RespSignal)
@@ -145,7 +145,7 @@ func (s *createSaga) indexTrigger(
 		createIndexItemOnDiskRespSignal,
 		createIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger action itemInfoData: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)

@@ -63,6 +63,9 @@ func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 		us.upsertRelationalItemOnDiskOnThread(ctx)
 	})
 	us.opSaga.offThread.Op(func() {
+		us.cleanUpUpsert(ctx)
+	})
+	us.opSaga.offThread.Op(func() {
 		us.deleteItemOnDiskOnThread(ctx)
 	})
 	us.opSaga.offThread.Op(func() {
@@ -101,7 +104,7 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel <- itemInfoDataForUpsertItemOnDisk
 	err := <-upsertItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger upsert action itemInfoData: %+v: %v\n", itemInfoData, err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -112,7 +115,7 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel <- itemInfoDataForUpsertRelationalItemOnDisk
 	err = <-upsertRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger upsert action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -124,7 +127,7 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert <- itemInfoDataForCleanUpUpsertItemOnDisk
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData cleanup: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger upsert action itemInfoData cleanup: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -154,7 +157,7 @@ func (s *upsertSaga) indexTrigger(
 		upsertIndexItemOnDiskRespSignal,
 		upsertIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger upsert indexed action itemInfoData: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -166,7 +169,7 @@ func (s *upsertSaga) indexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel <- itemInfoDataForUpsertRelationalItemOnDisk
 	err := <-upsertRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger upsert indexed action itemInfoData relational: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -178,7 +181,7 @@ func (s *upsertSaga) indexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert <- itemInfoDataForCleanUpUpsertItemOnDisk
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData cleanup: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger upsert indexed action itemInfoData cleanup: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -289,7 +292,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 					v.Opts.IndexingKeys)
 
 				for _, indexKey := range keysToSave {
-					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
+					if err := s.opSaga.e.createItemOnDisk(v.Ctx,
 						v.DBMetaInfo.IndexInfo(),
 						&ltngenginemodels.Item{
 							Key:   indexKey,
@@ -308,19 +311,13 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 					ltngenginemodels.IndexListToBytesList(indexingList))
 				v.IndexKeysToDelete = keysToDelete
 
-				var errAcc error
 				for _, indexKey := range keysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
 					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 					tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 
 					if _, err := execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
-						if errAcc == nil {
-							errAcc = err
-						} else {
-							err = fmt.Errorf("%s: %w", errAcc, err)
-							errAcc = fmt.Errorf("error deleting item on database: %w", err)
-						}
+						return nil, err
 					}
 				}
 
@@ -461,7 +458,9 @@ func (s *upsertSaga) cleanUpUpsert(
 				strItemKey := hex.EncodeToString(v.Item.Key)
 				tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.Path, strItemKey)
 				_ = os.Remove(tmpFilePath)
-				if v.Opts.HasIdx {
+				if !v.Opts.HasIdx {
+					v.RespSignal <- nil
+					close(v.RespSignal)
 					return
 				}
 			}
@@ -479,8 +478,9 @@ func (s *upsertSaga) cleanUpUpsert(
 				tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
 				_ = os.Remove(tmpFilePath)
 			}
+
+			v.RespSignal <- nil
+			close(v.RespSignal)
 		},
 	)
 }
-
-// TODO: add a fn to revert upsertRelationalItemOnDiskOnThread? Probably no!

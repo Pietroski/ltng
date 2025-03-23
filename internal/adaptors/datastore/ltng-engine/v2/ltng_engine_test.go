@@ -2,6 +2,8 @@ package v2
 
 import (
 	"context"
+	"github.com/google/uuid"
+	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 	"math"
 	"os/exec"
 	"strings"
@@ -9,8 +11,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
@@ -702,10 +702,112 @@ func TestLTNGEngineFlow(t *testing.T) {
 				createOpts = &ltngenginemodels.IndexOpts{
 					HasIdx:       true,
 					ParentKey:    item.Key,
-					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs},
+					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs, bsValues.extraUpsertIndex},
 				}
 				_, err = ts.ltngEngine.UpsertItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
+
+				{
+					// search by key
+					searchOpts := &ltngenginemodels.IndexOpts{}
+					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
+
+					var u user
+					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					require.NoError(t, err)
+					t.Log(u)
+
+					// search by key - parent key
+					searchOpts = &ltngenginemodels.IndexOpts{
+						HasIdx:    true,
+						ParentKey: item.Key,
+					}
+					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
+
+					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					require.NoError(t, err)
+					t.Log(u)
+
+					// search by index
+					searchOpts = &ltngenginemodels.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    item.Key,
+						IndexingKeys: [][]byte{bsValues.bsKey},
+					}
+					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
+
+					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					require.NoError(t, err)
+					t.Log(u)
+
+					// search by index
+					searchOpts = &ltngenginemodels.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    item.Key,
+						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
+					}
+					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
+
+					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					require.NoError(t, err)
+					t.Log(u)
+
+					// search by index
+					searchOpts = &ltngenginemodels.IndexOpts{
+						HasIdx:       true,
+						ParentKey:    item.Key,
+						IndexingKeys: [][]byte{bsValues.extraUpsertIndex},
+					}
+					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					require.NoError(t, err)
+					require.NotNil(t, loadedItem)
+
+					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					require.NoError(t, err)
+					t.Log(u)
+				}
+
+				{
+					// list items - default search
+					items, err := ts.ltngEngine.ListItems(
+						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+						&ltngenginemodels.IndexOpts{
+							IndexProperties: ltngenginemodels.IndexProperties{
+								ListSearchPattern: ltngenginemodels.Default,
+							},
+						},
+					)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
+
+					for _, item = range items.Items {
+						t.Log(string(item.Key), string(item.Value))
+					}
+
+					// list items - search for all
+					items, err = ts.ltngEngine.ListItems(
+						ts.ctx, databaseMetaInfo, ltngenginemodels.PageDefault(1),
+						&ltngenginemodels.IndexOpts{
+							IndexProperties: ltngenginemodels.IndexProperties{
+								ListSearchPattern: ltngenginemodels.All,
+							},
+						},
+					)
+					require.NoError(t, err)
+					require.Len(t, items.Items, 1)
+
+					for _, item = range items.Items {
+						t.Log(string(item.Key), string(item.Value))
+					}
+				}
 
 				{
 					deleteOpts := &ltngenginemodels.IndexOpts{
@@ -1498,6 +1600,7 @@ func assertLOFromHistory(t *testing.T, history []*ltngenginemodels.StoreInfo) {
 
 type (
 	user struct {
+		UUID      string
 		Username  string
 		Password  string
 		Email     string
@@ -1517,8 +1620,8 @@ type (
 )
 
 type bytesValues struct {
-	bsKey, bsValue, secondaryIndexBs []byte
-	item                             *ltngenginemodels.Item
+	bsKey, bsValue, secondaryIndexBs, extraUpsertIndex []byte
+	item                                               *ltngenginemodels.Item
 }
 
 func initTestSuite(t *testing.T) *testSuite {
@@ -1559,10 +1662,16 @@ func getValues(t *testing.T, ts *testSuite, userData *user) *bytesValues {
 	require.NotNil(t, secondaryIndexBs)
 	t.Log(string(secondaryIndexBs))
 
+	extraUpsertIndexBs, err := ts.ltngEngine.serializer.Serialize(userData.UUID)
+	require.NoError(t, err)
+	require.NotNil(t, extraUpsertIndexBs)
+	t.Log(string(extraUpsertIndexBs))
+
 	return &bytesValues{
 		bsKey:            bsKey,
 		bsValue:          bsValue,
 		secondaryIndexBs: secondaryIndexBs,
+		extraUpsertIndex: extraUpsertIndexBs,
 		item: &ltngenginemodels.Item{
 			Key:   bsKey,
 			Value: bsValue,
@@ -1598,8 +1707,12 @@ func createTestStore(t *testing.T, ctx context.Context, ts *testSuite) *ltngengi
 }
 
 func generateTestUser(t *testing.T) *user {
+	newUUID, err := uuid.NewUUID()
+	require.NoError(t, err)
+
 	timeNow := time.Now().UTC().Unix()
 	userData := &user{
+		UUID:      newUUID.String(),
 		Username:  go_random.RandomStringWithPrefixWithSep(12, "username", "-"),
 		Password:  go_random.RandomStringWithPrefixWithSep(12, "password", "-"),
 		Email:     go_random.RandomEmail(),

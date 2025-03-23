@@ -166,7 +166,7 @@ func testLTNGDBClient(t *testing.T) {
 	})
 
 	t.Run("UpsertItem", func(t *testing.T) {
-		t.Skip()
+		// t.Skip()
 		t.Log("UpsertItem")
 
 		tb := testbench.New()
@@ -184,7 +184,7 @@ func testLTNGDBClient(t *testing.T) {
 				IndexOpts: &grpc_ltngdb.IndexOpts{
 					HasIdx:       true,
 					ParentKey:    bvs.BsKey,
-					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
 				},
 			}
 			tb.CalcAvg(tb.CalcElapsed(func() {
@@ -196,7 +196,7 @@ func testLTNGDBClient(t *testing.T) {
 	})
 
 	t.Run("DeleteItem", func(t *testing.T) {
-		t.Skip()
+		// t.Skip()
 		t.Log("DeleteItem")
 
 		tb := testbench.New()
@@ -422,12 +422,12 @@ func TestClientsWithinDocker(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 150)
 	cts = data.InitClientTestSuite(t)
 
-	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
-		testLTNGDBClientWithinDocker(t)
-	})
-
 	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
 		testBadgerDBClientWithinDocker(t)
+	})
+
+	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testLTNGDBClientWithinDocker(t)
 	})
 }
 
@@ -551,7 +551,7 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 				IndexOpts: &grpc_ltngdb.IndexOpts{
 					HasIdx:       true,
 					ParentKey:    bvs.BsKey,
-					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
 				},
 			}
 			tb.CalcAvg(tb.CalcElapsed(func() {
