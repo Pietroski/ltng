@@ -272,7 +272,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 		ActionItemChannel <- itemInfoDataActionItemChannel
 	err := <-deleteItemFromDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger delete action itemInfoData: %+v: %v\n", itemInfoData, err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -285,7 +285,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 		ActionRelationalItemChannel <- itemInfoDataForActionRelationalItemChannel
 	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger delete action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -299,7 +299,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 		ActionDelTmpFiles <- itemInfoDataForActionDelTmpFiles
 	err = <-deleteTemporaryRecordsFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger delete action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -348,7 +348,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		deleteIndexItemFromDiskOnThreadRespSignal,
 		deleteIndexingListItemFromDiskOnThreadRespSignal,
 	); err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger delete indexed action itemInfoData: %+v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -362,7 +362,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		ActionRelationalItemChannel <- itemInfoDataForActionRelationalItemChannel
 	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger delete indexed action itemInfoData relational: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -377,7 +377,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		ActionDelTmpFiles <- itemInfoDataForActionDelTmpFiles
 	err = <-deleteTemporaryRecordsFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger delete indexed action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -797,7 +797,7 @@ func (s *deleteIdxOnlySaga) indexTrigger(
 		deleteIndexItemFromDiskOnThreadRespSignal,
 		updateIndexingListItemFromDiskOnThreadRespSignal,
 	); err != nil {
-		log.Printf("error on trigger action itemInfoData: %v: %v\n", itemInfoData, err)
+		log.Printf("error on trigger action itemInfoData: %+v: %v\n", itemInfoData, err)
 		s.indexRollback(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		return

@@ -139,6 +139,8 @@ func (opChan *OpChannels) Close() {
 	close(opChan.RollbackIndexListItemChannel)
 	close(opChan.ActionRelationalItemChannel)
 	close(opChan.RollbackRelationalItemChannel)
+
+	close(opChan.CleanUpUpsert)
 }
 
 type OpNatureType string
@@ -173,6 +175,8 @@ func MakeOpChannels() *OpChannels {
 		RollbackIndexListItemChannel:  make(chan *ItemInfoData, ChannelLimit),
 		ActionRelationalItemChannel:   make(chan *ItemInfoData, ChannelLimit),
 		RollbackRelationalItemChannel: make(chan *ItemInfoData, ChannelLimit),
+
+		CleanUpUpsert: make(chan *ItemInfoData, ChannelLimit),
 	}
 }
 
@@ -206,11 +210,14 @@ func (i *ItemInfoData) WithContext(ctx context.Context) *ItemInfoData {
 
 func (i *ItemInfoData) WithRespChan(sigChan chan error) *ItemInfoData {
 	return &ItemInfoData{
-		Ctx:        i.Ctx,
-		DBMetaInfo: i.DBMetaInfo,
-		Item:       i.Item,
-		Opts:       i.Opts,
-		RespSignal: sigChan,
+		Ctx:               i.Ctx,
+		OpNatureType:      i.OpNatureType,
+		OpType:            i.OpType,
+		DBMetaInfo:        i.DBMetaInfo,
+		Item:              i.Item,
+		Opts:              i.Opts,
+		RespSignal:        sigChan,
+		IndexKeysToDelete: i.IndexKeysToDelete,
 	}
 }
 

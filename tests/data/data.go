@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/google/uuid"
 	"math"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 
 type (
 	User struct {
+		UUID      string
 		Username  string
 		Password  string
 		Email     string
@@ -26,13 +28,17 @@ type (
 )
 
 type BytesValues struct {
-	BsKey, BsValue, SecondaryIndexBs []byte
-	Item                             *ltngenginemodels.Item
+	BsKey, BsValue, SecondaryIndexBs, ExtraUpsertIndex []byte
+	Item                                               *ltngenginemodels.Item
 }
 
 func GenerateRandomUser[T TestBench](tb T) *User {
+	newUUID, err := uuid.NewUUID()
+	require.NoError(tb, err)
+
 	timeNow := time.Now().UTC().Unix()
 	user := &User{
+		UUID:      newUUID.String(),
 		Username:  go_random.RandomStringWithPrefixWithSep(12, "username", "-"),
 		Password:  go_random.RandomStringWithPrefixWithSep(12, "password", "-"),
 		Email:     go_random.RandomEmail(),
@@ -71,10 +77,16 @@ func GetUserBytesValues[T TestBench](tb T, ts *TestSuite, userData *User) *Bytes
 	require.NotNil(tb, secondaryIndexBs)
 	//tb.Log(string(secondaryIndexBs))
 
+	extraUpsertIndexBs, err := ts.Serializer.Serialize(userData.UUID)
+	require.NoError(tb, err)
+	require.NotNil(tb, extraUpsertIndexBs)
+	//tb.Log(string(extraUpsertIndexBs))
+
 	return &BytesValues{
 		BsKey:            bsKey,
 		BsValue:          bsValue,
 		SecondaryIndexBs: secondaryIndexBs,
+		ExtraUpsertIndex: extraUpsertIndexBs,
 		Item: &ltngenginemodels.Item{
 			Key:   bsKey,
 			Value: bsValue,

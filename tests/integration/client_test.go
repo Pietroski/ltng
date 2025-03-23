@@ -14,6 +14,7 @@ import (
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
+	search "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
@@ -51,7 +52,7 @@ func TestLTNGDBClient(t *testing.T) {
 	})
 	defer offThread.Wait()
 	defer func() {
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 5_000)
 		cancel()
 	}()
 
@@ -114,6 +115,116 @@ func testLTNGDBClient(t *testing.T) {
 		}
 		t.Log(tb)
 	})
+
+	t.Run("ListItems", func(t *testing.T) {
+		t.Log("ListItems")
+
+		tb := testbench.New()
+		listRequest := &grpc_ltngdb.ListRequest{
+			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+				DatabaseName: getStoreRequest.Name,
+				DatabasePath: getStoreRequest.Path,
+			},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					ListSearchPattern: grpc_ltngdb.IndexProperties_DEFAULT,
+				},
+			},
+			Pagination: &search.Pagination{
+				PageId:   1,
+				PageSize: 50,
+			},
+		}
+		tb.CalcAvg(tb.CalcElapsed(func() {
+			_, err = cts.LTNGDBClient.List(cts.Ctx, listRequest)
+		}))
+		assert.NoError(t, err)
+		t.Log(tb)
+	})
+
+	t.Run("LoadItem", func(t *testing.T) {
+		t.Log("LoadItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			loadRequest := &grpc_ltngdb.LoadRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Load(cts.Ctx, loadRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("UpsertItem", func(t *testing.T) {
+		// t.Skip()
+		t.Log("UpsertItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			upsertRequest := &grpc_ltngdb.UpsertRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Upsert(cts.Ctx, upsertRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("DeleteItem", func(t *testing.T) {
+		// t.Skip()
+		t.Log("DeleteItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			deleteRequest := &grpc_ltngdb.DeleteRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.BsKey,
+					IndexingProperties: &grpc_ltngdb.IndexProperties{
+						IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
+					},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Delete(cts.Ctx, deleteRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
 }
 
 func TestBadgerDBClient(t *testing.T) {
@@ -134,7 +245,7 @@ func TestBadgerDBClient(t *testing.T) {
 	})
 	defer offThread.Wait()
 	defer func() {
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 5_000)
 		cancel()
 	}()
 
@@ -197,18 +308,126 @@ func testBadgerDBClient(t *testing.T) {
 		}
 		t.Log(tb)
 	})
+
+	t.Run("ListItems", func(t *testing.T) {
+		t.Log("ListItems")
+
+		tb := testbench.New()
+		listRequest := &grpc_ltngdb.ListRequest{
+			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+				DatabaseName: getStoreRequest.Name,
+				DatabasePath: getStoreRequest.Path,
+			},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					ListSearchPattern: grpc_ltngdb.IndexProperties_DEFAULT,
+				},
+			},
+			Pagination: &search.Pagination{
+				PageId:   1,
+				PageSize: 50,
+			},
+		}
+		tb.CalcAvg(tb.CalcElapsed(func() {
+			_, err = cts.BadgerDBClient.List(cts.Ctx, listRequest)
+		}))
+		assert.NoError(t, err)
+		t.Log(tb)
+	})
+
+	t.Run("LoadItem", func(t *testing.T) {
+		t.Log("LoadItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			loadRequest := &grpc_ltngdb.LoadRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Load(cts.Ctx, loadRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("UpsertItem", func(t *testing.T) {
+		t.Log("UpsertItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			upsertRequest := &grpc_ltngdb.UpsertRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Upsert(cts.Ctx, upsertRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("DeleteItem", func(t *testing.T) {
+		t.Log("DeleteItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			deleteRequest := &grpc_ltngdb.DeleteRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.BsKey,
+					IndexingProperties: &grpc_ltngdb.IndexProperties{
+						IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
+					},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Delete(cts.Ctx, deleteRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
 }
 
 func TestClientsWithinDocker(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 150)
 	cts = data.InitClientTestSuite(t)
 
-	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
-		testLTNGDBClientWithinDocker(t)
-	})
-
 	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
 		testBadgerDBClientWithinDocker(t)
+	})
+
+	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testLTNGDBClientWithinDocker(t)
 	})
 }
 
@@ -264,6 +483,114 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 		}
 		t.Log(tb)
 	})
+
+	t.Run("ListItems", func(t *testing.T) {
+		t.Log("ListItems")
+
+		tb := testbench.New()
+		listRequest := &grpc_ltngdb.ListRequest{
+			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+				DatabaseName: getStoreRequest.Name,
+				DatabasePath: getStoreRequest.Path,
+			},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					ListSearchPattern: grpc_ltngdb.IndexProperties_DEFAULT,
+				},
+			},
+			Pagination: &search.Pagination{
+				PageId:   1,
+				PageSize: 50,
+			},
+		}
+		tb.CalcAvg(tb.CalcElapsed(func() {
+			_, err = cts.LTNGDBClient.List(cts.Ctx, listRequest)
+		}))
+		assert.NoError(t, err)
+		t.Log(tb)
+	})
+
+	t.Run("LoadItem", func(t *testing.T) {
+		t.Log("LoadItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			loadRequest := &grpc_ltngdb.LoadRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Load(cts.Ctx, loadRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("UpsertItem", func(t *testing.T) {
+		t.Log("UpsertItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			upsertRequest := &grpc_ltngdb.UpsertRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Upsert(cts.Ctx, upsertRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("DeleteItem", func(t *testing.T) {
+		t.Log("DeleteItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			deleteRequest := &grpc_ltngdb.DeleteRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.BsKey,
+					IndexingProperties: &grpc_ltngdb.IndexProperties{
+						IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
+					},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.LTNGDBClient.Delete(cts.Ctx, deleteRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
 }
 
 func testBadgerDBClientWithinDocker(t *testing.T) {
@@ -313,6 +640,114 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 			}
 			tb.CalcAvg(tb.CalcElapsed(func() {
 				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("ListItems", func(t *testing.T) {
+		t.Log("ListItems")
+
+		tb := testbench.New()
+		listRequest := &grpc_ltngdb.ListRequest{
+			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+				DatabaseName: getStoreRequest.Name,
+				DatabasePath: getStoreRequest.Path,
+			},
+			IndexOpts: &grpc_ltngdb.IndexOpts{
+				IndexingProperties: &grpc_ltngdb.IndexProperties{
+					ListSearchPattern: grpc_ltngdb.IndexProperties_DEFAULT,
+				},
+			},
+			Pagination: &search.Pagination{
+				PageId:   1,
+				PageSize: 50,
+			},
+		}
+		tb.CalcAvg(tb.CalcElapsed(func() {
+			_, err = cts.BadgerDBClient.List(cts.Ctx, listRequest)
+		}))
+		assert.NoError(t, err)
+		t.Log(tb)
+	})
+
+	t.Run("LoadItem", func(t *testing.T) {
+		t.Log("LoadItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			loadRequest := &grpc_ltngdb.LoadRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Load(cts.Ctx, loadRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("UpsertItem", func(t *testing.T) {
+		t.Log("UpsertItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			upsertRequest := &grpc_ltngdb.UpsertRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key:   bvs.BsKey,
+					Value: bvs.BsValue,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:       true,
+					ParentKey:    bvs.BsKey,
+					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Upsert(cts.Ctx, upsertRequest)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(tb)
+	})
+
+	t.Run("DeleteItem", func(t *testing.T) {
+		t.Log("DeleteItem")
+
+		tb := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, cts.TS(), user)
+			deleteRequest := &grpc_ltngdb.DeleteRequest{
+				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
+					DatabaseName: getStoreRequest.Name,
+					DatabasePath: getStoreRequest.Path,
+				},
+				Item: &grpc_ltngdb.Item{
+					Key: bvs.BsKey,
+				},
+				IndexOpts: &grpc_ltngdb.IndexOpts{
+					HasIdx:    true,
+					ParentKey: bvs.BsKey,
+					IndexingProperties: &grpc_ltngdb.IndexProperties{
+						IndexDeletionBehaviour: grpc_ltngdb.IndexProperties_CASCADE,
+					},
+				},
+			}
+			tb.CalcAvg(tb.CalcElapsed(func() {
+				_, err = cts.BadgerDBClient.Delete(cts.Ctx, deleteRequest)
 			}))
 			assert.NoError(t, err)
 		}

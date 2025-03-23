@@ -25,7 +25,7 @@ var (
 )
 
 func TestEngines(t *testing.T) {
-	users = data.GenerateRandomUsers(t, 50)
+	users = data.GenerateRandomUsers(t, 100)
 	ets = data.InitEngineTestSuite(t)
 
 	t.Log("testLTNGDBEngineV2")
@@ -77,9 +77,8 @@ func testLTNGDBEngineV2(t *testing.T) {
 
 		bd := testbench.New()
 		pagination := &ltngenginemodels.Pagination{
-			PageID:           1,
-			PageSize:         10,
-			PaginationCursor: 0,
+			PageID:   1,
+			PageSize: 50,
 		}
 		opts := &ltngenginemodels.IndexOpts{
 			IndexProperties: ltngenginemodels.IndexProperties{
@@ -90,6 +89,56 @@ func testLTNGDBEngineV2(t *testing.T) {
 			_, err = ets.LTNGDBEngineV2.ListItems(ets.Ctx, dbMetaInfo, pagination, opts)
 		}))
 		assert.NoError(t, err)
+		t.Log(bd)
+	}
+
+	{
+		t.Log("UpsertItem")
+
+		bd := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, ets.TS(), user)
+
+			item := &ltngenginemodels.Item{
+				Key:   bvs.BsKey,
+				Value: bvs.BsValue,
+			}
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bvs.BsKey,
+				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
+			}
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				_, err = ets.LTNGDBEngineV2.UpsertItem(ets.Ctx, dbMetaInfo, item, opts)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(bd)
+	}
+
+	{
+		t.Log("DeleteItem")
+
+		bd := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, ets.TS(), user)
+
+			item := &ltngenginemodels.Item{
+				Key:   bvs.BsKey,
+				Value: bvs.BsValue,
+			}
+			opts := &ltngenginemodels.IndexOpts{
+				HasIdx:    true,
+				ParentKey: bvs.BsKey,
+				IndexProperties: ltngenginemodels.IndexProperties{
+					IndexDeletionBehaviour: ltngenginemodels.Cascade,
+				},
+			}
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				_, err = ets.LTNGDBEngineV2.DeleteItem(ets.Ctx, dbMetaInfo, item, opts)
+			}))
+			assert.NoError(t, err)
+		}
 		t.Log(bd)
 	}
 
@@ -156,6 +205,57 @@ func testBadgerDBEngine(t *testing.T) {
 		assert.NoError(t, err)
 		t.Log(bd)
 	}
+
+	{
+		t.Log("UpsertItem")
+
+		bd := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, ets.TS(), user)
+			item := &models_badgerdb_v4_operation.Item{
+				Key:   bvs.BsKey,
+				Value: bvs.BsValue,
+			}
+			opts := &models_badgerdb_v4_operation.IndexOpts{
+				HasIdx:       true,
+				ParentKey:    bvs.BsKey,
+				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
+			}
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
+					Upsert(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(bd)
+	}
+
+	{
+		t.Log("DeleteItem")
+
+		bd := testbench.New()
+		for _, user := range users {
+			bvs := data.GetUserBytesValues(t, ets.TS(), user)
+
+			item := &models_badgerdb_v4_operation.Item{
+				Key:   bvs.BsKey,
+				Value: bvs.BsValue,
+			}
+			opts := &models_badgerdb_v4_operation.IndexOpts{
+				HasIdx:    true,
+				ParentKey: bvs.BsKey,
+				IndexProperties: models_badgerdb_v4_operation.IndexProperties{
+					IndexDeletionBehaviour: models_badgerdb_v4_operation.Cascade,
+				},
+			}
+			bd.CalcAvg(bd.CalcElapsed(func() {
+				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
+					Upsert(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+			}))
+			assert.NoError(t, err)
+		}
+		t.Log(bd)
+	}
 }
 
 // TestReadFromFQ
@@ -188,7 +288,7 @@ func TestReadFromFQ(t *testing.T) {
 func TestCheckFileCount(t *testing.T) {
 	bs, err := execx.Executor(exec.Command(
 		"sh", "-c",
-		"find .ltngdb/v1/stores/user-store -maxdepth 1 -type f | wc -l",
+		"find .ltngdb/v2/stores/user-store -maxdepth 1 -type f | wc -l",
 	))
 	require.NoError(t, err)
 	t.Log(strings.TrimSpace(string(bs)))
