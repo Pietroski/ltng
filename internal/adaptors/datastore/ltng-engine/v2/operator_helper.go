@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"io"
 	"os"
 	"time"
@@ -616,22 +617,28 @@ func (e *LTNGEngine) upsertItemOnDisk(
 	ctx context.Context,
 	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
 	item *ltngenginemodels.Item,
-) error {
+) (err error) {
 	strItemKey := hex.EncodeToString(item.Key)
 	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
 	tmpFilePath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
 
+	if _, err = execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
+		return err
+	}
+
+	//defer func() {
+	//	if err != nil {
+	//		_, err = execx.MvFileExec(ctx, tmpFilePath, filePath)
+	//	}
+	//}()
+
 	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
-	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, tmpFilePath)
+	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)
 	if err != nil {
 		return fmt.Errorf("error opening/creating a temporary truncated file at %s: %v", tmpFilePath, err)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
-		return err
-	}
-
-	if err = os.Rename(tmpFilePath, filePath); err != nil {
 		return err
 	}
 
