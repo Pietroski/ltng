@@ -101,6 +101,8 @@ type (
 		Item         *Item
 		Opts         *IndexOpts
 		RespSignal   chan error
+
+		IndexKeysToDelete [][]byte
 	}
 
 	OpChannels struct {
@@ -114,6 +116,8 @@ type (
 		RollbackIndexListItemChannel  chan *ItemInfoData
 		ActionRelationalItemChannel   chan *ItemInfoData
 		RollbackRelationalItemChannel chan *ItemInfoData
+
+		CleanUpUpsert chan *ItemInfoData
 	}
 
 	CrudChannels struct {
