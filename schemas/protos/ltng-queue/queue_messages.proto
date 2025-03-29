@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package ltngqueue;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngqueue;grpc_ltngqueue";
+
+import "google/protobuf/timestamp.proto";
+// import "common/search/pagination.proto";
+
+enum QueueFanOutType {
+  QUEUE_FAN_OUT_TYPE_ROUND_ROBIN = 0;
+  QUEUE_FAN_OUT_TYPE_PROPAGATE = 1;
+}
+
+message Queue {
+  string name = 1;
+  string path = 2;
+
+  QueueFanOutType queue_fan_out_type = 3;
+
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp last_started_at = 5;
+}
+
+message EventMetadata {
+  bytes metadata = 1;
+  uint64 retry_count = 2;
+
+  google.protobuf.Timestamp sent_at = 4;
+  google.protobuf.Timestamp received_at = 5;
+  repeated google.protobuf.Timestamp received_at_list = 6;
+}
+
+message Event {
+  string event_id = 1;
+  Queue queue = 2;
+  bytes data = 3;
+  EventMetadata metadata = 4;
+}
+
+// PublishSyncRequest
+message PublishSyncRequest {
+  Event event = 1;
+}
+
+// PublishSyncResponse
+message PublishSyncResponse {
+  Event event = 1;
+}
+
+// PublishAsyncRequest
+message PublishAsyncRequest {
+  Event event = 1;
+}
+
+// PublishAsyncResponse
+message PublishAsyncResponse {}
+
+// CreateQueueRequest
+message CreateQueueRequest {
+  Queue queue = 1;
+}
+
+// CreateQueueResponse
+message CreateQueueResponse {
+  Queue queue = 1;
+}
+
+// CreateQueueRequest
+message CreateQueueSubscriptionRequest {
+  Queue queue = 1;
+}
+
+// CreateQueueResponse
+message CreateQueueSubscriptionResponse {
+  Event event = 1;
+}
+
+// CreateQueueSubscriptionFromTimestampRequest
+message CreateQueueSubscriptionFromTimestampRequest {
+  Queue queue = 1;
+  google.protobuf.Timestamp start_at = 4;
+}
+
+// CreateQueueSubscriptionFromTimestampResponse
+message CreateQueueSubscriptionFromTimestampResponse {
+  Event event = 1;
+}
+
+message AckRequest {
+  string event_id = 1;
+}
+
+message AckResponse {}
+
+message NackRequest {
+  string event_id = 1;
+}
+
+message NackResponse {}

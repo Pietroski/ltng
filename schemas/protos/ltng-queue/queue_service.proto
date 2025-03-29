@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package ltngqueue;
+option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngqueue;grpc_ltngqueue";
+
+import "ltng-queue/queue_messages.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Lightning-Queue API";
+    version: "v0.0.1";
+    contact: {
+      name: "Pietroski Software Company LTDA";
+      url: "https://www.pietroski.xyz";
+      email: "pietroskisoftwarecompany@gmail.com";
+    };
+  };
+};
+
+service LightningQueue {
+  // PublishSync
+  rpc PublishSync(PublishSyncRequest) returns(PublishSyncResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/publish_sync"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to publish a message synchronously"
+      summary: "Publish a Message Synchronously"
+    };
+  }
+  // PublishAsync
+  rpc PublishAsync(stream PublishAsyncRequest) returns(PublishAsyncResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/publish_async"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to publish a message asynchronously"
+      summary: "Publish a Message Asynchronously"
+    };
+  }
+
+  // CreateQueue
+  rpc CreateQueue(CreateQueueRequest) returns(CreateQueueResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/create_queue"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to create queue request"
+      summary: "Create Queue"
+    };
+  }
+  // CreateQueueSubscription
+  rpc CreateQueueSubscription(CreateQueueSubscriptionRequest) returns(stream CreateQueueSubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/create_subscription_queue"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to create queue subscriber request"
+      summary: "Create Queue Subscription"
+    };
+  }
+
+  // Ack
+  rpc Ack(AckRequest) returns (AckResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/ack"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to ack an event"
+      summary: "ACK Event"
+    };
+  }
+  // Nack
+  rpc Nack(NackRequest) returns (NackResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/nack"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to nack an event"
+      summary: "NACK Event"
+    };
+  }
+}

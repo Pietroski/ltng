@@ -14,6 +14,7 @@ declare -a proto_list=(
     "common/search"
 
     "ltng-db"
+    "ltng-queue"
 )
 
 declare -A proto_list_map=(
@@ -21,6 +22,7 @@ declare -A proto_list_map=(
     ["common/search"]="common_search"
 
     ["ltng-db"]="ltng-db"
+    ["ltng-queue"]="ltng-queue"
 )
 
 for domain in "${proto_list[@]}"; do

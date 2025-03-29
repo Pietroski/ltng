@@ -1,0 +1,434 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Lightning-Queue API",
+    "version": "v0.0.1",
+    "contact": {
+      "name": "Pietroski Software Company LTDA",
+      "url": "https://www.pietroski.xyz",
+      "email": "pietroskisoftwarecompany@gmail.com"
+    }
+  },
+  "tags": [
+    {
+      "name": "LightningQueue"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/ltng_queue/v1/ack": {
+      "post": {
+        "summary": "ACK Event",
+        "description": "Use this endpoint to ack an event",
+        "operationId": "LightningQueue_Ack",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueueAckResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueueAckRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
+    "/ltng_queue/v1/create_queue": {
+      "post": {
+        "summary": "Create Queue",
+        "description": "Use this endpoint to create queue request",
+        "operationId": "LightningQueue_CreateQueue",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueueCreateQueueResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueueCreateQueueRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
+    "/ltng_queue/v1/create_subscription_queue": {
+      "post": {
+        "summary": "Create Queue Subscription",
+        "description": "Use this endpoint to create queue subscriber request",
+        "operationId": "LightningQueue_CreateQueueSubscription",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/ltngqueueCreateQueueSubscriptionResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of ltngqueueCreateQueueSubscriptionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueueCreateQueueSubscriptionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
+    "/ltng_queue/v1/nack": {
+      "post": {
+        "summary": "NACK Event",
+        "description": "Use this endpoint to nack an event",
+        "operationId": "LightningQueue_Nack",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueueNackResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueueNackRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
+    "/ltng_queue/v1/publish_async": {
+      "post": {
+        "summary": "Publish a Message Asynchronously",
+        "description": "Use this endpoint to publish a message asynchronously",
+        "operationId": "LightningQueue_PublishAsync",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueuePublishAsyncResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " (streaming inputs)",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueuePublishAsyncRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
+    "/ltng_queue/v1/publish_sync": {
+      "post": {
+        "summary": "Publish a Message Synchronously",
+        "description": "Use this endpoint to publish a message synchronously",
+        "operationId": "LightningQueue_PublishSync",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueuePublishSyncResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueuePublishSyncRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ltngqueueAckRequest": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        }
+      }
+    },
+    "ltngqueueAckResponse": {
+      "type": "object"
+    },
+    "ltngqueueCreateQueueRequest": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "CreateQueueRequest"
+    },
+    "ltngqueueCreateQueueResponse": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "CreateQueueResponse"
+    },
+    "ltngqueueCreateQueueSubscriptionRequest": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "CreateQueueRequest"
+    },
+    "ltngqueueCreateQueueSubscriptionResponse": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/ltngqueueEvent"
+        }
+      },
+      "title": "CreateQueueResponse"
+    },
+    "ltngqueueEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        },
+        "data": {
+          "type": "string",
+          "format": "byte"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ltngqueueEventMetadata"
+        }
+      }
+    },
+    "ltngqueueEventMetadata": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "type": "string",
+          "format": "byte"
+        },
+        "retryCount": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sentAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receivedAtList": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "ltngqueueNackRequest": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        }
+      }
+    },
+    "ltngqueueNackResponse": {
+      "type": "object"
+    },
+    "ltngqueuePublishAsyncRequest": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/ltngqueueEvent"
+        }
+      },
+      "title": "PublishAsyncRequest"
+    },
+    "ltngqueuePublishAsyncResponse": {
+      "type": "object",
+      "title": "PublishAsyncResponse"
+    },
+    "ltngqueuePublishSyncRequest": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/ltngqueueEvent"
+        }
+      },
+      "title": "PublishSyncRequest"
+    },
+    "ltngqueuePublishSyncResponse": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/ltngqueueEvent"
+        }
+      },
+      "title": "PublishSyncResponse"
+    },
+    "ltngqueueQueue": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "queueFanOutType": {
+          "$ref": "#/definitions/ltngqueueQueueFanOutType"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastStartedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ltngqueueQueueFanOutType": {
+      "type": "string",
+      "enum": [
+        "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN",
+        "QUEUE_FAN_OUT_TYPE_PROPAGATE"
+      ],
+      "default": "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
