@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.5.1]
  - docs: output removal
  
 # [v1.5.0]
