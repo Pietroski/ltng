@@ -15,5 +15,5 @@ import _ "go.uber.org/mock/mockgen/model"
 ///go:generate mockgen -package mock_operator -destination ../../internal/adaptors/datastore/badgerdb/transactions/operations/mocks/operations.go gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/transactions/operations Operator
 //go:generate mockgen -package chained_mock -destination ../../pkg/tools/chained-operator/mocks/chained_mock.go gitlab.com/pietroski-software-company/lightning-db/pkg/tools/chained-operator/mocks Callers
 
-// pkg
+// client
 //go:generate mockgen -package mocked_ltng_client -destination ../../client/mocks/ltng_client_mock.go gitlab.com/pietroski-software-company/lightning-db/pkg/client LTNGClient
