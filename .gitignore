@@ -34,3 +34,7 @@ playground
 # report files
 #drone-analysis
 #drone-analysis.json
+
+# doc report
+docs/outputs/**
+!docs/outputs/.gitkeep
