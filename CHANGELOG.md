@@ -1,9 +1,10 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - docs: output removal
  
 # [v1.5.0]
- - [gitlab/main, github/main, , , devin/1740418982-add-comprehensive-client-tests) - Merge pull request 'devin/1740418982-add-comprehensive-client-tests' (#4] from devin/1740418982-add-comprehensive-client-tests into main
+ - [devin/1740418982-add-comprehensive-client-tests) - Merge pull request 'devin/1740418982-add-comprehensive-client-tests' (#4] from devin/1740418982-add-comprehensive-client-tests into main
  - [github/devin/1740418982-add-comprehensive-client-tests, gitea/devin/1740418982-add-comprehensive-client-tests] - tests: upsert and delete tests
  - wip: client and engine tests
  - test: integration tests
