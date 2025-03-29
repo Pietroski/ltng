@@ -1,6 +1,8 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ 
+# [v1.5.3]
  - chore: mocks
  
 # [v1.5.2]
