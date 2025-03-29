@@ -1,6 +1,7 @@
 # CHANGELOG
 
 # [UNRELEASED]
+ - chore: mock update
  
 # [v1.5.1]
  - docs: output removal
