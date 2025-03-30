@@ -14,9 +14,9 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
-	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/badgerdb/v4"
-	ltngdb_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/ltngdb/v1"
-	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/grpc/ltngdb/v2"
+	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
+	ltngdb_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v1"
+	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )

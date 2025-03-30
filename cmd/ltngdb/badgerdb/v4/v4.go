@@ -15,8 +15,8 @@ import (
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
-	badgerdb_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/badger/v4"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/factories/gRPC/badger/v4"
+	badgerdb_controller_v5 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/badger/v4"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/gRPC/badger/v4"
 )
 
 func StartV4(
@@ -75,12 +75,12 @@ func StartV4(
 		return
 	}
 
-	controller, err := badgerdb_controller_v4.New(ctx,
-		badgerdb_controller_v4.WithConfig(cfg),
-		badgerdb_controller_v4.WithLogger(logger),
-		badgerdb_controller_v4.WithBinder(binder),
-		badgerdb_controller_v4.WithManger(mngr),
-		badgerdb_controller_v4.WithOperator(oprt),
+	controller, err := badgerdb_controller_v5.New(ctx,
+		badgerdb_controller_v5.WithConfig(cfg),
+		badgerdb_controller_v5.WithLogger(logger),
+		badgerdb_controller_v5.WithBinder(binder),
+		badgerdb_controller_v5.WithManger(mngr),
+		badgerdb_controller_v5.WithOperator(oprt),
 	)
 	if err != nil {
 		logger.Errorf(

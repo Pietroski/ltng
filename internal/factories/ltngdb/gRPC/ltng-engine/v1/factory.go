@@ -1,20 +1,18 @@
-package ltngdb_factory_v2
+package ltngdb_factory_v1
 
 import (
 	"context"
 	"net"
-	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
 	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
-	ltngdb_controller_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltng-engine/v2"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v1"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
@@ -26,8 +24,8 @@ type (
 		listener net.Listener
 		server   *grpc.Server
 
-		engine     *ltng_engine_v2.LTNGEngine
-		controller *ltngdb_controller_v2.Controller
+		engine     *ltng_engine_v1.LTNGEngine
+		controller *ltngdb_controller_v1.Controller
 	}
 )
 
@@ -39,7 +37,7 @@ func New(
 		cfg: &ltng_node_config.Config{
 			Node: &ltng_node_config.Node{
 				Engine: &ltng_node_config.Engine{
-					Engine: common_model.LightningEngineV2EngineVersionType.String(),
+					Engine: common_model.LightningEngineV1EngineVersionType.String(),
 				},
 				Server: &ltng_node_config.Server{
 					Network: "tcp",
@@ -60,30 +58,12 @@ func (s *Factory) handle() {
 		grpc.ChainUnaryInterceptor(
 			go_tracer_middleware.NewGRPCUnaryTracerServerMiddleware(),
 		),
-		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle:     15 * time.Second,
-			MaxConnectionAge:      30 * time.Second,
-			MaxConnectionAgeGrace: 5 * time.Second,
-			Time:                  5 * time.Second,
-			Timeout:               1 * time.Second,
-		}),
-		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-			MinTime:             5 * time.Second,
-			PermitWithoutStream: true,
-		}),
 	}
 	grpcServer := grpc.NewServer(grpcOpts...)
 	grpc_ltngdb.RegisterLightningDBServer(grpcServer, s.controller)
 
 	// Register reflection service on gRPC server.
 	reflection.Register(grpcServer)
-
-	//go func() {
-	//	for {
-	//		time.Sleep(time.Second)
-	//		log.Printf("Server state: %v", grpcServer.GetServiceInfo())
-	//	}
-	//}()
 
 	s.server = grpcServer
 }

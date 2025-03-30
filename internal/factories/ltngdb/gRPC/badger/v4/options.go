@@ -7,7 +7,7 @@ import (
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
-	badgerdb_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/badger/v4"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/badger/v4"
 )
 
 func WithConfig(config *ltng_node_config.Config) options.Option {

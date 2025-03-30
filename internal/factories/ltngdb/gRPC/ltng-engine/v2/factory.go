@@ -1,4 +1,4 @@
-package badgerdb_factory_v4
+package ltngdb_factory_v2
 
 import (
 	"context"
@@ -12,20 +12,22 @@ import (
 	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
+	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
-	badgerdb_controller_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/badger/v4"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v2"
+	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
 type (
 	Factory struct {
+		cfg *ltng_node_config.Config
+
 		listener net.Listener
-		cfg      *ltng_node_config.Config
 		server   *grpc.Server
 
-		manager    badgerdb_manager_adaptor_v4.Manager
-		controller *badgerdb_controller_v4.Controller
+		engine     *ltng_engine_v2.LTNGEngine
+		controller *ltngdb_controller_v2.Controller
 	}
 )
 
@@ -33,7 +35,19 @@ func New(
 	ctx context.Context,
 	opts ...options.Option,
 ) (*Factory, error) {
-	factory := &Factory{}
+	factory := &Factory{
+		cfg: &ltng_node_config.Config{
+			Node: &ltng_node_config.Node{
+				Engine: &ltng_node_config.Engine{
+					Engine: common_model.LightningEngineV2EngineVersionType.String(),
+				},
+				Server: &ltng_node_config.Server{
+					Network: "tcp",
+					Port:    "50050",
+				},
+			},
+		},
+	}
 	options.ApplyOptions(factory, opts...)
 
 	factory.handle()
@@ -64,6 +78,13 @@ func (s *Factory) handle() {
 	// Register reflection service on gRPC server.
 	reflection.Register(grpcServer)
 
+	//go func() {
+	//	for {
+	//		time.Sleep(time.Second)
+	//		log.Printf("Server state: %v", grpcServer.GetServiceInfo())
+	//	}
+	//}()
+
 	s.server = grpcServer
 }
 
@@ -72,7 +93,7 @@ func (s *Factory) Start() error {
 }
 
 func (s *Factory) Stop() {
-	s.manager.ShutdownStores()
-	s.manager.Shutdown()
-	s.server.Stop()
+	s.engine.Close()
+	_ = s.listener.Close()
+	s.server.GracefulStop()
 }

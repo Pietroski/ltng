@@ -7,7 +7,7 @@ import (
 
 	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
-	ltngdb_controller_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltng-engine/v1"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v1"
 )
 
 func WithConfig(config *ltng_node_config.Config) options.Option {

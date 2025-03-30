@@ -3,10 +3,9 @@ package badgerdb_controller_v4
 import (
 	"context"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
