@@ -3,13 +3,14 @@ package safe
 import "sync"
 
 type GenericMap[T any] struct {
-	sync.RWMutex
+	*sync.RWMutex
 	data map[string]T
 }
 
 func NewGenericMap[T any]() *GenericMap[T] {
 	gm := &GenericMap[T]{
-		data: make(map[string]T),
+		RWMutex: &sync.RWMutex{},
+		data:    make(map[string]T),
 	}
 
 	return gm

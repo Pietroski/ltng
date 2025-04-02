@@ -330,6 +330,14 @@
         }
       }
     },
+    "ltngqueueGroup": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "ltngqueueNackRequest": {
       "type": "object",
       "properties": {
@@ -391,6 +399,9 @@
         "lastStartedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "group": {
+          "$ref": "#/definitions/ltngqueueGroup"
         }
       }
     },
@@ -398,7 +409,9 @@
       "type": "string",
       "enum": [
         "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN",
-        "QUEUE_FAN_OUT_TYPE_PROPAGATE"
+        "QUEUE_FAN_OUT_TYPE_PROPAGATE",
+        "QUEUE_FAN_OUT_TYPE_GROUP_ROUND_ROBIN",
+        "QUEUE_FAN_OUT_TYPE_GROUP_PROPAGATE"
       ],
       "default": "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN"
     },

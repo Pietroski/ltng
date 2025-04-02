@@ -10,7 +10,7 @@ import (
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )

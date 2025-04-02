@@ -1,12 +1,12 @@
 package ltngdb_controller_v1
 
 import (
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 )
 
 func WithConfig(config *ltng_node_config.Config) options.Option {

@@ -1,7 +1,7 @@
 package badgerdb_controller_v4
 
 import (
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
 

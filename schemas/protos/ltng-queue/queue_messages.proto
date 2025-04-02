@@ -9,6 +9,12 @@ import "google/protobuf/timestamp.proto";
 enum QueueFanOutType {
   QUEUE_FAN_OUT_TYPE_ROUND_ROBIN = 0;
   QUEUE_FAN_OUT_TYPE_PROPAGATE = 1;
+  QUEUE_FAN_OUT_TYPE_GROUP_ROUND_ROBIN = 2;
+  QUEUE_FAN_OUT_TYPE_GROUP_PROPAGATE = 3;
+}
+
+message Group {
+  string name = 1;
 }
 
 message Queue {
@@ -19,6 +25,8 @@ message Queue {
 
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp last_started_at = 5;
+
+  Group group = 6;
 }
 
 message EventMetadata {

@@ -1,12 +1,11 @@
 package http_ltngdb_factory_v2
 
 import (
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
-
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 )
 
 func WithConfig(config *ltng_node_config.Config) options.Option {

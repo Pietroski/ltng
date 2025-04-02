@@ -3,6 +3,7 @@ package ltngdb_engine_v1
 import (
 	"context"
 	"fmt"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
@@ -11,7 +12,6 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	ltngdb_controller_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v2"
 	ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/gRPC/ltng-engine/v2"
 	http_ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/http/ltng-engine/v2"

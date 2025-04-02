@@ -1,12 +1,12 @@
 package ltngdb_factory_v1
 
 import (
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v1"
 )
 

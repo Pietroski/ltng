@@ -2,6 +2,7 @@ package badgerdb_factory_v4
 
 import (
 	"context"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/badger/v4"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )

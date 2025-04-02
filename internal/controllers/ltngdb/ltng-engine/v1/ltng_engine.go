@@ -2,6 +2,7 @@ package ltngdb_controller_v1
 
 import (
 	"context"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
@@ -10,7 +11,6 @@ import (
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )

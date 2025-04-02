@@ -3,6 +3,7 @@ package http_ltngdb_factory_v2
 import (
 	"context"
 	"fmt"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 	"net/http"
 	"time"
@@ -15,7 +16,6 @@ import (
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/httpx"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
