@@ -23,6 +23,8 @@ const (
 	LightningQueue_PublishAsync_FullMethodName            = "/ltngqueue.LightningQueue/PublishAsync"
 	LightningQueue_CreateQueue_FullMethodName             = "/ltngqueue.LightningQueue/CreateQueue"
 	LightningQueue_CreateQueueSubscription_FullMethodName = "/ltngqueue.LightningQueue/CreateQueueSubscription"
+	LightningQueue_DeleteQueue_FullMethodName             = "/ltngqueue.LightningQueue/DeleteQueue"
+	LightningQueue_DeleteQueueHistory_FullMethodName      = "/ltngqueue.LightningQueue/DeleteQueueHistory"
 	LightningQueue_Ack_FullMethodName                     = "/ltngqueue.LightningQueue/Ack"
 	LightningQueue_Nack_FullMethodName                    = "/ltngqueue.LightningQueue/Nack"
 )
@@ -39,6 +41,10 @@ type LightningQueueClient interface {
 	CreateQueue(ctx context.Context, in *CreateQueueRequest, opts ...grpc.CallOption) (*CreateQueueResponse, error)
 	// CreateQueueSubscription
 	CreateQueueSubscription(ctx context.Context, in *CreateQueueSubscriptionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[CreateQueueSubscriptionResponse], error)
+	// DeleteQueue
+	DeleteQueue(ctx context.Context, in *DeleteQueueRequest, opts ...grpc.CallOption) (*DeleteQueueResponse, error)
+	// DeleteQueueHistory
+	DeleteQueueHistory(ctx context.Context, in *DeleteQueueHistoryRequest, opts ...grpc.CallOption) (*DeleteQueueHistoryResponse, error)
 	// Ack
 	Ack(ctx context.Context, in *AckRequest, opts ...grpc.CallOption) (*AckResponse, error)
 	// Nack
@@ -105,6 +111,26 @@ func (c *lightningQueueClient) CreateQueueSubscription(ctx context.Context, in *
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type LightningQueue_CreateQueueSubscriptionClient = grpc.ServerStreamingClient[CreateQueueSubscriptionResponse]
 
+func (c *lightningQueueClient) DeleteQueue(ctx context.Context, in *DeleteQueueRequest, opts ...grpc.CallOption) (*DeleteQueueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteQueueResponse)
+	err := c.cc.Invoke(ctx, LightningQueue_DeleteQueue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *lightningQueueClient) DeleteQueueHistory(ctx context.Context, in *DeleteQueueHistoryRequest, opts ...grpc.CallOption) (*DeleteQueueHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteQueueHistoryResponse)
+	err := c.cc.Invoke(ctx, LightningQueue_DeleteQueueHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *lightningQueueClient) Ack(ctx context.Context, in *AckRequest, opts ...grpc.CallOption) (*AckResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AckResponse)
@@ -137,6 +163,10 @@ type LightningQueueServer interface {
 	CreateQueue(context.Context, *CreateQueueRequest) (*CreateQueueResponse, error)
 	// CreateQueueSubscription
 	CreateQueueSubscription(*CreateQueueSubscriptionRequest, grpc.ServerStreamingServer[CreateQueueSubscriptionResponse]) error
+	// DeleteQueue
+	DeleteQueue(context.Context, *DeleteQueueRequest) (*DeleteQueueResponse, error)
+	// DeleteQueueHistory
+	DeleteQueueHistory(context.Context, *DeleteQueueHistoryRequest) (*DeleteQueueHistoryResponse, error)
 	// Ack
 	Ack(context.Context, *AckRequest) (*AckResponse, error)
 	// Nack
@@ -162,6 +192,12 @@ func (UnimplementedLightningQueueServer) CreateQueue(context.Context, *CreateQue
 }
 func (UnimplementedLightningQueueServer) CreateQueueSubscription(*CreateQueueSubscriptionRequest, grpc.ServerStreamingServer[CreateQueueSubscriptionResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method CreateQueueSubscription not implemented")
+}
+func (UnimplementedLightningQueueServer) DeleteQueue(context.Context, *DeleteQueueRequest) (*DeleteQueueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteQueue not implemented")
+}
+func (UnimplementedLightningQueueServer) DeleteQueueHistory(context.Context, *DeleteQueueHistoryRequest) (*DeleteQueueHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteQueueHistory not implemented")
 }
 func (UnimplementedLightningQueueServer) Ack(context.Context, *AckRequest) (*AckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ack not implemented")
@@ -244,6 +280,42 @@ func _LightningQueue_CreateQueueSubscription_Handler(srv interface{}, stream grp
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type LightningQueue_CreateQueueSubscriptionServer = grpc.ServerStreamingServer[CreateQueueSubscriptionResponse]
 
+func _LightningQueue_DeleteQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteQueueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LightningQueueServer).DeleteQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LightningQueue_DeleteQueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LightningQueueServer).DeleteQueue(ctx, req.(*DeleteQueueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LightningQueue_DeleteQueueHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteQueueHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LightningQueueServer).DeleteQueueHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LightningQueue_DeleteQueueHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LightningQueueServer).DeleteQueueHistory(ctx, req.(*DeleteQueueHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LightningQueue_Ack_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AckRequest)
 	if err := dec(in); err != nil {
@@ -294,6 +366,14 @@ var LightningQueue_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateQueue",
 			Handler:    _LightningQueue_CreateQueue_Handler,
+		},
+		{
+			MethodName: "DeleteQueue",
+			Handler:    _LightningQueue_DeleteQueue_Handler,
+		},
+		{
+			MethodName: "DeleteQueueHistory",
+			Handler:    _LightningQueue_DeleteQueueHistory_Handler,
 		},
 		{
 			MethodName: "Ack",

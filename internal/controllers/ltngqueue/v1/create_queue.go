@@ -1,0 +1,27 @@
+package ltngqueue_controller_v1
+
+import (
+	"context"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	ltngqueue_mappers "gitlab.com/pietroski-software-company/lightning-db/internal/mappers/ltngqueue"
+	grpc_ltngqueue "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngqueue"
+)
+
+func (c *Controller) CreateQueue(
+	ctx context.Context,
+	request *grpc_ltngqueue.CreateQueueRequest,
+) (*grpc_ltngqueue.CreateQueueResponse, error) {
+	if request.Queue == nil {
+		return nil, status.Error(codes.InvalidArgument, "queue required")
+	}
+	queue := ltngqueue_mappers.MapToQueue(request.GetQueue())
+
+	if _, err := c.queueEngine.CreateQueue(ctx, queue); err != nil {
+		return nil, err
+	}
+
+	return &grpc_ltngqueue.CreateQueueResponse{}, nil
+}

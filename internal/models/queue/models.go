@@ -2,33 +2,33 @@ package queuemodels
 
 import (
 	"fmt"
-	"time"
-
+	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
+	"sync/atomic"
 )
 
-type QueueFanOutType int32
+type QueueDistributionType int32
 
 const (
-	QueueFanOutTypeQueueFanOutTypeRoundRobin      QueueFanOutType = 0
-	QueueFanOutTypeQueueFanOutTypePropagate       QueueFanOutType = 1
-	QueueFanOutTypeQueueFanOUtTypeGroupRoundRobin QueueFanOutType = 2
-	QueueFanOutTypeQueueFanOUtTypeGroupPropagate  QueueFanOutType = 3
+	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN QueueDistributionType = 0
+	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT     QueueDistributionType = 1
+	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN       QueueDistributionType = 2
+	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT           QueueDistributionType = 3
 )
 
-// Enum value maps for QueueFanOutType.
+// Enum value maps for QueueDistributionType.
 var (
-	QueueFanOutTypeName = map[int32]string{
-		0: "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN",
-		1: "QUEUE_FAN_OUT_TYPE_PROPAGATE",
-		2: "QUEUE_FAN_OUT_TYPE_GROUP_ROUND_ROBIN",
-		3: "QUEUE_FAN_OUT_TYPE_GROUP_PROPAGATE",
+	QueueDistributionType_name = map[int32]string{
+		0: "QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN",
+		1: "QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT",
+		2: "QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN",
+		3: "QUEUE_DISTRIBUTION_TYPE_FAN_OUT",
 	}
-	QueueFanOutTypeValue = map[string]int32{
-		"QUEUE_FAN_OUT_TYPE_ROUND_ROBIN":       0,
-		"QUEUE_FAN_OUT_TYPE_PROPAGATE":         1,
-		"QUEUE_FAN_OUT_TYPE_GROUP_ROUND_ROBIN": 2,
-		"QUEUE_FAN_OUT_TYPE_GROUP_PROPAGATE":   3,
+	QueueDistributionType_value = map[string]int32{
+		"QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN": 0,
+		"QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT":     1,
+		"QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN":       2,
+		"QUEUE_DISTRIBUTION_TYPE_FAN_OUT":           3,
 	}
 )
 
@@ -37,20 +37,20 @@ type Group struct {
 }
 
 type Queue struct {
-	Name            string
-	Path            string
-	QueueFanOutType QueueFanOutType
-	CreatedAt       time.Time
-	LastStartedAt   time.Time
-	Group           *Group
+	Name                  string
+	Path                  string
+	QueueDistributionType QueueDistributionType
+	CreatedAt             int64 // time.Time
+	LastStartedAt         int64 // time.Time
+	Group                 *Group
 }
 
 type EventMetadata struct {
 	Metadata       []byte
 	RetryCount     uint64
-	SentAt         time.Time
-	ReceivedAt     time.Time
-	ReceivedAtList []time.Time
+	SentAt         int64   // time.Time
+	ReceivedAt     int64   // time.Time
+	ReceivedAtList []int64 // []time.Time
 }
 
 type Event struct {
@@ -126,4 +126,18 @@ type QueueOrchestrator struct {
 type Publisher struct {
 	NodeID string
 	Sender chan *Event
+}
+
+type EventTracker struct {
+	EventID string
+	Event   *Event
+	Ack     chan struct{}
+	Nack    chan struct{}
+}
+
+type QueueSignaler struct {
+	FileQueue         *filequeuev1.FileQueue
+	SignalTransmitter chan struct{}
+	FirstSent         *atomic.Bool
+	IsClosed          *atomic.Bool
 }

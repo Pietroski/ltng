@@ -2,6 +2,7 @@ package ltngqueue_controller_v1
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -35,7 +36,11 @@ func (c *Controller) CreateQueueSubscription(
 		NodeID: nodeID,
 		Sender: receiver,
 	}
-	c.queueEngine.SubscribeToQueue(ctx, queue, publisher)
+	err = c.queueEngine.SubscribeToQueue(ctx, queue, publisher)
+	if err != nil {
+		return fmt.Errorf("error subscribing to queue: %w", err)
+	}
+
 	defer func() {
 		if err := c.queueEngine.UnsubscribeToQueue(ctx, queue, publisher); err != nil {
 			log.Printf("error unsubscribing from queue: %v: error: %v", publisher.NodeID, err)

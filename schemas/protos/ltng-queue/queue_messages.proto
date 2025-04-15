@@ -6,11 +6,11 @@ option go_package = "gitlab.com/pietroski-software-company/lightning-db/schemas/
 import "google/protobuf/timestamp.proto";
 // import "common/search/pagination.proto";
 
-enum QueueFanOutType {
-  QUEUE_FAN_OUT_TYPE_ROUND_ROBIN = 0;
-  QUEUE_FAN_OUT_TYPE_PROPAGATE = 1;
-  QUEUE_FAN_OUT_TYPE_GROUP_ROUND_ROBIN = 2;
-  QUEUE_FAN_OUT_TYPE_GROUP_PROPAGATE = 3;
+enum QueueDistributionType {
+  QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN = 0;
+  QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT = 1;
+  QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN = 2;
+  QUEUE_DISTRIBUTION_TYPE_FAN_OUT = 3;
 }
 
 message Group {
@@ -21,7 +21,7 @@ message Queue {
   string name = 1;
   string path = 2;
 
-  QueueFanOutType queue_fan_out_type = 3;
+  QueueDistributionType queue_distribution_type = 3;
 
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp last_started_at = 5;
@@ -49,7 +49,6 @@ message Event {
 message PublishSyncRequest {
   Event event = 1;
 }
-
 // PublishSyncResponse
 message PublishSyncResponse {
   Event event = 1;
@@ -59,7 +58,6 @@ message PublishSyncResponse {
 message PublishAsyncRequest {
   Event event = 1;
 }
-
 // PublishAsyncResponse
 message PublishAsyncResponse {}
 
@@ -67,7 +65,6 @@ message PublishAsyncResponse {}
 message CreateQueueRequest {
   Queue queue = 1;
 }
-
 // CreateQueueResponse
 message CreateQueueResponse {
   Queue queue = 1;
@@ -77,10 +74,27 @@ message CreateQueueResponse {
 message CreateQueueSubscriptionRequest {
   Queue queue = 1;
 }
-
 // CreateQueueResponse
 message CreateQueueSubscriptionResponse {
   Event event = 1;
+}
+
+// DeleteQueueRequest
+message DeleteQueueRequest {
+  Queue queue = 1;
+}
+// DeleteQueueResponse
+message DeleteQueueResponse {
+  Queue queue = 1;
+}
+
+// DeleteQueueHistoryRequest
+message DeleteQueueHistoryRequest {
+  Queue queue = 1;
+}
+// DeleteQueueHistoryResponse
+message DeleteQueueHistoryResponse {
+  Queue queue = 1;
 }
 
 // CreateQueueSubscriptionFromTimestampRequest

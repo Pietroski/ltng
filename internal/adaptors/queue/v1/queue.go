@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
+	"runtime"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,19 +25,27 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
+var notImplemented = fmt.Errorf("not implemented")
+
 type Queue struct {
 	ctx context.Context
 
 	opMtx *lock.EngineLock
 	mtx   *sync.RWMutex
 
+	awaitTimeout time.Duration
+
 	serializer     serializer_models.Serializer
 	queueInfoStore *ltngenginemodels.StoreInfo
 	fileManager    *rw.FileManager
 	ltngdbengine   *ltng_engine_v2.LTNGEngine
-	fqMapping      *safe.GenericMap[*filequeuev1.FileQueue]
+	fqMapping      *safe.GenericMap[*queuemodels.QueueSignaler]
 
 	senderGroupMapping *safe.GenericMap[*safe.GenericMap[*queuemodels.QueueOrchestrator]]
+
+	eventMapTracker *safe.GenericMap[*queuemodels.EventTracker]
+
+	retryCountLimit uint64
 }
 
 func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
@@ -49,12 +59,15 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 		opMtx: lock.NewEngineLock(),
 		mtx:   &sync.RWMutex{},
 
-		serializer:   serializer.NewRawBinarySerializer(),
-		fileManager:  rw.NewFileManager(ctx),
-		ltngdbengine: ltngdbengine,
-		fqMapping:    safe.NewGenericMap[*filequeuev1.FileQueue](),
-
+		serializer:         serializer.NewRawBinarySerializer(),
+		fileManager:        rw.NewFileManager(ctx),
+		ltngdbengine:       ltngdbengine,
+		fqMapping:          safe.NewGenericMap[*queuemodels.QueueSignaler](),
 		senderGroupMapping: safe.NewGenericMap[*safe.GenericMap[*queuemodels.QueueOrchestrator]](),
+		eventMapTracker:    safe.NewGenericMap[*queuemodels.EventTracker](),
+
+		retryCountLimit: 5,
+		awaitTimeout:    time.Second * 5,
 	}
 
 	queueStoreInfo, err := q.runQueueMigration(ctx)
@@ -68,45 +81,75 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 	return q, nil
 }
 
-func (q *Queue) CreateQueue(ctx context.Context, queue *queuemodels.Queue) (*filequeuev1.FileQueue, error) {
+func (q *Queue) Close() error {
+	q.fqMapping.Range(func(key string, value *queuemodels.QueueSignaler) bool {
+		for !value.IsClosed.Load() {
+			runtime.Gosched()
+		}
+
+		return true
+	})
+	q.ltngdbengine.Close()
+
+	return nil
+}
+
+func (q *Queue) CreateQueueSignaler(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.QueueSignaler, error) {
 	if err := queue.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating queue: %w", err)
 	}
 
-	fq, err := filequeuev1.New(ctx, queue.Path, queue.Name)
-	if err != nil {
+	fq, err := filequeuev1.NewFromExisting(ctx, queue.Path, queue.Name)
+	if err != nil { //  && !strings.Contains(err.Error(), "file already exist")
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
-	q.fqMapping.Set(queue.GetLockKey(), fq)
+	qs := &queuemodels.QueueSignaler{
+		FileQueue:         fq,
+		SignalTransmitter: make(chan struct{}),
+		FirstSent:         new(atomic.Bool),
+		IsClosed:          new(atomic.Bool),
+	}
+	q.fqMapping.Set(queue.GetLockKey(), qs)
 
 	_, err = q.saveQueueReferenceOnDB(ctx, queue)
 	if err != nil {
 		return nil, fmt.Errorf("error persisting queue: %w", err)
 	}
 
-	if _, err = q.CreateQueueGroup(ctx, queue); err != nil {
-		rmErr := q.RemoveQueue(ctx, queue)
+	go q.consumerThread(q.ctx, qs)
+
+	if _, err = q.CreateQueueSignalerGroup(ctx, queue); err != nil {
+		rmErr := q.DeleteQueue(ctx, queue)
 		if rmErr != nil {
-			slog.Error("error removing queue: %w", err)
+			log.Printf("error removing queue: %v", err)
 		}
 		return nil, fmt.Errorf("error creating queue group: %w", err)
 	}
 
-	return fq, nil
+	return qs, nil
 }
 
-func (q *Queue) CreateQueueGroup(ctx context.Context, queue *queuemodels.Queue) (*filequeuev1.FileQueue, error) {
+func (q *Queue) CreateQueueSignalerGroup(
+	ctx context.Context, queue *queuemodels.Queue,
+) (*queuemodels.QueueSignaler, error) {
 	if queue.Group == nil {
 		return nil, nil
 	}
 
-	fq, err := filequeuev1.New(ctx, queue.Path, queue.GetGroupName())
+	fq, err := filequeuev1.NewFromExisting(ctx, queue.Path, queue.GetGroupName())
 	if err != nil {
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
-	q.fqMapping.Set(queue.GetCompleteLockKey(), fq)
+	qs := &queuemodels.QueueSignaler{
+		FileQueue:         fq,
+		SignalTransmitter: make(chan struct{}),
+		FirstSent:         new(atomic.Bool),
+		IsClosed:          new(atomic.Bool),
+	}
+	q.fqMapping.Set(queue.GetCompleteLockKey(), qs)
+	go q.consumerThread(q.ctx, qs)
 
-	return fq, nil
+	return qs, nil
 }
 
 func (q *Queue) saveQueueReferenceOnDB(
@@ -137,16 +180,16 @@ func (q *Queue) saveQueueReferenceOnDB(
 	}
 
 	item, err = q.ltngdbengine.CreateItem(ctx, dbMetaInfo, item, opts)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "file already exist") {
 		log.Printf("error creating queue item: %v", err)
 	}
 
 	return item, nil
 }
 
-func (q *Queue) RemoveQueue(ctx context.Context, queue *queuemodels.Queue) error {
-	// TODO: finish consuming the queue items or offload them into the db to preserve the history?
-	// TODO: should the history be kept or deleted? Should the history be deleted into another request?
+func (q *Queue) DeleteQueue(ctx context.Context, queue *queuemodels.Queue) error {
+	// TODO: finish consuming the queue items or offload them into the db to preserve the history? -
+	// TODO: should the history be kept or deleted? Should the history be deleted into another request? - it should be kept
 
 	lockKey := queue.GetLockKey()
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
@@ -160,14 +203,19 @@ func (q *Queue) RemoveQueue(ctx context.Context, queue *queuemodels.Queue) error
 	if err != nil {
 		log.Printf("error loading queue item: %v", err)
 	}
-	q.fqMapping.Delete(queue.GetLockKey())
+	q.fqMapping.Delete(lockKey)
+	q.fqMapping.Delete(queue.GetCompleteLockKey())
 
 	return nil
 }
 
-func (q *Queue) getQueue(ctx context.Context, queue *queuemodels.Queue) (*filequeuev1.FileQueue, error) {
+func (q *Queue) DeleteQueueHistory(ctx context.Context, queue *queuemodels.Queue) error {
+	return notImplemented
+}
+
+func (q *Queue) getQueueSignaler(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.QueueSignaler, error) {
 	lockKey := queue.GetCompleteLockKey()
-	fq, ok := q.fqMapping.Get(lockKey)
+	qs, ok := q.fqMapping.Get(lockKey)
 	if !ok {
 		dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
 		item := &ltngenginemodels.Item{
@@ -186,15 +234,15 @@ func (q *Queue) getQueue(ctx context.Context, queue *queuemodels.Queue) (*filequ
 			log.Printf("error deserializing queue item: %v", err)
 		}
 
-		fq, err = q.CreateQueue(ctx, queueInfo)
+		qs, err = q.CreateQueueSignaler(ctx, queueInfo)
 		if err != nil {
 			log.Printf("error creating queue: %v", err)
 		}
 
-		return fq, nil
+		return qs, nil
 	}
 
-	return fq, nil
+	return qs, nil
 }
 
 func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
@@ -202,18 +250,29 @@ func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemo
 		return nil, fmt.Errorf("error validating event: %w", err)
 	}
 
-	newEventUUID, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("error generating uuid: %w", err)
+	if event.EventID == "" {
+		newEventUUID, err := uuid.NewRandom()
+		if err != nil {
+			return nil, fmt.Errorf("error generating uuid: %w", err)
+		}
+		event.EventID = newEventUUID.String()
 	}
-	event.EventID = newEventUUID.String()
-	event.Metadata.ReceivedAt = time.Now()
 
-	fw, err := q.getQueue(ctx, event.Queue)
+	receivedAtTime := time.Unix(event.Metadata.ReceivedAt, 0)
+	if receivedAtTime.IsZero() {
+		event.Metadata.ReceivedAt = time.Now().UTC().Unix()
+	}
+	if event.Metadata.ReceivedAtList == nil {
+		event.Metadata.ReceivedAtList = []int64{event.Metadata.ReceivedAt}
+	} else {
+		event.Metadata.ReceivedAtList = append(event.Metadata.ReceivedAtList, time.Now().UTC().Unix())
+	}
+
+	qs, err := q.getQueueSignaler(ctx, event.Queue)
 	if err != nil {
 		return nil, fmt.Errorf("error getting queue: %w", err)
 	}
-	if err = fw.WriteOnCursor(ctx, event); err != nil {
+	if err = qs.FileQueue.WriteOnCursor(ctx, event); err != nil {
 		return nil, fmt.Errorf("error writing event: %w", err)
 	}
 
@@ -224,7 +283,7 @@ func (q *Queue) SubscribeToQueue(
 	_ context.Context,
 	queue *queuemodels.Queue,
 	publisher *queuemodels.Publisher,
-) {
+) error {
 	lockKey := queue.GetLockKey()
 	q.opMtx.Lock(lockKey, struct{}{})
 	defer q.opMtx.Unlock(lockKey)
@@ -247,10 +306,21 @@ func (q *Queue) SubscribeToQueue(
 
 		subscriptionQueueGroup.PublishList.Append(publisher)
 		subscriptionQueue.Set(completeLockKey, subscriptionQueueGroup)
-		return
+		return nil
 	}
 
 	subscriptionQueueGroup.PublishList.Append(publisher)
+
+	qs, ok := q.fqMapping.Get(completeLockKey)
+	if !ok {
+		return fmt.Errorf("error loading queue subscriber: no subscriber found")
+	}
+
+	if qs.FirstSent.CompareAndSwap(false, true) {
+		qs.SignalTransmitter <- struct{}{}
+	}
+
+	return nil
 }
 
 func (q *Queue) UnsubscribeToQueue(
@@ -296,7 +366,7 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 		return nil
 	}
 
-	if event.Queue != nil {
+	if event.Queue.Group != nil {
 		completeLockKey := event.Queue.GetCompleteLockKey()
 		orchestrator, isOkay := groupMapping.Get(completeLockKey)
 		if !isOkay {
@@ -304,12 +374,12 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 			return nil
 		}
 
-		switch orchestrator.Queue.QueueFanOutType {
-		case queuemodels.QueueFanOutTypeQueueFanOUtTypeGroupPropagate:
+		switch orchestrator.Queue.QueueDistributionType {
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT:
 			for _, publisher := range orchestrator.PublishList.Get() {
 				publisher.Sender <- event
 			}
-		case queuemodels.QueueFanOutTypeQueueFanOUtTypeGroupRoundRobin:
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN:
 			fallthrough
 		default:
 			orchestrator.PublishList.Next().Sender <- event
@@ -319,12 +389,12 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 	}
 
 	groupMapping.Range(func(key string, orchestrator *queuemodels.QueueOrchestrator) bool {
-		switch orchestrator.Queue.QueueFanOutType {
-		case queuemodels.QueueFanOutTypeQueueFanOutTypePropagate:
+		switch orchestrator.Queue.QueueDistributionType {
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
 			for _, publisher := range orchestrator.PublishList.Get() {
 				publisher.Sender <- event
 			}
-		case queuemodels.QueueFanOutTypeQueueFanOutTypeRoundRobin:
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
 			fallthrough
 		default:
 			orchestrator.PublishList.Next().Sender <- event
@@ -336,37 +406,86 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 	return nil
 }
 
-func (q *Queue) Consume(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.Event, error) {
-	event, err := q.getEventFromQueue(ctx, queue)
-	if err != nil {
-		return nil, fmt.Errorf("error getting event from queue: %w", err)
-	}
-	_ = event
-
-	// TODO: distribute
-
-	return nil, nil
-}
-
 func (q *Queue) consumerThread(
 	ctx context.Context,
-	queue *queuemodels.Queue,
-	rcv chan struct{},
+	queueSignaler *queuemodels.QueueSignaler,
 ) {
 	for {
 		select {
-		case rcv <- struct{}{}:
-			event, err := q.getEventFromQueue(ctx, queue)
+		case <-queueSignaler.SignalTransmitter:
+			event, err := q.getQueueNextEvent(ctx, queueSignaler)
 			if err != nil {
 				log.Printf("error getting event from queue: %v", err)
 				continue
 			}
 
+			ack := make(chan struct{})
+			nack := make(chan struct{})
+			et := &queuemodels.EventTracker{
+				EventID: event.EventID,
+				Event:   event,
+				Ack:     ack,
+				Nack:    nack,
+			}
+			q.eventMapTracker.Set(event.EventID, et)
 			if err = q.publishToSubscribers(ctx, event); err != nil {
 				log.Printf("error publishing event: %v", err)
 			}
+			eventIndex := []byte(et.EventID)
+
+			go func() {
+				ctxtimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
+				for {
+					select {
+					case <-ack:
+						cancel()
+						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+							log.Print("error popping queue: %w", err)
+						}
+
+						queueSignaler.SignalTransmitter <- struct{}{}
+					case <-nack:
+						cancel()
+						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+							log.Print("error popping queue: %w", err)
+						}
+
+						// TODO: add retry count limit
+						if event.Metadata.RetryCount > q.retryCountLimit {
+							// TODO: log and send it to the DLQ if existent?
+							return
+						}
+						event.Metadata.RetryCount++
+
+						if _, err = q.Publish(ctx, event); err != nil {
+							log.Print("error re-publishing nacked event: %w", err)
+						}
+
+						queueSignaler.SignalTransmitter <- struct{}{}
+					case <-ctxtimeout.Done():
+						log.Printf("event context cancellation: %v", ctx.Err())
+
+						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+							log.Print("error popping queue: %w", err)
+						}
+
+						if _, err = q.Publish(ctx, event); err != nil {
+							log.Print("error re-publishing nacked event: %w", err)
+						}
+
+						queueSignaler.SignalTransmitter <- struct{}{}
+						continue
+					}
+				}
+			}()
+
 		case <-ctx.Done():
-			log.Printf("context cancellation: %v", ctx.Err())
+			log.Printf("server context cancellation: %v", ctx.Err())
+			if err := queueSignaler.FileQueue.Reset(); err != nil {
+				log.Printf("error resetting file queue: %v", err)
+			}
+
+			queueSignaler.IsClosed.Store(true)
 			return
 		}
 	}
@@ -375,12 +494,12 @@ func (q *Queue) consumerThread(
 // Consume consumes the next event message
 // TODO: pass a callback function or return the event?
 func (q *Queue) getEventFromQueue(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.Event, error) {
-	fq, err := q.getQueue(ctx, queue)
+	qs, err := q.getQueueSignaler(ctx, queue)
 	if err != nil {
 		return nil, fmt.Errorf("error getting queue: %w", err)
 	}
 
-	bs, err := fq.ReadFromCursor(ctx)
+	bs, err := qs.FileQueue.ReadFromCursor(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error reading from queue: %w", err)
 	}
@@ -396,20 +515,73 @@ func (q *Queue) getEventFromQueue(ctx context.Context, queue *queuemodels.Queue)
 	return &event, nil
 }
 
-func (q *Queue) Ack(ctx context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
+func (q *Queue) getQueueAndItsNextEvent(
+	ctx context.Context, queue *queuemodels.Queue,
+) (*queuemodels.Event, *filequeuev1.FileQueue, error) {
+	qs, err := q.getQueueSignaler(ctx, queue)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting queue: %w", err)
+	}
+
+	bs, err := qs.FileQueue.ReadFromCursor(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading from queue: %w", err)
+	}
+
+	// TODO: store into to ack items
+	// TODO: store into the DB by timed-base-store
+
+	var event queuemodels.Event
+	if err = q.serializer.Deserialize(bs, &event); err != nil {
+		return nil, nil, fmt.Errorf("error deserializing event: %w", err)
+	}
+
+	return &event, qs.FileQueue, nil
+}
+
+func (q *Queue) getQueueNextEvent(
+	ctx context.Context, queueSignaler *queuemodels.QueueSignaler,
+) (*queuemodels.Event, error) {
+	bs, err := queueSignaler.FileQueue.ReadFromCursorWithoutTruncation(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error reading from queue: %w", err)
+	}
+
+	// TODO: store into to ack items
+	// TODO: store into the DB by timed-base-store
+
+	var event queuemodels.Event
+	if err = q.serializer.Deserialize(bs, &event); err != nil {
+		return nil, fmt.Errorf("error deserializing event: %w", err)
+	}
+
+	return &event, nil
+}
+
+func (q *Queue) Ack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
 	//eventID := event.EventID
 	// TODO: remove from the timed-base-store
 	// TODO: send to sigchannel to fetch next event message
+	et, ok := q.eventMapTracker.Get(event.EventID)
+	if !ok {
+		return nil, fmt.Errorf("no event mapper found for %s - failed to ack event message", event.EventID)
+	}
+	et.Ack <- struct{}{}
 
-	return nil, nil
+	return et.Event, nil
 }
 
-func (q *Queue) Nack(ctx context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
+func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
 	//eventID := event.EventID
-
 	// TODO: republish
 	// TODO: remove from the timed-base-store
 	// TODO: send to sigchannel to fetch next event message
+
+	et, ok := q.eventMapTracker.Get(event.EventID)
+	if !ok {
+		return nil, fmt.Errorf("no event mapper found for %s - failed to ack event message", event.EventID)
+	}
+	et.Ack <- struct{}{}
 
 	return nil, nil
 }

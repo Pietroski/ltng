@@ -66,6 +66,29 @@ service LightningQueue {
     };
   }
 
+  // DeleteQueue
+  rpc DeleteQueue(DeleteQueueRequest) returns(DeleteQueueResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/delete_queue"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to delete queue request"
+      summary: "Delete Queue"
+    };
+  }
+  // DeleteQueueHistory
+  rpc DeleteQueueHistory(DeleteQueueHistoryRequest) returns(DeleteQueueHistoryResponse) {
+    option (google.api.http) = {
+      post: "/ltng_queue/v1/delete_queue_history"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this endpoint to delete queue history request"
+      summary: "Delete Queue History"
+    };
+  }
+
   // Ack
   rpc Ack(AckRequest) returns (AckResponse) {
     option (google.api.http) = {

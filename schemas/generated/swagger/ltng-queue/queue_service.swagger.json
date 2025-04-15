@@ -132,6 +132,74 @@
         ]
       }
     },
+    "/ltng_queue/v1/delete_queue": {
+      "post": {
+        "summary": "Delete Queue",
+        "description": "Use this endpoint to delete queue request",
+        "operationId": "LightningQueue_DeleteQueue",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueueDeleteQueueResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueueDeleteQueueRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
+    "/ltng_queue/v1/delete_queue_history": {
+      "post": {
+        "summary": "Delete Queue History",
+        "description": "Use this endpoint to delete queue history request",
+        "operationId": "LightningQueue_DeleteQueueHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ltngqueueDeleteQueueHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ltngqueueDeleteQueueHistoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LightningQueue"
+        ]
+      }
+    },
     "/ltng_queue/v1/nack": {
       "post": {
         "summary": "NACK Event",
@@ -284,6 +352,42 @@
       },
       "title": "CreateQueueResponse"
     },
+    "ltngqueueDeleteQueueHistoryRequest": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "DeleteQueueHistoryRequest"
+    },
+    "ltngqueueDeleteQueueHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "DeleteQueueHistoryResponse"
+    },
+    "ltngqueueDeleteQueueRequest": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "DeleteQueueRequest"
+    },
+    "ltngqueueDeleteQueueResponse": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/definitions/ltngqueueQueue"
+        }
+      },
+      "title": "DeleteQueueResponse"
+    },
     "ltngqueueEvent": {
       "type": "object",
       "properties": {
@@ -389,8 +493,8 @@
         "path": {
           "type": "string"
         },
-        "queueFanOutType": {
-          "$ref": "#/definitions/ltngqueueQueueFanOutType"
+        "queueDistributionType": {
+          "$ref": "#/definitions/ltngqueueQueueDistributionType"
         },
         "createdAt": {
           "type": "string",
@@ -405,15 +509,15 @@
         }
       }
     },
-    "ltngqueueQueueFanOutType": {
+    "ltngqueueQueueDistributionType": {
       "type": "string",
       "enum": [
-        "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN",
-        "QUEUE_FAN_OUT_TYPE_PROPAGATE",
-        "QUEUE_FAN_OUT_TYPE_GROUP_ROUND_ROBIN",
-        "QUEUE_FAN_OUT_TYPE_GROUP_PROPAGATE"
+        "QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN",
+        "QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT",
+        "QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN",
+        "QUEUE_DISTRIBUTION_TYPE_FAN_OUT"
       ],
-      "default": "QUEUE_FAN_OUT_TYPE_ROUND_ROBIN"
+      "default": "QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN"
     },
     "protobufAny": {
       "type": "object",

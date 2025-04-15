@@ -2,7 +2,10 @@ package filequeuev1
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -69,6 +72,55 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 	return fq, nil
 }
 
+func NewFromExisting(_ context.Context, path, filename string) (*FileQueue, error) {
+	if err := os.MkdirAll(ltngFileQueueBasePath+sep+path, dbFilePerm); err != nil {
+		return nil, err
+	}
+	fullPath := getFilePath(path, filename)
+	fullTmpPath := getTmpFilePath(path, filename)
+	file, err := os.OpenFile(fullPath,
+		os.O_RDWR|os.O_APPEND, dbFilePerm,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	fq := &FileQueue{
+		opMtx:    lock.NewEngineLock(),
+		opPopMtx: lock.NewEngineLock(),
+		mtx:      &sync.RWMutex{},
+
+		serializer: serializer.NewRawBinarySerializer(),
+		cursor:     0,
+
+		fullPath:    fullPath,
+		fullTmpPath: fullTmpPath,
+		file:        file,
+		reader:      bufio.NewReader(file),
+		writer:      bufio.NewWriter(file),
+	}
+
+	return fq, nil
+}
+
+func (fq *FileQueue) newFileReference(_ context.Context, fullPath string) error {
+	file, err := os.OpenFile(fullPath,
+		os.O_RDWR|os.O_APPEND, dbFilePerm,
+	)
+	if err != nil {
+		return err
+	}
+
+	fq.file = file
+	fq.cursor = 0
+	fq.readerCursor = 0
+	fq.writeCursor = 0
+	fq.reader = bufio.NewReader(file)
+	fq.writer = bufio.NewWriter(file)
+
+	return nil
+}
+
 func (fq *FileQueue) resetReader() error {
 	if _, err := fq.file.Seek(0, 0); err != nil {
 		return err
@@ -88,9 +140,24 @@ func (fq *FileQueue) resetWriter() error {
 	return nil
 }
 
+func (fq *FileQueue) Reset() error {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	if err := fq.resetReader(); err != nil {
+		return err
+	}
+
+	if err := fq.resetWriter(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (fq *FileQueue) Read(ctx context.Context) ([]byte, error) {
 	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	//defer fq.opMtx.Unlock(fileQueueKey)
+	defer fq.opMtx.Unlock(fileQueueKey)
 
 	return fq.read(ctx)
 }
@@ -114,6 +181,39 @@ func (fq *FileQueue) read(_ context.Context) ([]byte, error) {
 	fq.cursor = uint64(4 + rowLen)
 
 	return row, nil
+}
+
+func (fq *FileQueue) readWithNoReset(_ context.Context) ([]byte, error) {
+	//if err := fq.resetReader(); err != nil {
+	//	return nil, err
+	//}
+
+	rawRowLen := make([]byte, 4)
+	if _, err := fq.reader.Read(rawRowLen); err != nil {
+		return nil, err
+	}
+	rowLen := bytesx.Uint32(rawRowLen)
+
+	row := make([]byte, rowLen)
+	if _, err := fq.reader.Read(row); err != nil {
+		return nil, err
+	}
+
+	fq.cursor = uint64(4 + rowLen)
+
+	return row, nil
+}
+
+func (fq *FileQueue) yield() uint64 {
+	return fq.cursor
+}
+
+func (fq *FileQueue) yieldReader() uint64 {
+	return fq.readerCursor
+}
+
+func (fq *FileQueue) yieldWriter() uint64 {
+	return fq.writeCursor
 }
 
 func (fq *FileQueue) Write(_ context.Context, data interface{}) error {
@@ -145,10 +245,102 @@ func (fq *FileQueue) Write(_ context.Context, data interface{}) error {
 }
 
 func (fq *FileQueue) Pop(ctx context.Context) error {
-	//fq.opMtx.Lock(fileQueueKey, struct{}{})
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
 	defer fq.opMtx.Unlock(fileQueueKey)
 
 	return fq.safelyTruncateFromStart(ctx)
+}
+
+func (fq *FileQueue) PopFromIndex(ctx context.Context, index []byte) error {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	return fq.safelyTruncateFromIndex(ctx, index)
+}
+
+func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) (err error) {
+	if err = fq.resetReader(); err != nil {
+		return err
+	}
+
+	var found bool
+	var upTo, from uint64
+	for {
+		bs, err := fq.readWithNoReset(ctx)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+
+			// TODO: undo reader reset
+			return err
+		}
+
+		if bytes.Contains(bs, index) {
+			found = true
+			from = fq.yield()
+			upTo = from - uint64(len(bs)+4)
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("index not found - %s", string(index))
+	}
+
+	{
+		// TODO: implement file truncation
+		// create temporary file - ok
+		// defer file removal in case of any error - ok
+		// copy upto to temporary file - ok
+		// copy from to temporary file - ok
+		// rename temporary file to main file - ok
+		// recreate the pointer references to the new file - ok
+
+		var tmpFile *os.File
+		tmpFile, err = os.OpenFile(fq.fullTmpPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFilePerm)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			if err != nil {
+				_ = tmpFile.Close()
+				_ = os.Remove(tmpFile.Name())
+			}
+		}()
+
+		// example pair (upTo - from) | 102 - 154
+		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
+			return fmt.Errorf("error copying first part of the file-queue to tmp file-queue: %w", err)
+		}
+
+		if _, err = fq.file.Seek(int64(from), 0); err != nil {
+			return fmt.Errorf("error seeking to file-queue: %w", err)
+		}
+
+		if _, err = io.Copy(tmpFile, fq.file); err != nil {
+			return fmt.Errorf("error copying second part of the file-queue to tmp file-queue: %w", err)
+		}
+
+		if err = tmpFile.Sync(); err != nil {
+			return fmt.Errorf("failed to sync file-queue - %s | err: %v", tmpFile.Name(), err)
+		}
+
+		if err = tmpFile.Close(); err != nil {
+			return fmt.Errorf("failed to close file-queue - %s | err: %v", tmpFile.Name(), err)
+		}
+
+		if err = os.Rename(fq.fullTmpPath, fq.fullPath); err != nil {
+			return fmt.Errorf("error renaming tmp file-queue to file-queue: %w", err)
+		}
+
+		if err = fq.newFileReference(ctx, fq.fullPath); err != nil {
+			return fmt.Errorf("error renaming creating a new file-queue reference: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (fq *FileQueue) safelyTruncateFromStart(_ context.Context) error {
@@ -288,6 +480,13 @@ func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
 	fq.opMtx.Lock(fileQueueKey, struct{}{})
 	defer fq.opMtx.Unlock(fileQueueKey)
 
+	return fq.readFromCursor(ctx)
+}
+
+func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
 	if fq.readerCursor == fq.writeCursor {
 		_ = fq.file.Truncate(0)
 		fq.readerCursor = 0
@@ -314,6 +513,55 @@ func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
 			fq.readerCursor = 0
 			fq.writeCursor = 0
 		}
+
+		return nil, err
+	}
+	rowLen := bytesx.Uint32(rawRowLen)
+
+	row := make([]byte, rowLen)
+	if _, err := fq.reader.Read(row); err != nil {
+		return nil, err
+	}
+
+	fq.readerCursor += uint64(4 + rowLen)
+
+	return row, nil
+}
+
+func (fq *FileQueue) ReadFromCursorWithoutTruncation(ctx context.Context) ([]byte, error) {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	return fq.readFromCursorWithoutTruncation(ctx)
+}
+
+func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte, error) {
+	//if fq.readerCursor == fq.writeCursor {
+	//	_ = fq.file.Truncate(0)
+	//	fq.readerCursor = 0
+	//	fq.writeCursor = 0
+	//	return nil, io.EOF
+	//}
+
+	//if fq.readerCursor >= truncateLimit {
+	//	if err := fq.safelyTruncateToCursor(ctx); err != nil {
+	//		return nil, err
+	//	}
+	//}
+
+	if _, err := fq.file.Seek(int64(fq.readerCursor), 0); err != nil {
+		return nil, err
+	}
+
+	fq.reader.Reset(fq.file)
+
+	rawRowLen := make([]byte, 4)
+	if _, err := fq.reader.Read(rawRowLen); err != nil {
+		//if err == io.EOF {
+		//	_ = fq.file.Truncate(0)
+		//	fq.readerCursor = 0
+		//	fq.writeCursor = 0
+		//}
 
 		return nil, err
 	}
