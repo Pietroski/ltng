@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"golang.org/x/sys/unix"
@@ -50,7 +51,7 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 	file, err := os.OpenFile(fullPath,
 		os.O_RDWR|os.O_CREATE|os.O_APPEND, dbFilePerm,
 	)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "file already exist") {
 		return nil, err
 	}
 
@@ -70,55 +71,6 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 	}
 
 	return fq, nil
-}
-
-func NewFromExisting(_ context.Context, path, filename string) (*FileQueue, error) {
-	if err := os.MkdirAll(ltngFileQueueBasePath+sep+path, dbFilePerm); err != nil {
-		return nil, err
-	}
-	fullPath := getFilePath(path, filename)
-	fullTmpPath := getTmpFilePath(path, filename)
-	file, err := os.OpenFile(fullPath,
-		os.O_RDWR|os.O_APPEND, dbFilePerm,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	fq := &FileQueue{
-		opMtx:    lock.NewEngineLock(),
-		opPopMtx: lock.NewEngineLock(),
-		mtx:      &sync.RWMutex{},
-
-		serializer: serializer.NewRawBinarySerializer(),
-		cursor:     0,
-
-		fullPath:    fullPath,
-		fullTmpPath: fullTmpPath,
-		file:        file,
-		reader:      bufio.NewReader(file),
-		writer:      bufio.NewWriter(file),
-	}
-
-	return fq, nil
-}
-
-func (fq *FileQueue) newFileReference(_ context.Context, fullPath string) error {
-	file, err := os.OpenFile(fullPath,
-		os.O_RDWR|os.O_APPEND, dbFilePerm,
-	)
-	if err != nil {
-		return err
-	}
-
-	fq.file = file
-	fq.cursor = 0
-	fq.readerCursor = 0
-	fq.writeCursor = 0
-	fq.reader = bufio.NewReader(file)
-	fq.writer = bufio.NewWriter(file)
-
-	return nil
 }
 
 func (fq *FileQueue) resetReader() error {
@@ -183,11 +135,10 @@ func (fq *FileQueue) read(_ context.Context) ([]byte, error) {
 	return row, nil
 }
 
+// readWithNoReset does not reset the reader before reading it.
+// it is recommented for using inside a for loop so it does not loop forever,
+// otherwise, the file would be endlessly reset on every for loop iteration.
 func (fq *FileQueue) readWithNoReset(_ context.Context) ([]byte, error) {
-	//if err := fq.resetReader(); err != nil {
-	//	return nil, err
-	//}
-
 	rawRowLen := make([]byte, 4)
 	if _, err := fq.reader.Read(rawRowLen); err != nil {
 		return nil, err
@@ -272,7 +223,6 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 				break
 			}
 
-			// TODO: undo reader reset
 			return err
 		}
 
@@ -335,8 +285,22 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 			return fmt.Errorf("error renaming tmp file-queue to file-queue: %w", err)
 		}
 
-		if err = fq.newFileReference(ctx, fq.fullPath); err != nil {
-			return fmt.Errorf("error renaming creating a new file-queue reference: %w", err)
+		{ // reset file pointers
+			var file *os.File
+			file, err = os.OpenFile(fq.fullPath,
+				os.O_RDWR|os.O_APPEND, dbFilePerm,
+			)
+			if err != nil {
+				return err
+			}
+
+			fq.file = file
+			deduct := from - upTo
+			fq.cursor = deduct
+			fq.readerCursor = deduct
+			fq.writeCursor = deduct
+			fq.reader = bufio.NewReader(file)
+			fq.writer = bufio.NewWriter(file)
 		}
 	}
 
@@ -552,7 +516,6 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 	if _, err := fq.file.Seek(int64(fq.readerCursor), 0); err != nil {
 		return nil, err
 	}
-
 	fq.reader.Reset(fq.file)
 
 	rawRowLen := make([]byte, 4)
@@ -572,6 +535,7 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 		return nil, err
 	}
 
+	//fq.cursor += uint64(4 + rowLen)
 	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil

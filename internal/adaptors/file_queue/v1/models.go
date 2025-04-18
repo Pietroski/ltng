@@ -30,9 +30,9 @@ const (
 )
 
 func getFilePath(path, filename string) string {
-	return ltngFileQueueBasePath + sep + path + sep + filename
+	return ltngFileQueueBasePath + sep + path + sep + filename + ext
 }
 
 func getTmpFilePath(path, filename string) string {
-	return ltngFileQueueBasePath + sep + path + sep + tmpPrefix + filename
+	return ltngFileQueueBasePath + sep + path + sep + tmpPrefix + filename + ext
 }

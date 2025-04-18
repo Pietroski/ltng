@@ -3,14 +3,17 @@ package ltngqueue_engine
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
-	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+
+	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
+	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 )
 
 type EventTestData struct {
@@ -77,6 +80,8 @@ func TestQueueFlow(t *testing.T) {
 			require.NoError(t, err)
 			eventID2 = event.EventID
 		}
+
+		_, _ = eventID1, eventID2
 
 		op := concurrent.New("test_round_robin")
 		op.OpX(func() (any, error) {

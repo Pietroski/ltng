@@ -3,6 +3,7 @@ package ltngqueue_engine
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"runtime"
 	"strings"
@@ -99,7 +100,7 @@ func (q *Queue) CreateQueueSignaler(ctx context.Context, queue *queuemodels.Queu
 		return nil, fmt.Errorf("error validating queue: %w", err)
 	}
 
-	fq, err := filequeuev1.NewFromExisting(ctx, queue.Path, queue.Name)
+	fq, err := filequeuev1.New(ctx, queue.Path, queue.Name)
 	if err != nil { //  && !strings.Contains(err.Error(), "file already exist")
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
@@ -136,7 +137,7 @@ func (q *Queue) CreateQueueSignalerGroup(
 		return nil, nil
 	}
 
-	fq, err := filequeuev1.NewFromExisting(ctx, queue.Path, queue.GetGroupName())
+	fq, err := filequeuev1.New(ctx, queue.Path, queue.GetGroupName())
 	if err != nil {
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
@@ -306,10 +307,9 @@ func (q *Queue) SubscribeToQueue(
 
 		subscriptionQueueGroup.PublishList.Append(publisher)
 		subscriptionQueue.Set(completeLockKey, subscriptionQueueGroup)
-		return nil
+	} else {
+		subscriptionQueueGroup.PublishList.Append(publisher)
 	}
-
-	subscriptionQueueGroup.PublishList.Append(publisher)
 
 	qs, ok := q.fqMapping.Get(completeLockKey)
 	if !ok {
@@ -345,6 +345,7 @@ func (q *Queue) UnsubscribeToQueue(
 	subscriptionGroupQueue.PublishList.FindAndDelete(
 		func(item *queuemodels.Publisher) bool {
 			if item.NodeID == publisher.NodeID {
+				// TODO: close sender channel
 				return true
 			}
 
@@ -440,14 +441,14 @@ func (q *Queue) consumerThread(
 					case <-ack:
 						cancel()
 						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-							log.Print("error popping queue: %w", err)
+							log.Printf("error popping queue: %v", err)
 						}
 
 						queueSignaler.SignalTransmitter <- struct{}{}
 					case <-nack:
 						cancel()
 						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-							log.Print("error popping queue: %w", err)
+							log.Printf("error popping queue: %v", err)
 						}
 
 						// TODO: add retry count limit
@@ -458,7 +459,7 @@ func (q *Queue) consumerThread(
 						event.Metadata.RetryCount++
 
 						if _, err = q.Publish(ctx, event); err != nil {
-							log.Print("error re-publishing nacked event: %w", err)
+							log.Printf("error re-publishing nacked event: %v", err)
 						}
 
 						queueSignaler.SignalTransmitter <- struct{}{}
@@ -466,11 +467,11 @@ func (q *Queue) consumerThread(
 						log.Printf("event context cancellation: %v", ctx.Err())
 
 						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-							log.Print("error popping queue: %w", err)
+							log.Printf("error popping queue: %v", err)
 						}
 
 						if _, err = q.Publish(ctx, event); err != nil {
-							log.Print("error re-publishing nacked event: %w", err)
+							log.Printf("error re-publishing nacked event: %v", err)
 						}
 
 						queueSignaler.SignalTransmitter <- struct{}{}
@@ -491,53 +492,53 @@ func (q *Queue) consumerThread(
 	}
 }
 
-// Consume consumes the next event message
-// TODO: pass a callback function or return the event?
-func (q *Queue) getEventFromQueue(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.Event, error) {
-	qs, err := q.getQueueSignaler(ctx, queue)
-	if err != nil {
-		return nil, fmt.Errorf("error getting queue: %w", err)
-	}
-
-	bs, err := qs.FileQueue.ReadFromCursor(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error reading from queue: %w", err)
-	}
-
-	// TODO: store into to ack items
-	// TODO: store into the DB by timed-base-store
-
-	var event queuemodels.Event
-	if err = q.serializer.Deserialize(bs, &event); err != nil {
-		return nil, fmt.Errorf("error deserializing event: %w", err)
-	}
-
-	return &event, nil
-}
-
-func (q *Queue) getQueueAndItsNextEvent(
-	ctx context.Context, queue *queuemodels.Queue,
-) (*queuemodels.Event, *filequeuev1.FileQueue, error) {
-	qs, err := q.getQueueSignaler(ctx, queue)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error getting queue: %w", err)
-	}
-
-	bs, err := qs.FileQueue.ReadFromCursor(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error reading from queue: %w", err)
-	}
-
-	// TODO: store into to ack items
-	// TODO: store into the DB by timed-base-store
-
-	var event queuemodels.Event
-	if err = q.serializer.Deserialize(bs, &event); err != nil {
-		return nil, nil, fmt.Errorf("error deserializing event: %w", err)
-	}
-
-	return &event, qs.FileQueue, nil
-}
+//// Consume consumes the next event message
+//// TODO: pass a callback function or return the event?
+//func (q *Queue) getEventFromQueue(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.Event, error) {
+//	qs, err := q.getQueueSignaler(ctx, queue)
+//	if err != nil {
+//		return nil, fmt.Errorf("error getting queue: %w", err)
+//	}
+//
+//	bs, err := qs.FileQueue.ReadFromCursor(ctx)
+//	if err != nil {
+//		return nil, fmt.Errorf("error reading from queue: %w", err)
+//	}
+//
+//	// TODO: store into to ack items
+//	// TODO: store into the DB by timed-base-store
+//
+//	var event queuemodels.Event
+//	if err = q.serializer.Deserialize(bs, &event); err != nil {
+//		return nil, fmt.Errorf("error deserializing event: %w", err)
+//	}
+//
+//	return &event, nil
+//}
+//
+//func (q *Queue) getQueueAndItsNextEvent(
+//	ctx context.Context, queue *queuemodels.Queue,
+//) (*queuemodels.Event, *filequeuev1.FileQueue, error) {
+//	qs, err := q.getQueueSignaler(ctx, queue)
+//	if err != nil {
+//		return nil, nil, fmt.Errorf("error getting queue: %w", err)
+//	}
+//
+//	bs, err := qs.FileQueue.ReadFromCursor(ctx)
+//	if err != nil {
+//		return nil, nil, fmt.Errorf("error reading from queue: %w", err)
+//	}
+//
+//	// TODO: store into to ack items
+//	// TODO: store into the DB by timed-base-store
+//
+//	var event queuemodels.Event
+//	if err = q.serializer.Deserialize(bs, &event); err != nil {
+//		return nil, nil, fmt.Errorf("error deserializing event: %w", err)
+//	}
+//
+//	return &event, qs.FileQueue, nil
+//}
 
 func (q *Queue) getQueueNextEvent(
 	ctx context.Context, queueSignaler *queuemodels.QueueSignaler,
@@ -545,6 +546,9 @@ func (q *Queue) getQueueNextEvent(
 	bs, err := queueSignaler.FileQueue.ReadFromCursorWithoutTruncation(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error reading from queue: %w", err)
+	}
+	if bs == nil || len(bs) == 0 {
+		return nil, io.EOF
 	}
 
 	// TODO: store into to ack items

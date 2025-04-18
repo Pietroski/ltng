@@ -2,9 +2,10 @@ package queuemodels
 
 import (
 	"fmt"
+	"sync/atomic"
+
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
-	"sync/atomic"
 )
 
 type QueueDistributionType int32
