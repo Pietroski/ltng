@@ -2,6 +2,7 @@ package ltngqueue_engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -95,7 +96,9 @@ func (q *Queue) Close() error {
 	return nil
 }
 
-func (q *Queue) CreateQueueSignaler(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.QueueSignaler, error) {
+func (q *Queue) CreateQueueSignaler(
+	ctx context.Context, queue *queuemodels.Queue,
+) (*queuemodels.QueueSignaler, error) {
 	if err := queue.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating queue: %w", err)
 	}
@@ -105,7 +108,8 @@ func (q *Queue) CreateQueueSignaler(ctx context.Context, queue *queuemodels.Queu
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
 	qs := &queuemodels.QueueSignaler{
-		FileQueue:         fq,
+		FileQueue: fq,
+		// TODO: revisit!!
 		SignalTransmitter: make(chan struct{}),
 		FirstSent:         new(atomic.Bool),
 		IsClosed:          new(atomic.Bool),
@@ -142,7 +146,8 @@ func (q *Queue) CreateQueueSignalerGroup(
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
 	qs := &queuemodels.QueueSignaler{
-		FileQueue:         fq,
+		FileQueue: fq,
+		// TODO: revisit!!
 		SignalTransmitter: make(chan struct{}),
 		FirstSent:         new(atomic.Bool),
 		IsClosed:          new(atomic.Bool),
@@ -210,11 +215,15 @@ func (q *Queue) DeleteQueue(ctx context.Context, queue *queuemodels.Queue) error
 	return nil
 }
 
-func (q *Queue) DeleteQueueHistory(ctx context.Context, queue *queuemodels.Queue) error {
+func (q *Queue) DeleteQueueHistory(
+	ctx context.Context, queue *queuemodels.Queue,
+) error {
 	return notImplemented
 }
 
-func (q *Queue) getQueueSignaler(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.QueueSignaler, error) {
+func (q *Queue) getQueueSignaler(
+	ctx context.Context, queue *queuemodels.Queue,
+) (*queuemodels.QueueSignaler, error) {
 	lockKey := queue.GetCompleteLockKey()
 	qs, ok := q.fqMapping.Get(lockKey)
 	if !ok {
@@ -416,70 +425,17 @@ func (q *Queue) consumerThread(
 		case <-queueSignaler.SignalTransmitter:
 			event, err := q.getQueueNextEvent(ctx, queueSignaler)
 			if err != nil {
+				if errors.Is(err, io.EOF) {
+					continue
+				}
+
 				log.Printf("error getting event from queue: %v", err)
 				continue
 			}
+			// TODO: debug log
+			//log.Printf("next event %v", event.EventID)
 
-			ack := make(chan struct{})
-			nack := make(chan struct{})
-			et := &queuemodels.EventTracker{
-				EventID: event.EventID,
-				Event:   event,
-				Ack:     ack,
-				Nack:    nack,
-			}
-			q.eventMapTracker.Set(event.EventID, et)
-			if err = q.publishToSubscribers(ctx, event); err != nil {
-				log.Printf("error publishing event: %v", err)
-			}
-			eventIndex := []byte(et.EventID)
-
-			go func() {
-				ctxtimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
-				for {
-					select {
-					case <-ack:
-						cancel()
-						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-							log.Printf("error popping queue: %v", err)
-						}
-
-						queueSignaler.SignalTransmitter <- struct{}{}
-					case <-nack:
-						cancel()
-						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-							log.Printf("error popping queue: %v", err)
-						}
-
-						// TODO: add retry count limit
-						if event.Metadata.RetryCount > q.retryCountLimit {
-							// TODO: log and send it to the DLQ if existent?
-							return
-						}
-						event.Metadata.RetryCount++
-
-						if _, err = q.Publish(ctx, event); err != nil {
-							log.Printf("error re-publishing nacked event: %v", err)
-						}
-
-						queueSignaler.SignalTransmitter <- struct{}{}
-					case <-ctxtimeout.Done():
-						log.Printf("event context cancellation: %v", ctx.Err())
-
-						if err = queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-							log.Printf("error popping queue: %v", err)
-						}
-
-						if _, err = q.Publish(ctx, event); err != nil {
-							log.Printf("error re-publishing nacked event: %v", err)
-						}
-
-						queueSignaler.SignalTransmitter <- struct{}{}
-						continue
-					}
-				}
-			}()
-
+			go q.handleEventWaiting(ctx, queueSignaler, event)
 		case <-ctx.Done():
 			log.Printf("server context cancellation: %v", ctx.Err())
 			if err := queueSignaler.FileQueue.Reset(); err != nil {
@@ -492,53 +448,81 @@ func (q *Queue) consumerThread(
 	}
 }
 
-//// Consume consumes the next event message
-//// TODO: pass a callback function or return the event?
-//func (q *Queue) getEventFromQueue(ctx context.Context, queue *queuemodels.Queue) (*queuemodels.Event, error) {
-//	qs, err := q.getQueueSignaler(ctx, queue)
-//	if err != nil {
-//		return nil, fmt.Errorf("error getting queue: %w", err)
-//	}
-//
-//	bs, err := qs.FileQueue.ReadFromCursor(ctx)
-//	if err != nil {
-//		return nil, fmt.Errorf("error reading from queue: %w", err)
-//	}
-//
-//	// TODO: store into to ack items
-//	// TODO: store into the DB by timed-base-store
-//
-//	var event queuemodels.Event
-//	if err = q.serializer.Deserialize(bs, &event); err != nil {
-//		return nil, fmt.Errorf("error deserializing event: %w", err)
-//	}
-//
-//	return &event, nil
-//}
-//
-//func (q *Queue) getQueueAndItsNextEvent(
-//	ctx context.Context, queue *queuemodels.Queue,
-//) (*queuemodels.Event, *filequeuev1.FileQueue, error) {
-//	qs, err := q.getQueueSignaler(ctx, queue)
-//	if err != nil {
-//		return nil, nil, fmt.Errorf("error getting queue: %w", err)
-//	}
-//
-//	bs, err := qs.FileQueue.ReadFromCursor(ctx)
-//	if err != nil {
-//		return nil, nil, fmt.Errorf("error reading from queue: %w", err)
-//	}
-//
-//	// TODO: store into to ack items
-//	// TODO: store into the DB by timed-base-store
-//
-//	var event queuemodels.Event
-//	if err = q.serializer.Deserialize(bs, &event); err != nil {
-//		return nil, nil, fmt.Errorf("error deserializing event: %w", err)
-//	}
-//
-//	return &event, qs.FileQueue, nil
-//}
+func (q *Queue) handleEventWaiting(
+	ctx context.Context, queueSignaler *queuemodels.QueueSignaler, event *queuemodels.Event,
+) {
+	ack := make(chan struct{})
+	nack := make(chan struct{})
+	et := &queuemodels.EventTracker{
+		EventID: event.EventID,
+		Event:   event,
+		Ack:     ack,
+		Nack:    nack,
+	}
+	q.eventMapTracker.Set(event.EventID, et)
+	if err := q.publishToSubscribers(ctx, event); err != nil {
+		log.Printf("error publishing event: %v", err)
+	}
+	eventIndex := []byte(et.EventID)
+
+	ctxtimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
+	defer func() {
+		cancel()
+		queueSignaler.SignalTransmitter <- struct{}{}
+	}()
+
+	for {
+		select {
+		case <-ack:
+			cancel()
+			if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+				log.Printf("error popping queue: %v", err)
+			}
+
+			// TODO: debug log
+			// log.Printf("event %v successfully ack'ed", event.EventID)
+			return
+		case <-nack:
+			cancel()
+			if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+				log.Printf("error popping queue: %v", err)
+				return
+			}
+
+			// TODO: add retry count limit
+			if event.Metadata.RetryCount > q.retryCountLimit {
+				// TODO: log and send it to the DLQ if existent?
+				return
+			}
+			event.Metadata.RetryCount++
+
+			if _, err := q.Publish(ctx, event); err != nil {
+				log.Printf("error re-publishing nacked event: %v", err)
+			}
+
+			// TODO: debug log
+			// log.Printf("event %v successfully nack'ed", event.EventID)
+
+			return
+		case <-ctxtimeout.Done():
+			err := ctxtimeout.Err()
+			if !errors.Is(err, context.DeadlineExceeded) {
+				log.Printf("event %v successfully ack'ed", event.EventID)
+				return
+			}
+
+			// TODO: debug log
+			log.Printf("event context cancellation: %v",
+				fmt.Errorf("event %v being cancelled: %v", event.EventID, err))
+
+			if err := queueSignaler.FileQueue.RepublishIndex(ctx, eventIndex); err != nil {
+				log.Printf("error republishing to queue: %v", err)
+			}
+
+			return
+		}
+	}
+}
 
 func (q *Queue) getQueueNextEvent(
 	ctx context.Context, queueSignaler *queuemodels.QueueSignaler,
@@ -585,7 +569,7 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 	if !ok {
 		return nil, fmt.Errorf("no event mapper found for %s - failed to ack event message", event.EventID)
 	}
-	et.Ack <- struct{}{}
+	et.Nack <- struct{}{}
 
 	return nil, nil
 }

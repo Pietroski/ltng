@@ -1,6 +1,7 @@
 package safe
 
 import (
+	"runtime"
 	"sync/atomic"
 
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
@@ -45,5 +46,11 @@ func (it *TicketStorageLoop[T]) Next() T {
 	}
 
 	it.nextIndex.Store(1)
+
+	for !it.appending.CompareAndSwap(0, 1) {
+		runtime.Gosched()
+	}
+	defer it.appending.Store(0)
+
 	return it.slots[0]
 }

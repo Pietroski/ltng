@@ -70,7 +70,7 @@ func MapToQueue(q *grpc_ltngqueue.Queue) *queuemodels.Queue {
 	queue := &queuemodels.Queue{
 		Name:                  q.GetName(),
 		Path:                  q.GetPath(),
-		QueueDistributionType: int32(q.GetQueueDistributionType()), // queuemodels.QueueDistributionType(q.GetQueueDistributionType()),
+		QueueDistributionType: queuemodels.QueueDistributionType(q.GetQueueDistributionType()),
 		CreatedAt:             q.GetCreatedAt().AsTime().Unix(),
 		LastStartedAt:         q.GetLastStartedAt().AsTime().Unix(),
 	}

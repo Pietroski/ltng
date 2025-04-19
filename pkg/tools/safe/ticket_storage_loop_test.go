@@ -5,7 +5,20 @@ import (
 )
 
 func TestTicketStorageLoop(t *testing.T) {
-	t.Run("", func(t *testing.T) {
+	t.Run("one item", func(t *testing.T) {
+		tsl := NewTicketStorageLoop[int](WithTicketStorageSize[int](2))
+		limit := 10
+
+		tsl.Put(1)
+
+		t.Log(len(tsl.Get()), tsl.Get())
+
+		for i := 0; i < limit; i++ {
+			t.Log(tsl.Next())
+		}
+	})
+
+	t.Run("two items", func(t *testing.T) {
 		tsl := NewTicketStorageLoop[int](WithTicketStorageSize[int](2))
 		limit := 10
 
@@ -19,7 +32,7 @@ func TestTicketStorageLoop(t *testing.T) {
 		}
 	})
 
-	t.Run("", func(t *testing.T) {
+	t.Run("three items", func(t *testing.T) {
 		tsl := NewTicketStorageLoop[int](WithTicketStorageSize[int](3))
 		limit := 10
 

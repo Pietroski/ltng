@@ -1540,6 +1540,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("test on and off", func(t *testing.T) {
+		ts := initTestSuite(t)
+		dbInfo := createTestStore(t, ts.ctx, ts)
+		_ = dbInfo
+		_ = ts
+	})
 }
 
 func TestReadFromFQ(t *testing.T) {

@@ -2,12 +2,12 @@ package filequeuev1
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"os"
 	"runtime"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1251,13 +1251,13 @@ func TestFileQueue_PopFromIndex(t *testing.T) {
 
 				op := concurrent.New("simultaneous popping")
 				op.OpX(func() (any, error) {
-					err = fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
+					err := fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
 					require.NoError(t, err)
 
 					return nil, nil
 				})
 				op.OpX(func() (any, error) {
-					err = fq.PopFromIndex(ctx, []byte(testDataList[anotherIndexPosition].IDField))
+					err := fq.PopFromIndex(ctx, []byte(testDataList[anotherIndexPosition].IDField))
 					require.NoError(t, err)
 
 					return nil, nil
@@ -1301,13 +1301,13 @@ func TestFileQueue_PopFromIndex(t *testing.T) {
 
 				op := concurrent.New("simultaneous popping")
 				op.OpX(func() (any, error) {
-					err = fq.PopFromIndex(ctx, nonExistentIndex)
+					err := fq.PopFromIndex(ctx, nonExistentIndex)
 					require.Error(t, err)
 
 					return nil, nil
 				})
 				op.OpX(func() (any, error) {
-					err = fq.PopFromIndex(ctx, nonExistentIndex)
+					err := fq.PopFromIndex(ctx, nonExistentIndex)
 					require.Error(t, err)
 
 					return nil, nil

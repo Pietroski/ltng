@@ -9,7 +9,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"strings"
 	"sync"
 
 	"golang.org/x/sys/unix"
@@ -51,7 +50,7 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 	file, err := os.OpenFile(fullPath,
 		os.O_RDWR|os.O_CREATE|os.O_APPEND, dbFilePerm,
 	)
-	if err != nil && !strings.Contains(err.Error(), "file already exist") {
+	if err != nil { // && !strings.Contains(err.Error(), "file already exist")
 		return nil, err
 	}
 
@@ -79,6 +78,7 @@ func (fq *FileQueue) resetReader() error {
 	}
 
 	fq.reader.Reset(fq.file)
+	fq.readerCursor = 0
 	fq.cursor = 0
 	return nil
 }
@@ -151,6 +151,7 @@ func (fq *FileQueue) readWithNoReset(_ context.Context) ([]byte, error) {
 	}
 
 	fq.cursor = uint64(4 + rowLen)
+	fq.readerCursor = uint64(4 + rowLen)
 
 	return row, nil
 }
@@ -256,7 +257,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 		defer func() {
 			if err != nil {
 				_ = tmpFile.Close()
-				_ = os.Remove(tmpFile.Name())
+				_ = os.Remove(fq.fullTmpPath)
 			}
 		}()
 
@@ -296,9 +297,115 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 
 			fq.file = file
 			deduct := from - upTo
-			fq.cursor = deduct
-			fq.readerCursor = deduct
-			fq.writeCursor = deduct
+			fq.cursor -= deduct
+			fq.readerCursor -= deduct
+			fq.writeCursor -= deduct
+			fq.reader = bufio.NewReader(file)
+			fq.writer = bufio.NewWriter(file)
+		}
+	}
+
+	return nil
+}
+
+func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte) error {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	return fq.safelyRepublishIndex(ctx, index)
+}
+
+func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (err error) {
+	if err = fq.resetReader(); err != nil {
+		return err
+	}
+
+	var found bool
+	var upTo, from uint64
+	for {
+		bs, err := fq.readWithNoReset(ctx)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+
+			return err
+		}
+
+		if bytes.Contains(bs, index) {
+			found = true
+			from = fq.yield()
+			upTo = from - uint64(len(bs)+4)
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("index not found - %s", string(index))
+	}
+
+	{
+		var tmpFile *os.File
+		tmpFile, err = os.OpenFile(fq.fullTmpPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFilePerm)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			if err != nil {
+				_ = tmpFile.Close()
+				_ = os.Remove(fq.fullTmpPath)
+			}
+		}()
+
+		// example pair (upTo - from) | 102 - 154
+		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
+			return fmt.Errorf("error copying first part of the file-queue to tmp file-queue: %w", err)
+		}
+
+		if _, err = fq.file.Seek(int64(from), 0); err != nil {
+			return fmt.Errorf("error seeking to file-queue: %w", err)
+		}
+
+		if _, err = io.Copy(tmpFile, fq.file); err != nil {
+			return fmt.Errorf("error copying second part of the file-queue to tmp file-queue: %w", err)
+		}
+
+		if _, err = fq.file.Seek(int64(upTo), 0); err != nil {
+			return fmt.Errorf("error seeking to file-queue upTo: %w", err)
+		}
+
+		if _, err = io.CopyN(tmpFile, fq.file, int64(from)); err != nil {
+			return fmt.Errorf(
+				"error copying first part of the file-queue to the end of the tmp file-queue: %w", err)
+		}
+
+		if err = tmpFile.Sync(); err != nil {
+			return fmt.Errorf("failed to sync file-queue - %s | err: %v", tmpFile.Name(), err)
+		}
+
+		if err = tmpFile.Close(); err != nil {
+			return fmt.Errorf("failed to close file-queue - %s | err: %v", tmpFile.Name(), err)
+		}
+
+		if err = os.Rename(fq.fullTmpPath, fq.fullPath); err != nil {
+			return fmt.Errorf("error renaming tmp file-queue to file-queue: %w", err)
+		}
+
+		{ // reset file pointers
+			var file *os.File
+			file, err = os.OpenFile(fq.fullPath,
+				os.O_RDWR|os.O_APPEND, dbFilePerm,
+			)
+			if err != nil {
+				return err
+			}
+
+			fq.file = file
+			deduct := from - upTo
+			fq.cursor -= deduct
+			fq.readerCursor -= deduct
+			//fq.writeCursor -= deduct
 			fq.reader = bufio.NewReader(file)
 			fq.writer = bufio.NewWriter(file)
 		}
@@ -448,8 +555,8 @@ func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
 }
 
 func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	//fq.opMtx.Lock(fileQueueKey, struct{}{})
+	//defer fq.opMtx.Unlock(fileQueueKey)
 
 	if fq.readerCursor == fq.writeCursor {
 		_ = fq.file.Truncate(0)
