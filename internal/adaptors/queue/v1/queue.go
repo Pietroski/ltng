@@ -314,19 +314,34 @@ func (q *Queue) SubscribeToQueue(
 			),
 		}
 
-		subscriptionQueueGroup.PublishList.Append(publisher)
 		subscriptionQueue.Set(completeLockKey, subscriptionQueueGroup)
-	} else {
-		subscriptionQueueGroup.PublishList.Append(publisher)
+	}
+	subscriptionQueueGroup.PublishList.Append(publisher)
+
+	{
+		qs, ok := q.fqMapping.Get(lockKey)
+		if !ok {
+			return fmt.Errorf("error loading queue subscriber for lockKey: no subscriber found")
+		}
+
+		if qs.FirstSent.CompareAndSwap(false, true) {
+			qs.SignalTransmitter <- struct{}{}
+		}
 	}
 
-	qs, ok := q.fqMapping.Get(completeLockKey)
-	if !ok {
-		return fmt.Errorf("error loading queue subscriber: no subscriber found")
-	}
+	{
+		if lockKey == completeLockKey {
+			return nil
+		}
 
-	if qs.FirstSent.CompareAndSwap(false, true) {
-		qs.SignalTransmitter <- struct{}{}
+		qs, ok := q.fqMapping.Get(completeLockKey)
+		if !ok {
+			return fmt.Errorf("error loading queue subscriber for completeLockKey: no subscriber found")
+		}
+
+		if qs.FirstSent.CompareAndSwap(false, true) {
+			qs.SignalTransmitter <- struct{}{}
+		}
 	}
 
 	return nil
@@ -398,15 +413,20 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 		return nil
 	}
 
+	//TODO: remove comments
 	groupMapping.Range(func(key string, orchestrator *queuemodels.QueueOrchestrator) bool {
+		//fmt.Printf("publishing to queue: %s - %v - %v - %+v\n", key,
+		//	orchestrator.Queue.QueueDistributionType, orchestrator.Queue, orchestrator.PublishList.Get())
 		switch orchestrator.Queue.QueueDistributionType {
 		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
+			//fmt.Printf("publishing to fan out: %s - %v\n", key, orchestrator.PublishList.Get())
 			for _, publisher := range orchestrator.PublishList.Get() {
 				publisher.Sender <- event
 			}
 		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
 			fallthrough
 		default:
+			//fmt.Printf("publishing to round robin: %s\n", key)
 			orchestrator.PublishList.Next().Sender <- event
 		}
 
@@ -454,11 +474,14 @@ func (q *Queue) handleEventWaiting(
 	ack := make(chan struct{})
 	nack := make(chan struct{})
 	et := &queuemodels.EventTracker{
-		EventID: event.EventID,
-		Event:   event,
-		Ack:     ack,
-		Nack:    nack,
+		EventID:   event.EventID,
+		Event:     event,
+		Ack:       ack,
+		Nack:      nack,
+		WasACKed:  new(atomic.Bool),
+		WasNACKed: new(atomic.Bool),
 	}
+	fmt.Printf("event %v\n", event.EventID)
 	q.eventMapTracker.Set(event.EventID, et)
 	if err := q.publishToSubscribers(ctx, event); err != nil {
 		log.Printf("error publishing event: %v", err)
@@ -474,16 +497,17 @@ func (q *Queue) handleEventWaiting(
 	for {
 		select {
 		case <-ack:
-			cancel()
 			if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
 				log.Printf("error popping queue: %v", err)
 			}
 
 			// TODO: debug log
 			// log.Printf("event %v successfully ack'ed", event.EventID)
+
+			q.eventMapTracker.Delete(event.EventID)
+
 			return
 		case <-nack:
-			cancel()
 			if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
 				log.Printf("error popping queue: %v", err)
 				return
@@ -503,6 +527,8 @@ func (q *Queue) handleEventWaiting(
 			// TODO: debug log
 			// log.Printf("event %v successfully nack'ed", event.EventID)
 
+			q.eventMapTracker.Delete(event.EventID)
+
 			return
 		case <-ctxtimeout.Done():
 			err := ctxtimeout.Err()
@@ -519,6 +545,8 @@ func (q *Queue) handleEventWaiting(
 				log.Printf("error republishing to queue: %v", err)
 			}
 
+			q.eventMapTracker.Delete(event.EventID)
+
 			return
 		}
 	}
@@ -531,9 +559,9 @@ func (q *Queue) getQueueNextEvent(
 	if err != nil {
 		return nil, fmt.Errorf("error reading from queue: %w", err)
 	}
-	if bs == nil || len(bs) == 0 {
-		return nil, io.EOF
-	}
+	//if bs == nil || len(bs) == 0 {
+	//	return nil, io.EOF
+	//}
 
 	// TODO: store into to ack items
 	// TODO: store into the DB by timed-base-store
@@ -547,19 +575,34 @@ func (q *Queue) getQueueNextEvent(
 }
 
 func (q *Queue) Ack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
+	q.opMtx.Lock(event.EventID, struct{}{})
+	defer q.opMtx.Unlock(event.EventID)
+
 	//eventID := event.EventID
 	// TODO: remove from the timed-base-store
 	// TODO: send to sigchannel to fetch next event message
 	et, ok := q.eventMapTracker.Get(event.EventID)
 	if !ok {
-		return nil, fmt.Errorf("no event mapper found for %s - failed to ack event message", event.EventID)
+		//return nil, nil
+		return nil, fmt.Errorf(
+			"no event mapper found for %s or event message already ack'ed - failed to ack event message",
+			event.EventID,
+		)
 	}
+	if et.WasACKed.Load() {
+		return et.Event, nil
+	}
+
 	et.Ack <- struct{}{}
+	et.WasACKed.Store(true)
 
 	return et.Event, nil
 }
 
 func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
+	q.opMtx.Lock(event.EventID, struct{}{})
+	defer q.opMtx.Unlock(event.EventID)
+
 	//eventID := event.EventID
 	// TODO: republish
 	// TODO: remove from the timed-base-store

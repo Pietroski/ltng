@@ -40,17 +40,18 @@ func NewTicketStorageLoop[T any](opts ...options.Option) *TicketStorageLoop[T] {
 }
 
 func (it *TicketStorageLoop[T]) Next() T {
+	// TODO: evaluate whether it is necessary
+	for !it.appending.CompareAndSwap(0, 1) {
+		runtime.Gosched()
+	}
+	defer it.appending.Store(0)
+
 	idx := it.nextIndex.Add(1) - 1
 	if idx < it.done.Load() {
 		return it.slots[idx]
 	}
 
 	it.nextIndex.Store(1)
-
-	for !it.appending.CompareAndSwap(0, 1) {
-		runtime.Gosched()
-	}
-	defer it.appending.Store(0)
 
 	return it.slots[0]
 }

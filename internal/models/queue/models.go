@@ -96,7 +96,7 @@ func (q *Queue) GetGroupName() string {
 		return q.Name
 	}
 
-	strKey := q.Name + "/" + q.Group.Name
+	strKey := q.Name + "|" + q.Group.Name
 	return strKey
 }
 
@@ -134,6 +134,9 @@ type EventTracker struct {
 	Event   *Event
 	Ack     chan struct{}
 	Nack    chan struct{}
+
+	WasACKed  *atomic.Bool
+	WasNACKed *atomic.Bool
 }
 
 type QueueSignaler struct {

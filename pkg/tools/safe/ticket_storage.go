@@ -40,6 +40,12 @@ func (ts *TicketStorage[T]) Append(item T) {
 }
 
 func (ts *TicketStorage[T]) Get() []T {
+	// TODO: evaluate whether it is necessary
+	for !ts.appending.CompareAndSwap(0, 1) {
+		runtime.Gosched()
+	}
+	defer ts.appending.Store(0)
+
 	return ts.slots[:ts.done.Load()]
 }
 
