@@ -102,6 +102,16 @@ func (q *Queue) CreateQueueSignaler(
 		return nil, fmt.Errorf("error validating queue: %w", err)
 	}
 
+	info := &ltngenginemodels.StoreInfo{
+		Name:         queue.Name,
+		Path:         queue.Path,
+		CreatedAt:    time.Now().UTC().Unix(),
+		LastOpenedAt: time.Now().UTC().Unix(),
+	}
+	if _, err := q.ltngdbengine.CreateStore(ctx, info); err != nil {
+		return nil, fmt.Errorf("error creating queue: %w", err)
+	}
+
 	fq, err := filequeuev1.New(ctx, queue.Path, queue.Name)
 	if err != nil { //  && !strings.Contains(err.Error(), "file already exist")
 		return nil, fmt.Errorf("error creating queue: %w", err)
