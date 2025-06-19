@@ -19,7 +19,7 @@ func (c *Controller) CreateQueue(
 	}
 	queue := ltngqueue_mappers.MapToQueue(request.GetQueue())
 
-	if _, err := c.queueEngine.CreateQueue(ctx, queue); err != nil {
+	if _, err := c.queueEngine.CreateQueueSignaler(ctx, queue); err != nil {
 		return nil, err
 	}
 

@@ -20,7 +20,7 @@ RUN CGO_ENABLED=0 \
 GOOS=linux \
 GOARCH=amd64 \
 GO111MODULE=on \
-go build -mod=vendor -ldflags="-w -s" -o lightning-db-node cmd/grpc/main.go
+go build -mod=vendor -ldflags="-w -s" -o lightning-db-node cmd/ltngdb/main.go
 
 # GOOS=linux \
 # GOARCH=amd64 \
