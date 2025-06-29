@@ -756,7 +756,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_round_robin",
 					Path:                  "test/round_robin",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -795,7 +795,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_round_robin",
 					Path:                  "test/round_robin",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -833,7 +833,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_round_robin",
 					Path:                  "test/round_robin",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -871,7 +871,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_round_robin",
 					Path:                  "test/round_robin",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -910,7 +910,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_fanout",
 					Path:                  "test/fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -947,7 +947,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_fanout",
 					Path:                  "test/fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -984,7 +984,7 @@ func TestQueueFlow(t *testing.T) {
 				queue := &queuemodels.Queue{
 					Name:                  "test_fanout",
 					Path:                  "test/fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT,
 					Group: &queuemodels.Group{
 						Name: "test_group",
 					},
@@ -1024,7 +1024,7 @@ func TestQueueFlow(t *testing.T) {
 				groupRoundRobinQueue := &queuemodels.Queue{
 					Name:                  "round_robin|fanout",
 					Path:                  "test/round_robin|fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN,
 					Group: &queuemodels.Group{
 						Name: "test_group|round_robin",
 					},
@@ -1035,7 +1035,7 @@ func TestQueueFlow(t *testing.T) {
 				groupFanOutQueue := &queuemodels.Queue{
 					Name:                  "round_robin|fanout",
 					Path:                  "test/round_robin|fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT,
 					Group: &queuemodels.Group{
 						Name: "test_group|fanout",
 					},
@@ -1102,7 +1102,7 @@ func TestQueueFlow(t *testing.T) {
 				groupRoundRobinQueue := &queuemodels.Queue{
 					Name:                  "round_robin|fanout",
 					Path:                  "test/round_robin|fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN,
 					Group: &queuemodels.Group{
 						Name: "test_group|round_robin",
 					},
@@ -1113,7 +1113,7 @@ func TestQueueFlow(t *testing.T) {
 				groupFanOutQueue := &queuemodels.Queue{
 					Name:                  "round_robin|fanout",
 					Path:                  "test/round_robin|fanout",
-					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT,
+					QueueDistributionType: queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT,
 					Group: &queuemodels.Group{
 						Name: "test_group|fanout",
 					},

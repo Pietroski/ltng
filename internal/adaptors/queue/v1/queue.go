@@ -399,11 +399,11 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 		}
 
 		switch orchestrator.Queue.QueueDistributionType {
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT:
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
 			for _, publisher := range orchestrator.PublishList.Get() {
 				publisher.Sender <- event
 			}
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN:
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
 			fallthrough
 		default:
 			orchestrator.PublishList.Next().Sender <- event
