@@ -23,7 +23,7 @@ const (
 	DeleteFileQueueFilePath = "action-queue/delete"
 
 	genericPrefix            = "generic-"
-	GenericFileQueueFileName = genericPrefix + fqPrefix + ext
+	GenericFileQueueFileName = genericPrefix + fqPrefix // + ext
 	GenericFileQueueFilePath = "action-queue/generic"
 
 	dbFilePerm = 0750

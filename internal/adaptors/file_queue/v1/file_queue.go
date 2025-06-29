@@ -555,9 +555,6 @@ func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
 }
 
 func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
-	//fq.opMtx.Lock(fileQueueKey, struct{}{})
-	//defer fq.opMtx.Unlock(fileQueueKey)
-
 	if fq.readerCursor == fq.writeCursor {
 		_ = fq.file.Truncate(0)
 		fq.readerCursor = 0
@@ -660,10 +657,11 @@ func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
 	if err != nil {
 		return err
 	}
-	bsLen := bytesx.AddUint32(uint32(len(bs)))
+	bsLen := len(bs)
+	bsBsLen := bytesx.AddUint32(uint32(bsLen))
 
-	bbw := bytesx.NewWriter(make([]byte, len(bs)+4))
-	bbw.Write(bsLen)
+	bbw := bytesx.NewWriter(make([]byte, bsLen+4))
+	bbw.Write(bsBsLen)
 	bbw.Write(bs)
 	if _, err = fq.writer.Write(bbw.Bytes()); err != nil {
 		return err
@@ -673,7 +671,7 @@ func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
 		return err
 	}
 
-	fq.writeCursor += 4 + uint64(len(bs))
+	fq.writeCursor += 4 + uint64(bsLen)
 
 	return nil
 }

@@ -11,26 +11,27 @@ import (
 type QueueDistributionType int32
 
 const (
-	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN QueueDistributionType = 0
-	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT     QueueDistributionType = 1
-	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN       QueueDistributionType = 2
-	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT           QueueDistributionType = 3
+	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN QueueDistributionType = 0
+	QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT     QueueDistributionType = 1
 )
 
 // Enum value maps for QueueDistributionType.
 var (
 	QueueDistributionType_name = map[int32]string{
-		0: "QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN",
-		1: "QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT",
-		2: "QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN",
-		3: "QUEUE_DISTRIBUTION_TYPE_FAN_OUT",
+		0: "QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN",
+		1: "QUEUE_DISTRIBUTION_TYPE_FAN_OUT",
 	}
 	QueueDistributionType_value = map[string]int32{
-		"QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN": 0,
-		"QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT":     1,
-		"QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN":       2,
-		"QUEUE_DISTRIBUTION_TYPE_FAN_OUT":           3,
+		"QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN": 0,
+		"QUEUE_DISTRIBUTION_TYPE_FAN_OUT":     1,
 	}
+)
+
+type ACKPolicy int32
+
+const (
+	ACKPolicy_ACK_POLICY_AT_LEAST_ONE ACKPolicy = 0
+	ACKPolicy_ACK_POLICY_ALL          ACKPolicy = 1
 )
 
 type Group struct {
@@ -38,12 +39,17 @@ type Group struct {
 }
 
 type Queue struct {
-	Name                  string
-	Path                  string
+	Name string
+	Path string
+	// QueueDistributionType is a valid field for subscribers.
 	QueueDistributionType QueueDistributionType
-	CreatedAt             int64 // time.Time
-	LastStartedAt         int64 // time.Time
-	Group                 *Group
+	// At least one or At lest all.
+	AckPolicy     ACKPolicy
+	MaxRetries    uint64
+	MaxRetryDelay uint64
+	Group         *Group
+	CreatedAt     int64 // time.Time
+	LastStartedAt int64 // time.Time
 }
 
 type EventMetadata struct {

@@ -274,6 +274,7 @@ func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemo
 		if err != nil {
 			return nil, fmt.Errorf("error generating uuid: %w", err)
 		}
+
 		event.EventID = newEventUUID.String()
 	}
 
@@ -281,6 +282,7 @@ func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemo
 	if receivedAtTime.IsZero() {
 		event.Metadata.ReceivedAt = time.Now().UTC().Unix()
 	}
+
 	if event.Metadata.ReceivedAtList == nil {
 		event.Metadata.ReceivedAtList = []int64{event.Metadata.ReceivedAt}
 	} else {
@@ -291,6 +293,7 @@ func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemo
 	if err != nil {
 		return nil, fmt.Errorf("error getting queue: %w", err)
 	}
+
 	if err = qs.FileQueue.WriteOnCursor(ctx, event); err != nil {
 		return nil, fmt.Errorf("error writing event: %w", err)
 	}
@@ -409,11 +412,11 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 		}
 
 		switch orchestrator.Queue.QueueDistributionType {
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT:
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
 			for _, publisher := range orchestrator.PublishList.Get() {
 				publisher.Sender <- event
 			}
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN:
+		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
 			fallthrough
 		default:
 			orchestrator.PublishList.Next().Sender <- event
@@ -625,3 +628,7 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 
 	return nil, nil
 }
+
+// create the topic and subtopic - does nothing if it already exists
+// create the subscriber - it can be for a group or the whole queue
+// a file queue is consumed, and it posts to the other queues
