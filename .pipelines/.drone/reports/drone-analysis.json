@@ -14,6 +14,48 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
+        "make -C .pipelines/.drone validate-docker-in-docker"
+      ],
+      "environment": {
+        "GITLAB_ACCESS_TOKEN": {
+          "from_secret": "GITLAB_ACCESS_TOKEN"
+        },
+        "GITLAB_USERNAME": {
+          "from_secret": "GITLAB_USERNAME"
+        }
+      },
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
+      "name": "docker-validation-non-master",
+      "privileged": true,
+      "volumes": [
+        {
+          "name": "dockersock",
+          "path": "/var/run/docker.sock"
+        }
+      ],
+      "when": {
+        "branch": {
+          "exclude": [
+            "main"
+          ]
+        },
+        "event": [
+          "push"
+        ]
+      }
+    },
+    {
+      "commands": [
+        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
+        "chmod 640 ~/.netrc",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
+        "chmod 640 build/docker/.netrc",
+        "go env -w GONOSUMDB=gitlab.com/pietroski-software-company",
+        "go env -w GONOPROXY=gitlab.com/pietroski-software-company",
+        "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
+        "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
+        "git config --global user.name \"ptk.swe\"",
         "make unit-tests"
       ],
       "environment": {
@@ -51,6 +93,9 @@
         "git config --global user.name \"ptk.swe\"",
         "make integration-tests"
       ],
+      "depends_on": [
+        "docker-validation-non-master"
+      ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
           "from_secret": "GITLAB_ACCESS_TOKEN"
@@ -75,6 +120,46 @@
             "main"
           ]
         },
+        "event": [
+          "push"
+        ]
+      }
+    },
+    {
+      "commands": [
+        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
+        "chmod 640 ~/.netrc",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
+        "chmod 640 build/docker/.netrc",
+        "go env -w GONOSUMDB=gitlab.com/pietroski-software-company",
+        "go env -w GONOPROXY=gitlab.com/pietroski-software-company",
+        "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
+        "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
+        "git config --global user.name \"ptk.swe\"",
+        "make -C .pipelines/.drone validate-docker-in-docker"
+      ],
+      "environment": {
+        "GITLAB_ACCESS_TOKEN": {
+          "from_secret": "GITLAB_ACCESS_TOKEN"
+        },
+        "GITLAB_USERNAME": {
+          "from_secret": "GITLAB_USERNAME"
+        }
+      },
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
+      "name": "docker-validation-master",
+      "privileged": true,
+      "volumes": [
+        {
+          "name": "dockersock",
+          "path": "/var/run/docker.sock"
+        }
+      ],
+      "when": {
+        "branch": [
+          "main"
+        ],
         "event": [
           "push"
         ]
@@ -126,6 +211,9 @@
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
         "make integration-tests"
+      ],
+      "depends_on": [
+        "docker-validation-master"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -200,6 +288,46 @@
         "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
+        "make -C .pipelines/.drone validate-docker-in-docker"
+      ],
+      "environment": {
+        "GITLAB_ACCESS_TOKEN": {
+          "from_secret": "GITLAB_ACCESS_TOKEN"
+        },
+        "GITLAB_USERNAME": {
+          "from_secret": "GITLAB_USERNAME"
+        }
+      },
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
+      "name": "docker-validation-tagging",
+      "privileged": true,
+      "volumes": [
+        {
+          "name": "dockersock",
+          "path": "/var/run/docker.sock"
+        }
+      ],
+      "when": {
+        "branch": [
+          "*"
+        ],
+        "event": [
+          "tag"
+        ]
+      }
+    },
+    {
+      "commands": [
+        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
+        "chmod 640 ~/.netrc",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
+        "chmod 640 build/docker/.netrc",
+        "go env -w GONOSUMDB=gitlab.com/pietroski-software-company",
+        "go env -w GONOPROXY=gitlab.com/pietroski-software-company",
+        "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
+        "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
+        "git config --global user.name \"ptk.swe\"",
         "make unit-tests"
       ],
       "environment": {
@@ -234,6 +362,9 @@
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
         "make integration-tests"
+      ],
+      "depends_on": [
+        "docker-validation-tagging"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {

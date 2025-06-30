@@ -1,9 +1,12 @@
 ##################################
 # STEP 1 build executable binary #
 ##################################
-FROM golang:1.24.0-alpine3.21 AS builder
+FROM golang:1.24-alpine3.21 AS builder
 
-RUN apk update && apk upgrade && apk add git tree
+# TODO: fix DNS resolution in order to be able to download dependencies
+# RUN apk update --no-cache && \
+#     apk upgrade --no-cache && \
+#     apk add --no-cache git make build-base curl ca-certificates
 
 COPY build/docker/.netrc /root/.netrc
 RUN chmod 400 /root/.netrc

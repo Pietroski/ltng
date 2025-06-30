@@ -10,12 +10,10 @@ local envs() = {
 local remote_git_repo_address = 'https://gitlab.com/pietroski-software-company/lightning-db.git';
 
 local set_netrc = [
-  # 'apk update && apk upgrade && apk add git bash make build-base ncurses',
-  'apk update -v',
-  'apk upgrade -v',
-  'apk add -v git bash make build-base ncurses',
+  'apk update && apk upgrade && apk add git bash make build-base ncurses',
   'echo -e "machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}" > ~/.netrc',
   'chmod 640 ~/.netrc',
+
   'echo -e "machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}" > build/docker/.netrc',
   'chmod 640 build/docker/.netrc',
 ];
@@ -24,6 +22,7 @@ local set_ptk_envs = [
   'go env -w GONOSUMDB=gitlab.com/pietroski-software-company',
   'go env -w GONOPROXY=gitlab.com/pietroski-software-company',
   'go env -w GOPRIVATE=gitlab.com/pietroski-software-company',
+
   'git config --global user.email "pietroskisoftwarecompany@gmail.com"',
   'git config --global user.name "ptk.swe"',
 ];
@@ -38,14 +37,6 @@ local dockerSocketVolume() = {
   path: '/var/run/docker.sock',
 };
 
-local gitlab_validation_cmd = [
-  'make -C .pipelines/.drone validate-gitlab-credentials',
-];
-
-local docker_validation_cmd = [
-  'make -C .pipelines/.drone validate-docker-in-docker',
-];
-
 local unit_tests_cmd = [
   'make unit-tests',
 ];
@@ -53,35 +44,6 @@ local unit_tests_cmd = [
 local integraiton_tests_cmd = [
   'make integration-tests',
 ];
-
-local gitlab_validation_suite_cmd = std.flattenArrays([
-  dependencies,
-  gitlab_validation_cmd,
-]);
-
-local gitlab_validation_suite(name, image, envs) = {
-  name: name,
-  image: image,
-  environment: envs,
-  commands: gitlab_validation_suite_cmd,
-};
-
-local docker_validation_suite_cmd = std.flattenArrays([
-  dependencies,
-  docker_validation_cmd,
-]);
-
-local docker_validation_suite(name, image, envs, depends_on) = {
-  name: name,
-  image: image,
-  privileged: true,
-  environment: envs,
-  commands: docker_validation_suite_cmd,
-  volumes: [
-    dockerSocketVolume(),
-  ],
-  depends_on: depends_on,
-};
 
 local unit_tests_suite_cmd = std.flattenArrays([
   dependencies,
@@ -100,7 +62,7 @@ local integration_tests_suite_cmd = std.flattenArrays([
   integraiton_tests_cmd,
 ]);
 
-local integration_tests_suite(name, image, envs, depends_on) = {
+local integration_tests_suite(name, image, envs) = {
   name: name,
   image: image,
   privileged: true,
@@ -110,7 +72,6 @@ local integration_tests_suite(name, image, envs, depends_on) = {
   volumes: [
     dockerSocketVolume(),
   ],
-  depends_on: depends_on,
 };
 
 local gitlab_push = [
@@ -151,10 +112,8 @@ local whenCommitToNonMaster(step) = step {
 };
 
 local commitToNonMasterSteps(image, envs) = std.map(whenCommitToNonMaster, [
-  gitlab_validation_suite('gitlab-validation-non-master', image, envs),
-  docker_validation_suite('docker-validation-non-master', image, envs, ['gitlab-validation-non-master']),
   unit_tests_suite('unit-tests-suite-non-master', image, envs),
-  integration_tests_suite('integration-tests-suite-non-master', image, envs, ['docker-validation-non-master']),
+  integration_tests_suite('integration-tests-suite-non-master', image, envs),
 ]);
 
 local whenCommitToMaster(step) = step {
@@ -165,10 +124,8 @@ local whenCommitToMaster(step) = step {
 };
 
 local commitToMasterSteps(image, envs) = std.map(whenCommitToMaster, [
-  gitlab_validation_suite('gitlab-validation-master', image, envs),
-  docker_validation_suite('docker-validation-master', image, envs, ['gitlab-validation-master']),
   unit_tests_suite('unit-tests-suite-master', image, envs),
-  integration_tests_suite('integration-tests-suite-master', image, envs, ['docker-validation-master']),
+  integration_tests_suite('integration-tests-suite-master', image, envs),
   gitlabPushStep(image, envs, [
     'unit-tests-suite-master',
     'integration-tests-suite-master',
@@ -183,10 +140,8 @@ local whenTag(step) = step {
 };
 
 local tagSteps(image, envs) = std.map(whenTag, [
-  gitlab_validation_suite('gitlab-validation-tagging', image, envs),
-  docker_validation_suite('docker-validation-tagging', image, envs, ['gitlab-validation-tagging']),
   unit_tests_suite('unit-tests-suite-tagging', image, envs),
-  integration_tests_suite('integration-tests-suite-tagging', image, envs, ['docker-validation-tagging']),
+  integration_tests_suite('integration-tests-suite-tagging', image, envs),
   gitlabTagStep(image, envs, [
     'unit-tests-suite-tagging',
     'integration-tests-suite-tagging',

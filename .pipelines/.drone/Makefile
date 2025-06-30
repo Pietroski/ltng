@@ -22,6 +22,13 @@ rm-drone-validate:
 drone-validate: build-drone-validate run-drone-validate
 	@echo "done validating drone jsonnet file"
 
+#########################################################################################################################
+
+# Validate GitLab credentials
+validate-gitlab-credentials:
+	@echo "Validating GitLab credentials..."
+	@cd $(PWD) && bash .pipelines/.drone/validate-gitlab-credentials.sh
+
 # Validate Docker-in-Docker functionality
 validate-docker-in-docker:
 	@echo "Validating Docker-in-Docker functionality..."
@@ -36,3 +43,5 @@ validate-docker-in-docker-container:
 		--privileged \
 		pietroski/alpine-docker-golang:v0.0.8 \
 		./.pipelines/.drone/validate-docker-in-docker.sh
+
+#########################################################################################################################
