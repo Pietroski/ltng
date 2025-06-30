@@ -29,7 +29,6 @@ type FileQueue struct {
 	opPopMtx *lock.EngineLock
 
 	serializer serializermodels.Serializer
-	cursor     uint64
 
 	readerCursor uint64
 	writeCursor  uint64
@@ -60,7 +59,6 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 		mtx:      &sync.RWMutex{},
 
 		serializer: serializer.NewRawBinarySerializer(),
-		cursor:     0,
 
 		fullPath:    fullPath,
 		fullTmpPath: fullTmpPath,
@@ -79,7 +77,7 @@ func (fq *FileQueue) resetReader() error {
 
 	fq.reader.Reset(fq.file)
 	fq.readerCursor = 0
-	fq.cursor = 0
+
 	return nil
 }
 
@@ -89,6 +87,7 @@ func (fq *FileQueue) resetWriter() error {
 	}
 
 	fq.writer.Reset(fq.file)
+
 	return nil
 }
 
@@ -137,14 +136,9 @@ func (fq *FileQueue) readWithNoReset(_ context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	fq.cursor += uint64(4 + rowLen)
 	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil
-}
-
-func (fq *FileQueue) yield() uint64 {
-	return fq.cursor
 }
 
 func (fq *FileQueue) yieldReader() uint64 {
@@ -217,7 +211,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 		// fmt.Printf("index: %s - bs: %s\n", index, bs)
 		if bytes.Contains(bs, index) {
 			found = true
-			from = fq.yield()
+			from = fq.yieldReader()
 			upTo = from - uint64(len(bs)+4)
 			break
 		}
@@ -291,9 +285,10 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 
 			fq.file = file
 			deduct := from - upTo
-			fq.cursor -= deduct
 			fq.readerCursor -= deduct
-			fq.writeCursor -= deduct
+			fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
+				fq.writeCursor, fq.writeCursor-deduct)
+			//fq.writeCursor -= deduct
 			fq.reader = bufio.NewReader(file)
 			fq.writer = bufio.NewWriter(file)
 		}
@@ -328,7 +323,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 
 		if bytes.Contains(bs, index) {
 			found = true
-			from = fq.yield()
+			from = fq.yieldReader()
 			upTo = from - uint64(len(bs)+4)
 			break
 		}
@@ -397,7 +392,6 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 
 			fq.file = file
 			deduct := from - upTo
-			fq.cursor -= deduct
 			fq.readerCursor -= deduct
 			//fq.writeCursor -= deduct
 			fq.reader = bufio.NewReader(file)
@@ -417,7 +411,7 @@ func (fq *FileQueue) safelyTruncateFromStart(_ context.Context) error {
 	size := fi.Size()
 
 	// If cursor is at start or file is empty, nothing to do
-	if fq.cursor == 0 || size == 0 {
+	if fq.readerCursor == 0 || size == 0 {
 		return nil
 	}
 
@@ -434,7 +428,8 @@ func (fq *FileQueue) safelyTruncateFromStart(_ context.Context) error {
 	}
 
 	// Copy the remaining data to the start
-	remaining := data[fq.cursor:]
+	remaining := data[fq.readerCursor:]
+	remainingLen := len(remaining)
 	copy(data[:len(remaining)], remaining)
 
 	// Sync changes to disk
@@ -452,12 +447,13 @@ func (fq *FileQueue) safelyTruncateFromStart(_ context.Context) error {
 	}
 
 	// Truncate the file to the new size
-	if err = fq.file.Truncate(int64(len(remaining))); err != nil {
+	if err = fq.file.Truncate(int64(remainingLen)); err != nil {
 		return err
 	}
 
 	// Reset cursor and readers/writers
-	fq.cursor = 0
+	fq.readerCursor = 0
+	fq.writeCursor = uint64(remainingLen)
 	fq.reader = bufio.NewReader(fq.file)
 	fq.writer = bufio.NewWriter(fq.file)
 
@@ -473,7 +469,7 @@ func (fq *FileQueue) safelyTruncateToCursor(_ context.Context) error {
 	size := fi.Size()
 
 	// If cursor is at start or file is empty, nothing to do
-	if fq.cursor == 0 || size == 0 {
+	if fq.readerCursor == 0 || size == 0 {
 		return nil
 	}
 
@@ -489,7 +485,6 @@ func (fq *FileQueue) safelyTruncateToCursor(_ context.Context) error {
 		return err
 	}
 
-	writeCursor := fq.readerCursor
 	// Copy the remaining data to the start
 	remaining := data[fq.readerCursor:]
 	copy(data[:len(remaining)], remaining)
@@ -498,11 +493,6 @@ func (fq *FileQueue) safelyTruncateToCursor(_ context.Context) error {
 	if err = unix.Msync(data, unix.MS_SYNC); err != nil {
 		return err
 	}
-
-	//// Force a disk sync before unmapping
-	//if err = fq.file.Sync(); err != nil {
-	//	return err
-	//}
 
 	if err = unix.Munmap(data); err != nil {
 		return err
@@ -514,8 +504,8 @@ func (fq *FileQueue) safelyTruncateToCursor(_ context.Context) error {
 	}
 
 	// Reset cursor and readers/writers
+	fq.writeCursor -= fq.readerCursor
 	fq.readerCursor = 0
-	fq.writeCursor = -writeCursor
 	fq.reader = bufio.NewReader(fq.file)
 	fq.writer = bufio.NewWriter(fq.file)
 
@@ -551,8 +541,11 @@ func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
 func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
 	if fq.readerCursor == fq.writeCursor {
 		_ = fq.file.Truncate(0)
-		fq.readerCursor = 0
 		fq.writeCursor = 0
+		fq.readerCursor = 0
+		fq.reader = bufio.NewReader(fq.file)
+		fq.writer = bufio.NewWriter(fq.file)
+
 		return nil, io.EOF
 	}
 
@@ -572,8 +565,10 @@ func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
 	if _, err := fq.reader.Read(rawRowLen); err != nil {
 		if err == io.EOF {
 			_ = fq.file.Truncate(0)
-			fq.readerCursor = 0
 			fq.writeCursor = 0
+			fq.readerCursor = 0
+			fq.reader = bufio.NewReader(fq.file)
+			fq.writer = bufio.NewWriter(fq.file)
 		}
 
 		return nil, err
@@ -585,7 +580,6 @@ func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	fq.cursor += uint64(4 + rowLen)
 	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil
@@ -599,19 +593,6 @@ func (fq *FileQueue) ReadFromCursorWithoutTruncation(ctx context.Context) ([]byt
 }
 
 func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte, error) {
-	//if fq.readerCursor == fq.writeCursor {
-	//	_ = fq.file.Truncate(0)
-	//	fq.readerCursor = 0
-	//	fq.writeCursor = 0
-	//	return nil, io.EOF
-	//}
-
-	//if fq.readerCursor >= truncateLimit {
-	//	if err := fq.safelyTruncateToCursor(ctx); err != nil {
-	//		return nil, err
-	//	}
-	//}
-
 	if _, err := fq.file.Seek(int64(fq.readerCursor), 0); err != nil {
 		return nil, err
 	}
@@ -619,12 +600,6 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 
 	rawRowLen := make([]byte, 4)
 	if _, err := fq.reader.Read(rawRowLen); err != nil {
-		//if err == io.EOF {
-		//	_ = fq.file.Truncate(0)
-		//	fq.readerCursor = 0
-		//	fq.writeCursor = 0
-		//}
-
 		return nil, err
 	}
 	rowLen := bytesx.Uint32(rawRowLen)
@@ -634,7 +609,6 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 		return nil, err
 	}
 
-	fq.cursor += uint64(4 + rowLen)
 	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil
@@ -699,7 +673,7 @@ func (fq *FileQueue) CheckAndClose() bool {
 	fq.opMtx.Lock(fileQueueKey, struct{}{})
 	defer fq.opMtx.Unlock(fileQueueKey)
 
-	if fq.writeCursor == fq.readerCursor {
+	if fq.readerCursor == fq.writeCursor {
 		fq.writeCursor = 0
 		fq.readerCursor = 0
 		if err := fq.file.Truncate(0); err != nil {

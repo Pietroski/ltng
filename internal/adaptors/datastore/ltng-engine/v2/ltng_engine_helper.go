@@ -100,6 +100,7 @@ func (e *LTNGEngine) closeItems() {
 	for !e.fq.CheckAndClose() {
 		runtime.Gosched()
 	}
+
 	for e.opSaga.pidRegister.CountNumber() != 0 {
 		runtime.Gosched()
 	}
