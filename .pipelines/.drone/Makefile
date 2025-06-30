@@ -21,3 +21,18 @@ rm-drone-validate:
 
 drone-validate: build-drone-validate run-drone-validate
 	@echo "done validating drone jsonnet file"
+
+# Validate Docker-in-Docker functionality
+validate-docker-in-docker:
+	@echo "Validating Docker-in-Docker functionality..."
+	@cd $(PWD) && bash .pipelines/.drone/validate-docker-in-docker.sh
+
+# Run Docker-in-Docker validation in a container (simulates drone environment)
+validate-docker-in-docker-container:
+	@echo "Running Docker-in-Docker validation in container..."
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(PWD):/workspace \
+		-w /workspace \
+		--privileged \
+		pietroski/alpine-docker-golang:v0.0.8 \
+		./.pipelines/.drone/validate-docker-in-docker.sh
