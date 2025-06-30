@@ -114,25 +114,12 @@ func (fq *FileQueue) Read(ctx context.Context) ([]byte, error) {
 	return fq.read(ctx)
 }
 
-func (fq *FileQueue) read(_ context.Context) ([]byte, error) {
+func (fq *FileQueue) read(ctx context.Context) ([]byte, error) {
 	if err := fq.resetReader(); err != nil {
 		return nil, err
 	}
 
-	rawRowLen := make([]byte, 4)
-	if _, err := fq.reader.Read(rawRowLen); err != nil {
-		return nil, err
-	}
-	rowLen := bytesx.Uint32(rawRowLen)
-
-	row := make([]byte, rowLen)
-	if _, err := fq.reader.Read(row); err != nil {
-		return nil, err
-	}
-
-	fq.cursor = uint64(4 + rowLen)
-
-	return row, nil
+	return fq.readWithNoReset(ctx)
 }
 
 // readWithNoReset does not reset the reader before reading it.
@@ -150,8 +137,8 @@ func (fq *FileQueue) readWithNoReset(_ context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	fq.cursor = uint64(4 + rowLen)
-	fq.readerCursor = uint64(4 + rowLen)
+	fq.cursor += uint64(4 + rowLen)
+	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil
 }
@@ -227,6 +214,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 			return err
 		}
 
+		// fmt.Printf("index: %s - bs: %s\n", index, bs)
 		if bytes.Contains(bs, index) {
 			found = true
 			from = fq.yield()
@@ -235,6 +223,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 		}
 	}
 
+	// fmt.Printf("from: %v - upTo: %v\n", from, upTo)
 	if !found {
 		return fmt.Errorf("index not found - %s", string(index))
 	}
@@ -260,6 +249,11 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 				_ = os.Remove(fq.fullTmpPath)
 			}
 		}()
+
+		// seek the file to the beginning.
+		if _, err = fq.file.Seek(0, 0); err != nil {
+			return fmt.Errorf("error seeking to file-queue: %w", err)
+		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
@@ -591,6 +585,7 @@ func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
+	fq.cursor += uint64(4 + rowLen)
 	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil
@@ -639,7 +634,7 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 		return nil, err
 	}
 
-	//fq.cursor += uint64(4 + rowLen)
+	fq.cursor += uint64(4 + rowLen)
 	fq.readerCursor += uint64(4 + rowLen)
 
 	return row, nil

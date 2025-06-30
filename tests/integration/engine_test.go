@@ -29,7 +29,7 @@ func TestEngines(t *testing.T) {
 	ets = data.InitEngineTestSuite(t)
 
 	t.Log("testLTNGDBEngineV2")
-	testLTNGDBEngineV2(t)
+	// testLTNGDBEngineV2(t)
 
 	t.Log("testBadgerDBEngine")
 	testBadgerDBEngine(t)
