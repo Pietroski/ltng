@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"log"
 	"os"
 
@@ -14,34 +13,13 @@ import (
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 )
 
 type upsertSaga struct {
 	opSaga *opSaga
 	cancel context.CancelFunc
 }
-
-//type (
-//	upsertChannels struct {
-//		QueueChannel                  chan struct{}
-//		InfoChannel                   chan *upsertItemInfoData
-//		ActionItemChannel             chan *upsertItemInfoData
-//		RollbackItemChannel           chan *upsertItemInfoData
-//		ActionIndexItemChannel        chan *upsertItemInfoData
-//		RollbackIndexItemChannel      chan *upsertItemInfoData
-//		ActionIndexListItemChannel    chan *upsertItemInfoData
-//		RollbackIndexListItemChannel  chan *upsertItemInfoData
-//		ActionRelationalItemChannel   chan *upsertItemInfoData
-//		RollbackRelationalItemChannel chan *upsertItemInfoData
-//
-//		CleanUpUpsert chan *upsertItemInfoData
-//	}
-//
-//	upsertItemInfoData struct {
-//		*ltngenginemodels.ItemInfoData
-//		IndexKeysToDelete [][]byte
-//	}
-//)
 
 func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 	ctx, cancel := context.WithCancel(ctx)
