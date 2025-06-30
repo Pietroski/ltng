@@ -4,7 +4,46 @@
   "steps": [
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
+        "chmod 640 ~/.netrc",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
+        "chmod 640 build/docker/.netrc",
+        "go env -w GONOSUMDB=gitlab.com/pietroski-software-company",
+        "go env -w GONOPROXY=gitlab.com/pietroski-software-company",
+        "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
+        "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
+        "git config --global user.name \"ptk.swe\"",
+        "make -C .pipelines/.drone validate-gitlab-credentials"
+      ],
+      "environment": {
+        "GITLAB_ACCESS_TOKEN": {
+          "from_secret": "GITLAB_ACCESS_TOKEN"
+        },
+        "GITLAB_USERNAME": {
+          "from_secret": "GITLAB_USERNAME"
+        }
+      },
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
+      "name": "gitlab-validation-non-master",
+      "when": {
+        "branch": {
+          "exclude": [
+            "main"
+          ]
+        },
+        "event": [
+          "push"
+        ]
+      }
+    },
+    {
+      "commands": [
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -15,6 +54,9 @@
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
         "make -C .pipelines/.drone validate-docker-in-docker"
+      ],
+      "depends_on": [
+        "gitlab-validation-non-master"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -46,7 +88,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -81,7 +125,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -127,7 +173,44 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
+        "chmod 640 ~/.netrc",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
+        "chmod 640 build/docker/.netrc",
+        "go env -w GONOSUMDB=gitlab.com/pietroski-software-company",
+        "go env -w GONOPROXY=gitlab.com/pietroski-software-company",
+        "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
+        "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
+        "git config --global user.name \"ptk.swe\"",
+        "make -C .pipelines/.drone validate-gitlab-credentials"
+      ],
+      "environment": {
+        "GITLAB_ACCESS_TOKEN": {
+          "from_secret": "GITLAB_ACCESS_TOKEN"
+        },
+        "GITLAB_USERNAME": {
+          "from_secret": "GITLAB_USERNAME"
+        }
+      },
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
+      "name": "gitlab-validation-master",
+      "when": {
+        "branch": [
+          "main"
+        ],
+        "event": [
+          "push"
+        ]
+      }
+    },
+    {
+      "commands": [
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -138,6 +221,9 @@
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
         "make -C .pipelines/.drone validate-docker-in-docker"
+      ],
+      "depends_on": [
+        "gitlab-validation-master"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -167,7 +253,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -200,7 +288,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -244,7 +334,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -278,7 +370,44 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
+        "chmod 640 ~/.netrc",
+        "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
+        "chmod 640 build/docker/.netrc",
+        "go env -w GONOSUMDB=gitlab.com/pietroski-software-company",
+        "go env -w GONOPROXY=gitlab.com/pietroski-software-company",
+        "go env -w GOPRIVATE=gitlab.com/pietroski-software-company",
+        "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
+        "git config --global user.name \"ptk.swe\"",
+        "make -C .pipelines/.drone validate-gitlab-credentials"
+      ],
+      "environment": {
+        "GITLAB_ACCESS_TOKEN": {
+          "from_secret": "GITLAB_ACCESS_TOKEN"
+        },
+        "GITLAB_USERNAME": {
+          "from_secret": "GITLAB_USERNAME"
+        }
+      },
+      "image": "pietroski/alpine-docker-golang:v0.0.8",
+      "name": "gitlab-validation-tagging",
+      "when": {
+        "branch": [
+          "*"
+        ],
+        "event": [
+          "tag"
+        ]
+      }
+    },
+    {
+      "commands": [
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -289,6 +418,9 @@
         "git config --global user.email \"pietroskisoftwarecompany@gmail.com\"",
         "git config --global user.name \"ptk.swe\"",
         "make -C .pipelines/.drone validate-docker-in-docker"
+      ],
+      "depends_on": [
+        "gitlab-validation-tagging"
       ],
       "environment": {
         "GITLAB_ACCESS_TOKEN": {
@@ -318,7 +450,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -351,7 +485,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
@@ -395,7 +531,9 @@
     },
     {
       "commands": [
-        "apk update && apk upgrade && apk add git bash make build-base ncurses",
+        "apk update -v",
+        "apk upgrade -v",
+        "apk add -v git bash make build-base ncurses",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > ~/.netrc",
         "chmod 640 ~/.netrc",
         "echo -e \"machine gitlab.com\nlogin $${GITLAB_USERNAME}\npassword $${GITLAB_ACCESS_TOKEN}\" > build/docker/.netrc",
