@@ -11,7 +11,7 @@ import (
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 )
 
 type createSaga struct {
@@ -56,7 +56,8 @@ func newCreateSaga(ctx context.Context, opSaga *opSaga) *createSaga {
 }
 
 func (s *createSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "operator_create_saga-ListenAndTrigger")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.InfoChannel,
 		func(itemInfoData *ltngenginemodels.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
@@ -189,7 +190,8 @@ func (s *createSaga) indexRollback(
 func (s *createSaga) createItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "createItemOnDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
@@ -202,7 +204,8 @@ func (s *createSaga) createItemOnDiskOnThread(
 func (s *createSaga) deleteItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "deleteItemOnDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.RollbackItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
@@ -217,7 +220,8 @@ func (s *createSaga) deleteItemOnDiskOnThread(
 func (s *createSaga) createIndexItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "createIndexItemOnDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			op := concurrent.New("createIndexItemOnDisk")
@@ -246,7 +250,8 @@ func (s *createSaga) createIndexItemOnDiskOnThread(
 func (s *createSaga) deleteIndexItemFromDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "deleteIndexItemFromDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			var errAcc error
@@ -271,7 +276,8 @@ func (s *createSaga) deleteIndexItemFromDiskOnThread(
 func (s *createSaga) createIndexListItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "createIndexListItemOnDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.createItemOnDisk(ctx,
@@ -290,7 +296,8 @@ func (s *createSaga) createIndexListItemOnDiskOnThread(
 func (s *createSaga) deleteIndexListItemFromDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "deleteIndexListItemFromDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
@@ -305,7 +312,8 @@ func (s *createSaga) deleteIndexListItemFromDiskOnThread(
 func (s *createSaga) createRelationalItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "createRelationalItemOnDiskOnThread")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)

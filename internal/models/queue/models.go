@@ -2,6 +2,7 @@ package queuemodels
 
 import (
 	"fmt"
+	"os"
 	"sync/atomic"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
@@ -34,20 +35,35 @@ const (
 	ACKPolicy_ACK_POLICY_ALL          ACKPolicy = 1
 )
 
+// Enum value maps for ACKPolicy.
+var (
+	ACKPolicy_name = map[int32]string{
+		0: "ACKPolicy_ACK_POLICY_AT_LEAST_ONE",
+		1: "ACKPolicy_ACK_POLICY_ALL",
+	}
+	ACKPolicy_value = map[string]int32{
+		"ACKPolicy_ACK_POLICY_AT_LEAST_ONE": 0,
+		"ACKPolicy_ACK_POLICY_ALL":          1,
+	}
+)
+
 type Group struct {
 	Name string
 }
 
 type Queue struct {
-	Name string
-	Path string
-	// QueueDistributionType is a valid field for subscribers.
-	QueueDistributionType QueueDistributionType
-	// At least one or At lest all.
-	AckPolicy     ACKPolicy
+	Name          string
+	Path          string
 	MaxRetries    uint64
 	MaxRetryDelay uint64
-	Group         *Group
+
+	// Group is a valid field for subscribers and publishers
+	Group *Group
+	// QueueDistributionType is a valid field for subscribers.
+	QueueDistributionType QueueDistributionType
+	// At least one or at lest all subscribers should ack the message.
+	AckPolicy ACKPolicy
+
 	CreatedAt     int64 // time.Time
 	LastStartedAt int64 // time.Time
 }
@@ -81,9 +97,9 @@ func (e *Event) Validate() error {
 	return nil
 }
 
-func (e *EventMetadata) Validate() error {
-	if e == nil {
-		return fmt.Errorf("nil event")
+func (emd *EventMetadata) Validate() error {
+	if emd == nil {
+		return fmt.Errorf("nil event metadata")
 	}
 
 	return nil
@@ -123,6 +139,12 @@ func (q *Queue) GetCompleteLockKey() string {
 const (
 	QueueNameStore = "ltng_queue_store"
 	QueuePathStore = "ltng_queue/queue_store"
+
+	Publishers    = "publishers"
+	Signalers     = "signalers"
+	Sep           = string(os.PathSeparator)
+	PublishersSep = Publishers + Sep
+	SignalersSep  = Signalers + Sep
 )
 
 type QueueOrchestrator struct {
@@ -143,6 +165,13 @@ type EventTracker struct {
 
 	WasACKed  *atomic.Bool
 	WasNACKed *atomic.Bool
+}
+
+type QueuePublisher struct {
+	FileQueue *filequeuev1.FileQueue
+
+	FirstSent *atomic.Bool
+	IsClosed  *atomic.Bool
 }
 
 type QueueSignaler struct {

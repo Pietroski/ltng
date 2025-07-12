@@ -305,6 +305,14 @@
     }
   },
   "definitions": {
+    "ltngqueueACKPolicy": {
+      "type": "string",
+      "enum": [
+        "ACK_POLICY_AT_LEAST_ONE",
+        "ACK_POLICY_ALL"
+      ],
+      "default": "ACK_POLICY_AT_LEAST_ONE"
+    },
     "ltngqueueAckRequest": {
       "type": "object",
       "properties": {
@@ -493,8 +501,22 @@
         "path": {
           "type": "string"
         },
+        "maxRetryCount": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "maxRetryDelay": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "group": {
+          "$ref": "#/definitions/ltngqueueGroup"
+        },
         "queueDistributionType": {
           "$ref": "#/definitions/ltngqueueQueueDistributionType"
+        },
+        "ackPolicy": {
+          "$ref": "#/definitions/ltngqueueACKPolicy"
         },
         "createdAt": {
           "type": "string",
@@ -503,21 +525,16 @@
         "lastStartedAt": {
           "type": "string",
           "format": "date-time"
-        },
-        "group": {
-          "$ref": "#/definitions/ltngqueueGroup"
         }
       }
     },
     "ltngqueueQueueDistributionType": {
       "type": "string",
       "enum": [
-        "QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN",
-        "QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT",
         "QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN",
         "QUEUE_DISTRIBUTION_TYPE_FAN_OUT"
       ],
-      "default": "QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN"
+      "default": "QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN"
     },
     "protobufAny": {
       "type": "object",

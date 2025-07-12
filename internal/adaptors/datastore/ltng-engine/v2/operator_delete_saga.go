@@ -13,7 +13,7 @@ import (
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
@@ -128,7 +128,8 @@ func newDeleteSaga(ctx context.Context, opSaga *opSaga) *deleteSaga {
 }
 
 func (s *deleteSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "operator_delete_saga-ListenAndTrigger")
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.DeleteChannels.InfoChannel,
 		func(itemInfoData *ltngenginemodels.ItemInfoData) {
 			switch itemInfoData.Opts.IndexProperties.IndexDeletionBehaviour {
@@ -227,7 +228,8 @@ func newDeleteCascadeSaga(ctx context.Context, deleteSaga *deleteSaga) *deleteCa
 }
 
 func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "operator_delete_cascade_saga-ListenAndTrigger")
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.InfoChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
@@ -459,7 +461,7 @@ func (s *deleteCascadeSaga) indexRollback(
 }
 
 func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
@@ -489,7 +491,7 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
 }
 
 func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
@@ -511,7 +513,7 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(ctx context.Context) {
 }
 
 func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			for _, item := range itemInfoData.IndexList {
@@ -544,7 +546,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 }
 
 func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			for _, item := range itemInfoData.IndexList {
@@ -567,7 +569,7 @@ func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 }
 
 func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
@@ -597,7 +599,7 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.C
 }
 
 func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexListItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
@@ -618,7 +620,7 @@ func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(ctx context.Cont
 }
 
 func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			err := s.deleteSaga.opSaga.e.deleteRelationalData(
@@ -637,7 +639,7 @@ func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(ctx context.Con
 }
 
 func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles,
 		func(itemInfoData *deleteItemInfoData) {
 			_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
@@ -679,7 +681,8 @@ func newDeleteCascadeByIdxSaga(ctx context.Context, deleteSaga *deleteSaga) *del
 }
 
 func (s *deleteCascadeByIdxSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "operator_delete_cascade_by_index_saga-ListenAndTrigger")
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeByIndex.InfoChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			item, err := s.deleteSaga.opSaga.e.loadItem(context.Background(),
@@ -734,7 +737,8 @@ func newDeleteIdxOnlySaga(ctx context.Context, deleteSaga *deleteSaga) *deleteId
 }
 
 func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "operator_delete_index_only_saga-ListenAndTrigger")
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.InfoChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			temporaryDelPaths, err := s.deleteSaga.createTmpDeletionPaths(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
@@ -841,7 +845,7 @@ func (s *deleteIdxOnlySaga) indexRollback(
 }
 
 func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionIndexItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			for _, indexKey := range itemInfoData.Opts.IndexingKeys {
@@ -875,7 +879,7 @@ func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 }
 
 func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.RollbackIndexItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			for _, item := range itemInfoData.IndexList {
@@ -898,7 +902,7 @@ func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 }
 
 func (s *deleteIdxOnlySaga) updateIndexingListItemFromDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionIndexListItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			key := itemInfoData.Opts.ParentKey
@@ -939,7 +943,7 @@ func (s *deleteIdxOnlySaga) updateIndexingListItemFromDiskOnThread(ctx context.C
 }
 
 func (s *deleteIdxOnlySaga) rollbackIndexListItemOnDiskOnThread(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.RollbackIndexListItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			var indexList [][]byte
@@ -967,7 +971,7 @@ func (s *deleteIdxOnlySaga) rollbackIndexListItemOnDiskOnThread(ctx context.Cont
 }
 
 func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionDelTmpFiles,
 		func(itemInfoData *deleteItemInfoData) {
 			if _, err := execx.DelDirsWithoutSepBothOSExec(ctx,

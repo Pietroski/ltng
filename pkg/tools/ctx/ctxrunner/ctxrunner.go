@@ -5,16 +5,20 @@ import (
 	"log"
 )
 
-func RunWithCancellation[T any](
+func WithCancellation[T any](
 	ctx context.Context,
 	channel chan T,
 	fn func(args T),
 ) {
+	thread, ok := ctx.Value("thread").(string)
+	if !ok || thread == "" {
+		thread = "thread"
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
-			// TODO: add func name param
-			log.Printf("context done: %v\n", ctx.Err())
+			log.Printf("context done for %v: %v\n", thread, ctx.Err())
 			close(channel)
 			for v := range channel {
 				fn(v)

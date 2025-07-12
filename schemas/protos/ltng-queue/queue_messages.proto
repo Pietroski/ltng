@@ -7,10 +7,13 @@ import "google/protobuf/timestamp.proto";
 // import "common/search/pagination.proto";
 
 enum QueueDistributionType {
-  QUEUE_DISTRIBUTION_TYPE_GROUP_ROUND_ROBIN = 0;
-  QUEUE_DISTRIBUTION_TYPE_GROUP_FAN_OUT = 1;
-  QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN = 2;
-  QUEUE_DISTRIBUTION_TYPE_FAN_OUT = 3;
+  QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN = 0;
+  QUEUE_DISTRIBUTION_TYPE_FAN_OUT = 1;
+}
+
+enum ACKPolicy {
+  ACK_POLICY_AT_LEAST_ONE = 0;
+  ACK_POLICY_ALL = 1;
 }
 
 message Group {
@@ -20,13 +23,16 @@ message Group {
 message Queue {
   string name = 1;
   string path = 2;
+  uint64 max_retry_count = 3;
+  uint64 max_retry_delay = 4;
 
-  QueueDistributionType queue_distribution_type = 3;
+  Group group = 5;
 
-  google.protobuf.Timestamp created_at = 4;
-  google.protobuf.Timestamp last_started_at = 5;
+  QueueDistributionType queue_distribution_type = 6;
+  ACKPolicy ack_policy = 7;
 
-  Group group = 6;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp last_started_at = 9;
 }
 
 message EventMetadata {

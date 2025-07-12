@@ -6,10 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"io"
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -18,6 +20,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -286,8 +289,8 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 			fq.file = file
 			deduct := from - upTo
 			fq.readerCursor -= deduct
-			fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
-				fq.writeCursor, fq.writeCursor-deduct)
+			//fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
+			//	fq.writeCursor, fq.writeCursor-deduct)
 			//fq.writeCursor -= deduct
 			//fq.reader = bufio.NewReader(file)
 			//fq.writer = bufio.NewWriter(file)
@@ -642,6 +645,44 @@ func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
 	fq.writeCursor += 4 + uint64(bsLen)
 
 	return nil
+}
+
+func (fq *FileQueue) ReaderPooler(
+	ctx context.Context,
+	handler func(ctx context.Context, bs []byte) error,
+) error {
+	ctxhandler.WithCancellation(ctx, func() error {
+		time.Sleep(time.Millisecond * 50)
+		bs, err := fq.Read(ctx)
+		if err != nil {
+			if err != io.EOF {
+				log.Printf("error reading file queue: %v", err)
+			}
+
+			return err
+		}
+
+		if err = handler(ctx, bs); err != nil {
+			log.Printf("error handling file queue: %v", err)
+			if !errors.Is(err, errorsx.ErrUnRetryable) {
+				err = fq.RepublishIndex(ctx, bs)
+				if err != nil {
+					return fmt.Errorf("error republishing index %s to file queue: %v", bs, err)
+				}
+			}
+
+			return fmt.Errorf("error handling file queue - retryable: %v", err)
+		}
+
+		err = fq.PopFromIndex(ctx, bs)
+		if err != nil {
+			return fmt.Errorf("error popping from file queue with index %s: %v", bs, err)
+		}
+
+		return nil
+	})
+
+	return fq.Close()
 }
 
 func (fq *FileQueue) Close() error {
