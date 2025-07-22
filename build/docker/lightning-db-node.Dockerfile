@@ -4,9 +4,9 @@
 FROM golang:1.24-alpine3.21 AS builder
 
 # TODO: fix DNS resolution in order to be able to download dependencies
-# RUN apk update --no-cache && \
-#     apk upgrade --no-cache && \
-#     apk add --no-cache git make build-base curl ca-certificates
+RUN apk update --no-cache && \
+    apk upgrade --no-cache && \
+    apk add --no-cache git make build-base curl ca-certificates
 
 COPY build/docker/.netrc /root/.netrc
 RUN chmod 400 /root/.netrc
