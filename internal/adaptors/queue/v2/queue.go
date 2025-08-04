@@ -872,3 +872,15 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 // a file queue is consumed, and it posts to the other queues
 
 // Secret Service - Your Service for Services's Secrets
+
+// for the queue creation
+// it creates the queue and the group queue (if it exists)
+// it can have a routing group or not
+// it does not define broadcasting rules; instead, subscribers do.
+// subscribes can define the consumer policy (if it has not been set yet)
+//
+// consumer structure: map - map - queue-ref
+// queue name - group name (should also contain a global one)
+// how if there is no global consumer?
+// how about there is a global and one or two group consumers?
+//
