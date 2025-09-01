@@ -6,12 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"io"
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -21,6 +19,7 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -652,7 +651,7 @@ func (fq *FileQueue) ReaderPooler(
 	handler func(ctx context.Context, bs []byte) error,
 ) error {
 	ctxhandler.WithCancellation(ctx, func() error {
-		time.Sleep(time.Millisecond * 50)
+		//time.Sleep(time.Millisecond * 50)
 		bs, err := fq.Read(ctx)
 		if err != nil {
 			if err != io.EOF {

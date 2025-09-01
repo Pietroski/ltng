@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"io"
 	"log"
 	"runtime"
@@ -24,11 +23,12 @@ import (
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
-const signalTransmitterBufferSize = 2 << 15
+const signalTransmitterBufferSize = 1 << 16
 
 var notImplemented = fmt.Errorf("not implemented")
 
@@ -54,6 +54,8 @@ type Queue struct {
 	eventMapTracker    *safe.GenericMap[*queuemodels.EventTracker]
 
 	retryCountLimit uint64
+
+	timer func() time.Time
 }
 
 func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
@@ -80,6 +82,8 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 
 		retryCountLimit: 5,
 		awaitTimeout:    time.Second * 5,
+
+		timer: time.Now,
 	}
 
 	queueStoreInfo, err := q.runQueueMigration(ctx)
@@ -438,13 +442,14 @@ func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemo
 
 	receivedAtTime := time.Unix(event.Metadata.ReceivedAt, 0)
 	if receivedAtTime.IsZero() {
-		event.Metadata.ReceivedAt = time.Now().UTC().Unix()
+		event.Metadata.ReceivedAt = q.timer().Unix()
 	}
 
 	if event.Metadata.ReceivedAtList == nil {
-		event.Metadata.ReceivedAtList = []int64{event.Metadata.ReceivedAt}
+		event.Metadata.ReceivedAtList = []int64{q.timer().Unix()}
 	} else {
-		event.Metadata.ReceivedAtList = append(event.Metadata.ReceivedAtList, time.Now().UTC().Unix())
+		event.Metadata.ReceivedAtList = append(
+			event.Metadata.ReceivedAtList, q.timer().Unix())
 	}
 
 	qp, err := q.getQueuePublisher(ctx, event.Queue)
@@ -675,7 +680,12 @@ func (q *Queue) readerPool(
 
 		// TODO: implement the downstream publishing logic
 
-		//
+		// TODO: check actual subscribers
+		// write to those file subscribers that are connected
+		// if no subscriber is connected, then do nothing until there is a subscriber;
+		// so keep checking for subscribers
+		// after the event is acked, write it to the ledger.
+		// if the event went through the max retry count; then write it to the DLQ ledger.
 
 		return nil
 	})
@@ -884,3 +894,9 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 // how if there is no global consumer?
 // how about there is a global and one or two group consumers?
 //
+// when an application tries to create a queue, a group queue, or
+// whether it tries to subscribe to a queue or a group queue, it then creates it;
+// if that is already created, do not error out.
+// if a publisher tries to write to a non-existent queue, it should error out.
+// if a subscriber tries to read from a non-existent queue, it should error out.
+// if a subscriber tries to read from a non-existent group queue, it should error out.
