@@ -11,6 +11,7 @@ import (
 	"os"
 	"sync"
 
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"golang.org/x/sys/unix"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
@@ -288,6 +289,8 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 			fq.file = file
 			deduct := from - upTo
 			fq.readerCursor -= deduct
+			fq.writeCursor -= deduct
+
 			//fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
 			//	fq.writeCursor, fq.writeCursor-deduct)
 			//fq.writeCursor -= deduct
@@ -299,106 +302,34 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 	return nil
 }
 
-func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte) error {
+func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte, data any) error {
 	fq.opMtx.Lock(fileQueueKey, struct{}{})
 	defer fq.opMtx.Unlock(fileQueueKey)
 
-	return fq.safelyRepublishIndex(ctx, index)
+	return fq.safelyRepublishIndex(ctx, index, data)
 }
 
-func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (err error) {
+func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, data any) (err error) {
 	if err = fq.resetReader(); err != nil {
-		return err
+		return fmt.Errorf("error republishing index: error resetting reader: %w", err)
 	}
 
-	var found bool
-	var upTo, from uint64
-	for {
-		bs, err := fq.readWithNoReset(ctx)
+	_, err = execx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath)
+	if err != nil {
+		return fmt.Errorf("error republishing index: error executing cpfile: %w", err)
+	}
+
+	if err = fq.PopFromIndex(ctx, index); err != nil {
+		return fmt.Errorf("error republishing index: error popping from index: %w", err)
+	}
+
+	if err = fq.WriteOnCursor(ctx, data); err != nil {
+		_, err = execx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath)
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-
-			return err
+			return fmt.Errorf("error republishing index: error executing reverse cpfile: %w", err)
 		}
 
-		if bytes.Contains(bs, index) {
-			found = true
-			from = fq.yieldReader()
-			upTo = from - uint64(len(bs)+4)
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("index not found - %s", string(index))
-	}
-
-	{
-		var tmpFile *os.File
-		tmpFile, err = os.OpenFile(fq.fullTmpPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFilePerm)
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			if err != nil {
-				_ = tmpFile.Close()
-				_ = os.Remove(fq.fullTmpPath)
-			}
-		}()
-
-		// example pair (upTo - from) | 102 - 154
-		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file-queue to tmp file-queue: %w", err)
-		}
-
-		if _, err = fq.file.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue: %w", err)
-		}
-
-		if _, err = io.Copy(tmpFile, fq.file); err != nil {
-			return fmt.Errorf("error copying second part of the file-queue to tmp file-queue: %w", err)
-		}
-
-		if _, err = fq.file.Seek(int64(upTo), 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue upTo: %w", err)
-		}
-
-		if _, err = io.CopyN(tmpFile, fq.file, int64(from)); err != nil {
-			return fmt.Errorf(
-				"error copying first part of the file-queue to the end of the tmp file-queue: %w", err)
-		}
-
-		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file-queue - %s | err: %v", tmpFile.Name(), err)
-		}
-
-		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file-queue - %s | err: %v", tmpFile.Name(), err)
-		}
-
-		if err = os.Rename(fq.fullTmpPath, fq.fullPath); err != nil {
-			return fmt.Errorf("error renaming tmp file-queue to file-queue: %w", err)
-		}
-
-		{ // reset file pointers
-			var file *os.File
-			file, err = os.OpenFile(fq.fullPath,
-				os.O_RDWR|os.O_APPEND, dbFilePerm,
-			)
-			if err != nil {
-				return err
-			}
-
-			fq.file = file
-			deduct := from - upTo
-			fq.readerCursor -= deduct
-			//fq.writeCursor -= deduct
-			//fq.reader = bufio.NewReader(file)
-			//fq.writer = bufio.NewWriter(file)
-		}
+		return fmt.Errorf("error republishing index: error writing cursor: %w", err)
 	}
 
 	return nil
@@ -654,8 +585,9 @@ func (fq *FileQueue) ReaderPooler(
 		//time.Sleep(time.Millisecond * 50)
 		bs, err := fq.Read(ctx)
 		if err != nil {
-			if err != io.EOF {
-				log.Printf("error reading file queue: %v", err)
+			// log.Printf("error reading file queue: %v", err)
+			if err == io.EOF {
+				return ctxhandler.ErrEnded
 			}
 
 			return err
@@ -664,10 +596,11 @@ func (fq *FileQueue) ReaderPooler(
 		if err = handler(ctx, bs); err != nil {
 			log.Printf("error handling file queue: %v", err)
 			if !errors.Is(err, errorsx.ErrUnRetryable) {
-				err = fq.RepublishIndex(ctx, bs)
-				if err != nil {
-					return fmt.Errorf("error republishing index %s to file queue: %v", bs, err)
-				}
+				// TODO: fix republish here
+				//err = fq.RepublishIndex(ctx, bs)
+				//if err != nil {
+				//	return fmt.Errorf("error republishing index %s to file queue: %v", bs, err)
+				//}
 			}
 
 			return fmt.Errorf("error handling file queue - retryable: %v", err)

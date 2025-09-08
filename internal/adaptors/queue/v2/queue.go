@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
-
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
@@ -23,12 +21,13 @@ import (
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
-const signalTransmitterBufferSize = 1 << 16
+const signalTransmitterBufferSize = 1 << 4
 
 var notImplemented = fmt.Errorf("not implemented")
 
@@ -37,6 +36,7 @@ type Queue struct {
 
 	opMtx *lock.EngineLock
 	mtx   *sync.RWMutex
+	//op    *concurrent.OffThread
 
 	awaitTimeout time.Duration
 
@@ -48,7 +48,7 @@ type Queue struct {
 	ltngdbengine   *ltng_engine_v2.LTNGEngine
 
 	fqMainMapping       *safe.GenericMap[*queuemodels.QueuePublisher]
-	fqDownstreamMapping *safe.GenericMap[*queuemodels.QueueSignaler]
+	fqDownstreamMapping *safe.GenericMap[*safe.GenericMap[*queuemodels.QueueSignaler]]
 
 	senderGroupMapping *safe.GenericMap[*safe.GenericMap[*queuemodels.QueueOrchestrator]]
 	eventMapTracker    *safe.GenericMap[*queuemodels.EventTracker]
@@ -68,6 +68,7 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 		ctx:   ctx,
 		opMtx: lock.NewEngineLock(),
 		mtx:   &sync.RWMutex{},
+		//op:    concurrent.New("ltng-queue"),
 
 		serializer:  serializer.NewRawBinarySerializer(),
 		fileManager: rw.NewFileManager(ctx),
@@ -75,7 +76,7 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 		ltngdbengine: ltngdbengine,
 
 		fqMainMapping:       safe.NewGenericMap[*queuemodels.QueuePublisher](),
-		fqDownstreamMapping: safe.NewGenericMap[*queuemodels.QueueSignaler](),
+		fqDownstreamMapping: safe.NewGenericMap[*safe.GenericMap[*queuemodels.QueueSignaler]](),
 
 		senderGroupMapping: safe.NewGenericMap[*safe.GenericMap[*queuemodels.QueueOrchestrator]](),
 		eventMapTracker:    safe.NewGenericMap[*queuemodels.EventTracker](),
@@ -103,17 +104,37 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 // - the db engine core.
 func (q *Queue) Close() error {
 	q.fqMainMapping.Range(func(key string, value *queuemodels.QueuePublisher) bool {
-		for !value.IsClosed.Load() {
-			runtime.Gosched()
+		//for !value.IsClosed.Load() {
+		//	runtime.Gosched()
+		//}
+		if !value.IsClosed.Load() {
+			// TODO: close the file queue
+			//if err := value.FileQueue.Close(); err != nil {
+			//	//
+			//}
+
+			value.IsClosed.Store(true)
 		}
 
 		return true
 	})
 
-	q.fqDownstreamMapping.Range(func(key string, value *queuemodels.QueueSignaler) bool {
-		for !value.IsClosed.Load() {
-			runtime.Gosched()
-		}
+	q.fqDownstreamMapping.Range(func(key string, value *safe.GenericMap[*queuemodels.QueueSignaler]) bool {
+		value.Range(func(key string, value *queuemodels.QueueSignaler) bool {
+			//for !value.IsClosed.Load() {
+			//	runtime.Gosched()
+			//}
+			if !value.IsClosed.Load() {
+				// TODO: close the file queue
+				//if err := value.FileQueue.Close(); err != nil {
+				//	//
+				//}
+
+				value.IsClosed.Store(true)
+			}
+
+			return true
+		})
 
 		return true
 	})
@@ -123,18 +144,37 @@ func (q *Queue) Close() error {
 	return nil
 }
 
+func (q *Queue) CreateQueue(
+	ctx context.Context,
+	queue *queuemodels.Queue,
+) (qp *queuemodels.QueuePublisher, err error) {
+	lockKey := queue.GetLockKey()
+	q.opMtx.Lock(lockKey, struct{}{})
+	defer q.opMtx.Unlock(lockKey)
+
+	if err = queue.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating queue: %w", err)
+	}
+
+	if qp, err = q.createQueuePublisher(ctx, queue); err != nil {
+		return nil, fmt.Errorf("failed to create queue publisher: %w", err)
+	}
+
+	if _, err = q.createQueueSignaler(ctx, queue); err != nil {
+		return nil, fmt.Errorf("error creating queue: %w", err)
+	}
+
+	return
+}
+
 // CreateQueuePublisher creates a queue publisher.
 // The queue publisher is the first point of contact with the ltng-queue.
 // It is responsible for making sure the message was received and stored successfully
 // to be later processed.
 // Right first, process later, principle.
-func (q *Queue) CreateQueuePublisher(
+func (q *Queue) createQueuePublisher(
 	ctx context.Context, queue *queuemodels.Queue,
 ) (*queuemodels.QueuePublisher, error) {
-	if err := queue.Validate(); err != nil {
-		return nil, fmt.Errorf("error validating queue: %w", err)
-	}
-
 	if _, err := q.createQueueStoreOnDB(ctx, queue); err != nil {
 		return nil, fmt.Errorf("error creating queue store: %w", err)
 	}
@@ -158,77 +198,40 @@ func (q *Queue) CreateQueuePublisher(
 
 	go q.readerPool(q.ctx, qp)
 
-	// create queue signalers
-	if _, err = q.CreateQueueSignaler(ctx, queue); err != nil {
-		//rmErr := q.deleteQueueReferenceFromDB(ctx, queue)
-		//if rmErr != nil {
-		//	log.Printf("error removing queue: %v", err)
-		//}
-
-		return nil, fmt.Errorf("error creating queue group: %w", err)
-	}
-
 	return qp, nil
 }
 
-func (q *Queue) CreateQueueSignaler(
+func (q *Queue) createQueueSignaler(
 	ctx context.Context, queue *queuemodels.Queue,
 ) (*queuemodels.QueueSignaler, error) {
-	if err := queue.Validate(); err != nil {
-		return nil, fmt.Errorf("error validating queue: %w", err)
-	}
-
-	fq, err := filequeuev1.New(ctx, queuemodels.SignalersSep+queue.Path, queue.Name)
+	fq, err := filequeuev1.New(ctx, queuemodels.SignalersSep+queue.Path, queue.GetGroupName())
 	if err != nil { //  && !strings.Contains(err.Error(), "file already exist")
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
 
-	qs := &queuemodels.QueueSignaler{
-		FileQueue:         fq,
-		SignalTransmitter: make(chan struct{}, signalTransmitterBufferSize),
-		FirstSent:         new(atomic.Bool),
-		IsClosed:          new(atomic.Bool),
-	}
-	q.fqDownstreamMapping.Set(queue.GetLockKey(), qs)
+	lockKey := queue.GetLockKey()
+	completeLockKey := queue.GetCompleteLockKey()
 
-	// TODO: check its functionality
-	go q.consumerThread(q.ctx, qs)
-
-	if _, err = q.CreateQueueSignalerGroup(ctx, queue); err != nil {
-		rmErr := q.deleteQueueIndexReferenceFromDB(ctx, queue)
-		if rmErr != nil {
-			log.Printf("error removing queue: %v", err)
-		}
-
-		q.fqDownstreamMapping.Delete(queue.GetCompleteLockKey())
-
-		return nil, fmt.Errorf("error creating queue group: %w", err)
+	fqdm, ok := q.fqDownstreamMapping.Get(lockKey)
+	if !ok {
+		fqdm = safe.NewGenericMap[*queuemodels.QueueSignaler]()
+		q.fqDownstreamMapping.Set(lockKey, fqdm)
 	}
 
-	return qs, nil
-}
-
-func (q *Queue) CreateQueueSignalerGroup(
-	ctx context.Context, queue *queuemodels.Queue,
-) (*queuemodels.QueueSignaler, error) {
-	if queue.Group == nil {
-		return nil, nil
-	}
-
-	fq, err := filequeuev1.New(ctx, queuemodels.SignalersSep+queue.Path, queue.GetGroupName())
-	if err != nil {
-		return nil, fmt.Errorf("error creating queue: %w", err)
+	sinalTransmitterCount := queue.ConsumerCountLimit
+	if sinalTransmitterCount == 0 {
+		sinalTransmitterCount = signalTransmitterBufferSize
 	}
 
 	qs := &queuemodels.QueueSignaler{
-		FileQueue:         fq,
-		SignalTransmitter: make(chan struct{}, signalTransmitterBufferSize),
-		FirstSent:         new(atomic.Bool),
-		IsClosed:          new(atomic.Bool),
+		FileQueue:              fq,
+		SignalTransmissionRate: sinalTransmitterCount,
+		SignalTransmitter:      make(chan struct{}, sinalTransmitterCount),
+		FirstSent:              new(atomic.Bool),
+		IsClosed:               new(atomic.Bool),
 	}
-	q.fqDownstreamMapping.Set(queue.GetCompleteLockKey(), qs)
+	fqdm.Set(completeLockKey, qs)
 
-	// TODO: check its functionality
 	go q.consumerThread(q.ctx, qs)
 
 	return qs, nil
@@ -381,49 +384,18 @@ func (q *Queue) getQueuePublisher(
 			log.Printf("error deserializing queue item: %v", err)
 		}
 
-		qp, err = q.CreateQueuePublisher(ctx, queueInfo)
+		qp, err = q.CreateQueue(ctx, queueInfo)
 		if err != nil {
 			log.Printf("error creating queue: %v", err)
 		}
 
 		return qp, nil
 	}
-
-	return qp, nil
-}
-
-func (q *Queue) getQueueSignaler(
-	ctx context.Context, queue *queuemodels.Queue,
-) (*queuemodels.QueueSignaler, error) {
-	lockKey := queue.GetCompleteLockKey()
-	qs, ok := q.fqDownstreamMapping.Get(lockKey)
-	if !ok {
-		dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-		item := &ltngenginemodels.Item{
-			Key: []byte(lockKey),
-		}
-		opts := &ltngenginemodels.IndexOpts{
-			HasIdx: false,
-		}
-		queueItem, err := q.ltngdbengine.LoadItem(ctx, dbMetaInfo, item, opts)
-		if err != nil {
-			log.Printf("error loading queue item: %v", err)
-		}
-
-		var queueInfo *queuemodels.Queue
-		if err = q.serializer.Deserialize(queueItem.Value, &queueInfo); err != nil {
-			log.Printf("error deserializing queue item: %v", err)
-		}
-
-		qs, err = q.CreateQueueSignaler(ctx, queueInfo)
-		if err != nil {
-			log.Printf("error creating queue: %v", err)
-		}
-
-		return qs, nil
+	if qp.IsClosed.Load() {
+		return nil, fmt.Errorf("queue is closed: %+v: %+v", queue, qp)
 	}
 
-	return qs, nil
+	return qp, nil
 }
 
 func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
@@ -464,59 +436,6 @@ func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemo
 	return event, nil
 }
 
-// publishDownStream publishes a message to downstream queues.
-// It constantly keeps reading the file until there is something to be read.
-func (q *Queue) publishDownStream(
-	ctx context.Context, event *queuemodels.Event,
-) (*queuemodels.Event, error) {
-	//if err := event.Validate(); err != nil {
-	//	return nil, fmt.Errorf("error validating event: %w", err)
-	//}
-	//
-	//if event.EventID == "" {
-	//	newEventUUID, err := uuid.NewRandom()
-	//	if err != nil {
-	//		return nil, fmt.Errorf("error generating uuid: %w", err)
-	//	}
-	//
-	//	event.EventID = newEventUUID.String()
-	//}
-	//
-	//receivedAtTime := time.Unix(event.Metadata.ReceivedAt, 0)
-	//if receivedAtTime.IsZero() {
-	//	event.Metadata.ReceivedAt = time.Now().UTC().Unix()
-	//}
-	//
-	//if event.Metadata.ReceivedAtList == nil {
-	//	event.Metadata.ReceivedAtList = []int64{event.Metadata.ReceivedAt}
-	//} else {
-	//	event.Metadata.ReceivedAtList = append(event.Metadata.ReceivedAtList, time.Now().UTC().Unix())
-	//}
-
-	// TODO: context handler
-
-	//qs, ok := q.fqMapping.Get(event.Queue.GetLockKey())
-	//if !ok {
-	//	return nil, fmt.Errorf("error getting file-queue for downstream event: %v", event.Queue.GetLockKey())
-	//}
-	//go qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
-	//
-	//})
-	//
-	//qs, err := q.getQueueSignaler(ctx, event.Queue)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error getting queue: %w", err)
-	//}
-	//
-	//if err = qs.FileQueue.WriteOnCursor(ctx, event); err != nil {
-	//	return nil, fmt.Errorf("error writing event: %w", err)
-	//}
-
-	//q.fqDownstreamMapping.Get()
-
-	return nil, nil
-}
-
 func (q *Queue) SubscribeToQueue(
 	_ context.Context,
 	queue *queuemodels.Queue,
@@ -545,32 +464,6 @@ func (q *Queue) SubscribeToQueue(
 		subscriptionQueue.Set(completeLockKey, subscriptionQueueGroup)
 	}
 	subscriptionQueueGroup.PublishList.Append(publisher)
-
-	//{
-	//	qs, ok := q.fqMapping.Get(lockKey)
-	//	if !ok {
-	//		return fmt.Errorf("error loading queue subscriber for lockKey: no subscriber found")
-	//	}
-	//
-	//	if qs.FirstSent.CompareAndSwap(false, true) {
-	//		qs.SignalTransmitter <- struct{}{}
-	//	}
-	//}
-	//
-	//{
-	//	if lockKey == completeLockKey {
-	//		return nil
-	//	}
-	//
-	//	qs, ok := q.fqMapping.Get(completeLockKey)
-	//	if !ok {
-	//		return fmt.Errorf("error loading queue subscriber for completeLockKey: no subscriber found")
-	//	}
-	//
-	//	if qs.FirstSent.CompareAndSwap(false, true) {
-	//		qs.SignalTransmitter <- struct{}{}
-	//	}
-	//}
 
 	return nil
 }
@@ -607,11 +500,9 @@ func (q *Queue) UnsubscribeToQueue(
 	return nil
 }
 
-func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event) error {
-	if err := event.Validate(); err != nil {
-		return fmt.Errorf("error validating event: %w", err)
-	}
-
+func (q *Queue) publishToSubscribers(
+	_ context.Context, event *queuemodels.Event,
+) error {
 	lockKey := event.Queue.GetLockKey()
 	groupMapping, ok := q.senderGroupMapping.Get(lockKey)
 	if !ok {
@@ -619,47 +510,24 @@ func (q *Queue) publishToSubscribers(_ context.Context, event *queuemodels.Event
 		return nil
 	}
 
-	if event.Queue.Group != nil {
-		completeLockKey := event.Queue.GetCompleteLockKey()
-		orchestrator, isOkay := groupMapping.Get(completeLockKey)
-		if !isOkay {
-			log.Printf("no available group queue subscriber for: %s", completeLockKey)
-			return nil
-		}
-
-		switch orchestrator.Queue.QueueDistributionType {
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
-			for _, publisher := range orchestrator.PublishList.Get() {
-				publisher.Sender <- event
-			}
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
-			fallthrough
-		default:
-			orchestrator.PublishList.Next().Sender <- event
-		}
-
+	completeLockKey := event.Queue.GetCompleteLockKey()
+	orchestrator, isOkay := groupMapping.Get(completeLockKey)
+	if !isOkay {
+		log.Printf("no available group queue subscriber for: %s", completeLockKey)
 		return nil
 	}
 
-	//TODO: remove comments
-	groupMapping.Range(func(key string, orchestrator *queuemodels.QueueOrchestrator) bool {
-		//fmt.Printf("publishing to queue: %s - %v - %v - %+v\n", key,
-		//	orchestrator.Queue.QueueDistributionType, orchestrator.Queue, orchestrator.PublishList.Get())
-		switch orchestrator.Queue.QueueDistributionType {
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
-			//fmt.Printf("publishing to fan out: %s - %v\n", key, orchestrator.PublishList.Get())
-			for _, publisher := range orchestrator.PublishList.Get() {
-				publisher.Sender <- event
-			}
-		case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
-			fallthrough
-		default:
-			//fmt.Printf("publishing to round robin: %s\n", key)
-			orchestrator.PublishList.Next().Sender <- event
+	switch orchestrator.Queue.QueueDistributionType {
+	case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
+		subscribers := orchestrator.PublishList.Get()
+		for _, publisher := range subscribers {
+			publisher.Sender <- event
 		}
-
-		return true
-	})
+	case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_ROUND_ROBIN:
+		fallthrough
+	default:
+		orchestrator.PublishList.Next().Sender <- event
+	}
 
 	return nil
 }
@@ -676,16 +544,43 @@ func (q *Queue) readerPool(
 				err, errorsx.ErrUnRetryable)
 		}
 
+		err := event.Validate()
+		if err != nil {
+			return fmt.Errorf("error validating event: %w: %w",
+				err, errorsx.ErrUnRetryable)
+		}
+
+		// TODO: remove it when it is done!
 		fmt.Printf("event: %+v\n", event)
 
-		// TODO: implement the downstream publishing logic
+		lockKey := event.Queue.GetLockKey()
+		fqdm, ok := q.fqDownstreamMapping.Get(lockKey)
+		if !ok {
+			return fmt.Errorf("queue not found for %s", lockKey)
+		}
 
-		// TODO: check actual subscribers
-		// write to those file subscribers that are connected
-		// if no subscriber is connected, then do nothing until there is a subscriber;
-		// so keep checking for subscribers
-		// after the event is acked, write it to the ledger.
-		// if the event went through the max retry count; then write it to the DLQ ledger.
+		if event.Queue.Group == nil {
+			fqdm.Range(func(key string, value *queuemodels.QueueSignaler) bool {
+				if err = value.FileQueue.WriteOnCursor(ctx, event); err != nil {
+					fmt.Printf("error writing event to file queue %s - %v: %v", key, event, err)
+				}
+
+				return true
+			})
+
+			return nil
+		}
+
+		completeLockKey := event.Queue.GetCompleteLockKey()
+		subscriber, isOk := fqdm.Get(completeLockKey)
+		if !isOk {
+			return fmt.Errorf("queue not found for %s", completeLockKey)
+		}
+
+		if err = subscriber.FileQueue.WriteOnCursor(ctx, event); err != nil {
+			return fmt.Errorf("error writing event to file queue: %w: %w",
+				err, errorsx.ErrRetryable)
+		}
 
 		return nil
 	})
@@ -700,39 +595,73 @@ func (q *Queue) consumerThread(
 	ctx context.Context,
 	queueSignaler *queuemodels.QueueSignaler,
 ) {
-	for {
-		select {
-		case <-queueSignaler.SignalTransmitter:
-			event, err := q.getQueueNextEvent(ctx, queueSignaler)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					continue
-				}
+	eventChannel := make(chan *queuemodels.Event, queueSignaler.SignalTransmissionRate)
+	go func() {
+		ctxhandler.WithCancelLimit(ctx, make(chan struct{}, queueSignaler.SignalTransmissionRate), func() error {
+			q.getQueueNextEvent(ctx, queueSignaler, eventChannel)
 
-				log.Printf("error getting event from queue: %v", err)
-				continue
-			}
-			// TODO: debug log
-			//log.Printf("next event %v", event.EventID)
+			return nil
+		})
+	}()
 
-			go q.handleEventWaiting(ctx, queueSignaler, event)
-		case <-ctx.Done():
-			log.Printf("server context cancellation: %v", ctx.Err())
-			if err := queueSignaler.FileQueue.Reset(); err != nil {
-				log.Printf("error resetting file queue: %v", err)
-			}
+	go func() {
+		ctxhandler.WithCancelLimit(ctx, make(chan struct{}, queueSignaler.SignalTransmissionRate), func() error {
+			q.handleEventLifecycle(ctx, queueSignaler, eventChannel)
 
-			queueSignaler.IsClosed.Store(true)
-			return
-		}
-	}
+			return nil
+		})
+	}()
 }
 
-func (q *Queue) handleEventWaiting(
-	ctx context.Context, queueSignaler *queuemodels.QueueSignaler, event *queuemodels.Event,
+func (q *Queue) getQueueNextEvent(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	eventChan chan *queuemodels.Event,
 ) {
-	ack := make(chan struct{})
-	nack := make(chan struct{})
+	bs, err := queueSignaler.FileQueue.ReadFromCursorWithoutTruncation(ctx)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return
+		}
+
+		log.Printf("error reading from file queue: %s", err)
+		return
+	}
+
+	var event queuemodels.Event
+	if err = q.serializer.Deserialize(bs, &event); err != nil {
+		log.Printf("error deserializing event from file queue: %s", err)
+		return
+	}
+
+	if err = event.Validate(); err != nil {
+		log.Printf("error validating event from file queue: %s", err)
+		return
+	}
+
+	eventChan <- &event
+}
+
+func (q *Queue) handleEventLifecycle(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	eventChan chan *queuemodels.Event,
+) {
+	event, ok := <-eventChan
+	if !ok {
+		fmt.Printf("consumer channel is now closed: %v\n", ok)
+		return
+	}
+
+	// TODO: remove it when it is done!
+	fmt.Printf("event id: %v\n", event.EventID)
+	fmt.Printf("event pulled from consumer thread: %+v\n", event)
+
+	subscriberCount := event.Queue.ConsumerCountLimit
+	//_ = subscriberCount
+
+	ack := make(chan struct{}, subscriberCount)
+	nack := make(chan struct{}, subscriberCount)
 	et := &queuemodels.EventTracker{
 		EventID:   event.EventID,
 		Event:     event,
@@ -741,14 +670,31 @@ func (q *Queue) handleEventWaiting(
 		WasACKed:  new(atomic.Bool),
 		WasNACKed: new(atomic.Bool),
 	}
-	fmt.Printf("event %v\n", event.EventID)
 	q.eventMapTracker.Set(event.EventID, et)
 	if err := q.publishToSubscribers(ctx, event); err != nil {
 		log.Printf("error publishing event: %v", err)
+		q.eventMapTracker.Delete(event.EventID)
+		// TODO: what should we do with the event? Republish?
+		// and/or how about its internal reader cursor?
+
+		// TODO: how should we handle events when there are no subscribers?
+		// How would we revert the event to the queue? or its reader cursor?
+		return
 	}
 	eventIndex := []byte(et.EventID)
 
-	ctxtimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
+	q.handleEventWaiting(ctx, queueSignaler, event, eventIndex, ack, nack)
+}
+
+func (q *Queue) handleEventWaiting(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	event *queuemodels.Event,
+	eventIndex []byte,
+	ack chan struct{},
+	nack chan struct{},
+) {
+	ctxTimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
 	defer func() {
 		cancel()
 		queueSignaler.SignalTransmitter <- struct{}{}
@@ -757,81 +703,78 @@ func (q *Queue) handleEventWaiting(
 	for {
 		select {
 		case <-ack:
-			if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-				log.Printf("error popping queue: %v", err)
-			}
-
-			// TODO: debug log
-			// log.Printf("event %v successfully ack'ed", event.EventID)
-
-			q.eventMapTracker.Delete(event.EventID)
-
-			return
+			q.handleAck(ctx, queueSignaler, event, eventIndex)
 		case <-nack:
-			if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
-				log.Printf("error popping queue: %v", err)
-				return
-			}
-
-			// TODO: add retry count limit
-			if event.Metadata.RetryCount > q.retryCountLimit {
-				// TODO: log and send it to the DLQ if existent?
-				return
-			}
-			event.Metadata.RetryCount++
-
-			if _, err := q.Publish(ctx, event); err != nil {
-				log.Printf("error re-publishing nacked event: %v", err)
-			}
-
-			// TODO: debug log
-			// log.Printf("event %v successfully nack'ed", event.EventID)
-
-			q.eventMapTracker.Delete(event.EventID)
-
-			return
-		case <-ctxtimeout.Done():
-			err := ctxtimeout.Err()
-			if !errors.Is(err, context.DeadlineExceeded) {
-				log.Printf("event %v successfully ack'ed", event.EventID)
-				return
-			}
-
-			// TODO: debug log
-			log.Printf("event context cancellation: %v",
-				fmt.Errorf("event %v being cancelled: %v", event.EventID, err))
-
-			if err := queueSignaler.FileQueue.RepublishIndex(ctx, eventIndex); err != nil {
-				log.Printf("error republishing to queue: %v", err)
-			}
-
-			q.eventMapTracker.Delete(event.EventID)
-
-			return
+			q.handleNack(ctx, queueSignaler, event, eventIndex)
+		case <-ctxTimeout.Done():
+			q.handleAckNackTimeout(ctx, queueSignaler, event, eventIndex)
 		}
 	}
 }
 
-func (q *Queue) getQueueNextEvent(
-	ctx context.Context, queueSignaler *queuemodels.QueueSignaler,
-) (*queuemodels.Event, error) {
-	bs, err := queueSignaler.FileQueue.ReadFromCursorWithoutTruncation(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error reading from queue: %w", err)
-	}
-	//if bs == nil || len(bs) == 0 {
-	//	return nil, io.EOF
-	//}
-
-	// TODO: store into to ack items
-	// TODO: store into the DB by timed-base-store
-
-	var event queuemodels.Event
-	if err = q.serializer.Deserialize(bs, &event); err != nil {
-		return nil, fmt.Errorf("error deserializing event: %w", err)
+func (q *Queue) handleAck(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	event *queuemodels.Event,
+	eventIndex []byte,
+) {
+	if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+		log.Printf("error popping queue: %v", err)
 	}
 
-	return &event, nil
+	// TODO: debug log
+	// log.Printf("event %v successfully ack'ed", event.EventID)
+
+	q.eventMapTracker.Delete(event.EventID)
+}
+
+func (q *Queue) handleNack(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	event *queuemodels.Event,
+	eventIndex []byte,
+) {
+	if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+		log.Printf("error popping queue: %v", err)
+		return
+	}
+
+	// TODO: add retry count limit
+	if event.Metadata.RetryCount > q.retryCountLimit {
+		// TODO: log and send it to the DLQ if existent?
+		return
+	}
+	event.Metadata.RetryCount++
+
+	if _, err := q.Publish(ctx, event); err != nil {
+		log.Printf("error re-publishing nacked event: %v", err)
+	}
+
+	// TODO: debug log
+	// log.Printf("event %v successfully nack'ed", event.EventID)
+
+	q.eventMapTracker.Delete(event.EventID)
+
+	return
+}
+
+func (q *Queue) handleAckNackTimeout(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	event *queuemodels.Event,
+	eventIndex []byte,
+) {
+	err := ctx.Err()
+	if !errors.Is(err, context.DeadlineExceeded) {
+		log.Printf("event %v ack/nack timeout", event.EventID)
+		return
+	}
+
+	// TODO: make it debug log
+	log.Printf("event context cancellation: %v",
+		fmt.Errorf("event %v being cancelled: %v", event.EventID, err))
+
+	q.handleNack(ctx, queueSignaler, event, eventIndex)
 }
 
 func (q *Queue) Ack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
@@ -849,6 +792,7 @@ func (q *Queue) Ack(_ context.Context, event *queuemodels.Event) (*queuemodels.E
 			event.EventID,
 		)
 	}
+
 	if et.WasACKed.Load() {
 		return et.Event, nil
 	}
@@ -872,9 +816,15 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 	if !ok {
 		return nil, fmt.Errorf("no event mapper found for %s - failed to ack event message", event.EventID)
 	}
-	et.Nack <- struct{}{}
 
-	return nil, nil
+	if et.WasNACKed.Load() {
+		return et.Event, nil
+	}
+
+	et.Nack <- struct{}{}
+	et.WasNACKed.Store(true)
+
+	return et.Event, nil
 }
 
 // create the topic and subtopic - does nothing if it already exists
@@ -900,3 +850,33 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 // if a publisher tries to write to a non-existent queue, it should error out.
 // if a subscriber tries to read from a non-existent queue, it should error out.
 // if a subscriber tries to read from a non-existent group queue, it should error out.
+
+// TODO: DO NOT USE READER POOLER HERE!!
+// it needs to be async
+// probably it is going to use the classic fq read and pop from index
+//
+// TODO: implement the downstream publishing logic
+
+// TODO: check actual subscribers
+// write to those file subscribers that are connected
+// if no subscriber is connected, then do nothing until there is a subscriber;
+// so keep checking for subscribers
+// after the event is acked, write it to the ledger.
+// if the event went through the max retry count; then write it to the DLQ ledger.
+//
+// apparently I do not need a publisher for the queue
+// if the queue is not a group queue, then I do not need a publisher
+// if the queue is a group queue, then I do not need a publisher for each group
+// I only need a publisher for the complete lock key
+//
+// TODO: Eureka!!
+// apparently I don't need a publisher and a queue signaler.
+// just one of them...
+// * pushes a message to the subscribed queues (all of them)
+// messages to specific groups go to that group subscriber or
+// a generic subscriber for that queue.
+// a subscriber without a group receives all messages
+// a subscriber with a group receives only messages from that group
+//
+// if the queue creation has a group, create only the group (complete lock key) file signaler
+// if the queue creation does not have a group, create the lock key file signaler only

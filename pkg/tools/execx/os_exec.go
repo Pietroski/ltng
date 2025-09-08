@@ -7,7 +7,7 @@ import (
 )
 
 func Executor(cmd *exec.Cmd) ([]byte, error) {
-	// fmt.Println(cmd.String())
+	fmt.Println(cmd.String())
 	return cmd.CombinedOutput()
 }
 

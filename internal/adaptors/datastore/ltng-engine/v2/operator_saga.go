@@ -115,7 +115,8 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 	}
 
 	if err = ResponseAccumulator(respSignalChan); err != nil {
-		log.Printf("error accumulating item info data from file queue: %v", err)
+		log.Printf("error accumulating item info data from file queue on op type %v: %v",
+			itemInfoData.OpType, err)
 	}
 	op.pidRegister.CountEnd()
 }

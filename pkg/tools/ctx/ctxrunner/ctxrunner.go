@@ -19,10 +19,13 @@ func WithCancellation[T any](
 		select {
 		case <-ctx.Done():
 			log.Printf("context done for %v: %v\n", thread, ctx.Err())
+			// TODO: try closing it on the publishing side
+			// or use the concurrent lib
 			close(channel)
 			for v := range channel {
 				fn(v)
 			}
+
 			return
 		case v := <-channel:
 			fn(v)

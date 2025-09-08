@@ -54,7 +54,7 @@ type Group struct {
 type Queue struct {
 	Name          string
 	Path          string
-	MaxRetries    uint64
+	MaxRetries    uint8
 	MaxRetryDelay uint64
 
 	// Group is a valid field for subscribers and publishers
@@ -63,6 +63,8 @@ type Queue struct {
 	QueueDistributionType QueueDistributionType
 	// At least one or at lest all subscribers should ack the message.
 	AckPolicy ACKPolicy
+
+	ConsumerCountLimit uint32
 
 	CreatedAt     int64 // time.Time
 	LastStartedAt int64 // time.Time
@@ -175,8 +177,10 @@ type QueuePublisher struct {
 }
 
 type QueueSignaler struct {
-	FileQueue         *filequeuev1.FileQueue
-	SignalTransmitter chan struct{}
-	FirstSent         *atomic.Bool
-	IsClosed          *atomic.Bool
+	FileQueue *filequeuev1.FileQueue
+
+	SignalTransmissionRate uint32
+	SignalTransmitter      chan struct{}
+	FirstSent              *atomic.Bool
+	IsClosed               *atomic.Bool
 }
