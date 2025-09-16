@@ -54,6 +54,12 @@ func (ch *Channel[T]) Close() {
 		runtime.Gosched()
 	}
 
+	if ch.isClosed.Load() {
+		// Release the lock before returning
+		ch.lock.Store(false)
+		return
+	}
+
 	ch.isClosed.Store(true)
 	close(ch.Ch)
 	ch.lock.Store(false)
