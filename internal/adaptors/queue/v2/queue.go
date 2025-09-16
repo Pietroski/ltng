@@ -68,7 +68,8 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 	}
 
 	q := &Queue{
-		ctx:   ctx,
+		ctx: ctx,
+
 		opMtx: lock.NewEngineLock(),
 		mtx:   &sync.RWMutex{},
 		//op:    concurrent.New("ltng-queue"),
@@ -106,6 +107,9 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 // - the downstream file-queues;
 // - the db engine core.
 func (q *Queue) Close() error {
+	// give it a delay before shutting down if the service crashes at the beginning
+	time.Sleep(time.Second)
+
 	q.fqMainMapping.Range(func(key string, value *queuemodels.QueuePublisher) bool {
 		//for !value.IsClosed.Load() {
 		//	runtime.Gosched()
@@ -404,6 +408,11 @@ func (q *Queue) getQueuePublisher(
 }
 
 func (q *Queue) Publish(ctx context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
+	// TODO: check whether or not these are necessary:
+	// check retry count
+	// create sent at
+	// create received at
+
 	if err := event.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating event: %w", err)
 	}
@@ -475,7 +484,7 @@ func (q *Queue) SubscribeToQueue(
 	return nil
 }
 
-func (q *Queue) UnsubscribeToQueue(
+func (q *Queue) UnsubscribeFromQueue(
 	_ context.Context,
 	queue *queuemodels.Queue,
 	publisher *queuemodels.Publisher,

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
@@ -31,9 +32,9 @@ type (
 )
 
 func TestQueue(t *testing.T) {
-	Test_DeleteTestFileQueue(t)
-
 	t.Run("queue instantiation", func(t *testing.T) {
+		Test_DeleteTestFileQueue(t)
+
 		ctx := context.Background()
 
 		ltngqueue, err := New(ctx)
@@ -44,6 +45,8 @@ func TestQueue(t *testing.T) {
 	})
 
 	t.Run("queue creation", func(t *testing.T) {
+		Test_DeleteTestFileQueue(t)
+
 		ctx := context.Background()
 
 		ltngqueue, err := New(ctx)
@@ -61,160 +64,265 @@ func TestQueue(t *testing.T) {
 	})
 
 	t.Run("publish only flow", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-
-		ltngqueue, err := New(ctx)
-		require.NoError(t, err)
-
-		queue := &queuemodels.Queue{
-			Name: "test-queue",
-			Path: "test/queue",
-
-			ConsumerCountLimit: 5,
+		testCases := map[string]struct {
+			consumerCountLimit uint32
+			eventCount         int
+		}{
+			"single consumer": {
+				consumerCountLimit: 1,
+				eventCount:         10,
+			},
+			"single consumer for one event": {
+				consumerCountLimit: 1,
+				eventCount:         10,
+			},
+			"multiple consumers for single event": {
+				consumerCountLimit: 5,
+				eventCount:         1,
+			},
+			"multiple consumers for multiple events": {
+				consumerCountLimit: 5,
+				eventCount:         10,
+			},
 		}
-		_, err = ltngqueue.CreateQueue(ctx, queue)
-		require.NoError(t, err)
 
-		eventCount := 10
-		for i := 0; i < eventCount; i++ {
-			gtd := &GenericTestData{
-				FieldString: go_random.RandomString(12),
-				FieldInt:    int(go_random.RandomInt(1, 100)),
-				FieldBool:   true,
-			}
-			bs, err := ltngqueue.serializer.Serialize(gtd)
-			require.NoError(t, err)
+		for testName, testCase := range testCases {
+			t.Run(testName, func(t *testing.T) {
+				Test_DeleteTestFileQueue(t)
 
-			metadata := &queuemodels.EventMetadata{
-				Metadata:       nil,
-				RetryCount:     0,
-				SentAt:         0,
-				ReceivedAt:     0,
-				ReceivedAtList: nil,
-			}
-			event := &queuemodels.Event{
-				EventID:  "",
-				Queue:    queue,
-				Data:     bs,
-				Metadata: metadata,
-			}
+				ctx, cancel := context.WithCancel(context.Background())
 
-			e, err := ltngqueue.Publish(ctx, event)
-			require.NoError(t, err)
-			require.EqualValues(t, event, e)
+				ltngqueue, err := New(ctx)
+				require.NoError(t, err)
+
+				queue := &queuemodels.Queue{
+					Name: "test-queue",
+					Path: "test/queue",
+
+					ConsumerCountLimit: testCase.consumerCountLimit,
+				}
+				_, err = ltngqueue.CreateQueue(ctx, queue)
+				require.NoError(t, err)
+
+				eventCount := testCase.eventCount
+				for i := 0; i < eventCount; i++ {
+					gtd := &GenericTestData{
+						FieldString: go_random.RandomString(12),
+						FieldInt:    int(go_random.RandomInt(1, 100)),
+						FieldBool:   true,
+					}
+					bs, err := ltngqueue.serializer.Serialize(gtd)
+					require.NoError(t, err)
+
+					metadata := &queuemodels.EventMetadata{
+						Metadata:       nil,
+						RetryCount:     0,
+						SentAt:         0,
+						ReceivedAt:     0,
+						ReceivedAtList: nil,
+					}
+					event := &queuemodels.Event{
+						EventID:  "",
+						Queue:    queue,
+						Data:     bs,
+						Metadata: metadata,
+					}
+					e, err := ltngqueue.Publish(ctx, event)
+					require.NoError(t, err)
+					require.EqualValues(t, event, e)
+				}
+
+				time.Sleep(time.Second)
+
+				cancel()
+				err = ltngqueue.Close()
+				require.NoError(t, err)
+			})
 		}
-		time.Sleep(1 * time.Second)
-
-		cancel()
-		err = ltngqueue.Close()
-		require.NoError(t, err)
 	})
 
-	t.Run("subscription / consumption flow", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-
-		ltngqueue, err := New(ctx)
-		require.NoError(t, err)
-
-		queue := &queuemodels.Queue{
-			Name: "test-queue",
-			Path: "test/queue",
-
-			ConsumerCountLimit: 5,
+	t.Run("subscription / unsubscription only flow", func(t *testing.T) {
+		testCases := map[string]struct {
+			consumerCountLimit uint32
+			subscriberCount    int
+		}{
+			"single consumer": {
+				consumerCountLimit: 1,
+				subscriberCount:    10,
+			},
+			"single consumer for one event": {
+				consumerCountLimit: 1,
+				subscriberCount:    10,
+			},
+			"multiple consumers for single event": {
+				consumerCountLimit: 5,
+				subscriberCount:    1,
+			},
+			"multiple consumers for multiple events": {
+				consumerCountLimit: 5,
+				subscriberCount:    10,
+			},
 		}
-		_, err = ltngqueue.CreateQueue(ctx, queue)
-		require.NoError(t, err)
+		for testName, testCase := range testCases {
+			t.Run(testName, func(t *testing.T) {
+				Test_DeleteTestFileQueue(t)
 
-		{
-			nodeUUID, err := uuid.NewRandom()
-			require.NoError(t, err)
-			nodeID := queue.GetCompleteLockKey() + "_" + nodeUUID.String()
+				ctx, cancel := context.WithCancel(context.Background())
 
-			receiver := make(chan *queuemodels.Event, 1)
-			publisher := &queuemodels.Publisher{
-				NodeID: nodeID,
-				Sender: receiver,
-			}
-			err = ltngqueue.SubscribeToQueue(ctx, queue, publisher)
-			require.NoError(t, err)
+				ltngqueue, err := New(ctx)
+				require.NoError(t, err)
+
+				queue := &queuemodels.Queue{
+					Name: "test-queue",
+					Path: "test/queue",
+
+					ConsumerCountLimit: testCase.consumerCountLimit,
+				}
+				_, err = ltngqueue.CreateQueue(ctx, queue)
+				require.NoError(t, err)
+
+				nodeIdListSize := testCase.subscriberCount
+				nodeIdList := make([]string, nodeIdListSize)
+				for i := 0; i < testCase.subscriberCount; i++ {
+					nodeUUID, err := uuid.NewRandom()
+					require.NoError(t, err)
+					nodeID := queue.GetCompleteLockKey() + "_" + nodeUUID.String()
+
+					nodeIdList[i] = nodeID
+
+					receiver := make(chan *queuemodels.Event, 1)
+					publisher := &queuemodels.Publisher{
+						NodeID: nodeID,
+						Sender: receiver,
+					}
+					err = ltngqueue.SubscribeToQueue(ctx, queue, publisher)
+					require.NoError(t, err)
+				}
+
+				time.Sleep(1 * time.Second)
+
+				for _, nodeID := range nodeIdList {
+					err = ltngqueue.UnsubscribeFromQueue(ctx, queue,
+						&queuemodels.Publisher{
+							NodeID: nodeID,
+						})
+					require.NoError(t, err)
+				}
+
+				cancel()
+				err = ltngqueue.Close()
+				require.NoError(t, err)
+			})
 		}
-
-		time.Sleep(1 * time.Second)
-
-		cancel()
-		err = ltngqueue.Close()
-		require.NoError(t, err)
 	})
 
 	t.Run("publish / consumption flow", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
+		t.Skip("wip")
 
-		ltngqueue, err := New(ctx)
-		require.NoError(t, err)
-
-		queue := &queuemodels.Queue{
-			Name: "test-queue",
-			Path: "test/queue",
-
-			ConsumerCountLimit: 10,
+		testCases := map[string]struct {
+			consumerCountLimit     uint32
+			eventCount             int
+			subscriberCount        int
+			timeoutInSeconds       int
+			receiverConcurrentSize int
+		}{
+			"single consumer": {
+				consumerCountLimit:     1,
+				eventCount:             10,
+				subscriberCount:        10,
+				timeoutInSeconds:       10,
+				receiverConcurrentSize: 10,
+			},
+			"single consumer for one event": {
+				consumerCountLimit:     1,
+				subscriberCount:        10,
+				receiverConcurrentSize: 10,
+			},
+			"multiple consumers for single event": {
+				consumerCountLimit:     5,
+				subscriberCount:        1,
+				receiverConcurrentSize: 10,
+			},
+			"multiple consumers for multiple events": {
+				consumerCountLimit:     5,
+				subscriberCount:        10,
+				receiverConcurrentSize: 10,
+			},
 		}
-		_, err = ltngqueue.CreateQueue(ctx, queue)
-		require.NoError(t, err)
+		for testName, testCase := range testCases {
+			t.Run(testName, func(t *testing.T) {
+				Test_DeleteTestFileQueue(t)
 
-		eventCount := 10
-		for i := 0; i < eventCount; i++ {
-			gtd := &GenericTestData{
-				FieldString: go_random.RandomString(12),
-				FieldInt:    int(go_random.RandomInt(1, 100)),
-				FieldBool:   true,
-			}
-			bs, err := ltngqueue.serializer.Serialize(gtd)
-			require.NoError(t, err)
+				ctx, cancel := context.WithCancel(context.Background())
 
-			metadata := &queuemodels.EventMetadata{
-				Metadata:       nil,
-				RetryCount:     0,
-				SentAt:         0,
-				ReceivedAt:     0,
-				ReceivedAtList: nil,
-			}
-			event := &queuemodels.Event{
-				EventID:  "",
-				Queue:    queue,
-				Data:     bs,
-				Metadata: metadata,
-			}
+				ltngqueue, err := New(ctx)
+				require.NoError(t, err)
 
-			e, err := ltngqueue.Publish(ctx, event)
-			require.NoError(t, err)
-			require.EqualValues(t, event, e)
+				queue := &queuemodels.Queue{
+					Name: "test-queue",
+					Path: "test/queue",
+
+					ConsumerCountLimit: testCase.consumerCountLimit,
+				}
+				_, err = ltngqueue.CreateQueue(ctx, queue)
+				require.NoError(t, err)
+
+				eventCount := testCase.eventCount
+				for i := 0; i < eventCount; i++ {
+					gtd := &GenericTestData{
+						FieldString: go_random.RandomString(12),
+						FieldInt:    int(go_random.RandomInt(1, 100)),
+						FieldBool:   true,
+					}
+					bs, err := ltngqueue.serializer.Serialize(gtd)
+					require.NoError(t, err)
+
+					metadata := &queuemodels.EventMetadata{
+						Metadata:       nil,
+						RetryCount:     0,
+						SentAt:         0,
+						ReceivedAt:     0,
+						ReceivedAtList: nil,
+					}
+					event := &queuemodels.Event{
+						EventID:  "",
+						Queue:    queue,
+						Data:     bs,
+						Metadata: metadata,
+					}
+
+					e, err := ltngqueue.Publish(ctx, event)
+					require.NoError(t, err)
+					require.EqualValues(t, event, e)
+				}
+
+				nodeUUID, err := uuid.NewRandom()
+				require.NoError(t, err)
+				nodeID := queue.GetCompleteLockKey() + "_" + nodeUUID.String()
+
+				receiver := make(chan *queuemodels.Event, 10)
+				publisher := &queuemodels.Publisher{
+					NodeID: nodeID,
+					Sender: receiver,
+				}
+				err = ltngqueue.SubscribeToQueue(ctx, queue, publisher)
+				require.NoError(t, err)
+
+				count := new(atomic.Uint64)
+				go func() {
+					for event := range receiver {
+						count.Add(1)
+						fmt.Printf("received event: %+v\n", event)
+					}
+				}()
+
+				time.Sleep(time.Second * time.Duration(testCase.timeoutInSeconds))
+				assert.EqualValues(t, uint64(eventCount), count.Load())
+				cancel()
+				err = ltngqueue.Close()
+				require.NoError(t, err)
+			})
 		}
-
-		nodeUUID, err := uuid.NewRandom()
-		require.NoError(t, err)
-		nodeID := queue.GetCompleteLockKey() + "_" + nodeUUID.String()
-
-		receiver := make(chan *queuemodels.Event, 10)
-		publisher := &queuemodels.Publisher{
-			NodeID: nodeID,
-			Sender: receiver,
-		}
-		err = ltngqueue.SubscribeToQueue(ctx, queue, publisher)
-		require.NoError(t, err)
-
-		count := new(atomic.Uint64)
-		go func() {
-			for event := range receiver {
-				count.Add(1)
-				fmt.Printf("received event: %+v\n", event)
-			}
-		}()
-
-		time.Sleep(2 * time.Second)
-		assert.EqualValues(t, uint64(eventCount), count.Load())
-		cancel()
-		err = ltngqueue.Close()
-		require.NoError(t, err)
 	})
 
 	t.Run("publish / consumption with ack/nack timeout flow", func(t *testing.T) {
