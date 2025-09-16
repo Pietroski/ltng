@@ -35,7 +35,7 @@ func WithCancellation(
 
 func WithCancelLimit(
 	ctx context.Context,
-	limiter chan struct{},
+	limit uint32,
 	fn func() error,
 ) {
 	thread, ok := ctx.Value("thread").(string)
@@ -43,6 +43,7 @@ func WithCancelLimit(
 		thread = "thread"
 	}
 
+	limiter := make(chan struct{}, limit)
 	for {
 		limiter <- struct{}{}
 

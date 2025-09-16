@@ -170,6 +170,7 @@ type EventTracker struct {
 }
 
 type QueuePublisher struct {
+	Queue     *Queue
 	FileQueue *filequeuev1.FileQueue
 
 	FirstSent *atomic.Bool
@@ -177,6 +178,7 @@ type QueuePublisher struct {
 }
 
 type QueueSignaler struct {
+	Queue     *Queue
 	FileQueue *filequeuev1.FileQueue
 
 	SignalTransmissionRate uint32

@@ -29,7 +29,10 @@ import (
 
 const signalTransmitterBufferSize = 1 << 4
 
-var notImplemented = fmt.Errorf("not implemented")
+var (
+	notImplemented         = fmt.Errorf("not implemented")
+	noAvailableSubscribers = fmt.Errorf("no available subscribers")
+)
 
 type Queue struct {
 	ctx context.Context
@@ -184,6 +187,7 @@ func (q *Queue) createQueuePublisher(
 		return nil, fmt.Errorf("error creating queue: %w", err)
 	}
 	qp := &queuemodels.QueuePublisher{
+		Queue:     queue,
 		FileQueue: fq,
 
 		FirstSent: new(atomic.Bool),
@@ -224,6 +228,7 @@ func (q *Queue) createQueueSignaler(
 	}
 
 	qs := &queuemodels.QueueSignaler{
+		Queue:                  queue,
 		FileQueue:              fq,
 		SignalTransmissionRate: sinalTransmitterCount,
 		SignalTransmitter:      make(chan struct{}, sinalTransmitterCount),
@@ -463,6 +468,8 @@ func (q *Queue) SubscribeToQueue(
 
 		subscriptionQueue.Set(completeLockKey, subscriptionQueueGroup)
 	}
+	// TODO: change it to append unique. It only appends to the list if it does not exist on it yet.
+	// so it traverses the existing list for checking item by item and then it appends if it does not exist.
 	subscriptionQueueGroup.PublishList.Append(publisher)
 
 	return nil
@@ -500,21 +507,38 @@ func (q *Queue) UnsubscribeToQueue(
 	return nil
 }
 
-func (q *Queue) publishToSubscribers(
-	_ context.Context, event *queuemodels.Event,
-) error {
-	lockKey := event.Queue.GetLockKey()
+func (q *Queue) getQueueSubscribers(
+	_ context.Context,
+	queue *queuemodels.Queue,
+) *queuemodels.QueueOrchestrator {
+	lockKey := queue.GetLockKey()
 	groupMapping, ok := q.senderGroupMapping.Get(lockKey)
 	if !ok {
-		log.Printf("no available queue subscriber for: %s", lockKey)
+		// TODO: make it debug log
+		// log.Printf("no available queue subscriber for: %s", lockKey)
+
 		return nil
 	}
 
-	completeLockKey := event.Queue.GetCompleteLockKey()
+	completeLockKey := queue.GetCompleteLockKey()
 	orchestrator, isOkay := groupMapping.Get(completeLockKey)
 	if !isOkay {
-		log.Printf("no available group queue subscriber for: %s", completeLockKey)
+		// TODO: make it debug log
+		// log.Printf("no available group queue subscriber for: %s", completeLockKey)
+
 		return nil
+	}
+
+	return orchestrator
+}
+
+func (q *Queue) publishToSubscribers(
+	ctx context.Context, event *queuemodels.Event,
+) error {
+	orchestrator := q.getQueueSubscribers(ctx, event.Queue)
+	if orchestrator == nil {
+		return fmt.Errorf("no available queue subscriber for: %s: %w",
+			event.Queue.Name, noAvailableSubscribers)
 	}
 
 	switch orchestrator.Queue.QueueDistributionType {
@@ -551,7 +575,7 @@ func (q *Queue) readerPool(
 		}
 
 		// TODO: remove it when it is done!
-		fmt.Printf("event: %+v\n", event)
+		// fmt.Printf("event: %+v\n", event)
 
 		lockKey := event.Queue.GetLockKey()
 		fqdm, ok := q.fqDownstreamMapping.Get(lockKey)
@@ -560,8 +584,8 @@ func (q *Queue) readerPool(
 		}
 
 		if event.Queue.Group == nil {
-			fqdm.Range(func(key string, value *queuemodels.QueueSignaler) bool {
-				if err = value.FileQueue.WriteOnCursor(ctx, event); err != nil {
+			fqdm.Range(func(key string, subscriber *queuemodels.QueueSignaler) bool {
+				if err = subscriber.FileQueue.WriteOnCursor(ctx, event); err != nil {
 					fmt.Printf("error writing event to file queue %s - %v: %v", key, event, err)
 				}
 
@@ -595,9 +619,16 @@ func (q *Queue) consumerThread(
 	ctx context.Context,
 	queueSignaler *queuemodels.QueueSignaler,
 ) {
+	fmt.Printf("queueSignaler.SignalTransmissionRate: %v\n", queueSignaler.SignalTransmissionRate)
 	eventChannel := make(chan *queuemodels.Event, queueSignaler.SignalTransmissionRate)
 	go func() {
-		ctxhandler.WithCancelLimit(ctx, make(chan struct{}, queueSignaler.SignalTransmissionRate), func() error {
+		ctxhandler.WithCancelLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
+			// do not consume if there is no active subscribers
+			orchestrator := q.getQueueSubscribers(ctx, queueSignaler.Queue)
+			if orchestrator == nil {
+				return nil
+			}
+
 			q.getQueueNextEvent(ctx, queueSignaler, eventChannel)
 
 			return nil
@@ -605,7 +636,7 @@ func (q *Queue) consumerThread(
 	}()
 
 	go func() {
-		ctxhandler.WithCancelLimit(ctx, make(chan struct{}, queueSignaler.SignalTransmissionRate), func() error {
+		ctxhandler.WithCancelLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
 			q.handleEventLifecycle(ctx, queueSignaler, eventChannel)
 
 			return nil
@@ -655,11 +686,29 @@ func (q *Queue) handleEventLifecycle(
 
 	// TODO: remove it when it is done!
 	fmt.Printf("event id: %v\n", event.EventID)
-	fmt.Printf("event pulled from consumer thread: %+v\n", event)
+	//fmt.Printf("event pulled from consumer thread: %+v\n", event)
 
+	queueSignaler.SignalTransmitter <- struct{}{}
+	defer func() {
+		<-queueSignaler.SignalTransmitter
+	}()
+
+	if err := q.publishToSubscribers(ctx, event); errors.Is(err, noAvailableSubscribers) {
+		log.Printf("error publishing event: %v", err)
+		q.eventMapTracker.Delete(event.EventID)
+
+		return
+	}
+
+	q.handleEventWaiting(ctx, queueSignaler, event)
+}
+
+func (q *Queue) handleEventWaiting(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	event *queuemodels.Event,
+) {
 	subscriberCount := event.Queue.ConsumerCountLimit
-	//_ = subscriberCount
-
 	ack := make(chan struct{}, subscriberCount)
 	nack := make(chan struct{}, subscriberCount)
 	et := &queuemodels.EventTracker{
@@ -671,44 +720,20 @@ func (q *Queue) handleEventLifecycle(
 		WasNACKed: new(atomic.Bool),
 	}
 	q.eventMapTracker.Set(event.EventID, et)
-	if err := q.publishToSubscribers(ctx, event); err != nil {
-		log.Printf("error publishing event: %v", err)
-		q.eventMapTracker.Delete(event.EventID)
-		// TODO: what should we do with the event? Republish?
-		// and/or how about its internal reader cursor?
-
-		// TODO: how should we handle events when there are no subscribers?
-		// How would we revert the event to the queue? or its reader cursor?
-		return
-	}
 	eventIndex := []byte(et.EventID)
 
-	q.handleEventWaiting(ctx, queueSignaler, event, eventIndex, ack, nack)
-}
-
-func (q *Queue) handleEventWaiting(
-	ctx context.Context,
-	queueSignaler *queuemodels.QueueSignaler,
-	event *queuemodels.Event,
-	eventIndex []byte,
-	ack chan struct{},
-	nack chan struct{},
-) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
 	defer func() {
 		cancel()
-		queueSignaler.SignalTransmitter <- struct{}{}
 	}()
 
-	for {
-		select {
-		case <-ack:
-			q.handleAck(ctx, queueSignaler, event, eventIndex)
-		case <-nack:
-			q.handleNack(ctx, queueSignaler, event, eventIndex)
-		case <-ctxTimeout.Done():
-			q.handleAckNackTimeout(ctx, queueSignaler, event, eventIndex)
-		}
+	select {
+	case <-ack:
+		q.handleAck(ctx, queueSignaler, event, eventIndex)
+	case <-nack:
+		q.handleNack(ctx, queueSignaler, event, eventIndex)
+	case <-ctxTimeout.Done():
+		q.handleAckNackTimeout(ctx, queueSignaler, event, eventIndex)
 	}
 }
 
@@ -740,7 +765,7 @@ func (q *Queue) handleNack(
 	}
 
 	// TODO: add retry count limit
-	if event.Metadata.RetryCount > q.retryCountLimit {
+	if event.Metadata.RetryCount >= q.retryCountLimit {
 		// TODO: log and send it to the DLQ if existent?
 		return
 	}
@@ -880,3 +905,13 @@ func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.
 //
 // if the queue creation has a group, create only the group (complete lock key) file signaler
 // if the queue creation does not have a group, create the lock key file signaler only
+//
+// TODO: what should we do with the event? Republish?
+// and/or how about its internal reader cursor?
+//
+// TODO: how should we handle events when there are no subscribers?
+// How would we revert the event to the queue? or its reader cursor?
+// perhaps that if there is no subscriber, we should not consume at all! <--!!
+//
+// less effective would be to just pop the event from the queue; republish it
+// and move on with the next event
