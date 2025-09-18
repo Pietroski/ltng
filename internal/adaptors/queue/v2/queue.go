@@ -246,6 +246,26 @@ func (q *Queue) createQueueSignaler(
 	return qs, nil
 }
 
+func (q *Queue) getQueueSignaler(
+	queue *queuemodels.Queue,
+) (*queuemodels.QueueSignaler, error) {
+	lockKey := queue.GetLockKey()
+	completeLockKey := queue.GetCompleteLockKey()
+
+	fqdm, ok := q.fqDownstreamMapping.Get(lockKey)
+	if !ok {
+		fqdm = safe.NewGenericMap[*queuemodels.QueueSignaler]()
+		q.fqDownstreamMapping.Set(lockKey, fqdm)
+	}
+
+	qs, ok := fqdm.Get(completeLockKey)
+	if !ok {
+		return nil, fmt.Errorf("error getting queue signaler")
+	}
+
+	return qs, nil
+}
+
 // createQueueStoreOnDB is responsible to hold the queue messages for historical reasons.
 // with that we can query the messages from the queue store.
 func (q *Queue) createQueueStoreOnDB(
@@ -811,7 +831,10 @@ func (q *Queue) handleAckNackTimeout(
 	q.handleNack(ctx, queueSignaler, event, eventIndex)
 }
 
-func (q *Queue) Ack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
+func (q *Queue) Ack(
+	_ context.Context,
+	event *queuemodels.Event,
+) (*queuemodels.Event, error) {
 	q.opMtx.Lock(event.EventID, struct{}{})
 	defer q.opMtx.Unlock(event.EventID)
 
