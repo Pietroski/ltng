@@ -688,10 +688,16 @@ func TestQueue_Publish(t *testing.T) {
 		"10 events": {
 			eventCount: 10,
 		},
+		"50 events": {
+			eventCount: 50,
+		},
 		"100 events": {
 			eventCount: 100,
 		},
-		"1000 events": {
+		"500 events": {
+			eventCount: 500,
+		},
+		"1_000 events": {
 			eventCount: 1_000,
 		},
 	}
