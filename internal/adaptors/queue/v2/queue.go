@@ -648,7 +648,6 @@ func (q *Queue) consumerThread(
 	ctx context.Context,
 	queueSignaler *queuemodels.QueueSignaler,
 ) {
-	//fmt.Printf("queueSignaler.SignalTransmissionRate: %v\n", queueSignaler.SignalTransmissionRate)
 	eventChannel := make(chan *queuemodels.Event, queueSignaler.SignalTransmissionRate)
 	go func() {
 		ctxhandler.WithCancelLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
@@ -772,12 +771,10 @@ func (q *Queue) handleEventWaiting(
 	select {
 	case <-et.Ack:
 		q.handleAck(ctxTimeout, queueSignaler, et.Event, eventIndex)
-		//ack <- struct{}{}
 	case <-et.Nack:
 		q.handleNack(ctxTimeout, queueSignaler, et.Event, eventIndex)
 	case <-ctxTimeout.Done():
 		q.handleAckNackTimeout(ctxTimeout, queueSignaler, et.Event, eventIndex)
-		//q.handleAckNackTimeout(ctxTimeout, queueSignaler, event, eventIndex)
 	}
 }
 
@@ -873,7 +870,6 @@ func (q *Queue) Ack(
 	}
 
 	et.Ack <- struct{}{}
-	//<-et.Ack
 	et.WasACKed.Store(true)
 
 	return et.Event, nil

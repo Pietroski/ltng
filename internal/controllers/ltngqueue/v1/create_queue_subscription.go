@@ -42,7 +42,7 @@ func (c *Controller) CreateQueueSubscription(
 	}
 
 	defer func() {
-		if err := c.queueEngine.UnsubscribeToQueue(ctx, queue, publisher); err != nil {
+		if err := c.queueEngine.UnsubscribeFromQueue(ctx, queue, publisher); err != nil {
 			log.Printf("error unsubscribing from queue: %v: error: %v", publisher.NodeID, err)
 		}
 	}()
