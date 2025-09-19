@@ -737,9 +737,11 @@ func (q *Queue) handleEventWaiting(
 	queueSignaler *queuemodels.QueueSignaler,
 	event *queuemodels.Event,
 ) {
-	subscriberCount := event.Queue.ConsumerCountLimit
-	ack := make(chan struct{}, subscriberCount)
-	nack := make(chan struct{}, subscriberCount)
+	//subscriberCount := event.Queue.ConsumerCountLimit
+	//ack := make(chan struct{}, subscriberCount)
+	//nack := make(chan struct{}, subscriberCount)
+	ack := make(chan struct{}, 1)
+	nack := make(chan struct{}, 1)
 	et := &queuemodels.EventTracker{
 		EventID:   event.EventID,
 		Event:     event,
@@ -759,10 +761,12 @@ func (q *Queue) handleEventWaiting(
 	select {
 	case <-ack:
 		q.handleAck(ctx, queueSignaler, event, eventIndex)
+		//ack <- struct{}{}
 	case <-nack:
 		q.handleNack(ctx, queueSignaler, event, eventIndex)
 	case <-ctxTimeout.Done():
 		q.handleAckNackTimeout(ctx, queueSignaler, event, eventIndex)
+		//q.handleAckNackTimeout(ctxTimeout, queueSignaler, event, eventIndex)
 	}
 }
 
@@ -820,7 +824,7 @@ func (q *Queue) handleAckNackTimeout(
 ) {
 	err := ctx.Err()
 	if !errors.Is(err, context.DeadlineExceeded) {
-		log.Printf("event %v ack/nack timeout", event.EventID)
+		log.Printf("event %v ack/nack timeout: %v", event.EventID, err)
 		return
 	}
 
@@ -835,6 +839,10 @@ func (q *Queue) Ack(
 	_ context.Context,
 	event *queuemodels.Event,
 ) (*queuemodels.Event, error) {
+	if err := event.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating event: %v", err)
+	}
+
 	q.opMtx.Lock(event.EventID, struct{}{})
 	defer q.opMtx.Unlock(event.EventID)
 
@@ -843,10 +851,10 @@ func (q *Queue) Ack(
 	// TODO: send to sigchannel to fetch next event message
 	et, ok := q.eventMapTracker.Get(event.EventID)
 	if !ok {
-		//return nil, nil
 		return nil, fmt.Errorf(
-			"no event mapper found for %s or event message already ack'ed - failed to ack event message",
+			"no event tracker found for: %s - ack'ed: %v",
 			event.EventID,
+			et.WasACKed.Load(),
 		)
 	}
 
@@ -855,6 +863,7 @@ func (q *Queue) Ack(
 	}
 
 	et.Ack <- struct{}{}
+	//<-et.Ack
 	et.WasACKed.Store(true)
 
 	return et.Event, nil
