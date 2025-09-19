@@ -648,7 +648,7 @@ func (q *Queue) consumerThread(
 	ctx context.Context,
 	queueSignaler *queuemodels.QueueSignaler,
 ) {
-	fmt.Printf("queueSignaler.SignalTransmissionRate: %v\n", queueSignaler.SignalTransmissionRate)
+	//fmt.Printf("queueSignaler.SignalTransmissionRate: %v\n", queueSignaler.SignalTransmissionRate)
 	eventChannel := make(chan *queuemodels.Event, queueSignaler.SignalTransmissionRate)
 	go func() {
 		ctxhandler.WithCancelLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
@@ -678,7 +678,7 @@ func (q *Queue) getQueueNextEvent(
 	queueSignaler *queuemodels.QueueSignaler,
 	eventChan chan *queuemodels.Event,
 ) {
-	bs, err := queueSignaler.FileQueue.ReadFromCursorWithoutTruncation(ctx)
+	bs, err := queueSignaler.FileQueue.ReadFromCursorAndLockItWithoutTruncation(ctx)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return
@@ -714,13 +714,15 @@ func (q *Queue) handleEventLifecycle(
 	}
 
 	// TODO: remove it when it is done!
-	fmt.Printf("event id: %v\n", event.EventID)
+	//fmt.Printf("event id: %v\n", event.EventID)
 	//fmt.Printf("event pulled from consumer thread: %+v\n", event)
 
 	queueSignaler.SignalTransmitter <- struct{}{}
 	defer func() {
 		<-queueSignaler.SignalTransmitter
 	}()
+
+	et := q.createEventTracker(ctx, event)
 
 	if err := q.publishToSubscribers(ctx, event); errors.Is(err, noAvailableSubscribers) {
 		log.Printf("error publishing event: %v", err)
@@ -729,17 +731,17 @@ func (q *Queue) handleEventLifecycle(
 		return
 	}
 
-	q.handleEventWaiting(ctx, queueSignaler, event)
+	q.handleEventWaiting(ctx, queueSignaler, et)
 }
 
-func (q *Queue) handleEventWaiting(
-	ctx context.Context,
-	queueSignaler *queuemodels.QueueSignaler,
+func (q *Queue) createEventTracker(
+	_ context.Context,
 	event *queuemodels.Event,
-) {
+) *queuemodels.EventTracker {
 	//subscriberCount := event.Queue.ConsumerCountLimit
 	//ack := make(chan struct{}, subscriberCount)
 	//nack := make(chan struct{}, subscriberCount)
+
 	ack := make(chan struct{}, 1)
 	nack := make(chan struct{}, 1)
 	et := &queuemodels.EventTracker{
@@ -751,6 +753,15 @@ func (q *Queue) handleEventWaiting(
 		WasNACKed: new(atomic.Bool),
 	}
 	q.eventMapTracker.Set(event.EventID, et)
+
+	return et
+}
+
+func (q *Queue) handleEventWaiting(
+	ctx context.Context,
+	queueSignaler *queuemodels.QueueSignaler,
+	et *queuemodels.EventTracker,
+) {
 	eventIndex := []byte(et.EventID)
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, q.awaitTimeout)
@@ -759,13 +770,13 @@ func (q *Queue) handleEventWaiting(
 	}()
 
 	select {
-	case <-ack:
-		q.handleAck(ctx, queueSignaler, event, eventIndex)
+	case <-et.Ack:
+		q.handleAck(ctxTimeout, queueSignaler, et.Event, eventIndex)
 		//ack <- struct{}{}
-	case <-nack:
-		q.handleNack(ctx, queueSignaler, event, eventIndex)
+	case <-et.Nack:
+		q.handleNack(ctxTimeout, queueSignaler, et.Event, eventIndex)
 	case <-ctxTimeout.Done():
-		q.handleAckNackTimeout(ctx, queueSignaler, event, eventIndex)
+		q.handleAckNackTimeout(ctxTimeout, queueSignaler, et.Event, eventIndex)
 		//q.handleAckNackTimeout(ctxTimeout, queueSignaler, event, eventIndex)
 	}
 }
@@ -776,7 +787,7 @@ func (q *Queue) handleAck(
 	event *queuemodels.Event,
 	eventIndex []byte,
 ) {
-	if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+	if err := queueSignaler.FileQueue.PopAndUnlockItFromIndex(ctx, eventIndex); err != nil {
 		log.Printf("error popping queue: %v", err)
 	}
 
@@ -792,7 +803,7 @@ func (q *Queue) handleNack(
 	event *queuemodels.Event,
 	eventIndex []byte,
 ) {
-	if err := queueSignaler.FileQueue.PopFromIndex(ctx, eventIndex); err != nil {
+	if err := queueSignaler.FileQueue.PopAndUnlockItFromIndex(ctx, eventIndex); err != nil {
 		log.Printf("error popping queue: %v", err)
 		return
 	}
@@ -852,9 +863,8 @@ func (q *Queue) Ack(
 	et, ok := q.eventMapTracker.Get(event.EventID)
 	if !ok {
 		return nil, fmt.Errorf(
-			"no event tracker found for: %s - ack'ed: %v",
+			"no event tracker found for: %s - ack'ed",
 			event.EventID,
-			et.WasACKed.Load(),
 		)
 	}
 
