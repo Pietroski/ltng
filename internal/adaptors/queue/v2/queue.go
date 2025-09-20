@@ -740,6 +740,12 @@ func (q *Queue) createEventTracker(
 
 	ack := make(chan struct{}, 1)
 	nack := make(chan struct{}, 1)
+	if orchestrator.Queue.AckPolicy == queuemodels.ACKPolicy_ACK_POLICY_ALL {
+		subscriberCount := len(orchestrator.PublishList.Get())
+		ack = make(chan struct{}, subscriberCount)
+		nack = make(chan struct{}, subscriberCount)
+	}
+
 	et := &queuemodels.EventTracker{
 		EventID:   event.EventID,
 		Event:     event,
