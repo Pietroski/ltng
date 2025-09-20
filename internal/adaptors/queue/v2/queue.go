@@ -562,14 +562,10 @@ func (q *Queue) getQueueSubscribers(
 }
 
 func (q *Queue) publishToSubscribers(
-	ctx context.Context, event *queuemodels.Event,
-) error {
-	orchestrator := q.getQueueSubscribers(ctx, event.Queue)
-	if orchestrator == nil {
-		return fmt.Errorf("no available queue subscriber for: %s: %w",
-			event.Queue.Name, noAvailableSubscribers)
-	}
-
+	_ context.Context,
+	event *queuemodels.Event,
+	orchestrator *queuemodels.QueueOrchestrator,
+) {
 	switch orchestrator.Queue.QueueDistributionType {
 	case queuemodels.QueueDistributionType_QUEUE_DISTRIBUTION_TYPE_FAN_OUT:
 		subscribers := orchestrator.PublishList.Get()
@@ -581,8 +577,6 @@ func (q *Queue) publishToSubscribers(
 	default:
 		orchestrator.PublishList.Next().Sender <- event
 	}
-
-	return nil
 }
 
 func (q *Queue) readerPool(
@@ -721,14 +715,16 @@ func (q *Queue) handleEventLifecycle(
 		<-queueSignaler.SignalTransmitter
 	}()
 
-	et := q.createEventTracker(ctx, event)
-
-	if err := q.publishToSubscribers(ctx, event); errors.Is(err, noAvailableSubscribers) {
-		log.Printf("error publishing event: %v", err)
-		q.eventMapTracker.Delete(event.EventID)
+	orchestrator := q.getQueueSubscribers(ctx, event.Queue)
+	if orchestrator == nil {
+		log.Printf("no available queue subscriber for: %s: %v",
+			event.Queue.Name, noAvailableSubscribers)
 
 		return
 	}
+
+	et := q.createEventTracker(ctx, event, orchestrator)
+	q.publishToSubscribers(ctx, event, orchestrator)
 
 	q.handleEventWaiting(ctx, queueSignaler, et)
 }
@@ -736,6 +732,7 @@ func (q *Queue) handleEventLifecycle(
 func (q *Queue) createEventTracker(
 	_ context.Context,
 	event *queuemodels.Event,
+	orchestrator *queuemodels.QueueOrchestrator,
 ) *queuemodels.EventTracker {
 	//subscriberCount := event.Queue.ConsumerCountLimit
 	//ack := make(chan struct{}, subscriberCount)
