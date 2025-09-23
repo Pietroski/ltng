@@ -1,0 +1,14 @@
+# IDE's configs
+.idea
+.vscode
+
+# coverage files
+cover.out
+cover-all.out
+
+# vendor deps
+#vendor/
+
+# report files
+#drone-analysis
+#drone-analysis.json

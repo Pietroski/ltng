@@ -108,6 +108,25 @@ gitlab.com/pietroski-software-company/devex/golang/transporthandler
 gitlab.com/pietroski-software-company/devex/golang/transporthandler/internal/factories
 gitlab.com/pietroski-software-company/devex/golang/transporthandler/internal/tools/stacktracer
 gitlab.com/pietroski-software-company/devex/golang/transporthandler/models
+# gitlab.com/pietroski-software-company/golang/devex/concurrent v0.0.1
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/concurrent
+# gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/options
+# gitlab.com/pietroski-software-company/golang/devex/safe v0.0.1
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/safe
+# gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.1 => /Users/pietroski/Documents/PTK_SWE/golang/devex/servermanager
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/servermanager
+gitlab.com/pietroski-software-company/golang/devex/servermanager/internal/pprof
+# gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.1
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/slogx
+# gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.1
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/tracer
 # gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder
@@ -367,3 +386,4 @@ google.golang.org/protobuf/types/pluginpb
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# gitlab.com/pietroski-software-company/golang/devex/servermanager => /Users/pietroski/Documents/PTK_SWE/golang/devex/servermanager

@@ -2,8 +2,8 @@ package http_ltngdb_factory_v2
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 	"net/http"
 	"time"
@@ -16,6 +16,7 @@ import (
 
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/httpx"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
@@ -97,15 +98,18 @@ func (s *Factory) Start() error {
 	}
 	s.server = server
 
-	return s.server.Serve(s.listener)
+	if err := s.server.Serve(s.listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Factory) Stop() {
-	_ = s.listener.Close()
 	err := s.server.Shutdown(s.ctx)
-	if err != nil {
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		s.logger.Errorf("failed to shutdown http gateway server",
-			go_logger.Field{"error": err.Error()},
+			go_logger.Field{"error": err},
 		)
 	}
 }

@@ -13,6 +13,7 @@ require (
 	gitlab.com/pietroski-software-company/devex/golang/concurrent v0.0.1
 	gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1
 	gitlab.com/pietroski-software-company/devex/golang/transporthandler v0.0.2
+	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.1
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
 	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.18
 	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
@@ -41,6 +42,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/concurrent v0.0.1 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/safe v0.0.1 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.1 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.1 // indirect
 	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
@@ -55,3 +61,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace gitlab.com/pietroski-software-company/golang/devex/servermanager => /Users/pietroski/Documents/PTK_SWE/golang/devex/servermanager
