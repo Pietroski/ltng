@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
@@ -28,6 +29,8 @@ type (
 		storeFileMapping       *safe.GenericMap[*ltngenginemodels.FileInfo]
 		itemFileMapping        *safe.GenericMap[*ltngenginemodels.FileInfo]
 		markedAsDeletedMapping *safe.GenericMap[struct{}]
+
+		logger slogx.SLogger
 	}
 )
 

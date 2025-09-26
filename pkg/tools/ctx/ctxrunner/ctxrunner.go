@@ -2,7 +2,8 @@ package ctxrunner
 
 import (
 	"context"
-	"log"
+
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 )
 
 func WithCancellation[T any](
@@ -18,7 +19,8 @@ func WithCancellation[T any](
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("context done for %v: %v\n", thread, ctx.Err())
+			slogx.New().Debug(ctx, "context is done", "thread", thread, "error", ctx.Err())
+
 			// TODO: try closing it on the publishing side
 			// or use the concurrent lib
 			close(channel)
