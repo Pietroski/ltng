@@ -18,10 +18,11 @@ func (c *Controller) DeleteQueue(
 		return nil, status.Error(codes.InvalidArgument, "queue required")
 	}
 	queue := ltngqueue_mappers.MapToQueue(request.GetQueue())
+	_ = queue
 
-	if err := c.queueEngine.DeleteQueue(ctx, queue); err != nil {
-		return nil, err
-	}
+	//if err := c.queueEngine.DeleteQueue(ctx, queue); err != nil {
+	//	return nil, err
+	//}
 
 	return &grpc_ltngqueue.DeleteQueueResponse{}, nil
 }

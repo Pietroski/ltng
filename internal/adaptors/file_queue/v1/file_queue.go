@@ -11,6 +11,7 @@ import (
 	"os"
 	"sync"
 
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"golang.org/x/sys/unix"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
@@ -18,6 +19,8 @@ import (
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -38,6 +41,8 @@ type FileQueue struct {
 	file        *os.File
 	reader      *bufio.Reader
 	writer      *bufio.Writer
+
+	readerCursorLocker map[uint64]uint64
 }
 
 func New(_ context.Context, path, filename string) (*FileQueue, error) {
@@ -65,6 +70,8 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 		file:        file,
 		reader:      bufio.NewReader(file),
 		writer:      bufio.NewWriter(file),
+
+		readerCursorLocker: make(map[uint64]uint64),
 	}
 
 	return fq, nil
@@ -286,8 +293,10 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 			fq.file = file
 			deduct := from - upTo
 			fq.readerCursor -= deduct
-			fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
-				fq.writeCursor, fq.writeCursor-deduct)
+			fq.writeCursor -= deduct
+
+			//fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
+			//	fq.writeCursor, fq.writeCursor-deduct)
 			//fq.writeCursor -= deduct
 			//fq.reader = bufio.NewReader(file)
 			//fq.writer = bufio.NewWriter(file)
@@ -297,14 +306,14 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 	return nil
 }
 
-func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte) error {
+func (fq *FileQueue) PopAndUnlockItFromIndex(ctx context.Context, index []byte) error {
 	fq.opMtx.Lock(fileQueueKey, struct{}{})
 	defer fq.opMtx.Unlock(fileQueueKey)
 
-	return fq.safelyRepublishIndex(ctx, index)
+	return fq.safelyTruncateAndUnlockItFromIndex(ctx, index)
 }
 
-func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (err error) {
+func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, index []byte) (err error) {
 	if err = fq.resetReader(); err != nil {
 		return err
 	}
@@ -321,6 +330,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 			return err
 		}
 
+		// fmt.Printf("index: %s - bs: %s\n", index, bs)
 		if bytes.Contains(bs, index) {
 			found = true
 			from = fq.yieldReader()
@@ -329,11 +339,20 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 		}
 	}
 
+	// fmt.Printf("from: %v - upTo: %v\n", from, upTo)
 	if !found {
 		return fmt.Errorf("index not found - %s", string(index))
 	}
 
 	{
+		// TODO: implement file truncation
+		// create temporary file - ok
+		// defer file removal in case of any error - ok
+		// copy upto to temporary file - ok
+		// copy from to temporary file - ok
+		// rename temporary file to main file - ok
+		// recreate the pointer references to the new file - ok
+
 		var tmpFile *os.File
 		tmpFile, err = os.OpenFile(fq.fullTmpPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFilePerm)
 		if err != nil {
@@ -347,6 +366,11 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 			}
 		}()
 
+		// seek the file to the beginning.
+		if _, err = fq.file.Seek(0, 0); err != nil {
+			return fmt.Errorf("error seeking to file-queue: %w", err)
+		}
+
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
 			return fmt.Errorf("error copying first part of the file-queue to tmp file-queue: %w", err)
@@ -358,15 +382,6 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 
 		if _, err = io.Copy(tmpFile, fq.file); err != nil {
 			return fmt.Errorf("error copying second part of the file-queue to tmp file-queue: %w", err)
-		}
-
-		if _, err = fq.file.Seek(int64(upTo), 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue upTo: %w", err)
-		}
-
-		if _, err = io.CopyN(tmpFile, fq.file, int64(from)); err != nil {
-			return fmt.Errorf(
-				"error copying first part of the file-queue to the end of the tmp file-queue: %w", err)
 		}
 
 		if err = tmpFile.Sync(); err != nil {
@@ -393,10 +408,61 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte) (er
 			fq.file = file
 			deduct := from - upTo
 			fq.readerCursor -= deduct
+			fq.writeCursor -= deduct
+
+			newReaderCursorLocker := make(map[uint64]uint64)
+			for key, value := range fq.readerCursorLocker {
+				if key == 0 {
+					continue
+				}
+
+				newReaderCursorLocker[key-deduct] = value - deduct
+			}
+			fq.readerCursorLocker = newReaderCursorLocker
+
+			//for cursor, ok := fq.readerCursorLocker[fq.readerCursor]; ok; cursor, ok = fq.readerCursorLocker[fq.readerCursor] {
+			//	fq.readerCursor = cursor
+			//}
+
+			//fmt.Printf("writeCursor from %d to %d - %v -> %v\n", upTo, deduct,
+			//	fq.writeCursor, fq.writeCursor-deduct)
 			//fq.writeCursor -= deduct
 			//fq.reader = bufio.NewReader(file)
 			//fq.writer = bufio.NewWriter(file)
 		}
+	}
+
+	return nil
+}
+
+func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte, data any) error {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	return fq.safelyRepublishIndex(ctx, index, data)
+}
+
+func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, data any) (err error) {
+	if err = fq.resetReader(); err != nil {
+		return fmt.Errorf("error republishing index: error resetting reader: %w", err)
+	}
+
+	_, err = execx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath)
+	if err != nil {
+		return fmt.Errorf("error republishing index: error executing cpfile: %w", err)
+	}
+
+	if err = fq.PopFromIndex(ctx, index); err != nil {
+		return fmt.Errorf("error republishing index: error popping from index: %w", err)
+	}
+
+	if err = fq.WriteOnCursor(ctx, data); err != nil {
+		_, err = execx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath)
+		if err != nil {
+			return fmt.Errorf("error republishing index: error executing reverse cpfile: %w", err)
+		}
+
+		return fmt.Errorf("error republishing index: error writing cursor: %w", err)
 	}
 
 	return nil
@@ -613,6 +679,42 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 	return row, nil
 }
 
+func (fq *FileQueue) ReadFromCursorAndLockItWithoutTruncation(ctx context.Context) ([]byte, error) {
+	fq.opMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.opMtx.Unlock(fileQueueKey)
+
+	return fq.readFromCursorAndLockItWithoutTruncation(ctx)
+}
+
+func (fq *FileQueue) readFromCursorAndLockItWithoutTruncation(_ context.Context) ([]byte, error) {
+	for cursor, ok := fq.readerCursorLocker[fq.readerCursor]; ok; cursor, ok = fq.readerCursorLocker[fq.readerCursor] {
+		fq.readerCursor = cursor
+	}
+
+	if _, err := fq.file.Seek(int64(fq.readerCursor), 0); err != nil {
+		return nil, err
+	}
+	fq.reader.Reset(fq.file)
+
+	rawRowLen := make([]byte, 4)
+	if _, err := fq.reader.Read(rawRowLen); err != nil {
+		return nil, err
+	}
+	rowLen := bytesx.Uint32(rawRowLen)
+
+	row := make([]byte, rowLen)
+	if _, err := fq.reader.Read(row); err != nil {
+		return nil, err
+	}
+
+	newReadCursor := fq.readerCursor + uint64(4+rowLen)
+	fq.readerCursorLocker[fq.readerCursor] = newReadCursor
+	fq.readerCursor = newReadCursor
+	//fq.readerCursor += uint64(4 + rowLen)
+
+	return row, nil
+}
+
 func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
 	fq.opMtx.Lock(fileQueueKey, struct{}{})
 	defer fq.opMtx.Unlock(fileQueueKey)
@@ -642,6 +744,46 @@ func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
 	fq.writeCursor += 4 + uint64(bsLen)
 
 	return nil
+}
+
+func (fq *FileQueue) ReaderPooler(
+	ctx context.Context,
+	handler func(ctx context.Context, bs []byte) error,
+) error {
+	ctxhandler.WithCancellation(ctx, func() error {
+		//time.Sleep(time.Millisecond * 50)
+		bs, err := fq.Read(ctx)
+		if err != nil {
+			// log.Printf("error reading file queue: %v", err)
+			if err == io.EOF {
+				return ctxhandler.ErrEnded
+			}
+
+			return err
+		}
+
+		if err = handler(ctx, bs); err != nil {
+			log.Printf("error handling file queue: %v", err)
+			if !errors.Is(err, errorsx.ErrUnRetryable) {
+				// TODO: fix republish here
+				//err = fq.RepublishIndex(ctx, bs)
+				//if err != nil {
+				//	return fmt.Errorf("error republishing index %s to file queue: %v", bs, err)
+				//}
+			}
+
+			return fmt.Errorf("error handling file queue - retryable: %v", err)
+		}
+
+		err = fq.PopFromIndex(ctx, bs)
+		if err != nil {
+			return fmt.Errorf("error popping from file queue with index %s: %v", bs, err)
+		}
+
+		return nil
+	})
+
+	return fq.Close()
 }
 
 func (fq *FileQueue) Close() error {

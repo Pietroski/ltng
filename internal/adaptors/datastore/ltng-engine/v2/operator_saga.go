@@ -10,7 +10,7 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/process"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 )
 
 func ResponseAccumulator(respSigChan ...chan error) error {
@@ -74,7 +74,8 @@ func newOpSaga(ctx context.Context, e *LTNGEngine) *opSaga {
 }
 
 func (op *opSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctx = context.WithValue(ctx, "thread", "operator_saga-ListenAndTrigger")
+	ctxrunner.WithCancellation(ctx,
 		op.crudChannels.OpSagaChannel.QueueChannel,
 		func(_ struct{}) {
 			op.listenAndTrigger(ctx)
@@ -114,7 +115,8 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 	}
 
 	if err = ResponseAccumulator(respSignalChan); err != nil {
-		log.Printf("error accumulating item info data from file queue: %v", err)
+		log.Printf("error accumulating item info data from file queue on op type %v: %v",
+			itemInfoData.OpType, err)
 	}
 	op.pidRegister.CountEnd()
 }

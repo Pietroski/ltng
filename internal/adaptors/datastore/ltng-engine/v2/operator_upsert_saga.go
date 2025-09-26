@@ -12,7 +12,7 @@ import (
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctxrunner"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 )
 
@@ -61,7 +61,7 @@ func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 }
 
 func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.InfoChannel,
 		func(itemInfoData *ltngenginemodels.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
@@ -218,7 +218,7 @@ func (s *upsertSaga) indexRollback(
 func (s *upsertSaga) upsertItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
@@ -231,7 +231,7 @@ func (s *upsertSaga) upsertItemOnDiskOnThread(
 func (s *upsertSaga) deleteItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
@@ -253,7 +253,7 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
@@ -312,7 +312,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
@@ -375,7 +375,7 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.upsertItemOnDisk(ctx,
@@ -394,7 +394,7 @@ func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
@@ -416,7 +416,7 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
@@ -429,7 +429,7 @@ func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 func (s *upsertSaga) cleanUpUpsert(
 	ctx context.Context,
 ) {
-	ctxrunner.RunWithCancellation(ctx,
+	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert,
 		func(v *ltngenginemodels.ItemInfoData) {
 			{

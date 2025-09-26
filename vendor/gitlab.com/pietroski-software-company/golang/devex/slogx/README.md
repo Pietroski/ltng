@@ -1,0 +1,3 @@
+# GoLogger
+
+GoLogger documentation

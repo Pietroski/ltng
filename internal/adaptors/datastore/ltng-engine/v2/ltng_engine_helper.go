@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
@@ -22,6 +23,8 @@ import (
 func newLTNGEngine(
 	ctx context.Context, opts ...options.Option,
 ) (*LTNGEngine, error) {
+	logger := slogx.New()
+
 	fq, err := filequeuev1.New(ctx,
 		filequeuev1.GenericFileQueueFilePath,
 		filequeuev1.GenericFileQueueFileName,
@@ -40,6 +43,7 @@ func newLTNGEngine(
 		itemFileMapping:        safe.NewGenericMap[*ltngenginemodels.FileInfo](),
 		markedAsDeletedMapping: safe.NewGenericMap[struct{}](),
 		serializer:             serializer.NewRawBinarySerializer(),
+		logger:                 logger,
 	}
 	options.ApplyOptions(engine, opts...)
 

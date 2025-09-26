@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"io"
 	"os"
 	"time"
@@ -622,9 +621,11 @@ func (e *LTNGEngine) upsertItemOnDisk(
 	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
 	tmpFilePath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
 
-	if _, err = execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
-		return err
-	}
+	// TODO: revisit upsert functionality
+
+	//if _, err = execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
+	//	return err
+	//}
 
 	//defer func() {
 	//	if err != nil {

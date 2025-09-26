@@ -1,0 +1,10 @@
+# IDE's configs
+.idea
+.vscode
+
+# vendor deps
+#vendor/
+
+# report files
+#drone-analysis
+#drone-analysis.json
