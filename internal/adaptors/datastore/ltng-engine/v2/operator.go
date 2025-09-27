@@ -49,7 +49,7 @@ func (e *LTNGEngine) createItem(
 
 	if _, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err != nil {
 		if _, err = os.Stat(ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)); !os.IsNotExist(err) {
-			return nil, fmt.Errorf("file already exist: %s: %v", dbMetaInfo.Path, err)
+			return nil, fmt.Errorf("file already exist: %s: %w", dbMetaInfo.Path, err)
 		}
 	} else {
 		return nil, fmt.Errorf("error item already exists")

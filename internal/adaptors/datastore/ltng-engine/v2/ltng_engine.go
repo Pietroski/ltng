@@ -18,6 +18,8 @@ import (
 
 type (
 	LTNGEngine struct {
+		ctx context.Context
+
 		opMtx       *lock.EngineLock
 		mtx         *sync.RWMutex
 		opSaga      *opSaga

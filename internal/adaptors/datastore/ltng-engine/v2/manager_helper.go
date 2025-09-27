@@ -19,7 +19,7 @@ func (e *LTNGEngine) createDataPathOnDisk(
 ) error {
 	path := ltngenginemodels.GetDataPath(info.Path)
 	if err := os.MkdirAll(path, ltngenginemodels.DBFilePerm); err != nil {
-		return fmt.Errorf("error creating data directory %s: %v", path, err)
+		return fmt.Errorf("error creating data directory %s: %w", path, err)
 	}
 
 	return nil
@@ -30,7 +30,7 @@ func (e *LTNGEngine) createStatsPathOnDisk(
 ) error {
 	path := ltngenginemodels.GetStatsPathWithSep()
 	if err := os.MkdirAll(path, ltngenginemodels.DBFilePerm); err != nil {
-		return fmt.Errorf("error creating stats directory %s: %v", path, err)
+		return fmt.Errorf("error creating stats directory %s: %w", path, err)
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func (e *LTNGEngine) writeRelationalStatsStoreToFile(
 ) (*ltngenginemodels.FileInfo, error) {
 	bs, err := e.fileManager.WriteToRelationalFile(ctx, file, fileData)
 	if err != nil {
-		return nil, fmt.Errorf("error writing file data: %v", err)
+		return nil, fmt.Errorf("error writing file data: %w", err)
 	}
 
 	fi := &ltngenginemodels.FileInfo{
@@ -115,7 +115,7 @@ func (e *LTNGEngine) writeStatsStoreToFile(
 ) (*ltngenginemodels.FileInfo, error) {
 	bs, err := e.fileManager.WriteToFile(ctx, file, fileData)
 	if err != nil {
-		return nil, fmt.Errorf("error writing file data: %v", err)
+		return nil, fmt.Errorf("error writing file data: %w", err)
 	}
 
 	fi := &ltngenginemodels.FileInfo{
@@ -140,8 +140,7 @@ func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 		fi, err := e.loadStoreStatsFromDisk(ctx, info)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to load %s store info from disk: %v",
-				info.Name, err)
+				"failed to load %s store info from disk: %w", info.Name, err)
 		}
 
 		e.storeFileMapping.Set(info.Name, fi)
@@ -163,22 +162,22 @@ func (e *LTNGEngine) loadStoreStatsFromDisk(
 
 	var fileData ltngenginemodels.FileData
 	if err = e.serializer.Deserialize(bs, &fileData); err != nil {
-		return nil, fmt.Errorf("failed to deserialize store stats: %v", err)
+		return nil, fmt.Errorf("failed to deserialize store stats: %w", err)
 	}
 	fileData.Header.StoreInfo.LastOpenedAt = time.Now().UTC().Unix()
 
 	err = file.Truncate(0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to truncate store stats file: %v", err)
+		return nil, fmt.Errorf("failed to truncate store stats file: %w", err)
 	}
 
 	fi, err := e.writeStatsStoreToFile(ctx, file, &fileData)
 	if err != nil {
-		return nil, fmt.Errorf("error writing store stats file: %v", err)
+		return nil, fmt.Errorf("error writing store stats file: %w", err)
 	}
 
 	if _, err = e.updateRelationalStatsFile(ctx, fi.FileData); err != nil {
-		return nil, fmt.Errorf("error updateRelationalStatsFile: %v", err)
+		return nil, fmt.Errorf("error updateRelationalStatsFile: %w", err)
 	}
 
 	return fi, err
@@ -194,7 +193,7 @@ func (e *LTNGEngine) loadRelationalStoreFromMemoryOrDisk(
 		fi, err := e.loadRelationalStoreStatsFromDisk(ctx)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to load %s store info from disk: %v",
+				"failed to load %s store info from disk: %w",
 				ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, err)
 		}
 
@@ -224,7 +223,7 @@ func (e *LTNGEngine) loadRelationalStoreStatsFromDisk(
 	if err = e.updateRelationalStats(
 		ctx, fi, []byte(fi.FileData.Header.StoreInfo.Name), fi.FileData,
 	); err != nil {
-		return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
+		return nil, fmt.Errorf("failed to update store stats manager file: %w", err)
 	}
 
 	return fi, nil
@@ -241,7 +240,7 @@ func (e *LTNGEngine) updateRelationalStatsFile(
 	if err = e.updateRelationalStats(
 		ctx, fi, []byte(fileData.Header.StoreInfo.Name), fileData,
 	); err != nil {
-		return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
+		return nil, fmt.Errorf("failed to update store stats manager file: %w", err)
 	}
 
 	return fi, nil
@@ -323,7 +322,7 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		return nil
@@ -492,7 +491,7 @@ func (e *LTNGEngine) updateRelationalStats(
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		return nil
@@ -697,7 +696,9 @@ func (e *LTNGEngine) upsertRelationalStats(
 	reopenMainFile := func() error {
 		fi, err = e.loadStoreFromMemoryOrDisk(ctx, ltngenginemodels.DBManagerStoreInfo.RelationalInfo())
 		if err != nil {
-			return fmt.Errorf("error re-opening %s manager relational store: %w", fi.FileData.Header.StoreInfo.Name, err)
+			return fmt.Errorf(
+				"error re-opening %s manager relational store: %w",
+				fi.FileData.Header.StoreInfo.Name, err)
 		}
 
 		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)

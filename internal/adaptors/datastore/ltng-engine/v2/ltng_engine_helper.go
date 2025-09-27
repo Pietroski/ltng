@@ -3,7 +3,6 @@ package v2
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"runtime"
 	"sync"
@@ -34,6 +33,7 @@ func newLTNGEngine(
 	}
 
 	engine := &LTNGEngine{
+		ctx:                    ctx,
 		opMtx:                  lock.NewEngineLock(),
 		mtx:                    new(sync.RWMutex),
 		fq:                     fq,
@@ -89,10 +89,11 @@ func (e *LTNGEngine) close() {
 
 func (e *LTNGEngine) closeStores() {
 	e.storeFileMapping.RangeAndDelete(
-		func(key string, value *ltngenginemodels.FileInfo) bool {
+		func(fileStore string, value *ltngenginemodels.FileInfo) bool {
 			if !rw.IsFileClosed(value.File) {
 				if err := value.File.Close(); err != nil {
-					log.Printf("error closing file from %s store: %v\n", key, err)
+					e.logger.Error(e.ctx, "error closing file from store",
+						"file_store", fileStore, "err", err)
 				}
 			}
 
@@ -109,10 +110,11 @@ func (e *LTNGEngine) closeItems() {
 		runtime.Gosched()
 	}
 
-	e.itemFileMapping.RangeAndDelete(func(key string, value *ltngenginemodels.FileInfo) bool {
+	e.itemFileMapping.RangeAndDelete(func(fileItem string, value *ltngenginemodels.FileInfo) bool {
 		if !rw.IsFileClosed(value.File) {
 			if err := value.File.Close(); err != nil {
-				log.Printf("error closing file from %s item store: %v\n", key, err)
+				e.logger.Error(e.ctx, "error closing file from item store",
+					"file_item", fileItem, "err", err)
 			}
 		}
 

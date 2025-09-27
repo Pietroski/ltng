@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
@@ -35,7 +34,7 @@ func (e *LTNGEngine) createStore(
 	statsFileCreation := func() error {
 		fi, err := e.createStatsStoreOnDisk(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error creating %s store stats: %v", info.Name, err)
+			return fmt.Errorf("error creating %s store stats: %w", info.Name, err)
 		}
 		store = fi.FileData.Header.StoreInfo
 		e.storeFileMapping.Set(info.Name, fi)
@@ -45,7 +44,7 @@ func (e *LTNGEngine) createStore(
 	statsFileDeletion := func() error {
 		err = e.deleteStore(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error deleting %s store stats: %v", info.Name, err)
+			return fmt.Errorf("error deleting %s store stats: %w", info.Name, err)
 		}
 
 		return nil
@@ -54,7 +53,7 @@ func (e *LTNGEngine) createStore(
 	mainStoreCreation := func() error {
 		err = e.createDataPathOnDisk(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error creating %s store: %v", info.Name, err)
+			return fmt.Errorf("error creating %s store: %w", info.Name, err)
 		}
 
 		return nil
@@ -62,7 +61,7 @@ func (e *LTNGEngine) createStore(
 	mainStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error creating %s store: %v", info.Name, err)
+			return fmt.Errorf("error creating %s store: %w", info.Name, err)
 		}
 
 		return nil
@@ -72,7 +71,7 @@ func (e *LTNGEngine) createStore(
 	indexStoreCreation := func() error {
 		err = e.createDataPathOnDisk(ctx, indexInfo)
 		if err != nil {
-			return fmt.Errorf("error creating %s index store: %v", info.Name, err)
+			return fmt.Errorf("error creating %s index store: %w", info.Name, err)
 		}
 
 		return nil
@@ -80,7 +79,7 @@ func (e *LTNGEngine) createStore(
 	indexStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, indexInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index store: %v", info.Name, err)
+			return fmt.Errorf("error deleting %s index store: %w", info.Name, err)
 		}
 
 		return nil
@@ -90,7 +89,7 @@ func (e *LTNGEngine) createStore(
 	indexListStoreCreation := func() error {
 		err = e.createDataPathOnDisk(ctx, indexListInfo)
 		if err != nil {
-			return fmt.Errorf("error creating %s index-list store: %v", info.Name, err)
+			return fmt.Errorf("error creating %s index-list store: %w", info.Name, err)
 		}
 
 		return nil
@@ -98,7 +97,7 @@ func (e *LTNGEngine) createStore(
 	indexListStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, indexListInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index-list store: %v", info.Name, err)
+			return fmt.Errorf("error deleting %s index-list store: %w", info.Name, err)
 		}
 
 		return nil
@@ -107,11 +106,11 @@ func (e *LTNGEngine) createStore(
 	relationalInfo := info.RelationalInfo()
 	relationalStoreCreation := func() error {
 		if err = e.createDataPathOnDisk(ctx, relationalInfo); err != nil {
-			return fmt.Errorf("error creating %s relational store: %v", relationalInfo.Name, err)
+			return fmt.Errorf("error creating %s relational store: %w", relationalInfo.Name, err)
 		}
 
 		if _, err = e.createRelationalItemStore(ctx, info); err != nil {
-			return fmt.Errorf("error creating %s relational store header item: %v", relationalInfo.Name, err)
+			return fmt.Errorf("error creating %s relational store header item: %w", relationalInfo.Name, err)
 		}
 
 		return nil
@@ -119,7 +118,7 @@ func (e *LTNGEngine) createStore(
 	relationalStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, relationalInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index-list store: %v", relationalInfo.Name, err)
+			return fmt.Errorf("error deleting %s index-list store: %w", relationalInfo.Name, err)
 		}
 
 		return nil
@@ -259,11 +258,13 @@ func (e *LTNGEngine) deleteStore(
 		}
 
 		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
-			log.Printf("failed to delete tmp stats dir %s - output: %s: %v", info.Name, bs, err)
+			e.logger.Error(ctx, "failed to delete tmp stats dir",
+				"store_name", info.Name, "output", string(bs), "err", err)
 		}
 
 		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
-			log.Printf("failed to delete tmp data dir %s - output: %s: %v", info.Name, bs, err)
+			e.logger.Error(ctx, "failed to delete tmp data dir",
+				"store_name", info.Name, "output", string(bs), "err", err)
 		}
 
 		return nil
@@ -322,7 +323,8 @@ func (e *LTNGEngine) deleteStore(
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
-			return fmt.Errorf("error de-copying %s store stats file - output: %s: %w", info.Name, bs, err)
+			return fmt.Errorf(
+				"error de-copying %s store stats file - output: %s: %w", info.Name, bs, err)
 		}
 
 		return nil

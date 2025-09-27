@@ -3,7 +3,6 @@ package v2
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 
@@ -88,13 +87,13 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 	op.pidRegister.Count()
 	bs, err := op.fq.ReadFromCursor(ctx)
 	if err != nil {
-		log.Printf("error reading item from file queue: %v\n", err)
+		op.e.logger.Error(ctx, "error reading item from file queue", "error", err)
 		return
 	}
 
 	var itemInfoData ltngenginemodels.ItemInfoData
 	if err = op.e.serializer.Deserialize(bs, &itemInfoData); err != nil {
-		log.Printf("error deserializing item info data from file queue: %v", err)
+		op.e.logger.Error(ctx, "error deserializing item info data from file queue", "error", err)
 		return
 	}
 
@@ -110,13 +109,13 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 	case ltngenginemodels.OpTypeDelete:
 		op.crudChannels.DeleteChannels.InfoChannel <- &itemInfoData
 	default:
-		log.Printf("unknown op type: %v", itemInfoData.OpType)
+		op.e.logger.Error(ctx, "unknown op type", "op_type", itemInfoData.OpType)
 		return
 	}
 
 	if err = ResponseAccumulator(respSignalChan); err != nil {
-		log.Printf("error accumulating item info data from file queue on op type %v: %v",
-			itemInfoData.OpType, err)
+		op.e.logger.Error(ctx, "error accumulating item info data from file queue on op type",
+			"op_type", itemInfoData.OpType, "error", err)
 	}
 	op.pidRegister.CountEnd()
 }

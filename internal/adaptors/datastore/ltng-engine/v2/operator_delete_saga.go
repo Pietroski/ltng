@@ -155,22 +155,22 @@ func (s *deleteSaga) createTmpDeletionPaths(
 ) (*temporaryDeletionPaths, error) {
 	tmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.Path)
 	if err := os.MkdirAll(tmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	indexTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexInfo().Path)
 	if err := os.MkdirAll(indexTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	indexListTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexListInfo().Path)
 	if err := os.MkdirAll(indexListTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	relationalTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
 	if err := os.MkdirAll(relationalTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	return &temporaryDeletionPaths{
@@ -265,7 +265,7 @@ func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *deleteCascadeSaga) noIndexTrigger(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	deleteItemFromDiskRespSignal := make(chan error, 1)
 	itemInfoDataActionItemChannel := itemInfoData.
@@ -274,7 +274,8 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 		ActionItemChannel <- itemInfoDataActionItemChannel
 	err := <-deleteItemFromDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger delete action itemInfoData: %+v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete action item info data",
+			"item_info_data", itemInfoData, "err", err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -287,7 +288,8 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 		ActionRelationalItemChannel <- itemInfoDataForActionRelationalItemChannel
 	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger delete action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete action relational item info data",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -301,7 +303,9 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 		ActionDelTmpFiles <- itemInfoDataForActionDelTmpFiles
 	err = <-deleteTemporaryRecordsFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger delete action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx,
+			"error on triggering delete action item info data delete temporary records",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -313,7 +317,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 }
 
 func (s *deleteCascadeSaga) indexTrigger(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
 		itemInfoData.Ctx,
@@ -350,7 +354,8 @@ func (s *deleteCascadeSaga) indexTrigger(
 		deleteIndexItemFromDiskOnThreadRespSignal,
 		deleteIndexingListItemFromDiskOnThreadRespSignal,
 	); err != nil {
-		log.Printf("error on trigger delete indexed action itemInfoData: %+v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete indexed action item info data",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -364,7 +369,8 @@ func (s *deleteCascadeSaga) indexTrigger(
 		ActionRelationalItemChannel <- itemInfoDataForActionRelationalItemChannel
 	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger delete indexed action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete indexed action relational item info data",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -379,7 +385,9 @@ func (s *deleteCascadeSaga) indexTrigger(
 		ActionDelTmpFiles <- itemInfoDataForActionDelTmpFiles
 	err = <-deleteTemporaryRecordsFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger delete indexed action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx,
+			"error on triggering delete indexed action item info data temporary records",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -400,14 +408,15 @@ func (s *deleteCascadeSaga) RollbackTrigger(ctx context.Context, itemInfoData *d
 }
 
 func (s *deleteCascadeSaga) noIndexRollback(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	recreateItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForRollbackItemChannel := itemInfoData.withRespChan(recreateItemOnDiskRespSignal)
 	s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackItemChannel <- itemInfoDataForRollbackItemChannel
 	err := <-recreateItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on rolling back trigger for item info data",
+			"item_info_data", itemInfoData, "err", err)
 	}
 
 	deleteTemporaryRecordsFromDiskOnThreadRespSignal := make(chan error, 1)
@@ -417,12 +426,14 @@ func (s *deleteCascadeSaga) noIndexRollback(
 		ActionDelTmpFiles <- itemInfoDataForActionDelTmpFiles
 	err = <-deleteTemporaryRecordsFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx,
+			"error on triggering item info data delete temporary records action",
+			"item_info_data", itemInfoData, "err", err)
 	}
 }
 
 func (s *deleteCascadeSaga) indexRollback(
-	_ context.Context, itemInfoData *deleteItemInfoData,
+	ctx context.Context, itemInfoData *deleteItemInfoData,
 ) {
 	recreateItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForRollbackItemChannel := itemInfoData.
@@ -446,7 +457,8 @@ func (s *deleteCascadeSaga) indexRollback(
 		recreateIndexItemOnDiskRespSignal,
 		recreateIndexListItemOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on rolling back trigger for item info data",
+			"item_info_data", itemInfoData, "err", err)
 	}
 
 	deleteTemporaryRecordsFromDiskOnThreadRespSignal := make(chan error, 1)
@@ -456,7 +468,9 @@ func (s *deleteCascadeSaga) indexRollback(
 		ActionDelTmpFiles <- itemInfoDataForActionDelTmpFiles
 	err := <-deleteTemporaryRecordsFromDiskOnThreadRespSignal
 	if err != nil {
-		log.Printf("error on trigger action itemInfoData delete temporary data: %v: %v\n", itemInfoData, err)
+		s.deleteSaga.opSaga.e.logger.Error(ctx,
+			"error on triggering item info data delete temporary records action",
+			"item_info_data", itemInfoData, "err", err)
 	}
 }
 

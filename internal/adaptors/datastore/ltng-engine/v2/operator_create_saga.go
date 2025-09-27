@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"os"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
@@ -71,14 +70,15 @@ func (s *createSaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *createSaga) noIndexTrigger(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
 ) {
 	createItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateItemOnDisk := itemInfoData.WithRespChan(createItemOnDiskRespSignal)
 	s.opSaga.crudChannels.CreateChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger create action itemInfoData: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(ctx, "error on triggering create action itemInfoData",
+			"item_info_data", itemInfoData, "err", err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -89,7 +89,8 @@ func (s *createSaga) noIndexTrigger(
 	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
 	err = <-createRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger create action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(ctx, "error on trigger create action itemInfoData relational",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -101,7 +102,7 @@ func (s *createSaga) noIndexTrigger(
 }
 
 func (s *createSaga) indexTrigger(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
 ) {
 	createItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateItemOnDisk := itemInfoData.WithRespChan(createItemOnDiskRespSignal)
@@ -119,7 +120,8 @@ func (s *createSaga) indexTrigger(
 		createIndexItemOnDiskRespSignal,
 		createIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error on trigger create indexed action itemInfoData: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -131,7 +133,8 @@ func (s *createSaga) indexTrigger(
 	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
 	err := <-createRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger create indexed action itemInfoData relational: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data relational",
+			"item_info_data", itemInfoData, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -152,19 +155,20 @@ func (s *createSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngengi
 }
 
 func (s *createSaga) noIndexRollback(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
 	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel <- itemInfoDataForDeleteItemOnDisk
 	err := <-deleteItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
+			"item_info_data", itemInfoData, "err", err)
 	}
 }
 
 func (s *createSaga) indexRollback(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
@@ -182,7 +186,8 @@ func (s *createSaga) indexRollback(
 		deleteIndexItemOnDiskRespSignal,
 		deleteIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
+			"item_info_data", itemInfoData, "err", err)
 	}
 }
 

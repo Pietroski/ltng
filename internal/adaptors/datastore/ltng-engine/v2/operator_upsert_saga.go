@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"os"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
@@ -82,7 +81,8 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel <- itemInfoDataForUpsertItemOnDisk
 	err := <-upsertItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger upsert action itemInfoData: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data",
+			"item_info_data", itemInfoData, "error", err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -93,7 +93,8 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel <- itemInfoDataForUpsertRelationalItemOnDisk
 	err = <-upsertRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger upsert action itemInfoData relational: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data relational",
+			"item_info_data", itemInfoData, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -105,7 +106,8 @@ func (s *upsertSaga) noIndexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert <- itemInfoDataForCleanUpUpsertItemOnDisk
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger upsert action itemInfoData cleanup: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data cleanup",
+			"item_info_data", itemInfoData, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -135,7 +137,8 @@ func (s *upsertSaga) indexTrigger(
 		upsertIndexItemOnDiskRespSignal,
 		upsertIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error on trigger upsert indexed action itemInfoData: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert indexed action item info data",
+			"item_info_data", itemInfoData, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -147,7 +150,9 @@ func (s *upsertSaga) indexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel <- itemInfoDataForUpsertRelationalItemOnDisk
 	err := <-upsertRelationalItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger upsert indexed action itemInfoData relational: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx,
+			"error on trigger upsert indexed action item info data relational",
+			"item_info_data", itemInfoData, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -159,7 +164,8 @@ func (s *upsertSaga) indexTrigger(
 	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert <- itemInfoDataForCleanUpUpsertItemOnDisk
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error on trigger upsert indexed action itemInfoData cleanup: %+v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data cleanup",
+			"item_info_data", itemInfoData, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -187,7 +193,8 @@ func (s *upsertSaga) noIndexRollback(
 	s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel <- itemInfoDataForDeleteItemOnDisk
 	err := <-deleteItemOnDiskRespSignal
 	if err != nil {
-		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error rolling back trigger for upsert item info data",
+			"item_info_data", itemInfoData, "error", err)
 	}
 }
 
@@ -210,7 +217,8 @@ func (s *upsertSaga) indexRollback(
 		deleteIndexItemOnDiskRespSignal,
 		deleteIndexItemListOnDiskRespSignal,
 	); err != nil {
-		log.Printf("error rolling back trigger for itemInfoData: %v: %v\n", itemInfoData, err)
+		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error rolling back trigger for indexed upsert item info data",
+			"item_info_data", itemInfoData, "error", err)
 	}
 }
 

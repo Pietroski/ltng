@@ -122,7 +122,7 @@ func (e *LTNGEngine) loadItemFromDisk(
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, tmpFile, fileData); err != nil {
-		return nil, fmt.Errorf("error writing item metadata to file: %v", err)
+		return nil, fmt.Errorf("error writing item metadata to file: %w", err)
 	}
 
 	if err = os.Rename(tmpFilepath, filepath); err != nil {
@@ -138,7 +138,7 @@ func (e *LTNGEngine) loadItemFromDisk(
 		if err = e.upsertRelationalData(
 			ctx, dbMetaInfo, &fileData, fi,
 		); err != nil {
-			return nil, fmt.Errorf("failed to update store stats manager file: %v", err)
+			return nil, fmt.Errorf("failed to update store stats manager file: %w", err)
 		}
 	}
 
@@ -338,7 +338,7 @@ func (e *LTNGEngine) andComputationalSearch(
 		}
 
 		if !bytes.Equal(keyValue.Value, parentKey) && parentKey != nil {
-			return nil, fmt.Errorf("")
+			return nil, fmt.Errorf("not found")
 		}
 
 		parentKey = keyValue.Value
@@ -586,7 +586,7 @@ func (e *LTNGEngine) createItemOnDisk(
 	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
 	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)
 	if err != nil {
-		return fmt.Errorf("error opening/creating a truncated file at %s: %v", filePath, err)
+		return fmt.Errorf("error opening/creating a truncated file at %s: %w", filePath, err)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
@@ -636,7 +636,7 @@ func (e *LTNGEngine) upsertItemOnDisk(
 	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
 	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)
 	if err != nil {
-		return fmt.Errorf("error opening/creating a temporary truncated file at %s: %v", tmpFilePath, err)
+		return fmt.Errorf("error opening/creating a temporary truncated file at %s: %w", tmpFilePath, err)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
@@ -677,22 +677,22 @@ func (e *LTNGEngine) createTmpDeletionPaths(
 ) (*tmpDelPaths, error) {
 	tmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.Path)
 	if err := os.MkdirAll(tmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	indexTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexInfo().Path)
 	if err := os.MkdirAll(indexTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	indexListTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexListInfo().Path)
 	if err := os.MkdirAll(indexListTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	relationalTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
 	if err := os.MkdirAll(relationalTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %v", err)
+		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
 	}
 
 	return &tmpDelPaths{
@@ -764,7 +764,7 @@ func (e *LTNGEngine) upsertRelationalData(
 	{
 		relationalTmpPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
 		if err = os.MkdirAll(relationalTmpPath, os.ModePerm); err != nil {
-			return fmt.Errorf("error creating tmp delete store item directory: %v", err)
+			return fmt.Errorf("error creating tmp delete store item directory: %w", err)
 		}
 
 		tmpFile, err = os.OpenFile(
@@ -793,15 +793,15 @@ func (e *LTNGEngine) upsertRelationalData(
 		}
 
 		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to close file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("failed to close file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to close file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		if err = os.Rename(
@@ -904,11 +904,11 @@ func (e *LTNGEngine) deleteRelationalData(
 		}
 
 		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file - %s | err: %v", tmpFile.Name(), err)
+			return fmt.Errorf("failed to close file - %s | err: %w", tmpFile.Name(), err)
 		}
 
 		if err = os.Rename(
