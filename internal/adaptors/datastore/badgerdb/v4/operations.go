@@ -1,4 +1,4 @@
-package badgerdb_operations_adaptor_v4
+package v4
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	co "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/chained-operator"
@@ -57,12 +56,12 @@ type (
 	}
 
 	BadgerOperatorV4Params struct {
-		Manager    badgerdb_manager_adaptor_v4.Manager
+		Manager    Manager
 		Serializer serializer_models.Serializer
 	}
 
 	BadgerOperatorV4 struct {
-		manager    badgerdb_manager_adaptor_v4.Manager
+		manager    Manager
 		dbInfo     *badgerdb_management_models_v4.DBMemoryInfo
 		serializer serializer_models.Serializer
 

@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"net"
 
+	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/servermanager"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
+	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 
-	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	ltngdb_controller_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v2"
 	ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/gRPC/ltng-engine/v2"
 	http_ltngdb_factory_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/http/ltng-engine/v2"
-	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 )
 
 func StartV2(

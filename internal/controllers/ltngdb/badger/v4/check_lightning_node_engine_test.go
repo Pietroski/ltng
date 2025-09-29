@@ -11,7 +11,7 @@ import (
 	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	mock_badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager/mocks"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	grpc_query_config "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/queries/config"
 )
@@ -30,7 +30,7 @@ func Test_CheckLightingNodeEngine(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
@@ -60,7 +60,7 @@ func Test_CheckLightingNodeEngine(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),

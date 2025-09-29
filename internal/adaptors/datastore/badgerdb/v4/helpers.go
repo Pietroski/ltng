@@ -1,4 +1,4 @@
-package badgerdb_manager_adaptor_v4
+package v4
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package badgerdb_operations_adaptor_v4
+package v4
 
 import (
 	"bytes"
@@ -15,7 +15,6 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
@@ -34,10 +33,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -140,10 +139,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -262,10 +261,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -349,7 +348,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			t.Log("retrieved value ->", string(retrievedValue))
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName := dbMemoryInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+			indexedListName := dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
@@ -393,7 +392,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("value loaded")
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName = dbMemoryInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+			indexedListName = dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
@@ -427,10 +426,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -514,7 +513,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			t.Log("retrieved value ->", string(retrievedValue))
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName := dbMemoryInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+			indexedListName := dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
@@ -557,7 +556,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("value loaded")
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName = dbMemoryInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+			indexedListName = dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
@@ -591,10 +590,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -678,7 +677,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			t.Log("retrieved value ->", string(retrievedValue))
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName := dbMemoryInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+			indexedListName := dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
@@ -722,7 +721,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger.Debugf("value loaded")
 
 			logger.Debugf("loading value for indexed list")
-			indexedListName = dbMemoryInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+			indexedListName = dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
 				ctx,
@@ -756,10 +755,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -1171,10 +1170,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -1298,10 +1297,10 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 			s := serializer.NewJsonSerializer()
 
 			logger.Infof("opening badger local manager")
-			db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
-			m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+			m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 			require.NoError(t, err)
 
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
@@ -1576,10 +1575,10 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	s := serializer.NewJsonSerializer()
 
 	logger.Infof("opening badger local manager")
-	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	require.NoError(t, err)
 
-	m, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx, badgerdb_manager_adaptor_v4.WithDB(db))
+	m, err := NewBadgerLocalManagerV4(ctx, WithDB(db))
 	require.NoError(t, err)
 
 	op, err := NewBadgerOperatorV4(ctx, WithManager(m))

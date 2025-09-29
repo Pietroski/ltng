@@ -1,4 +1,4 @@
-package badgerdb_manager_adaptor_v4
+package v4
 
 import badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 

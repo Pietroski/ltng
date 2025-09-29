@@ -392,16 +392,6 @@ func (fake *FakeCacher) SetReturnsOnCall(i int, result1 error) {
 func (fake *FakeCacher) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.delMutex.RLock()
-	defer fake.delMutex.RUnlock()
-	fake.delFromPatternMutex.RLock()
-	defer fake.delFromPatternMutex.RUnlock()
-	fake.delFromPatternSyncMutex.RLock()
-	defer fake.delFromPatternSyncMutex.RUnlock()
-	fake.getMutex.RLock()
-	defer fake.getMutex.RUnlock()
-	fake.setMutex.RLock()
-	defer fake.setMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

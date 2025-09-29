@@ -16,7 +16,7 @@ import (
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
-	mock_badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager/mocks"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
@@ -36,7 +36,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
@@ -78,7 +78,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
@@ -123,7 +123,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
@@ -167,7 +167,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
@@ -212,7 +212,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
@@ -287,7 +287,7 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
-			manager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
+			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),

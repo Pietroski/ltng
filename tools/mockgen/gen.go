@@ -1,6 +1,3 @@
-//go:build tools
-// +build tools
-
 package mock_generator
 
 import _ "go.uber.org/mock/mockgen/model"
@@ -9,8 +6,8 @@ import _ "go.uber.org/mock/mockgen/model"
 // // datastore
 // // // badgerdb
 // // // // v4
-//go:generate mockgen -package mock_badgerdb_manager_adaptor_v4 -destination ../../internal/adaptors/datastore/badgerdb/v4/manager/mocks/manager.go gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager Manager
-//go:generate mockgen -package mock_badgerdb_operations_adaptor_v4 -destination ../../internal/adaptors/datastore/badgerdb/v4/transactions/operations/mocks/operations.go gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations Operator
+//go:generate mockgen -package mocks -destination ../../internal/adaptors/datastore/badgerdb/v4/mocks/manager.go gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4 Manager
+//go:generate mockgen -package mocks -destination ../../internal/adaptors/datastore/badgerdb/v4/mocks/operations.go gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4 Operator
 
 ///go:generate mockgen -package mock_operator -destination ../../internal/adaptors/datastore/badgerdb/transactions/operations/mocks/operations.go gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/transactions/operations Operator
 //go:generate mockgen -package chained_mock -destination ../../pkg/tools/chained-operator/mocks/chained_mock.go gitlab.com/pietroski-software-company/lightning-db/pkg/tools/chained-operator/mocks Callers

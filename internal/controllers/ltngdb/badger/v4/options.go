@@ -1,13 +1,12 @@
 package badgerdb_controller_v4
 
 import (
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
-	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
+	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 )
 
 func WithConfig(config *ltng_node_config.Config) options.Option {
@@ -42,7 +41,7 @@ func WithManger(manager badgerdb_manager_adaptor_v4.Manager) options.Option {
 	}
 }
 
-func WithOperator(operator badgerdb_operations_adaptor_v4.Operator) options.Option {
+func WithOperator(operator badgerdb_manager_adaptor_v4.Operator) options.Option {
 	return func(i interface{}) {
 		if c, ok := i.(*Controller); ok {
 			c.operator = operator

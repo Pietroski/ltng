@@ -3,7 +3,6 @@ package badgerdb_engine_v4
 import (
 	"context"
 	"fmt"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	"net"
 
 	"github.com/dgraph-io/badger/v4"
@@ -13,8 +12,8 @@ import (
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
-	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
+	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	badgerdb_controller_v5 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/badger/v4"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/gRPC/badger/v4"
 )
@@ -29,7 +28,7 @@ func StartV4(
 	exitter func(code int),
 ) {
 	logger.Debugf("opening badger local manager")
-	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
 	if err != nil {
 		logger.Errorf(
 			"failed to open badger local manager",
@@ -40,10 +39,10 @@ func StartV4(
 	}
 
 	logger.Debugf("starting badger instances")
-	mngr, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx,
-		badgerdb_manager_adaptor_v4.WithDB(db),
-		badgerdb_manager_adaptor_v4.WithLogger(logger),
-		badgerdb_manager_adaptor_v4.WithSerializer(s),
+	mngr, err := v4.NewBadgerLocalManagerV4(ctx,
+		v4.WithDB(db),
+		v4.WithLogger(logger),
+		v4.WithSerializer(s),
 	)
 	if err != nil {
 		logger.Errorf(
@@ -62,9 +61,9 @@ func StartV4(
 		return
 	}
 
-	oprt, err := badgerdb_operations_adaptor_v4.NewBadgerOperatorV4(ctx,
-		badgerdb_operations_adaptor_v4.WithSerializer(s),
-		badgerdb_operations_adaptor_v4.WithManager(mngr),
+	oprt, err := v4.NewBadgerOperatorV4(ctx,
+		v4.WithSerializer(s),
+		v4.WithManager(mngr),
 	)
 	if err != nil {
 		logger.Errorf(

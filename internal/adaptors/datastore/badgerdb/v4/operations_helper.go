@@ -1,11 +1,10 @@
-package badgerdb_operations_adaptor_v4
+package v4
 
 import (
 	"bytes"
 	"context"
 	"fmt"
-
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
+	
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
@@ -19,7 +18,7 @@ const (
 func (o *BadgerOperatorV4) indexedStoreOperator(
 	ctx context.Context,
 ) (*BadgerOperatorV4, error) {
-	indexedName := o.dbInfo.Name + badgerdb_manager_adaptor_v4.IndexedSuffixName
+	indexedName := o.dbInfo.Name + IndexedSuffixName
 	idxMemoryInfo, err := o.manager.GetDBMemoryInfo(ctx, indexedName)
 	if err != nil {
 		return o, err
@@ -33,7 +32,7 @@ func (o *BadgerOperatorV4) indexedStoreOperator(
 func (o *BadgerOperatorV4) indexedListStoreOperator(
 	ctx context.Context,
 ) (*BadgerOperatorV4, error) {
-	indexedListName := o.dbInfo.Name + badgerdb_manager_adaptor_v4.IndexedListSuffixName
+	indexedListName := o.dbInfo.Name + IndexedListSuffixName
 	idxListMemoryInfo, err := o.manager.GetDBMemoryInfo(ctx, indexedListName)
 	if err != nil {
 		return o, err
@@ -407,8 +406,8 @@ func (o *BadgerOperatorV4) computationalSearch(
 	ctx context.Context,
 	opts *badgerdb_operation_models_v4.IndexOpts,
 	fn func(
-		indexedKeys [][]byte,
-	) ([]byte, error),
+	indexedKeys [][]byte,
+) ([]byte, error),
 ) ([]byte, error) {
 	objKey, err := fn(opts.IndexingKeys)
 	if err != nil {

@@ -330,16 +330,6 @@ func (fake *FakeCallers) RollbackActionFunc2ReturnsOnCall(i int, result1 error) 
 func (fake *FakeCallers) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.actionFunc1Mutex.RLock()
-	defer fake.actionFunc1Mutex.RUnlock()
-	fake.actionFunc2Mutex.RLock()
-	defer fake.actionFunc2Mutex.RUnlock()
-	fake.actionFunc3Mutex.RLock()
-	defer fake.actionFunc3Mutex.RUnlock()
-	fake.rollbackActionFunc1Mutex.RLock()
-	defer fake.rollbackActionFunc1Mutex.RUnlock()
-	fake.rollbackActionFunc2Mutex.RLock()
-	defer fake.rollbackActionFunc2Mutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

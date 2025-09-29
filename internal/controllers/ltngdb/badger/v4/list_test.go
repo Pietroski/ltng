@@ -12,9 +12,8 @@ import (
 	mock_go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
-	mock_badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager/mocks"
-	mock_operator "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations/mocks"
+	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
@@ -28,8 +27,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}
@@ -82,8 +81,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}
@@ -143,8 +142,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}
@@ -235,8 +234,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}
@@ -327,8 +326,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}
@@ -418,8 +417,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}
@@ -537,8 +536,8 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
-			mockManager := mock_badgerdb_manager_adaptor_v4.NewMockManager(ctrl)
-			mockOperator := mock_operator.NewMockOperator(ctrl)
+			mockManager := mocks.NewMockManager(ctrl)
+			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			loggerPublishers := &go_logger.Publishers{}

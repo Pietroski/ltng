@@ -12,13 +12,12 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 
 	"gitlab.com/pietroski-software-company/devex/golang/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
-	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/manager"
-	badgerdb_operations_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/transactions/operations"
 	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
 	ltng_engine_concurrent_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1/concurrent"
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
@@ -129,8 +128,8 @@ type (
 
 	BadgerDBEngine struct {
 		DB       *badger.DB
-		Manager  badgerdb_manager_adaptor_v4.Manager
-		Operator badgerdb_operations_adaptor_v4.Operator
+		Manager  v4.Manager
+		Operator v4.Operator
 	}
 )
 
@@ -224,19 +223,19 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	ltngDBConcurrentEngine, err := ltng_engine_concurrent_v1.New(ctx)
 	require.NoError(tb, err)
 
-	db, err := badger.Open(badger.DefaultOptions(badgerdb_manager_adaptor_v4.InternalLocalManagement))
+	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
 	require.NoError(tb, err)
 
-	badgerDBEngineManager, err := badgerdb_manager_adaptor_v4.NewBadgerLocalManagerV4(ctx,
-		badgerdb_manager_adaptor_v4.WithDB(db),
+	badgerDBEngineManager, err := v4.NewBadgerLocalManagerV4(ctx,
+		v4.WithDB(db),
 	)
 	require.NoError(tb, err)
 
 	err = badgerDBEngineManager.Start()
 	require.NoError(tb, err)
 
-	badgerDBEngineOperator, err := badgerdb_operations_adaptor_v4.NewBadgerOperatorV4(ctx,
-		badgerdb_operations_adaptor_v4.WithManager(badgerDBEngineManager),
+	badgerDBEngineOperator, err := v4.NewBadgerOperatorV4(ctx,
+		v4.WithManager(badgerDBEngineManager),
 	)
 	require.NoError(tb, err)
 
