@@ -2,12 +2,12 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"runtime"
 	"sync"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
@@ -60,7 +60,7 @@ func (e *LTNGEngine) init(ctx context.Context) error {
 		return err
 	}
 	if _, err := e.createOrOpenRelationalStatsStoreOnDisk(ctx); err != nil {
-		return fmt.Errorf("failed creating store stats manager on-disk: %w", err)
+		return errorsx.Wrap(err, "failed creating store stats manager on-disk")
 	}
 	if err := os.MkdirAll(
 		ltngenginemodels.DBTmpDelDataPath, ltngenginemodels.DBFilePerm,
@@ -74,7 +74,7 @@ func (e *LTNGEngine) init(ctx context.Context) error {
 	}
 
 	if err := e.fq.Init(); err != nil {
-		return fmt.Errorf("failed initializing file queue: %w", err)
+		return errorsx.Wrap(err, "failed initializing file queue")
 	}
 
 	e.opSaga = newOpSaga(ctx, e)

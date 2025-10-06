@@ -2,6 +2,9 @@
 .idea
 .vscode
 
+# key and credentials
+.netrc
+
 # vendor
 # vendor/
 

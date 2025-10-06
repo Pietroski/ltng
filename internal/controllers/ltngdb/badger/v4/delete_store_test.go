@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
@@ -24,12 +24,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 		"fails to delete a store - invalid",
 		func(t *testing.T) {
 			ctx := context.Background()
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
@@ -63,12 +58,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 		"fails to delete a store - internal",
 		func(t *testing.T) {
 			ctx := context.Background()
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 			s := serializer.NewJsonSerializer()
 			validator := go_validator.NewStructValidator()
 			binder := go_binder.NewStructBinder(s, validator)
@@ -103,12 +93,7 @@ func TestBadgerDBManagerServiceController_DeleteStore(t *testing.T) {
 		"successfully deletes a store",
 		func(t *testing.T) {
 			ctx := context.Background()
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 			s := serializer.NewJsonSerializer()
 			validator := go_validator.NewStructValidator()
 			binder := go_binder.NewStructBinder(s, validator)

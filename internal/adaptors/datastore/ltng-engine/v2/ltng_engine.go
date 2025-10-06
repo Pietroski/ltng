@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 

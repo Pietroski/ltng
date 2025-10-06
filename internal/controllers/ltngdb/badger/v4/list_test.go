@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	mock_go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
@@ -31,12 +31,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
@@ -85,12 +80,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
@@ -146,12 +136,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
@@ -238,12 +223,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
@@ -330,12 +310,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
@@ -421,12 +396,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
@@ -540,12 +510,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			mockOperator := mocks.NewMockOperator(ctrl)
 			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),

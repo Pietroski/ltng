@@ -1,9 +1,9 @@
 package v4
 
 import (
-	"fmt"
-
 	"github.com/dgraph-io/badger/v4"
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
@@ -16,7 +16,7 @@ func (o *BadgerOperatorV4) create(key, value []byte) error {
 		if err == badger.ErrKeyNotFound {
 			err = txn.Set(key, value)
 		} else if err == nil {
-			return fmt.Errorf(ErrKeyAlreadyExist)
+			return errorsx.New(ErrKeyAlreadyExist)
 		}
 
 		return err
@@ -32,7 +32,7 @@ func (o *BadgerOperatorV4) createWithTxn(txn *badger.Txn, key, value []byte) err
 	if err == badger.ErrKeyNotFound {
 		err = txn.Set(key, value)
 	} else if err == nil {
-		return fmt.Errorf(ErrKeyAlreadyExist)
+		return errorsx.New(ErrKeyAlreadyExist)
 	}
 
 	return err

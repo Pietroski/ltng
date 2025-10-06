@@ -70,9 +70,6 @@ github.com/maxbrunsfeld/counterfeiter/v6
 github.com/maxbrunsfeld/counterfeiter/v6/arguments
 github.com/maxbrunsfeld/counterfeiter/v6/command
 github.com/maxbrunsfeld/counterfeiter/v6/generator
-# github.com/pkg/errors v0.9.1
-## explicit
-github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
@@ -99,29 +96,29 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 gitlab.com/pietroski-software-company/devex/golang/concurrent
 # gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1
 ## explicit; go 1.23
-gitlab.com/pietroski-software-company/devex/golang/serializer
-gitlab.com/pietroski-software-company/devex/golang/serializer/internal/bytesx
 gitlab.com/pietroski-software-company/devex/golang/serializer/models
-# gitlab.com/pietroski-software-company/devex/golang/transporthandler v0.0.2
-## explicit; go 1.23.5
-gitlab.com/pietroski-software-company/devex/golang/transporthandler
-gitlab.com/pietroski-software-company/devex/golang/transporthandler/internal/factories
-gitlab.com/pietroski-software-company/devex/golang/transporthandler/internal/tools/stacktracer
-gitlab.com/pietroski-software-company/devex/golang/transporthandler/models
 # gitlab.com/pietroski-software-company/golang/devex/concurrent v0.0.1
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/concurrent
+# gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/errorsx
 # gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/options
 # gitlab.com/pietroski-software-company/golang/devex/safe v0.0.1
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/safe
+# gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/serializer
+gitlab.com/pietroski-software-company/golang/devex/serializer/internal/bytesx
+gitlab.com/pietroski-software-company/golang/devex/serializer/models
 # gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.1 => /Users/pietroski/Documents/PTK_SWE/golang/devex/servermanager
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/servermanager
 gitlab.com/pietroski-software-company/golang/devex/servermanager/internal/pprof
-# gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.1
+# gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/slogx
 # gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.1

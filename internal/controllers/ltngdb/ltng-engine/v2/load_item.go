@@ -6,8 +6,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
@@ -16,8 +14,6 @@ func (c *Controller) Load(
 	ctx context.Context,
 	req *grpc_ltngdb.LoadRequest,
 ) (*grpc_ltngdb.LoadResponse, error) {
-	logger := c.logger.FromCtx(ctx)
-
 	dbMetaInfo := &ltngenginemodels.ManagerStoreMetaInfo{
 		Name: req.GetDatabaseMetaInfo().GetDatabaseName(),
 		Path: req.GetDatabaseMetaInfo().GetDatabasePath(),
@@ -37,12 +33,7 @@ func (c *Controller) Load(
 	}
 	loadedItem, err := c.engine.LoadItem(ctx, dbMetaInfo, item, opts)
 	if err != nil {
-		logger.Errorf(
-			"error loading item",
-			go_logger.Field{
-				"err": err.Error(),
-			},
-		)
+		c.logger.Error(ctx, "error loading item", "err", err)
 
 		err = status.Error(codes.Internal, err.Error())
 		return nil, err

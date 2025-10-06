@@ -5,13 +5,14 @@ import (
 	"log"
 	"os"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
+	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
 	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
@@ -41,7 +42,7 @@ func main() {
 
 	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
-		//badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
+		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
 	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:

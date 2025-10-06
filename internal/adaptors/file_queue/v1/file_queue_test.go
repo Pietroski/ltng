@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"

@@ -11,16 +11,16 @@ import (
 	"os"
 	"sync"
 
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"golang.org/x/sys/unix"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 

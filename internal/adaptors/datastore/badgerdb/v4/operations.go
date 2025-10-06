@@ -3,10 +3,10 @@ package v4
 import (
 	"bytes"
 	"context"
-	"fmt"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
@@ -447,7 +447,7 @@ func (o *BadgerOperatorV4) Delete(
 	case badgerdb_operation_models_v4.None:
 		fallthrough
 	default:
-		return fmt.Errorf("delete was not called - invalid behaviour")
+		return errorsx.New("delete was not called - invalid behaviour")
 	}
 }
 
@@ -485,7 +485,7 @@ func (o *BadgerOperatorV4) List(
 ) (items badgerdb_operation_models_v4.Items, err error) {
 	ok, err := o.manager.ValidatePagination(int(pagination.PageSize), int(pagination.PageID))
 	if err != nil {
-		return items, fmt.Errorf("invalid pagination: %v", err)
+		return items, errorsx.Wrap(err, "invalid pagination")
 	}
 	if ok {
 		return o.listPaginated(pagination)
@@ -501,6 +501,7 @@ func (o *BadgerOperatorV4) List(
 			PageID:   1,
 			PageSize: 20,
 		}
+
 		return o.listPaginated(pagination)
 	}
 }
@@ -519,7 +520,7 @@ func (o *BadgerOperatorV4) ListValuesFromIndexingKeys(
 		objKey, err := idxOp.load(idxKey)
 		if err != nil {
 			item := &badgerdb_operation_models_v4.Item{
-				Error: fmt.Errorf("error searching from idx key: %s", idxKey),
+				Error: errorsx.Wrapf(err, "error searching from idx key: %s", idxKey),
 			}
 			items[idx] = item
 
@@ -529,7 +530,7 @@ func (o *BadgerOperatorV4) ListValuesFromIndexingKeys(
 		objValue, err := o.load(objKey)
 		if err != nil {
 			item := &badgerdb_operation_models_v4.Item{
-				Error: fmt.Errorf("error searching from main key: %s", objKey),
+				Error: errorsx.Wrapf(err, "error searching from main key: %s", objKey),
 			}
 			items[idx] = item
 

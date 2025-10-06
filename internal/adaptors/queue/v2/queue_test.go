@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 

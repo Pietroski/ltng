@@ -3,8 +3,8 @@ package v4
 import (
 	"github.com/dgraph-io/badger/v4"
 
-	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 )
 
@@ -32,7 +32,7 @@ func WithDB(db *badger.DB) options.Option {
 	}
 }
 
-func WithLogger(logger go_logger.Logger) options.Option {
+func WithLogger(logger slogx.SLogger) options.Option {
 	return func(cfg interface{}) {
 		if c, ok := cfg.(*BadgerLocalManagerV4); ok {
 			c.logger = logger

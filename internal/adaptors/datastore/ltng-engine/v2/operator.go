@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"os"
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 )
@@ -49,10 +50,10 @@ func (e *LTNGEngine) createItem(
 
 	if _, err := e.memoryStore.LoadItem(ctx, dbMetaInfo, item, opts); err != nil {
 		if _, err = os.Stat(ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)); !os.IsNotExist(err) {
-			return nil, fmt.Errorf("file already exist: %s: %w", dbMetaInfo.Path, err)
+			return nil, errorsx.Wrapf(err, "file already exist: %s", dbMetaInfo.Path)
 		}
 	} else {
-		return nil, fmt.Errorf("error item already exists")
+		return nil, errorsx.New("error item already exists")
 	}
 
 	itemInfoData := &ltngenginemodels.ItemInfoData{

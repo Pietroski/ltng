@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"

@@ -3,8 +3,9 @@ package v4
 import (
 	"bytes"
 	"context"
-	"fmt"
-	
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
@@ -52,14 +53,12 @@ func (o *BadgerOperatorV4) deleteCascadeByIdx(
 	if opts != nil && opts.HasIdx && len(opts.IndexingKeys) == 1 {
 		idxOp, err := o.indexedStoreOperator(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to get indexed memory info on deleteCascadeByIdx: %v", err)
+			return errorsx.Wrap(err, "failed to get indexed memory info on deleteCascadeByIdx")
 		}
 
 		var objKey []byte
 		if objKey, err = idxOp.load(opts.IndexingKeys[0]); err != nil {
-			return fmt.Errorf(
-				"deleteCascadeByIdx - failed to load from key - %v: %v",
-				opts.IndexingKeys[0], err)
+			return errorsx.Wrapf(err, "deleteCascadeByIdx - failed to load from key - %v", opts.IndexingKeys[0])
 		}
 
 		item.Key = objKey
@@ -333,12 +332,12 @@ func (o *BadgerOperatorV4) andComputationalSearchFn(
 	for _, key := range indexedKeys {
 		keyValue, err := o.load(key)
 		if err != nil {
-			return []byte{}, fmt.Errorf("inconsistent database err: %v", err)
+			return []byte{}, errorsx.Wrap(err, "inconsistent database err")
 		}
 
 		if !bytes.Equal(objKey, keyValue) && objKey != nil {
-			err = fmt.Errorf("inconsistent key-value indexing: %v", err)
-			return []byte{}, fmt.Errorf("inconsistent database err: %v", err)
+			err = errorsx.Wrap(err, "inconsistent key-value indexing")
+			return []byte{}, errorsx.Wrap(err, "inconsistent database err")
 		}
 
 		objKey = keyValue
@@ -358,8 +357,8 @@ func (o *BadgerOperatorV4) orComputationalSearchFn(
 		}
 
 		if !bytes.Equal(objKey, keyValue) && objKey != nil {
-			err = fmt.Errorf("inconsistent key-value indexing: %v", err)
-			return []byte{}, fmt.Errorf("inconsistent database err: %v", err)
+			err = errorsx.Wrap(err, "inconsistent key-value indexing")
+			return []byte{}, errorsx.Wrap(err, "inconsistent database err")
 		}
 
 		objKey = keyValue
@@ -374,12 +373,12 @@ func (o *BadgerOperatorV4) andComputationalSearch(
 ) (objValue []byte, err error) {
 	indexedOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to get indexed memory info: %v", err)
+		return []byte{}, errorsx.Wrap(err, "failed to get indexed memory info")
 	}
 
 	objValue, err = o.computationalSearch(ctx, opts, indexedOp.andComputationalSearchFn)
 	if err != nil {
-		err = fmt.Errorf("failed to retrieve data on AND computational search: %v", err)
+		err = errorsx.Wrap(err, "failed to retrieve data on AND computational search")
 	}
 
 	return
@@ -391,12 +390,12 @@ func (o *BadgerOperatorV4) orComputationalSearch(
 ) ([]byte, error) {
 	indexedOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to get indexed memory info: %v", err)
+		return []byte{}, errorsx.Wrap(err, "failed to get indexed memory info")
 	}
 
 	objValue, err := o.computationalSearch(ctx, opts, indexedOp.orComputationalSearchFn)
 	if err != nil {
-		err = fmt.Errorf("failed to retrieve data on OR computational search: %v", err)
+		err = errorsx.Wrap(err, "failed to retrieve data on OR computational search")
 	}
 
 	return objValue, err
@@ -406,12 +405,12 @@ func (o *BadgerOperatorV4) computationalSearch(
 	ctx context.Context,
 	opts *badgerdb_operation_models_v4.IndexOpts,
 	fn func(
-	indexedKeys [][]byte,
-) ([]byte, error),
+		indexedKeys [][]byte,
+	) ([]byte, error),
 ) ([]byte, error) {
 	objKey, err := fn(opts.IndexingKeys)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed on computational search pattern: %v", err)
+		return []byte{}, errorsx.Wrap(err, "failed on computational search pattern")
 	}
 
 	return o.load(objKey)
@@ -422,22 +421,22 @@ func (o *BadgerOperatorV4) straightSearch(
 	opts *badgerdb_operation_models_v4.IndexOpts,
 ) ([]byte, error) {
 	if opts == nil || len(opts.IndexingKeys) != 1 {
-		err := fmt.Errorf("straightSearch requires index key list with length of 1")
-		return []byte{}, fmt.Errorf("invalid index payload size for giving option: %v", err)
+		err := errorsx.New("straightSearch requires index key list with length of 1")
+		return []byte{}, errorsx.Wrap(err, "invalid index payload size for giving option")
 	}
 
 	idxOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to get indexed memory info: %v", err)
+		return []byte{}, errorsx.Wrap(err, "failed to get indexed memory info")
 	}
 
 	var objKey, objValue []byte
 	if objKey, err = idxOp.load(opts.IndexingKeys[0]); err != nil {
-		return []byte{}, fmt.Errorf("failed to load from key - %v: %v", opts.IndexingKeys[0], err)
+		return []byte{}, errorsx.Wrapf(err, "failed to load from key - %v", opts.IndexingKeys[0])
 	}
 
 	if objValue, err = o.load(objKey); err != nil {
-		return []byte{}, fmt.Errorf("failed to load from key - %v: %v", string(objKey), err)
+		return []byte{}, errorsx.Wrapf(err, "failed to load from key - %v", string(objKey))
 	}
 
 	return objValue, err
@@ -455,7 +454,7 @@ func (o *BadgerOperatorV4) indexingList(
 	if opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
 		return idxListOp.load(opts.ParentKey)
 	} else if len(opts.IndexingKeys) > 1 {
-		return idxList, fmt.Errorf("to many indexing keys")
+		return idxList, errorsx.New("too many indexing keys")
 	}
 
 	idxOp, err := o.indexedStoreOperator(ctx)

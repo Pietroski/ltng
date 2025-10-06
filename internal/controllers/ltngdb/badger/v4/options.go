@@ -1,8 +1,8 @@
 package badgerdb_controller_v4
 
 import (
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
@@ -17,7 +17,7 @@ func WithConfig(config *ltng_node_config.Config) options.Option {
 	}
 }
 
-func WithLogger(logger go_logger.Logger) options.Option {
+func WithLogger(logger slogx.SLogger) options.Option {
 	return func(i interface{}) {
 		if c, ok := i.(*Controller); ok {
 			c.logger = logger

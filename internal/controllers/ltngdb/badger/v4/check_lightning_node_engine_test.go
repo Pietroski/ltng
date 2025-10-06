@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
@@ -21,12 +21,7 @@ func Test_CheckLightingNodeEngine(t *testing.T) {
 		"happy-path",
 		func(t *testing.T) {
 			ctx := context.Background()
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)
@@ -51,12 +46,7 @@ func Test_CheckLightingNodeEngine(t *testing.T) {
 		"invalid version",
 		func(t *testing.T) {
 			ctx := context.Background()
-			loggerPublishers := &go_logger.Publishers{}
-			loggerOpts := &go_logger.Opts{
-				Debug:   true,
-				Publish: true,
-			}
-			logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts)
+			logger := slogx.New()
 
 			ctrl := gomock.NewController(t)
 			mockedBinder := mock_binder.NewMockBinder(ctrl)

@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
 	"os"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
@@ -267,8 +267,8 @@ func (s *createSaga) deleteIndexItemFromDiskOnThread(
 					if errAcc == nil {
 						errAcc = err
 					} else {
-						err = fmt.Errorf("%s: %w", errAcc, err)
-						errAcc = fmt.Errorf("error deleting item on database: %w", err)
+						err = errorsx.Wrapf(err, "%v", errAcc)
+						errAcc = errorsx.Wrap(err, "error deleting item on database")
 					}
 				}
 			}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 )
 
 type MsgpackSerializer struct{}

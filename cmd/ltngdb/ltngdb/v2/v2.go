@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/servermanager"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"

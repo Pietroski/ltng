@@ -8,14 +8,14 @@ import (
 	"os"
 	"strings"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
-	ltngdb_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v1"
 	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
@@ -96,12 +96,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	//defer cancelFn()
 
 	var err error
-	loggerPublishers := &go_logger.Publishers{}
-	loggerOpts := &go_logger.Opts{
-		Debug:   true,
-		Publish: false,
-	}
-	logger := go_logger.NewGoLogger(ctx, loggerPublishers, loggerOpts).FromCtx(ctx)
+	logger := slogx.New()
 
 	s := serializer.NewJsonSerializer()
 	validator := go_validator.NewStructValidator()
@@ -110,10 +105,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	cfg := &ltng_node_config.Config{}
 	err = go_env_extractor.LoadEnvs(cfg)
 	if err != nil {
-		logger.Errorf(
-			"failed to load ltng's node configs",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to load env vars", "error", err)
 
 		return
 	}
@@ -121,11 +113,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
 		badgerdb_engine_v4.StartV4(ctx, cancel, cfg, logger, s, binder, func(code int) {
-			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
-		})
-	case common_model.LightningEngineV1EngineVersionType:
-		ltngdb_engine_v1.StartV1(ctx, cancel, cfg, logger, s, binder, func(code int) {
-			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
+			logger.Debug(ctx, "os.Exit", go_logger.Mapper("code", code))
 		})
 	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
@@ -133,7 +121,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 		fallthrough
 	default:
 		ltngdb_engine_v2.StartV2(ctx, cancel, cfg, logger, s, binder, func(code int) {
-			logger.Debugf("os.Exit", go_logger.Mapper("code", code))
+			logger.Debug(ctx, "os.Exit", "code", code)
 		})
 	}
 }

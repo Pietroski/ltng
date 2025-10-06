@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer/internal/bytesx"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer/internal/bytesx"
 )
 
 type RawBinarySerializer struct{}

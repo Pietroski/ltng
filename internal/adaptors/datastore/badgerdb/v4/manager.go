@@ -3,16 +3,15 @@ package v4
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"sync"
 
 	"github.com/dgraph-io/badger/v4"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializer_models "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
@@ -34,7 +33,7 @@ const (
 )
 
 var (
-	ErrUnimplemented = fmt.Errorf("unimplemented method")
+	ErrUnimplemented = errorsx.New("unimplemented method")
 )
 
 type (
@@ -82,9 +81,9 @@ type (
 	}
 
 	BadgerLocalManagerV4 struct {
-		db *badger.DB
-		//TODO: remove logger and instead user error wrapper for returning
-		logger        go_logger.Logger
+		ctx           context.Context
+		db            *badger.DB
+		logger        slogx.SLogger
 		serializer    serializer_models.Serializer
 		badgerMapping *sync.Map
 		reqMapping    *sync.Map
@@ -96,8 +95,9 @@ func NewBadgerLocalManagerV4(
 	ctx context.Context, opts ...options.Option,
 ) (*BadgerLocalManagerV4, error) {
 	m := &BadgerLocalManagerV4{
+		ctx:        ctx,
 		serializer: serializer.NewJsonSerializer(),
-		logger:     go_logger.NewGoLogger(ctx, nil, go_logger.NewDefaultOpts()).FromCtx(ctx),
+		logger:     slogx.New(),
 
 		badgerMapping: &sync.Map{},
 		reqMapping:    &sync.Map{},
@@ -285,7 +285,7 @@ func (m *BadgerLocalManagerV4) ListStoreInfo(
 
 			_, value, err := m.deserializeItem(item)
 			if err != nil {
-				log.Printf("failed to deserialize item: %v", err)
+				m.logger.Error(ctx, "failed to deserialize item", "err", err)
 				continue
 			}
 
@@ -297,7 +297,7 @@ func (m *BadgerLocalManagerV4) ListStoreInfo(
 		return nil
 	})
 	if err != nil {
-		return memoryInfoList, fmt.Errorf("failed to obtain memory info list - err: %v", err)
+		return memoryInfoList, errorsx.Wrap(err, "failed to obtain memory info list")
 	}
 
 	return memoryInfoList, nil
@@ -333,7 +333,7 @@ func (m *BadgerLocalManagerV4) ListStoreMemoryInfo(
 
 			key, value, err := m.deserializeItem(item)
 			if err != nil {
-				log.Printf("failed to deserialize item: %v", err)
+				m.logger.Error(ctx, "failed to deserialize item", "err", err)
 				continue
 			}
 
@@ -345,7 +345,7 @@ func (m *BadgerLocalManagerV4) ListStoreMemoryInfo(
 
 			db, err := m.openLoadAndReturn(&value)
 			if err != nil {
-				log.Printf("failed to open and load item - %v: %v", key, err)
+				m.logger.Error(ctx, "failed to open and load item", "key", key, "err", err)
 				continue
 			}
 			memoryInfoItem := value.InfoToMemoryInfo(db)
@@ -357,14 +357,14 @@ func (m *BadgerLocalManagerV4) ListStoreMemoryInfo(
 		return nil
 	})
 	if err != nil {
-		return memoryInfoList, fmt.Errorf("failed to obtain memory info list - err: %v", err)
+		return memoryInfoList, errorsx.Wrap(err, "failed to obtain memory info list")
 	}
 
 	return memoryInfoList, nil
 }
 
 func (m *BadgerLocalManagerV4) listAllStoresInfoFromMemoryOrDisk(
-	_ context.Context,
+	ctx context.Context,
 ) ([]*badgerdb_management_models_v4.DBInfo, error) {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 50
@@ -379,7 +379,7 @@ func (m *BadgerLocalManagerV4) listAllStoresInfoFromMemoryOrDisk(
 
 			_, value, err := m.deserializeItem(item)
 			if err != nil {
-				log.Printf("failed to deserialize item: %v", err)
+				m.logger.Error(ctx, "failed to deserialize item", "err", err)
 				continue
 			}
 
@@ -389,14 +389,14 @@ func (m *BadgerLocalManagerV4) listAllStoresInfoFromMemoryOrDisk(
 		return nil
 	})
 	if err != nil {
-		return memoryInfoList, fmt.Errorf("failed to obtain memory info list - err: %v", err)
+		return memoryInfoList, errorsx.Wrap(err, "failed to obtain memory info list")
 	}
 
 	return memoryInfoList, nil
 }
 
 func (m *BadgerLocalManagerV4) listAllStoresMemoryInfoFromMemoryOrDisk(
-	_ context.Context,
+	ctx context.Context,
 ) ([]*badgerdb_management_models_v4.DBMemoryInfo, error) {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchSize = 50
@@ -411,7 +411,7 @@ func (m *BadgerLocalManagerV4) listAllStoresMemoryInfoFromMemoryOrDisk(
 
 			key, value, err := m.deserializeItem(item)
 			if err != nil {
-				log.Printf("failed to deserialize item: %v", err)
+				m.logger.Error(ctx, "failed to deserialize item", "err", err)
 				continue
 			}
 
@@ -423,7 +423,7 @@ func (m *BadgerLocalManagerV4) listAllStoresMemoryInfoFromMemoryOrDisk(
 
 			db, err := m.openLoadAndReturn(&value)
 			if err != nil {
-				log.Printf("failed to open and load item - %v: %v", key, err)
+				m.logger.Error(ctx, "failed to open and load item", "key", key, "err", err)
 				continue
 			}
 			memoryInfoItem := value.InfoToMemoryInfo(db)
@@ -433,7 +433,7 @@ func (m *BadgerLocalManagerV4) listAllStoresMemoryInfoFromMemoryOrDisk(
 		return nil
 	})
 	if err != nil {
-		return memoryInfoList, fmt.Errorf("failed to obtain memory info list - err: %v", err)
+		return memoryInfoList, errorsx.Wrap(err, "failed to obtain memory info list")
 	}
 
 	return memoryInfoList, nil
@@ -443,12 +443,12 @@ func (m *BadgerLocalManagerV4) Backup(_ context.Context, filePath string, backup
 	buffer := bytes.NewBuffer([]byte{})
 	_, err := m.db.Backup(buffer, backupSince)
 	if err != nil {
-		return fmt.Errorf("failed to backup: %v", err)
+		return errorsx.Wrap(err, "failed to backup")
 	}
 
 	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to create backup file: %v", err)
+		return errorsx.Wrap(err, "failed to create backup file")
 	}
 	defer func() {
 		_ = f.Close()
@@ -456,7 +456,7 @@ func (m *BadgerLocalManagerV4) Backup(_ context.Context, filePath string, backup
 
 	_, err = f.Write(buffer.Bytes())
 	if err != nil {
-		return fmt.Errorf("failed to write backup file: %v", err)
+		return errorsx.Wrap(err, "failed to write backup file")
 	}
 
 	return nil
@@ -465,7 +465,7 @@ func (m *BadgerLocalManagerV4) Backup(_ context.Context, filePath string, backup
 func (m *BadgerLocalManagerV4) RestoreBackup(_ context.Context, filePath string, maxPendingWrites int) error {
 	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_RDONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to open backup file: %v", err)
+		return errorsx.Wrap(err, "failed to open backup file")
 	}
 	defer func() {
 		_ = f.Close()
@@ -473,7 +473,7 @@ func (m *BadgerLocalManagerV4) RestoreBackup(_ context.Context, filePath string,
 
 	err = m.db.Load(f, maxPendingWrites)
 	if err != nil {
-		return fmt.Errorf("failed to restore backup: %v", err)
+		return errorsx.Wrap(err, "failed to restore backup")
 	}
 
 	return nil

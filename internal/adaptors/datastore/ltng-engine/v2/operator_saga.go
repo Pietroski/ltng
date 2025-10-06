@@ -2,9 +2,9 @@ package v2
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
@@ -26,7 +26,7 @@ func ResponseAccumulator(respSigChan ...chan error) error {
 		})
 	}
 	if err = op.WaitAndWrapErr(); err != nil {
-		return fmt.Errorf("responseAccumulator: %w", err)
+		return errorsx.Wrap(err, "responseAccumulator")
 	}
 
 	return err

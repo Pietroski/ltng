@@ -3,9 +3,9 @@ package ltngdb_controller_v2
 import (
 	"context"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
@@ -20,7 +20,7 @@ type (
 		grpc_ltngdb.UnimplementedLightningDBServer
 		cfg *ltng_node_config.Config
 
-		logger go_logger.Logger
+		logger slogx.SLogger
 		binder go_binder.Binder
 
 		engine *ltng_engine_v2.LTNGEngine
@@ -53,9 +53,7 @@ func defaultController(
 				},
 			},
 		},
-		logger: go_logger.NewGoLogger(
-			ctx, nil, go_logger.NewDefaultOpts(),
-		).FromCtx(ctx),
+		logger: slogx.New(),
 		binder: go_binder.NewStructBinder(
 			serializer.NewRawBinarySerializer(),
 			go_validator.NewStructValidator(),

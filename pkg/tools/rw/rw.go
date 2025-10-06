@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"

@@ -1,9 +1,9 @@
 package v4
 
 import (
-	"fmt"
-
 	"github.com/dgraph-io/badger/v4"
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 )
 
 // ValidatePagination validates whether there is a valid pagination.
@@ -14,9 +14,7 @@ func (m *BadgerLocalManagerV4) ValidatePagination(size, page int) (bool, error) 
 
 	if size == 0 && page != 0 || size != 0 && page == 0 {
 		return false,
-			fmt.Errorf(
-				"invalid pagination - size and page must both be zero or different from zero",
-			)
+			errorsx.New("invalid pagination - size and page must both be zero or different from zero")
 	}
 
 	return true, nil

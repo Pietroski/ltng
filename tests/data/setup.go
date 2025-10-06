@@ -12,14 +12,12 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
-	ltng_engine_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1"
-	ltng_engine_concurrent_v1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v1/concurrent"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
@@ -118,12 +116,10 @@ type (
 	}
 
 	EngineTestSuite struct {
-		Ctx                    context.Context
-		Serializer             serializermodels.Serializer
-		LTNGDBEngine           *ltng_engine_v1.LTNGEngine
-		LTNGDBConcurrentEngine *ltng_engine_concurrent_v1.LTNGEngine
-		LTNGDBEngineV2         *ltng_engine_v2.LTNGEngine
-		BadgerDBEngine         *BadgerDBEngine
+		Ctx            context.Context
+		Serializer     serializermodels.Serializer
+		LTNGDBEngineV2 *ltng_engine_v2.LTNGEngine
+		BadgerDBEngine *BadgerDBEngine
 	}
 
 	BadgerDBEngine struct {
@@ -214,13 +210,7 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	ctx := context.Background()
 	CleanupDirectories(tb)
 
-	ltngDBEngine, err := ltng_engine_v1.New(ctx)
-	require.NoError(tb, err)
-
 	ltngDBEngineV2, err := ltng_engine_v2.New(ctx)
-	require.NoError(tb, err)
-
-	ltngDBConcurrentEngine, err := ltng_engine_concurrent_v1.New(ctx)
 	require.NoError(tb, err)
 
 	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
@@ -242,11 +232,9 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	// time.Sleep(1 * time.Second)
 
 	return &EngineTestSuite{
-		Ctx:                    ctx,
-		Serializer:             serializer.NewRawBinarySerializer(),
-		LTNGDBEngine:           ltngDBEngine,
-		LTNGDBConcurrentEngine: ltngDBConcurrentEngine,
-		LTNGDBEngineV2:         ltngDBEngineV2,
+		Ctx:            ctx,
+		Serializer:     serializer.NewRawBinarySerializer(),
+		LTNGDBEngineV2: ltngDBEngineV2,
 		BadgerDBEngine: &BadgerDBEngine{
 			DB:       db,
 			Manager:  badgerDBEngineManager,

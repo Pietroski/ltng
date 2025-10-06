@@ -1,6 +1,7 @@
 # IDEs configs
 .idea/
 .vscode/
+.kilocode/
 
 # vendor
 #vendor/

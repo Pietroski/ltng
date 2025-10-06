@@ -39,9 +39,7 @@ func defaultReplaceAttrs() SlogFnAttr {
 var replaceAttrs = []SlogFnAttr{
 	replaceLogLevel,
 	replaceSrcAttr,
-
-	// TODO: implement when stacktrace interface is present on errorx pkg.
-	// replaceErrAttr
+	replaceErrAttr,
 }
 
 // replaceLogLevel replaces the log level
@@ -65,7 +63,7 @@ const SourceKey = "source"
 // replaceSrcAttr replaces the source attribute for the correct one if AddSource is set to true
 func replaceSrcAttr(_ []string, attr slog.Attr) slog.Attr {
 	if attr.Key == SourceKey {
-		attr.Value = fmtSrc()
+		attr.Value = fmtSrc(attr.Value.Any())
 	}
 
 	return attr

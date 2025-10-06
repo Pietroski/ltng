@@ -4,7 +4,7 @@ import (
 	"math"
 	"reflect"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer/internal/bytesx"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer/internal/bytesx"
 )
 
 type BinarySerializer struct{}

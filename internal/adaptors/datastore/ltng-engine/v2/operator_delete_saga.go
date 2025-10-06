@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
-
-	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
@@ -142,7 +140,7 @@ func (s *deleteSaga) ListenAndTrigger(ctx context.Context) {
 			case ltngenginemodels.None:
 				fallthrough
 			default:
-				itemInfoData.RespSignal <- fmt.Errorf("invalid index deletion behaviour")
+				itemInfoData.RespSignal <- errorsx.New("invalid index deletion behaviour")
 			}
 		},
 	)
@@ -155,22 +153,22 @@ func (s *deleteSaga) createTmpDeletionPaths(
 ) (*temporaryDeletionPaths, error) {
 	tmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.Path)
 	if err := os.MkdirAll(tmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
+		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
 	}
 
 	indexTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexInfo().Path)
 	if err := os.MkdirAll(indexTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
+		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
 	}
 
 	indexListTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexListInfo().Path)
 	if err := os.MkdirAll(indexListTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
+		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
 	}
 
 	relationalTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
 	if err := os.MkdirAll(relationalTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
+		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
 	}
 
 	return &temporaryDeletionPaths{
@@ -239,8 +237,9 @@ func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 				if _, err = os.Stat(ltngenginemodels.GetDataFilepath(
 					itemInfoData.DBMetaInfo.Path, strItemKey),
 				); os.IsNotExist(err) {
-					// TODO: log fmt.Errorf("file does not exist: %s: %v", itemInfoData.DBMetaInfo.Path, err)
-					itemInfoData.RespSignal <- err
+					s.deleteSaga.opSaga.e.logger.Error(ctx, "file does not exist",
+						"item_info_data", itemInfoData, "err", err)
+					itemInfoData.RespSignal <- errorsx.Wrap(err, "file does not exist")
 					close(itemInfoData.RespSignal)
 					return
 				}
@@ -991,7 +990,7 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 			if _, err := execx.DelDirsWithoutSepBothOSExec(ctx,
 				ltngenginemodels.DBTmpDelDataPath+itemInfoData.TmpDelPaths.tmpDelPath,
 			); err != nil {
-				itemInfoData.RespSignal <- errors.WithStack(err)
+				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting tmp files")
 				//close(itemInfoData.RespSignal)
 				return
 			}

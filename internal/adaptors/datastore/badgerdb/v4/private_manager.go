@@ -2,13 +2,12 @@ package v4
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
 
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 )
@@ -57,11 +56,11 @@ func (m *BadgerLocalManagerV4) updateLastOpenedAt(info *badgerdb_management_mode
 		func(txn *badger.Txn) error {
 			sValue, err := m.serializer.Serialize(info)
 			if err != nil {
-				return fmt.Errorf("failed to serialize info: %v", err)
+				return errorsx.Wrap(err, "failed to serialize info")
 			}
 
 			if err = txn.Set(sKey, sValue); err != nil {
-				return fmt.Errorf("failed to persist info in db: %v", err)
+				return errorsx.Wrap(err, "failed to persist info in db")
 			}
 
 			return nil
@@ -83,15 +82,15 @@ func (m *BadgerLocalManagerV4) persistInfo(
 ) error {
 	sValue, err := m.serializer.Serialize(info)
 	if err != nil {
-		return fmt.Errorf("failed to serialize info: %v", err)
+		return errorsx.Wrap(err, "failed to serialize info")
 	}
 
 	if err = txn.Set(sKey, sValue); err != nil {
-		return fmt.Errorf("failed to persist info in db: %v", err)
+		return errorsx.Wrap(err, "failed to persist info in db")
 	}
 
 	if err = m.openAndLoad(info); err != nil {
-		return fmt.Errorf("failed to open and load info in memory: %v", err)
+		return errorsx.Wrap(err, "failed to open and load info in memory")
 	}
 
 	return nil
@@ -113,7 +112,7 @@ func (m *BadgerLocalManagerV4) openAndLoad(
 
 	db, err := openBadger(info)
 	if err != nil {
-		return fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+		return errorsx.Wrapf(err, "error opening db path, info name: %s", info.Name)
 	}
 
 	memInfo = info.InfoToMemoryInfo(db)
@@ -128,7 +127,7 @@ func openBadger(
 	path := InternalLocalManagement + "/" + info.Path
 	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
-		return nil, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+		return nil, errorsx.Wrapf(err, "error opening db path, info name: %s", info.Name)
 	}
 
 	return db, nil
@@ -152,7 +151,7 @@ func (m *BadgerLocalManagerV4) openLoadAndReturn(
 
 	db, err := openBadger(info)
 	if err != nil {
-		return nil, fmt.Errorf("error opening db path - %v: %v", info.Name, err)
+		return nil, errorsx.Wrapf(err, "error opening db path, info name: %s", info.Name)
 	}
 	info.LastOpenedAt = time.Now()
 
@@ -174,14 +173,13 @@ func (m *BadgerLocalManagerV4) getStoreFromMemory(
 	if infoFromName, ok := m.badgerMapping.Load(name); ok {
 		info, ok = infoFromName.(*badgerdb_management_models_v4.DBMemoryInfo)
 		if !ok {
-			err = fmt.Errorf(ErrCorruptedStoreDataCastFailure)
-			return info, err
+			return info, errorsx.New(ErrCorruptedStoreDataCastFailure)
 		}
 
 		return info, err
 	}
 
-	return info, fmt.Errorf(ErrKeyNotFound)
+	return info, errorsx.New(ErrKeyNotFound)
 }
 
 // getStoreFromDB will try to look for the given name key in the db,
@@ -203,12 +201,12 @@ func (m *BadgerLocalManagerV4) getStoreFromDB(
 		func(txn *badger.Txn) error {
 			rawItem, err := txn.Get(serializedKey)
 			if err != nil {
-				return fmt.Errorf("failed to retrieve item from key; err: %v", err)
+				return errorsx.Wrap(err, "failed to retrieve item from key")
 			}
 
 			_, *info, err = m.deserializeItem(rawItem)
 			if err != nil {
-				return fmt.Errorf("failed to deserialize item; err: %v", err)
+				return errorsx.Wrap(err, "failed to deserialize item")
 			}
 
 			return nil
@@ -224,60 +222,42 @@ func (m *BadgerLocalManagerV4) getStoreInfoFromMemoryOrFromDisk(
 	ctx context.Context,
 	name string,
 ) (info *badgerdb_management_models_v4.DBInfo, err error) {
-	logger := m.logger.FromCtx(ctx)
-
 	memoryInfo, err := m.getStoreFromMemory(name)
 	if err == nil {
 		return memoryInfo.MemoryInfoToInfo(), err
 	}
 
-	logger.Warningf(
-		"failed to get store from memory",
-		go_logger.Mapper("err", err.Error()),
-	)
-	logger.Warningf("trying to get store from db")
+	m.logger.Warn(ctx, "failed to get store from memory", "name", name, "err", err)
+	m.logger.Warn(ctx, "trying to get store from db", "name", name)
 	if info, err = m.getStoreFromDB(name); err == nil {
 		return info, err
 	}
+	m.logger.Warn(ctx, "failed to get store from db", "name", name, "err", err)
 
-	logger.Warningf(
-		"failed to get store from db",
-		go_logger.Mapper("err", err.Error()),
-	)
-	return info, fmt.Errorf("failed to get store from db")
+	return info, errorsx.New("failed to get store from db")
 }
 
 func (m *BadgerLocalManagerV4) getStoreMemoryInfoFromMemoryOrDisk(
 	ctx context.Context,
 	name string,
 ) (*badgerdb_management_models_v4.DBMemoryInfo, error) {
-	logger := m.logger.FromCtx(ctx)
 	dbMemoryInfo, err := m.getStoreFromMemory(name)
 	if err == nil {
 		return dbMemoryInfo, err
 	}
 
-	logger.Warningf(
-		"failed to get store from memory",
-		go_logger.Mapper("err", err.Error()),
-	)
-	logger.Warningf("trying to get store from db")
+	m.logger.Warn(ctx, "failed to get store from memory", "name", name, "err", err)
+	m.logger.Warn(ctx, "trying to get store from db")
 	dbInfo, err := m.getStoreFromDB(name)
 	if err != nil {
-		logger.Warningf(
-			"failed to get store from db",
-			go_logger.Mapper("err", err.Error()),
-		)
+		m.logger.Warn(ctx, "failed to get store from db", "name", name, "err", err)
 		return &badgerdb_management_models_v4.DBMemoryInfo{},
-			fmt.Errorf("failed to get store from db")
+			errorsx.New("failed to get store from db")
 	}
 
 	db, err := m.openLoadAndReturn(dbInfo)
 	if err != nil {
-		logger.Warningf(
-			"failed to open store retrieved from db",
-			go_logger.Mapper("err", err.Error()),
-		)
+		m.logger.Warn(ctx, "failed to get store from db", "name", name, "err", err)
 		return &badgerdb_management_models_v4.DBMemoryInfo{}, err
 	}
 
@@ -298,27 +278,19 @@ func (m *BadgerLocalManagerV4) deleteFromMemoryAndDisk(
 	ctx context.Context,
 	name string,
 ) error {
-	logger := m.logger.FromCtx(ctx)
-
 	if info, err := m.getStoreFromMemory(name); err == nil {
 		if err = info.DB.Close(); err != nil {
-			return fmt.Errorf("error closing the database - name: %v - err: %v", name, err)
+			return errorsx.Wrapf(err, "error closing the database - name: %v", name)
 		}
 
 		m.badgerMapping.Delete(name)
-	} else if err != nil && err.Error() != fmt.Errorf(ErrKeyNotFound).Error() {
-		logger.Errorf(
-			"error finding db in sync map",
-			go_logger.Field{
-				"name":  name,
-				"error": err.Error(),
-			},
-		)
+	} else if err != nil && err.Error() != errorsx.New(ErrKeyNotFound).Error() {
+		m.logger.Error(ctx, "error finding db in sync map", "name", name, "err", err)
 	}
 
 	serializedName, err := m.serializer.Serialize(name)
 	if err != nil {
-		return fmt.Errorf("error serializing name field - name: %v - err: %v", name, err)
+		return errorsx.Wrapf(err, "error serializing name field - name: %v", name)
 	}
 	err = m.db.Update(
 		func(txn *badger.Txn) error {

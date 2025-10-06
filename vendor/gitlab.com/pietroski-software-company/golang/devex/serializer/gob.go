@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"gitlab.com/pietroski-software-company/devex/golang/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 )
 
 type GobSerializer struct {

@@ -10,30 +10,27 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
-
-	"gitlab.com/pietroski-software-company/devex/golang/serializer"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_tracer "gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 )
 
 func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger local manager")
+	logger.Test(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "error", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	m := &BadgerLocalManagerV4{
 		db:            db,
 		logger:        logger,
@@ -43,10 +40,7 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 	}
 	err = m.Start()
 	if err != nil {
-		logger.Errorf(
-			"failed to start badger instances",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to start badger instances", "error", err)
 	}
 
 	dnInfo := &badgerdb_management_models_v4.DBInfo{
@@ -71,12 +65,12 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 
 		item, err := txn.Get(keyTest)
 		if err == badger.ErrKeyNotFound {
-			logger.Debugf("key not found")
+			logger.Test(ctx, "key not found")
 			return txn.Set(keyTest, valueTest)
 		}
 
 		if item != nil {
-			logger.Debugf("item is not nil")
+			logger.Test(ctx, "item is not nil")
 			bs, err := item.ValueCopy(nil)
 			require.NoError(t, err)
 			str := string(bs)
@@ -93,33 +87,32 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 		keyTest := []byte("test-key")
 		item, err := txn.Get(keyTest)
 		if err != nil {
+			logger.Test(ctx, "failed to get item from badger db", "err", err)
 			return err
 		}
 
+		logger.Test(ctx, "item is not nil")
 		fetchedVal, err = item.ValueCopy(nil)
-		return err
+		if err != nil {
+			logger.Test(ctx, "failed to get value from badger db item", "err", err)
+			return err
+		}
+		return nil
 	})
 	require.NoError(t, err)
 	require.Equal(t, []byte("this is a value test"), fetchedVal)
-	logger.Debugf(
-		"fetched value ->",
-		go_logger.Mapper("value", string(fetchedVal)),
-	)
+	logger.Debug(ctx, "successfully loaded data", "value", string(fetchedVal))
 
 	// From here and below it only closes the database references to prevent memory leak
 	m.badgerMapping.Range(func(key, value any) bool {
 		dbInfo, ok := value.(*badgerdb_management_models_v4.DBMemoryInfo)
 		if !ok {
-			logger.Errorf("corrupted stored memory")
+			logger.Error(ctx, "corrupted stored memory", "key", key, "value", value)
 		}
 
 		err := dbInfo.DB.Close()
 		if err != nil {
-			logger.Errorf(
-				"failed to close badger db instance",
-				go_logger.Mapper("err", err.Error()),
-				go_logger.Mapper("db_info", dbInfo),
-			)
+			logger.Error(ctx, "failed to close badger local manager", "db_info", dbInfo, "error", err)
 		}
 
 		m.badgerMapping.Delete(key)
@@ -130,35 +123,29 @@ func Test_Integration_CreateOpenStoreAndLoadIntoMemory(t *testing.T) {
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger local manager")
+	logger.Test(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "error", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
 	m := &BadgerLocalManagerV4{
 		db:            db,
@@ -169,10 +156,7 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 	}
 	err = m.Start()
 	if err != nil {
-		logger.Errorf(
-			"failed to start badger instances",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to start badger instances", "error", err)
 	}
 
 	dbInfo := &badgerdb_management_models_v4.DBInfo{
@@ -203,35 +187,29 @@ func Test_Integration_GetStoreInfoFromMemoryOrFromDisk(t *testing.T) {
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger local manager")
+	logger.Test(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "error", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
 	m := &BadgerLocalManagerV4{
 		db:            db,
@@ -242,10 +220,7 @@ func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 	}
 	err = m.Start()
 	if err != nil {
-		logger.Errorf(
-			"failed to start badger instances",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to start badger instances", "error", err)
 	}
 
 	dbInfo := &badgerdb_management_models_v4.DBInfo{
@@ -274,35 +249,29 @@ func Test_Integration_GetStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger local manager")
+	logger.Test(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "error", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
 	m := &BadgerLocalManagerV4{
 		db:            db,
@@ -313,10 +282,7 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 	}
 	err = m.Start()
 	if err != nil {
-		logger.Errorf(
-			"failed to start badger instances",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to start badger instances", "error", err)
 	}
 
 	dbInfo := &badgerdb_management_models_v4.DBInfo{
@@ -345,12 +311,8 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
 			if key == "badger-db-test-4" {
-				logger.Warningf("remaining ->", map[string]interface{}{
-					"key":   key,
-					"value": value,
-				})
+				logger.Test(ctx, "key is nil", "key", key, "value", value)
 
 				return false
 			}
@@ -364,35 +326,29 @@ func Test_Integration_DeleteFromMemoryAndDisk(t *testing.T) {
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Integration_Restart(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger local manager")
+	logger.Test(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "error", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	//m := NewBadgerLocalManagerV4(db, s)
 	m := &BadgerLocalManagerV4{
 		db:            db,
@@ -404,69 +360,54 @@ func Test_Integration_Restart(t *testing.T) {
 
 	err = m.Start()
 	if err != nil {
-		logger.Errorf(
-			"failed to start badger instances",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to start badger instances", "error", err)
 	}
 
-	logger.Infof("restarting badger instances")
+	logger.Test(ctx, "restarting badger instances")
 	err = m.Restart()
 	if err != nil {
-		logger.Errorf(
-			"failed to restart badger instances",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to restart badger instances", "error", err)
 	}
 
-	logger.Debugf("checking badger instances")
+	logger.Test(ctx, "checking badger instances")
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("shutting down badger instances and badger manager")
+	logger.Test(ctx, "shutting down badger instances and badger manager")
 	m.ShutdownStores()
 	m.Shutdown()
 
-	logger.Infof("checking badger instances and badger manager")
+	logger.Test(ctx, "checking badger instances and badger manager")
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Raw_Badger_Iterator_Behaviour(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger db instance")
+	logger.Test(ctx, "opening badger db instance")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "error", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	m := &BadgerLocalManagerV4{
 		db:            db,
 		serializer:    s,
@@ -503,13 +444,7 @@ func Test_Raw_Badger_Iterator_Behaviour(t *testing.T) {
 				continue
 			}
 
-			logger.Debugf(
-				"badger instance",
-				go_logger.Field{
-					"name": key,
-					"info": value,
-				},
-			)
+			logger.Test(ctx, "badger instance", "name", key, "info", value)
 
 			// Jump n - 1 from PrefetchSize totaling PrefetchSize number
 			//if it.Valid() {
@@ -531,52 +466,42 @@ func Test_Raw_Badger_Iterator_Behaviour(t *testing.T) {
 	require.NoError(t, err)
 
 	s1, s2 := m.db.Size()
-	logger.Debugf(
-		"batch counters",
-		go_logger.Field{
-			"batch_counter": m.db.MaxBatchCount(),
-			"batch_size":    m.db.MaxBatchSize(),
-			"size":          fmt.Sprintf("%v - %v", s1, s2),
-		},
-	)
+	logger.Test(ctx, "batch counters",
+		"batch_count", m.db.MaxBatchCount(),
+		"batch_size", m.db.MaxBatchSize(),
+		"size", fmt.Sprintf("%v - %v", s1, s2))
 
 	m.ShutdownStores()
 	m.Shutdown()
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 	t.Run(
 		"list with pagination",
 		func(t *testing.T) {
-			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.FromCtx(ctx)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-			logger.Infof("opening badger db instance")
+			logger.Test(ctx, "opening badger db instance")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			if err != nil {
-				logger.Errorf(
-					"failed to open badger local manager",
-					go_logger.Mapper("err", err.Error()),
-				)
+				logger.Error(ctx, "failed to open badger local manager", "error", err)
 			}
 
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("starting badger instances")
+			logger.Test(ctx, "starting badger instances")
 			m := &BadgerLocalManagerV4{
 				db:            db,
 				serializer:    s,
@@ -600,68 +525,51 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 						continue
 					}
 
-					logger.Debugf(
-						"badger instance",
-						go_logger.Field{
-							"name": key,
-							"info": value,
-						},
-					)
+					logger.Test(ctx, "badger instance", "name", key, "info", value)
 				}
 
 				return nil
 			})
 			require.NoError(t, err)
 
-			logger.Debugf("###########################################################################################")
+			logger.Test(ctx, "###########################################################################################")
 
 			list, err := m.ListStoreInfo(ctx, 7, 4)
 			require.NoError(t, err)
 
-			logger.Debugf(
-				"paginated list",
-				go_logger.Field{
-					"list": list,
-				},
-			)
+			logger.Test(ctx, "paginated list", "list", list)
 
 			m.ShutdownStores()
 			m.Shutdown()
 
 			m.badgerMapping.Range(
 				func(key, value any) bool {
-					// Should not be displayed
-					logger.Warningf("remaining ->", map[string]interface{}{
-						"key":   key,
-						"value": value,
-					})
+					logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 					return true
 				},
 			)
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
 	t.Run(
 		"list with no pagination",
 		func(t *testing.T) {
-			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.FromCtx(ctx)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-			logger.Infof("opening badger db instance")
+			logger.Test(ctx, "opening badger db instance")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			if err != nil {
-				logger.Errorf(
-					"failed to open badger local manager",
-					go_logger.Mapper("err", err.Error()),
-				)
+				logger.Error(ctx, "failed to open badger local manager", "err", err)
 			}
 
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("starting badger instances")
+			logger.Test(ctx, "starting badger instances")
 			m := &BadgerLocalManagerV4{
 				db:            db,
 				serializer:    s,
@@ -685,68 +593,50 @@ func Test_Integration_ListStoreInfoFromMemoryOrDisk(t *testing.T) {
 						continue
 					}
 
-					logger.Debugf(
-						"badger instance",
-						go_logger.Field{
-							"name": key,
-							"info": value,
-						},
-					)
+					logger.Test(ctx, "badger instance", "name", key, "info", value)
 				}
 
 				return nil
 			})
 			require.NoError(t, err)
 
-			logger.Debugf("###########################################################################################")
+			logger.Test(ctx, "###########################################################################################")
 
 			list, err := m.ListStoreInfo(ctx, 0, 0)
 			require.NoError(t, err)
 
-			logger.Debugf(
-
-				"not paginated list - list all",
-				go_logger.Field{
-					"list": list,
-				},
-			)
+			logger.Test(ctx, "not paginated list - list all", "list", list)
 
 			m.ShutdownStores()
 			m.Shutdown()
 
 			m.badgerMapping.Range(
 				func(key, value any) bool {
-					// Should not be displayed
-					logger.Warningf("remaining ->", map[string]interface{}{
-						"key":   key,
-						"value": value,
-					})
+					logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 					return true
 				},
 			)
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 }
 
 func Test_Integration_ListStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.FromCtx(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
-	logger.Infof("opening badger db instance")
+	logger.Test(ctx, "opening badger db instance")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	if err != nil {
-		logger.Errorf(
-			"failed to open badger local manager",
-			go_logger.Mapper("err", err.Error()),
-		)
+		logger.Error(ctx, "failed to open badger local manager", "err", err)
 	}
 
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("starting badger instances")
+	logger.Test(ctx, "starting badger instances")
 	m := &BadgerLocalManagerV4{
 		db:            db,
 		serializer:    s,
@@ -770,48 +660,32 @@ func Test_Integration_ListStoreMemoryInfoFromMemoryOrDisk(t *testing.T) {
 				continue
 			}
 
-			logger.Debugf(
-				"badger instance",
-				go_logger.Field{
-					"name": key,
-					"info": value,
-				},
-			)
+			logger.Test(ctx, "badger instance", "name", key, "info", value)
 		}
 
 		return nil
 	})
 	require.NoError(t, err)
 
-	logger.Debugf("###################################################################################################")
+	logger.Test(ctx, "###################################################################################################")
 
 	list, err := m.ListStoreMemoryInfo(ctx, 7, 4)
 	require.NoError(t, err)
 
-	logger.Debugf(
-
-		"paginated list",
-		go_logger.Field{
-			"list": list,
-		},
-	)
+	logger.Test(ctx, "paginated list", "list", list)
 
 	m.ShutdownStores()
 	m.Shutdown()
 
 	m.badgerMapping.Range(
 		func(key, value any) bool {
-			// Should not be displayed
-			logger.Warningf("remaining ->", map[string]interface{}{
-				"key":   key,
-				"value": value,
-			})
+			logger.Test(ctx, "key is not nil", "key", key, "value", value)
 
 			return true
 		},
 	)
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }
 
 func Test_Integration_CreateStore(t *testing.T) {
@@ -819,11 +693,11 @@ func Test_Integration_CreateStore(t *testing.T) {
 		"happy path",
 		func(t *testing.T) {
 			var err error
-			ctx, _ := context.WithCancel(context.Background())
-			ctx, err = go_tracer.NewCtxTracer().Trace(ctx)
-			require.NoError(t, err)
 
-			logger := go_logger.FromCtx(ctx)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
+			ctx, err = tracer.New().Trace(ctx)
 
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
@@ -838,10 +712,7 @@ func Test_Integration_CreateStore(t *testing.T) {
 
 			stores, err := badgerManager.ListStoreInfo(ctx, 0, 0)
 			require.NoError(t, err)
-			logger.Debugf(
-				"stores",
-				go_logger.Field{"stores": stores},
-			)
+			logger.Test(ctx, "stores", "store_list", stores)
 
 			info := &badgerdb_management_models_v4.DBInfo{
 				Name:         "integration-manager-test",
@@ -855,20 +726,14 @@ func Test_Integration_CreateStore(t *testing.T) {
 
 			stores, err = badgerManager.ListStoreInfo(ctx, 0, 0)
 			require.NoError(t, err)
-			logger.Debugf(
-				"stores",
-				go_logger.Field{"stores": stores},
-			)
+			logger.Test(ctx, "stores", "store_list", stores)
 
 			err = badgerManager.DeleteStore(ctx, info.Name)
 			require.NoError(t, err)
 
 			stores, err = badgerManager.ListStoreInfo(ctx, 0, 0)
 			require.NoError(t, err)
-			logger.Debugf(
-				"stores",
-				go_logger.Field{"stores": stores},
-			)
+			logger.Test(ctx, "stores", "store_list", stores)
 		},
 	)
 }

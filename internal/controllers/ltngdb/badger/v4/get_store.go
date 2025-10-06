@@ -7,8 +7,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
@@ -17,14 +15,9 @@ func (c *Controller) GetStore(
 	ctx context.Context,
 	req *grpc_ltngdb.GetStoreRequest,
 ) (*grpc_ltngdb.GetStoreResponse, error) {
-	logger := c.logger.FromCtx(ctx)
-
 	var r badgerdb_management_models_v4.GetStoreRequest
 	if err := c.binder.ShouldBind(req, &r); err != nil {
-		logger.Errorf(
-			"error binding data",
-			go_logger.Mapper("err", err.Error()),
-		)
+		c.logger.Error(ctx, "error binding data", "error", err)
 
 		err = status.Error(codes.InvalidArgument, err.Error())
 		return &grpc_ltngdb.GetStoreResponse{}, err
@@ -32,13 +25,7 @@ func (c *Controller) GetStore(
 
 	dbInfo, err := c.manager.GetDBInfo(ctx, r.Name)
 	if err != nil {
-		logger.Errorf(
-			"error creating or opening database",
-			go_logger.Field{
-				"err":  err.Error(),
-				"name": r.Name,
-			},
-		)
+		c.logger.Error(ctx, "error getting db info", "error", err)
 
 		err = status.Error(codes.Internal, err.Error())
 		return &grpc_ltngdb.GetStoreResponse{}, err
