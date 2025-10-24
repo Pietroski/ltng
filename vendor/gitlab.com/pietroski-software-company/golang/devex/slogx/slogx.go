@@ -3,7 +3,6 @@ package slogx
 import (
 	"context"
 	"log/slog"
-	"os"
 	"sync/atomic"
 
 	"gitlab.com/pietroski-software-company/golang/devex/tracer"
@@ -24,37 +23,6 @@ type Slog struct {
 // New instantiates a new Slog type.
 func New(opts ...Option) *Slog {
 	return defaultLogger(opts...)
-}
-
-func defaultLogger(opts ...Option) *Slog {
-	logLevel := &slog.LevelVar{} // default INFO
-
-	defaultOpts := &slog.HandlerOptions{
-		AddSource:   false, // if true, it shows the correct path the log functions from Slog are being called.
-		Level:       logLevel,
-		ReplaceAttr: defaultReplaceAttrs(),
-	}
-	ApplyOptions(defaultOpts, opts...)
-
-	handler := slog.NewJSONHandler(os.Stdout, defaultOpts)
-	ctxHandler := &ContextHandler{handler}
-	tracingHandler := &TraceHandler{
-		Handler: ctxHandler,
-		tracer:  tracer.New(),
-	}
-	logger := slog.New(tracingHandler)
-
-	l := &Slog{
-		initialLogLevel: logLevel.Level(),
-		logger:          logger,
-		logLevel:        logLevel,
-		tracer:          tracer.New(),
-		osExit:          os.Exit,
-	}
-	l.setDefaultTimer()
-	ApplySlogOptions(l, opts...)
-
-	return l
 }
 
 // SetLogLevel sets the log level during the runtime

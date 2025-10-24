@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"

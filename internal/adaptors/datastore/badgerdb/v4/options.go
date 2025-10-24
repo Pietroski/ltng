@@ -3,9 +3,9 @@ package v4
 import (
 	"github.com/dgraph-io/badger/v4"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 )
 
 func WithManager(manager Manager) options.Option {

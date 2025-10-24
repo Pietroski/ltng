@@ -12,15 +12,15 @@ type (
 	}
 
 	Engine struct {
-		Engine string `env-name:"LTNG_ENGINE" validation:"required"`
+		Engine string `env:"LTNG_DB_ENGINE" validation:"required"`
 	}
 
 	Server struct {
-		Network string `env-name:"LTNG_SERVER_NETWORK" validation:"required"`
-		Port    string `env-name:"LTNG_SERVER_PORT" validation:"required"`
+		Network string `env:"LTNG_DB_SERVER_NETWORK" validation:"required"`
+		Port    string `env:"LTNG_DB_SERVER_PORT" validation:"required"`
 	}
 
 	UI struct {
-		Port string `env-name:"LTNG_UI_ADDR" validation:"required"`
+		Port string `env:"LTNG_DB_UI_ADDR" validation:"required"`
 	}
 )

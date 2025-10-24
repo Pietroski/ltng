@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
+	"gitlab.com/pietroski-software-company/golang/devex/random"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
@@ -1721,12 +1721,12 @@ func generateTestUser(t *testing.T) *user {
 	timeNow := time.Now().UTC().Unix()
 	userData := &user{
 		UUID:      newUUID.String(),
-		Username:  go_random.RandomStringWithPrefixWithSep(12, "username", "-"),
-		Password:  go_random.RandomStringWithPrefixWithSep(12, "password", "-"),
-		Email:     go_random.RandomEmail(),
-		Name:      go_random.RandomStringWithPrefixWithSep(12, "name", "-"),
-		Surname:   go_random.RandomStringWithPrefixWithSep(12, "surname", "-"),
-		Age:       uint8(go_random.RandomInt(0, math.MaxUint8)),
+		Username:  random.StringWithPrefixWithSep(12, "username", "-"),
+		Password:  random.StringWithPrefixWithSep(12, "password", "-"),
+		Email:     random.Email(),
+		Name:      random.StringWithPrefixWithSep(12, "name", "-"),
+		Surname:   random.StringWithPrefixWithSep(12, "surname", "-"),
+		Age:       uint8(random.Int(0, math.MaxUint8)),
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}

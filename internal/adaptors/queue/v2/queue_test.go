@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"

@@ -3,7 +3,7 @@ package concurrentmemorystorev1
 import (
 	"context"
 
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"

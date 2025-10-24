@@ -10,10 +10,10 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/pietroski-software-company/golang/devex/random"
 
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
-	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
@@ -299,9 +299,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			person := &Person{
 				ID:       newUUID,
-				Name:     go_random.RandomString(8),
-				Email:    go_random.RandomEmail(),
-				Username: go_random.RandomString(8),
+				Name:     random.String(8),
+				Email:    random.Email(),
+				Username: random.String(8),
 			}
 
 			key := newUUID
@@ -464,9 +464,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			person := &Person{
 				ID:       newUUID,
-				Name:     go_random.RandomString(8),
-				Email:    go_random.RandomEmail(),
-				Username: go_random.RandomString(8),
+				Name:     random.String(8),
+				Email:    random.Email(),
+				Username: random.String(8),
 			}
 
 			key := newUUID
@@ -628,9 +628,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			person := &Person{
 				ID:       newUUID,
-				Name:     go_random.RandomString(8),
-				Email:    go_random.RandomEmail(),
-				Username: go_random.RandomString(8),
+				Name:     random.String(8),
+				Email:    random.Email(),
+				Username: random.String(8),
 			}
 
 			key := newUUID
@@ -797,9 +797,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			person := &Person{
 				ID:       newUUID,
-				Name:     go_random.RandomString(8),
-				Email:    go_random.RandomEmail(),
-				Username: go_random.RandomString(8),
+				Name:     random.String(8),
+				Email:    random.Email(),
+				Username: random.String(8),
 			}
 
 			key := newUUID
@@ -1342,9 +1342,9 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 				require.NoError(t, err)
 				person := &Person{
 					ID:       newUUID,
-					Name:     go_random.RandomString(8),
-					Email:    go_random.RandomEmail(),
-					Username: go_random.RandomString(8),
+					Name:     random.String(8),
+					Email:    random.Email(),
+					Username: random.String(8),
 				}
 
 				people[idx] = person
@@ -1563,11 +1563,11 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	}
 
 	ts := TestStructure{
-		Field1PK:     go_random.RandomString(7),
-		Field2:       go_random.RandomString(7),
-		Filed3:       go_random.RandomString(7),
-		Field4IdxKey: go_random.RandomString(7),
-		Field5IdxKey: go_random.RandomString(7),
+		Field1PK:     random.String(7),
+		Field2:       random.String(7),
+		Filed3:       random.String(7),
+		Field4IdxKey: random.String(7),
+		Field5IdxKey: random.String(7),
 	}
 
 	ctx, _ := context.WithCancel(context.Background())

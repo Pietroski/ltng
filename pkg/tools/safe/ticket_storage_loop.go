@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"sync/atomic"
 
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 )
 
 type TicketStorageLoop[T any] struct {

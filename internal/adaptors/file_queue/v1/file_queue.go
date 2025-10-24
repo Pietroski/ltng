@@ -13,13 +13,13 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/errorsx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
@@ -27,9 +27,8 @@ import (
 const truncateLimit = 1 << 14
 
 type FileQueue struct {
-	mtx      *sync.RWMutex
-	opMtx    *lock.EngineLock
-	opPopMtx *lock.EngineLock
+	mtx   *sync.RWMutex
+	kvMtx *syncx.KVLock
 
 	serializer serializermodels.Serializer
 
@@ -59,9 +58,8 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 	}
 
 	fq := &FileQueue{
-		opMtx:    lock.NewEngineLock(),
-		opPopMtx: lock.NewEngineLock(),
-		mtx:      &sync.RWMutex{},
+		kvMtx: syncx.NewKVLock(),
+		mtx:   &sync.RWMutex{},
 
 		serializer: serializer.NewRawBinarySerializer(),
 
@@ -99,8 +97,8 @@ func (fq *FileQueue) resetWriter() error {
 }
 
 func (fq *FileQueue) Reset() error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	if err := fq.resetReader(); err != nil {
 		return err
@@ -114,8 +112,8 @@ func (fq *FileQueue) Reset() error {
 }
 
 func (fq *FileQueue) Read(ctx context.Context) ([]byte, error) {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.read(ctx)
 }
@@ -157,8 +155,8 @@ func (fq *FileQueue) yieldWriter() uint64 {
 }
 
 func (fq *FileQueue) Write(_ context.Context, data interface{}) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	if err := fq.resetWriter(); err != nil {
 		return err
@@ -185,15 +183,15 @@ func (fq *FileQueue) Write(_ context.Context, data interface{}) error {
 }
 
 func (fq *FileQueue) Pop(ctx context.Context) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.safelyTruncateFromStart(ctx)
 }
 
 func (fq *FileQueue) PopFromIndex(ctx context.Context, index []byte) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.safelyTruncateFromIndex(ctx, index)
 }
@@ -307,8 +305,8 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 }
 
 func (fq *FileQueue) PopAndUnlockItFromIndex(ctx context.Context, index []byte) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.safelyTruncateAndUnlockItFromIndex(ctx, index)
 }
@@ -436,8 +434,8 @@ func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, ind
 }
 
 func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte, data any) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.safelyRepublishIndex(ctx, index, data)
 }
@@ -582,8 +580,8 @@ func (fq *FileQueue) ReadAndPop(
 	ctx context.Context,
 	handler func(ctx context.Context, bs []byte) error,
 ) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	bs, err := fq.read(ctx)
 	if err != nil {
@@ -598,8 +596,8 @@ func (fq *FileQueue) ReadAndPop(
 }
 
 func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.readFromCursor(ctx)
 }
@@ -651,8 +649,8 @@ func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
 }
 
 func (fq *FileQueue) ReadFromCursorWithoutTruncation(ctx context.Context) ([]byte, error) {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.readFromCursorWithoutTruncation(ctx)
 }
@@ -680,8 +678,8 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 }
 
 func (fq *FileQueue) ReadFromCursorAndLockItWithoutTruncation(ctx context.Context) ([]byte, error) {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	return fq.readFromCursorAndLockItWithoutTruncation(ctx)
 }
@@ -716,8 +714,8 @@ func (fq *FileQueue) readFromCursorAndLockItWithoutTruncation(_ context.Context)
 }
 
 func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	if err := fq.resetWriter(); err != nil {
 		return err
@@ -763,8 +761,7 @@ func (fq *FileQueue) ReaderPooler(
 		}
 
 		if err = handler(ctx, bs); err != nil {
-			log.Printf("error handling file queue: %v", err)
-			if !errors.Is(err, errorsx.ErrUnRetryable) {
+			if !errorsx.IsNonRetriable(err) {
 				// TODO: fix republish here
 				//err = fq.RepublishIndex(ctx, bs)
 				//if err != nil {
@@ -772,12 +769,14 @@ func (fq *FileQueue) ReaderPooler(
 				//}
 			}
 
-			return fmt.Errorf("error handling file queue - retryable: %v", err)
+			return errorsx.New("error handling file queue").
+				Wrap(err, "error from handler").
+				WithRetriable()
 		}
 
 		err = fq.PopFromIndex(ctx, bs)
 		if err != nil {
-			return fmt.Errorf("error popping from file queue with index %s: %v", bs, err)
+			return errorsx.Wrapf(err, "error popping from file queue with index %s", bs)
 		}
 
 		return nil
@@ -787,8 +786,8 @@ func (fq *FileQueue) ReaderPooler(
 }
 
 func (fq *FileQueue) Close() error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	if err := fq.file.Close(); err != nil {
 		return err
@@ -811,8 +810,8 @@ func (fq *FileQueue) IsEmpty() (bool, error) {
 }
 
 func (fq *FileQueue) CheckAndClose() bool {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	if fq.readerCursor == fq.writeCursor {
 		fq.writeCursor = 0
@@ -832,8 +831,8 @@ func (fq *FileQueue) CheckAndClose() bool {
 }
 
 func (fq *FileQueue) Init() error {
-	fq.opMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.opMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileQueueKey)
 
 	if !rw.IsFileClosed(fq.file) {
 		return nil

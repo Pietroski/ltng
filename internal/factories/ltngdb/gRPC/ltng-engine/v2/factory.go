@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	go_tracer_middleware "gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"

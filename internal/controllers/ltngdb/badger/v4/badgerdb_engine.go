@@ -3,10 +3,10 @@ package badgerdb_controller_v4
 import (
 	"context"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"

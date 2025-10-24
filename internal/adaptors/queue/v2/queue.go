@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"

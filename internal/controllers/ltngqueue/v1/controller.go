@@ -3,7 +3,7 @@ package ltngqueue_controller_v1
 import (
 	"context"
 
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	ltngqueue_engine "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/queue/v2"

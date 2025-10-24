@@ -9,9 +9,9 @@ import (
 	"os"
 	"time"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
@@ -21,7 +21,7 @@ type FileManager struct {
 	serializer serializermodels.Serializer
 }
 
-func NewFileManager(ctx context.Context, opts ...options.Option) *FileManager {
+func NewFileManager(_ context.Context, opts ...options.Option) *FileManager {
 	fm := &FileManager{
 		serializer: serializer.NewRawBinarySerializer(),
 	}

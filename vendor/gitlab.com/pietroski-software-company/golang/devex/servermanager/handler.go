@@ -6,10 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
-	"gitlab.com/pietroski-software-company/golang/devex/safe"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 )
 
 type (
@@ -19,7 +18,7 @@ type (
 		osExit     func(code int)
 
 		serverMapping ServerMapping
-		offThread     concurrent.Operator
+		offThread     syncx.Operator
 		logger        slogx.SLogger
 
 		srvChan *srvChan
@@ -29,8 +28,8 @@ type (
 		ctx    context.Context
 		logger slogx.SLogger
 
-		errSig  *safe.Channel[error]
-		stopSig *safe.Channel[os.Signal]
+		errSig  *syncx.Channel[error]
+		stopSig *syncx.Channel[os.Signal]
 	}
 )
 
@@ -40,7 +39,7 @@ func New(ctx context.Context, cancel context.CancelFunc, opts ...options.Option)
 		cancelFunc:    cancel,
 		osExit:        OsExit,
 		serverMapping: ServerMapping{},
-		offThread:     concurrent.New("ServerManager"),
+		offThread:     syncx.NewThreadOperator("ServerManager"),
 		logger:        slogx.New(),
 
 		srvChan: nil,
@@ -52,8 +51,8 @@ func New(ctx context.Context, cancel context.CancelFunc, opts ...options.Option)
 		ctx:    ctx,
 		logger: h.logger,
 
-		errSig:  safe.NewChannel[error](safe.WithChannelSize[error](serverLimit)),
-		stopSig: safe.NewChannel[os.Signal](safe.WithChannelSize[os.Signal](serverLimit)),
+		errSig:  syncx.NewChannel[error](syncx.WithChannelSize[error](serverLimit)),
+		stopSig: syncx.NewChannel[os.Signal](syncx.WithChannelSize[os.Signal](serverLimit)),
 	}
 
 	signal.Notify(h.srvChan.stopSig.Ch, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)

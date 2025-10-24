@@ -1,0 +1,3 @@
+# GoRandom
+
+GoRandom documentation

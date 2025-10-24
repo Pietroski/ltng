@@ -3,7 +3,7 @@ package ltngqueue_engine
 import (
 	"time"
 
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 )
 
 func WithTimeout(duration time.Duration) options.Option {

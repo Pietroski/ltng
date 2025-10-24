@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"

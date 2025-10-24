@@ -1,0 +1,7 @@
+# IDE's config files
+.idea
+.vscode
+
+# report files
+#drone-analysis
+#drone-analysis.json

@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	"gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"

@@ -8,6 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
+func NewCtxTracingInfoFromUUID(existingUUID uuid.UUID) CtxTraceInfo {
+	return CtxTraceInfo{
+		ID:        existingUUID,
+		CreatedAt: time.Now(),
+		Metadata:  make(map[string]any),
+	}
+}
+
 func NewCtxTracingInfo() (CtxTraceInfo, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -21,11 +29,37 @@ func NewCtxTracingInfo() (CtxTraceInfo, error) {
 	}, nil
 }
 
+func (t *ctxStructTracer) injectCTI(ctx context.Context, cti CtxTraceInfo) context.Context {
+	return context.WithValue(ctx, ctxTraceKey, cti)
+}
+
 func (t *ctxStructTracer) checkOrTrace(ctx context.Context) (context.Context, error) {
 	_, ok := ctx.Value(ctxTraceKey).(CtxTraceInfo)
 	if !ok {
 		var err error
 		ctx, err = t.injectTracing(ctx)
+		if err != nil {
+			return ctx, fmt.Errorf("failed to create ctxtracing: %v", err)
+		}
+	}
+
+	return ctx, nil
+}
+
+func (t *ctxStructTracer) checkOrTraceWithUUID(ctx context.Context, existingID uuid.UUID) context.Context {
+	_, ok := ctx.Value(ctxTraceKey).(CtxTraceInfo)
+	if !ok {
+		return t.injectTracingWithUUID(ctx, existingID)
+	}
+
+	return ctx
+}
+
+func (t *ctxStructTracer) checkOrTraceWithRawUUID(ctx context.Context, rawUUID string) (context.Context, error) {
+	_, ok := ctx.Value(ctxTraceKey).(CtxTraceInfo)
+	if !ok {
+		var err error
+		ctx, err = t.injectTracingWithRawUUID(ctx, rawUUID)
 		if err != nil {
 			return ctx, fmt.Errorf("failed to create ctxtracing: %v", err)
 		}
@@ -65,6 +99,21 @@ func (t *ctxStructTracer) injectTracing(ctx context.Context) (context.Context, e
 	ctx = context.WithValue(ctx, ctxTraceKey, ctxTracingInfo)
 
 	return ctx, nil
+}
+
+func (t *ctxStructTracer) injectTracingWithUUID(ctx context.Context, existingUUID uuid.UUID) context.Context {
+	ctxTracingInfo := NewCtxTracingInfoFromUUID(existingUUID)
+	return context.WithValue(ctx, ctxTraceKey, ctxTracingInfo)
+}
+
+func (t *ctxStructTracer) injectTracingWithRawUUID(ctx context.Context, rawUUID string) (context.Context, error) {
+	parsedUUID, err := uuid.Parse(rawUUID)
+	if err != nil {
+		return ctx, fmt.Errorf("failed to parse uuid: %v", err)
+	}
+
+	ctxTracingInfo := NewCtxTracingInfoFromUUID(parsedUUID)
+	return context.WithValue(ctx, ctxTraceKey, ctxTracingInfo), nil
 }
 
 func (t *ctxStructTracer) wrap(ctx context.Context, md Metadata) (context.Context, error) {

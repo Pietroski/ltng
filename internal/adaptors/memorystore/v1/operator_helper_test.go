@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/golang/devex/random"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
-	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 )
@@ -80,13 +80,13 @@ type BytesValues struct {
 func GenerateRandomUser[T TestBench](tb T) *User {
 	timeNow := time.Now().UTC().Unix()
 	user := &User{
-		Username:  go_random.RandomStringWithPrefixWithSep(12, "username", "-"),
-		Password:  go_random.RandomStringWithPrefixWithSep(12, "password", "-"),
-		Email:     go_random.RandomEmail(),
-		Name:      go_random.RandomStringWithPrefixWithSep(12, "name", "-"),
-		Surname:   go_random.RandomStringWithPrefixWithSep(12, "surname", "-"),
-		Age:       uint8(go_random.RandomInt(0, math.MaxUint8)),
-		RandomKey: go_random.RandomString(10),
+		Username:  random.StringWithPrefixWithSep(12, "username", "-"),
+		Password:  random.StringWithPrefixWithSep(12, "password", "-"),
+		Email:     random.Email(),
+		Name:      random.StringWithPrefixWithSep(12, "name", "-"),
+		Surname:   random.StringWithPrefixWithSep(12, "surname", "-"),
+		Age:       uint8(random.Int(0, math.MaxUint8)),
+		RandomKey: random.String(10),
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}

@@ -27,9 +27,14 @@ func WithSource(addSrc bool) Option {
 func WithLogLevel(logLevel slog.Level) Option {
 	return func(cfg interface{}) {
 		if c, ok := cfg.(*slog.HandlerOptions); ok {
-			ll := &slog.LevelVar{}
-			ll.Set(logLevel)
-			c.Level = ll
+			if levelVar, ok := c.Level.(*slog.LevelVar); ok {
+				levelVar.Set(logLevel)
+			}
+		}
+
+		if c, ok := cfg.(*Slog); ok {
+			c.initialLogLevel = logLevel
+			c.SetLogLevel(logLevel)
 		}
 	}
 }
