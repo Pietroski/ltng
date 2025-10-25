@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
@@ -46,7 +46,7 @@ func TestLTNGDBClient(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	offThread := concurrent.New("TestMain")
+	offThread := syncx.NewThreadOperator("TestMain")
 	offThread.Op(func() {
 		main(ctx, cancel)
 	})
@@ -242,7 +242,7 @@ func TestBadgerDBClient(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	offThread := concurrent.New("TestMain")
+	offThread := syncx.NewThreadOperator("TestMain")
 	offThread.Op(func() {
 		main(ctx, cancel)
 	})

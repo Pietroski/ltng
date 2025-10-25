@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
@@ -271,7 +271,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 				return
 			}
 
-			op := concurrent.New("upsertIndexItemOnDisk")
+			op := syncx.NewThreadOperator("upsertIndexItemOnDisk")
 			op.OpX(func() (any, error) {
 				keysToSave := bytesop.CalRightDiff(
 					ltngenginemodels.IndexListToBytesList(indexingList),
@@ -330,7 +330,7 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 				return
 			}
 
-			op := concurrent.New("upsertIndexItemOnDisk")
+			op := syncx.NewThreadOperator("upsertIndexItemOnDisk")
 			op.OpX(func() (any, error) {
 				keysToSave := bytesop.CalRightDiff(
 					v.Opts.IndexingKeys,

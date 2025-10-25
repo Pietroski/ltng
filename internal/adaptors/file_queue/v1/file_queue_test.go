@@ -10,10 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
@@ -209,7 +208,7 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
 
-	op := concurrent.New("file_queue")
+	op := syncx.NewThreadOperator("file_queue")
 	limit := 50
 	for idx := 0; idx < limit; idx++ {
 		//op.OpX(func() (any, error) {
@@ -274,7 +273,7 @@ func TestFileQueueConcurrent(t *testing.T) {
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
 
-	op := concurrent.New("file_queue")
+	op := syncx.NewThreadOperator("file_queue")
 	limit := 50
 	for idx := 0; idx < limit; idx++ {
 		op.OpX(func() (any, error) {
@@ -478,7 +477,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
 
-		op := concurrent.New("file_queue")
+		op := syncx.NewThreadOperator("file_queue")
 		limit := 50
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
@@ -518,7 +517,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 	//	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	//	require.NoError(b, err)
 	//
-	//	op := concurrent.New("file_queue")
+	//	op := syncx.NewThreadOperator("file_queue")
 	//	limit := 5
 	//	for idx := 0; idx < limit; idx++ {
 	//		op.OpX(func() (any, error) {
@@ -562,7 +561,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
 
-		op := concurrent.New("file_queue")
+		op := syncx.NewThreadOperator("file_queue")
 		limit := 50
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
@@ -613,7 +612,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 			BoolField: true,
 		}
 
-		op := concurrent.New("file_queue")
+		op := syncx.NewThreadOperator("file_queue")
 		limit := 50
 
 		canRead := make(chan struct{}, limit)
@@ -692,7 +691,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 			BoolField: true,
 		}
 
-		op := concurrent.New("file_queue")
+		op := syncx.NewThreadOperator("file_queue")
 		limit := 50
 
 		canRead := make(chan struct{}, limit)
@@ -1248,7 +1247,7 @@ func TestFileQueue_PopFromIndex(t *testing.T) {
 				t.Log(testDataList[indexPosition].IDField)
 				t.Log(testDataList[anotherIndexPosition].IDField)
 
-				op := concurrent.New("simultaneous popping")
+				op := syncx.NewThreadOperator("simultaneous popping")
 				op.OpX(func() (any, error) {
 					err := fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
 					require.NoError(t, err)
@@ -1298,7 +1297,7 @@ func TestFileQueue_PopFromIndex(t *testing.T) {
 					require.EqualValues(t, testData, &td)
 				}
 
-				op := concurrent.New("simultaneous popping")
+				op := syncx.NewThreadOperator("simultaneous popping")
 				op.OpX(func() (any, error) {
 					err := fq.PopFromIndex(ctx, nonExistentIndex)
 					require.Error(t, err)

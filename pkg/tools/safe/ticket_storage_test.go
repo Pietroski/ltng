@@ -3,7 +3,7 @@ package safe
 import (
 	"testing"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 )
 
 func TestTicketStorage(t *testing.T) {
@@ -11,7 +11,7 @@ func TestTicketStorage(t *testing.T) {
 		ts := NewTicketStorage[int](10)
 		limit := 10
 
-		op := concurrent.New("ticket_storage")
+		op := syncx.NewThreadOperator("ticket_storage")
 		for i := 0; i < limit; i++ {
 			op.Op(func() {
 				ts.Put(i)
@@ -27,7 +27,7 @@ func TestTicketStorage(t *testing.T) {
 		ts := NewTicketStorage[int](0)
 		limit := 10
 
-		op := concurrent.New("ticket_storage")
+		op := syncx.NewThreadOperator("ticket_storage")
 		for i := 0; i < limit; i++ {
 			op.Op(func() {
 				ts.Append(i)
@@ -43,7 +43,7 @@ func TestTicketStorage(t *testing.T) {
 		ts := NewTicketStorage[int](0)
 		limit := 10
 
-		op := concurrent.New("ticket_storage")
+		op := syncx.NewThreadOperator("ticket_storage")
 		for i := 0; i < limit; i++ {
 			op.Op(func() {
 				ts.Append(i)
@@ -64,7 +64,7 @@ func TestTicketStorage(t *testing.T) {
 		ts := NewTicketStorage[int](0)
 		limit := 10
 
-		op := concurrent.New("ticket_storage")
+		op := syncx.NewThreadOperator("ticket_storage")
 		for i := 0; i < limit; i++ {
 			op.Op(func() {
 				ts.Append(i)
@@ -75,7 +75,7 @@ func TestTicketStorage(t *testing.T) {
 		t.Log(ts.ticket.Load(), ts.done.Load())
 		t.Log(len(ts.Get()), ts.Get())
 
-		op = concurrent.New("ticket_storage")
+		op = syncx.NewThreadOperator("ticket_storage")
 		for i := 9; i >= 0; i-- {
 			op.Op(func() {
 				ts.FindAndDelete(func(item int) bool {

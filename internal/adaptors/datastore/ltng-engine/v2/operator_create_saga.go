@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"os"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
@@ -229,7 +229,7 @@ func (s *createSaga) createIndexItemOnDiskOnThread(
 	ctxrunner.WithCancellation(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel,
 		func(v *ltngenginemodels.ItemInfoData) {
-			op := concurrent.New("createIndexItemOnDisk")
+			op := syncx.NewThreadOperator("createIndexItemOnDisk")
 			for _, indexKey := range v.Opts.IndexingKeys {
 				op.OpX(func() (any, error) {
 					if err := s.opSaga.e.createItemOnDisk(v.Ctx,

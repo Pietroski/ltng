@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
+	"gitlab.com/pietroski-software-company/golang/devex/random"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
-	go_random "gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
@@ -269,7 +269,7 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 			_, err = ltngqueue.CreateQueue(ctx, queue)
 			require.NoError(t, err)
 
-			op := concurrent.New("publisher", concurrent.WithThreadLimit(64))
+			op := syncx.NewThreadOperator("publisher", syncx.WithThreadLimit(64))
 
 			// generate & publish events
 			events := generateEventList(t, ltngqueue.serializer, queue, testCase.eventCount)
@@ -599,7 +599,7 @@ func testConsumerConcurrently(
 	_, err = ltngqueue.CreateQueue(ctx, queue)
 	require.NoError(t, err)
 
-	op := concurrent.New("publisher", concurrent.WithThreadLimit(64))
+	op := syncx.NewThreadOperator("publisher", syncx.WithThreadLimit(64))
 
 	// generate & publish events
 	events := generateEventList(t, ltngqueue.serializer, queue, testCase.eventCount)
@@ -822,7 +822,7 @@ func testNackAndTimeout(
 	_, err = ltngqueue.CreateQueue(ctx, queue)
 	require.NoError(t, err)
 
-	op := concurrent.New("publisher", concurrent.WithThreadLimit(64))
+	op := syncx.NewThreadOperator("publisher", syncx.WithThreadLimit(64))
 
 	// generate & publish events
 	events := generateEventList(t, ltngqueue.serializer, queue, testCase.eventCount)
@@ -914,8 +914,8 @@ func testNackAndTimeout(
 
 func generateGenericTestData(t *testing.T) *GenericTestData {
 	gtd := &GenericTestData{
-		FieldString: go_random.RandomString(12),
-		FieldInt:    int(go_random.RandomInt(1, 100)),
+		FieldString: random.String(12),
+		FieldInt:    int(random.Int(1, 100)),
 		FieldBool:   true,
 	}
 

@@ -9,9 +9,9 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.0
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/pietroski-software-company/golang/devex/concurrent v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
 	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
+	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
@@ -20,8 +20,6 @@ require (
 	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
-	gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11
-	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.29
 	go.uber.org/mock v0.6.0
 	golang.org/x/sys v0.37.0
@@ -38,14 +36,15 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/flatbuffers v25.9.23+incompatible // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.1 // indirect
 	gitlab.com/pietroski-software-company/golang/devex/validator v0.0.4 // indirect
-	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
@@ -56,6 +55,6 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.37.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251014184007-4626949a642f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
@@ -100,7 +100,7 @@ type (
 	deleteSaga struct {
 		opSaga         *opSaga
 		deleteChannels *deleteChannels
-		offThread      *concurrent.OffThread
+		offThread      *syncx.OffThread
 		cancel         context.CancelFunc
 	}
 )
@@ -110,7 +110,7 @@ func newDeleteSaga(ctx context.Context, opSaga *opSaga) *deleteSaga {
 	ds := &deleteSaga{
 		opSaga:         opSaga,
 		deleteChannels: makeDeleteChannels(),
-		offThread:      concurrent.New("DeleteSaga", concurrent.WithThreadLimit(threadLimit)),
+		offThread:      syncx.NewThreadOperator("DeleteSaga", syncx.WithThreadLimit(threadLimit)),
 		cancel:         cancel,
 	}
 

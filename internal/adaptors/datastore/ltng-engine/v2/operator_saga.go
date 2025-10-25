@@ -3,8 +3,8 @@ package v2
 import (
 	"context"
 
-	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
@@ -14,7 +14,7 @@ import (
 
 func ResponseAccumulator(respSigChan ...chan error) error {
 	var err error
-	op := concurrent.New("responseAccumulator")
+	op := syncx.NewThreadOperator("responseAccumulator")
 	for _, sigChan := range respSigChan {
 		op.OpX(func() (any, error) {
 			sigErr := <-sigChan
@@ -40,7 +40,7 @@ type opSaga struct {
 	e            *LTNGEngine
 	fq           *filequeuev1.FileQueue
 	cancel       context.CancelFunc
-	offThread    *concurrent.OffThread
+	offThread    *syncx.OffThread
 	crudChannels *ltngenginemodels.CrudChannels
 	pidRegister  *process.Register
 }
@@ -51,7 +51,7 @@ func newOpSaga(ctx context.Context, e *LTNGEngine) *opSaga {
 		e:         e,
 		fq:        e.fq,
 		cancel:    cancel,
-		offThread: concurrent.New("OpSaga", concurrent.WithThreadLimit(threadLimit)),
+		offThread: syncx.NewThreadOperator("OpSaga", syncx.WithThreadLimit(threadLimit)),
 		crudChannels: &ltngenginemodels.CrudChannels{
 			OpSagaChannel:  ltngenginemodels.MakeOpChannels(),
 			CreateChannels: ltngenginemodels.MakeOpChannels(),
