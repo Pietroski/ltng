@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -224,7 +223,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 
 	// fmt.Printf("from: %v - upTo: %v\n", from, upTo)
 	if !found {
-		return fmt.Errorf("index not found - %s", string(index))
+		return errorsx.Errorf("index not found: %s", string(index))
 	}
 
 	{
@@ -251,32 +250,32 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 
 		// seek the file to the beginning.
 		if _, err = fq.file.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue: %w", err)
+			return errorsx.Wrap(err, "error seeking to file-queue")
 		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file-queue to tmp file-queue: %w", err)
+			return errorsx.Wrap(err, "error copying first part of the file-queue to tmp file-queue")
 		}
 
 		if _, err = fq.file.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue: %w", err)
+			return errorsx.Wrap(err, "error seeking to file-queue")
 		}
 
 		if _, err = io.Copy(tmpFile, fq.file); err != nil {
-			return fmt.Errorf("error copying second part of the file-queue to tmp file-queue: %w", err)
+			return errorsx.Wrap(err, "error copying second part of the file-queue to tmp file-queue")
 		}
 
 		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file-queue - %s | err: %v", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to sync file-queue: %s", tmpFile.Name())
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file-queue - %s | err: %v", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close file-queue: %s", tmpFile.Name())
 		}
 
 		if err = os.Rename(fq.fullTmpPath, fq.fullPath); err != nil {
-			return fmt.Errorf("error renaming tmp file-queue to file-queue: %w", err)
+			return errorsx.Wrap(err, "error renaming tmp file-queue to file-queue")
 		}
 
 		{ // reset file pointers
@@ -339,7 +338,7 @@ func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, ind
 
 	// fmt.Printf("from: %v - upTo: %v\n", from, upTo)
 	if !found {
-		return fmt.Errorf("index not found - %s", string(index))
+		return errorsx.Errorf("index not found: %s", string(index))
 	}
 
 	{
@@ -366,32 +365,32 @@ func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, ind
 
 		// seek the file to the beginning.
 		if _, err = fq.file.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue: %w", err)
+			return errorsx.Wrap(err, "error seeking to file-queue")
 		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fq.file, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file-queue to tmp file-queue: %w", err)
+			return errorsx.Wrap(err, "error copying first part of the file-queue to tmp file-queue")
 		}
 
 		if _, err = fq.file.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file-queue: %w", err)
+			return errorsx.Wrap(err, "error seeking to file-queue")
 		}
 
 		if _, err = io.Copy(tmpFile, fq.file); err != nil {
-			return fmt.Errorf("error copying second part of the file-queue to tmp file-queue: %w", err)
+			return errorsx.Wrap(err, "error copying second part of the file-queue to tmp file-queue")
 		}
 
 		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file-queue - %s | err: %v", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to sync file-queue - %s", tmpFile.Name())
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file-queue - %s | err: %v", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close file-queue - %s", tmpFile.Name())
 		}
 
 		if err = os.Rename(fq.fullTmpPath, fq.fullPath); err != nil {
-			return fmt.Errorf("error renaming tmp file-queue to file-queue: %w", err)
+			return errorsx.Wrap(err, "error renaming tmp file-queue to file-queue")
 		}
 
 		{ // reset file pointers
@@ -442,25 +441,25 @@ func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte, data any)
 
 func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, data any) (err error) {
 	if err = fq.resetReader(); err != nil {
-		return fmt.Errorf("error republishing index: error resetting reader: %w", err)
+		return errorsx.Wrap(err, "error republishing index: error resetting reader")
 	}
 
 	_, err = execx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath)
 	if err != nil {
-		return fmt.Errorf("error republishing index: error executing cpfile: %w", err)
+		return errorsx.Wrap(err, "error republishing index: error executing cpfile")
 	}
 
 	if err = fq.PopFromIndex(ctx, index); err != nil {
-		return fmt.Errorf("error republishing index: error popping from index: %w", err)
+		return errorsx.Wrap(err, "error republishing index: error popping from index")
 	}
 
 	if err = fq.WriteOnCursor(ctx, data); err != nil {
 		_, err = execx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath)
 		if err != nil {
-			return fmt.Errorf("error republishing index: error executing reverse cpfile: %w", err)
+			return errorsx.Wrap(err, "error republishing index: error executing reverse cpfile")
 		}
 
-		return fmt.Errorf("error republishing index: error writing cursor: %w", err)
+		return errorsx.Wrap(err, "error republishing index: error writing cursor")
 	}
 
 	return nil

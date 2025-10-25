@@ -3,7 +3,7 @@ package v2
 import (
 	"context"
 
-	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"

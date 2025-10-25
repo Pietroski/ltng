@@ -3,7 +3,7 @@ package safe
 import (
 	"testing"
 
-	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 )
 
 func TestTicketStorage(t *testing.T) {

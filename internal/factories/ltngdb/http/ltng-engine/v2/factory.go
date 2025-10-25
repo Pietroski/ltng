@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 
 	"gitlab.com/pietroski-software-company/golang/devex/options"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
@@ -26,7 +26,7 @@ type (
 	Factory struct {
 		ctx    context.Context
 		cfg    *ltng_node_config.Config
-		logger go_logger.Logger
+		logger slogx.SLogger
 
 		listener  net.Listener
 		server    *http.Server
@@ -108,8 +108,6 @@ func (s *Factory) Start() error {
 func (s *Factory) Stop() {
 	err := s.server.Shutdown(s.ctx)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Errorf("failed to shutdown http gateway server",
-			go_logger.Field{"error": err},
-		)
+		s.logger.Error(s.ctx, "failed to shutdown http gateway server", "error", err)
 	}
 }

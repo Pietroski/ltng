@@ -91,15 +91,15 @@ github.com/vmihailenco/msgpack/v5/msgpcode
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
 github.com/vmihailenco/tagparser/v2/internal/parser
-# gitlab.com/pietroski-software-company/devex/golang/concurrent v0.0.1
-## explicit; go 1.23.5
-gitlab.com/pietroski-software-company/devex/golang/concurrent
 # gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/devex/golang/serializer/models
 # gitlab.com/pietroski-software-company/golang/devex/concurrent v0.0.1
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/concurrent
+# gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/env
 # gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/errorsx
@@ -127,35 +127,19 @@ gitlab.com/pietroski-software-company/golang/devex/syncx
 # gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/tracer
+# gitlab.com/pietroski-software-company/golang/devex/validator v0.0.4
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/validator
 # gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder
 gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks
-# gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.18
-## explicit; go 1.21
-gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-converter
-gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor
-# gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
-## explicit; go 1.21
-gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/colours
-gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/models/prefix
-gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger
-gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger/dyer
-gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger/encapsulator
-gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/publisher
 # gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares/pkg/tools/middlewares/gRPC/tracer
-# gitlab.com/pietroski-software-company/tools/options/go-opts v0.0.2
-## explicit; go 1.23.0
-gitlab.com/pietroski-software-company/tools/options/go-opts/pkg/options
 # gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13
 ## explicit; go 1.23
 gitlab.com/pietroski-software-company/tools/random/go-random/pkg/tools/random
-# gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0
-## explicit; go 1.23
-gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/builder/errors
-gitlab.com/pietroski-software-company/tools/serializer/go-serializer/pkg/tools/serializer
 # gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25
 ## explicit; go 1.21
 gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2/pkg/tools/tracer

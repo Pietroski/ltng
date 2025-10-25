@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
@@ -176,7 +177,7 @@ func (ltng *LTNGCacheEngine) deleteItem(
 	case ltngenginemodels.None:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("invalid index deletion behaviour")
+		return nil, errorsx.New("invalid index deletion behaviour")
 	}
 }
 
@@ -187,7 +188,7 @@ func (ltng *LTNGCacheEngine) loadItem(
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
 	if opts == nil {
-		return nil, fmt.Errorf("invalid index deletion behaviour")
+		return nil, errorsx.New("invalid index deletion behaviour")
 	}
 
 	if !opts.HasIdx {
@@ -227,7 +228,7 @@ func (ltng *LTNGCacheEngine) listItems(
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.ListItemsResult, error) {
 	if !pagination.IsValid() {
-		return nil, fmt.Errorf("invalid pagination")
+		return nil, errorsx.New("invalid pagination")
 	}
 
 	switch opts.IndexProperties.ListSearchPattern {

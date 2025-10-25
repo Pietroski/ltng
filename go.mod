@@ -9,8 +9,8 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.0
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/pietroski-software-company/devex/golang/concurrent v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/concurrent v0.0.1
+	gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
 	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
@@ -20,8 +20,6 @@ require (
 	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 	gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
-	gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor v0.0.18
-	gitlab.com/pietroski-software-company/tools/logger/go-logger/v3 v3.3.12
 	gitlab.com/pietroski-software-company/tools/middlewares/go-middlewares v1.2.11
 	gitlab.com/pietroski-software-company/tools/random/go-random v0.0.13
 	gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.29
@@ -46,8 +44,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1 // indirect
-	gitlab.com/pietroski-software-company/tools/options/go-opts v0.0.2 // indirect
-	gitlab.com/pietroski-software-company/tools/serializer/go-serializer v1.2.0 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/validator v0.0.4 // indirect
 	gitlab.com/pietroski-software-company/tools/tracer/go-tracer/v2 v2.4.25 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect

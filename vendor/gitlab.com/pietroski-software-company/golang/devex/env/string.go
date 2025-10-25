@@ -1,22 +1,26 @@
-package env_converter
+package env
 
 import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
+
+	"gitlab.com/pietroski-software-company/golang/devex/validator"
 )
 
-const (
-	format = "format"
-)
-
-func StringConverter(str string, pt reflect.Type, pv reflect.Value, tag reflect.StructTag) (interface{}, error) {
-	switch pt.Kind() {
+func stringConverter(str string, pt reflect.Kind, pv reflect.Value, tag reflect.StructTag) (any, error) {
+	switch pt {
 	case reflect.Int:
 		return strconv.Atoi(str)
 	case reflect.Int32:
-		return strconv.ParseInt(str, 10, 32)
+		val, err := strconv.ParseInt(str, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+
+		return int32(val), nil
 	case reflect.Int64:
 		switch pv.Interface().(type) {
 		case time.Duration:
@@ -24,6 +28,13 @@ func StringConverter(str string, pt reflect.Type, pv reflect.Value, tag reflect.
 		}
 
 		return strconv.ParseInt(str, 10, 64)
+	case reflect.Uint32:
+		val, err := strconv.ParseUint(str, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+
+		return uint32(val), nil
 	case reflect.Uint64:
 		return strconv.ParseUint(str, 10, 64)
 	case reflect.Float64:
@@ -33,12 +44,14 @@ func StringConverter(str string, pt reflect.Type, pv reflect.Value, tag reflect.
 	case reflect.Slice:
 		switch pv.Interface().(type) {
 		case []string:
-			return stringSlicer(str, tag)
+			return stringSlicer(str, tag), nil
 		}
+
+		fallthrough
 	case reflect.Struct:
 		switch pv.Interface().(type) {
 		case time.Time:
-			return timeParser(str, tag)
+			return validator.TimeParser(str)
 		}
 
 		fallthrough
@@ -52,4 +65,13 @@ func StringConverter(str string, pt reflect.Type, pv reflect.Value, tag reflect.
 	}
 
 	return str, nil
+}
+
+func stringSlicer(str string, tag reflect.StructTag) []string {
+	separator := ","
+	if v, ok := tag.Lookup("split"); ok {
+		separator = v
+	}
+
+	return strings.Split(str, separator)
 }

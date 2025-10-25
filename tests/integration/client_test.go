@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
+	"gitlab.com/pietroski-software-company/golang/devex/concurrent"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"

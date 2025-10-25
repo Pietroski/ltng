@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"gitlab.com/pietroski-software-company/devex/golang/concurrent"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -26,22 +26,18 @@ type (
 	Fallback func() (interface{}, error)
 
 	InMemoryCache struct {
-		logger go_logger.Logger
+		logger slogx.SLogger
 		store  *sync.Map
 
-		operator concurrent.Operator
+		operator syncx.Operator
 	}
 )
 
 func New(opts ...options.Option) *InMemoryCache {
 	cacher := &InMemoryCache{
-		logger: go_logger.NewGoLogger(context.Background(), nil,
-			&go_logger.Opts{
-				Debug:   false,
-				Publish: false,
-			}),
+		logger:   slogx.New(),
 		store:    new(sync.Map),
-		operator: concurrent.New("cache"),
+		operator: syncx.NewThreadOperator("cache"),
 	}
 	options.ApplyOptions(cacher, opts...)
 
@@ -49,12 +45,9 @@ func New(opts ...options.Option) *InMemoryCache {
 }
 
 func (s *InMemoryCache) Get(ctx context.Context, key string, target interface{}, fallback Fallback) (err error) {
-	logger := s.logger.FromCtx(ctx)
-
 	value, ok := s.store.Load(key)
 	if !ok {
-		logger.Debugf("value not found in cache - calling callback",
-			go_logger.Field{"err": err, "key": key})
+		s.logger.Debug(ctx, "value not found in cache - calling callback", "key", key, "err", err)
 		if fallback == nil {
 			return fmt.Errorf("value not found in cache - key: %v", key)
 		}
@@ -87,11 +80,10 @@ func (s *InMemoryCache) Del(_ context.Context, key string) error {
 }
 
 func (s *InMemoryCache) DelFromPattern(ctx context.Context, pattern string) error {
-	logger := s.logger.FromCtx(ctx)
 	s.store.Range(func(key, _ interface{}) bool {
 		searchKey, ok := key.(string)
 		if !ok {
-			logger.Debugf("wrong stored key type", go_logger.Field{"key": key})
+			s.logger.Debug(ctx, "wrong stored key type", "key", key)
 			s.store.Delete(key)
 
 			return true
@@ -107,12 +99,11 @@ func (s *InMemoryCache) DelFromPattern(ctx context.Context, pattern string) erro
 }
 
 func (s *InMemoryCache) DelFromPatternSync(ctx context.Context, pattern string) error {
-	logger := s.logger.FromCtx(ctx)
 	s.store.Range(func(key, _ interface{}) bool {
 		s.operator.OpX(func() (any, error) {
 			searchKey, ok := key.(string)
 			if !ok {
-				logger.Debugf("wrong stored key type", go_logger.Field{"key": key})
+				s.logger.Debug(ctx, "wrong stored key type", "key", key)
 				s.store.Delete(key)
 
 				return nil, nil

@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 )
@@ -56,7 +57,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	strRelationalKey := hex.EncodeToString(relationalKey)
 	var value []*ltngenginemodels.Item
 	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, fmt.Errorf("item not found")
+		return []*ltngenginemodels.Item{}, errorsx.New("item not found")
 	}); err != nil {
 		return nil, nil
 	}
@@ -89,7 +90,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 		)
 	}
 	if key == nil && (opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0) {
-		return nil, fmt.Errorf("invalid indexing key")
+		return nil, errorsx.New("invalid indexing key")
 	} else if key == nil {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
@@ -114,7 +115,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	opts *ltngenginemodels.IndexOpts,
 ) (*ltngenginemodels.Item, error) {
 	if opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
-		return nil, fmt.Errorf("invalid indexing key relation")
+		return nil, errorsx.New("invalid indexing key relation")
 	}
 
 	secondaryKey := bytes.Join(
@@ -185,7 +186,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 		)
 		strKey = hex.EncodeToString(key)
 	} else if opts.IndexingKeys == nil || len(opts.IndexingKeys) != 1 {
-		return nil, fmt.Errorf("invalid indexing key")
+		return nil, errorsx.New("invalid indexing key")
 	} else {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
@@ -230,7 +231,7 @@ func (ltng *LTNGCacheEngine) andComputationalSearch(
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		if err := ltng.cache.Get(ctx, strIndexKey, &value, nil); err != nil {
-			return nil, fmt.Errorf("not found - index list inconsistency")
+			return nil, errorsx.New("not found - index list inconsistency")
 		}
 	}
 
@@ -265,7 +266,7 @@ func (ltng *LTNGCacheEngine) orComputationalSearch(
 		}
 	}
 
-	return nil, fmt.Errorf("not found")
+	return nil, errorsx.New("not found")
 }
 
 // #####################################################################################################################

@@ -11,9 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
-
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
-	go_logger "gitlab.com/pietroski-software-company/tools/logger/go-logger/v3/pkg/tools/logger"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
@@ -30,9 +29,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"happy path",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -42,12 +41,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -56,14 +55,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
 
 			storeKey := []byte("key-test-to-store")
 			storeValue := []byte("value test to store")
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Create(
@@ -76,9 +75,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -88,10 +87,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("deleting value")
+			logger.Test(ctx, "deleting value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Delete(
@@ -104,9 +103,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value deleted")
+			logger.Test(ctx, "value deleted")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -116,19 +115,19 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
@@ -136,9 +135,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"happy path - call with upsert",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -148,12 +147,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -162,14 +161,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
 
 			storeKey := []byte("key-test-to-store")
 			storeValue := []byte("value test to store")
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Create(
@@ -182,9 +181,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("re-writing value")
+			logger.Test(ctx, "re-writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Upsert(
@@ -197,9 +196,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value re-written")
+			logger.Test(ctx, "value re-written")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -209,10 +208,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("deleting value")
+			logger.Test(ctx, "deleting value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Delete(
@@ -225,9 +224,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value deleted")
+			logger.Test(ctx, "value deleted")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -237,19 +236,19 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
@@ -257,10 +256,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"happy path - delete cascade",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -270,12 +269,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -284,7 +283,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
@@ -314,7 +313,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			require.NoError(t, err)
 			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Create(
@@ -332,9 +331,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -344,10 +343,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("loading value for indexed list")
+			logger.Test(ctx, "loading value for indexed list")
 			indexedListName := dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
@@ -358,10 +357,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("deleting value")
+			logger.Test(ctx, "deleting value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Delete(
@@ -378,9 +377,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value deleted")
+			logger.Test(ctx, "value deleted")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -389,9 +388,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("loading value for indexed list")
+			logger.Test(ctx, "loading value for indexed list")
 			indexedListName = dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
@@ -402,19 +401,19 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
@@ -422,10 +421,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"happy path - delete cascade by index",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -435,12 +434,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -449,7 +448,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
@@ -479,7 +478,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			require.NoError(t, err)
 			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Create(
@@ -497,9 +496,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -509,10 +508,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("loading value for indexed list")
+			logger.Test(ctx, "loading value for indexed list")
 			indexedListName := dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
@@ -523,10 +522,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("deleting value")
+			logger.Test(ctx, "deleting value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Delete(
@@ -542,9 +541,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value deleted")
+			logger.Test(ctx, "value deleted")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -553,9 +552,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("loading value for indexed list")
+			logger.Test(ctx, "loading value for indexed list")
 			indexedListName = dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
@@ -566,19 +565,19 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
@@ -586,10 +585,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"happy path - delete cascade - call with upsert",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -599,12 +598,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -613,7 +612,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
@@ -643,7 +642,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			require.NoError(t, err)
 			storeValue, err := s.Serialize(value)
 			require.NoError(t, err)
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Upsert(
@@ -661,9 +660,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -673,10 +672,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("loading value for indexed list")
+			logger.Test(ctx, "loading value for indexed list")
 			indexedListName := dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err := m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
@@ -687,10 +686,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("deleting value")
+			logger.Test(ctx, "deleting value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Delete(
@@ -707,9 +706,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value deleted")
+			logger.Test(ctx, "value deleted")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -718,9 +717,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("loading value for indexed list")
+			logger.Test(ctx, "loading value for indexed list")
 			indexedListName = dbMemoryInfo.Name + IndexedListSuffixName
 			idxListMemoryInfo, err = m.GetDBMemoryInfo(ctx, indexedListName)
 			retrievedValue, err = op.Operate(idxListMemoryInfo).Load(
@@ -731,19 +730,19 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
@@ -751,10 +750,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"happy path - delete index only - call with upsert",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -764,12 +763,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -778,11 +777,11 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			storeList, err := m.ListStoreMemoryInfo(ctx, 0, 0)
 			require.NoError(t, err)
-			logger.Debugf("stores", go_logger.Field{"stores": storeList})
+			logger.Test(ctx, "stores list result", "stores", storeList)
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
@@ -814,7 +813,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			require.NoError(t, err)
 			// UPSERT
 			{
-				logger.Debugf("writing value")
+				logger.Test(ctx, "writing value")
 				err = op.
 					Operate(dbMemoryInfo).
 					Upsert(
@@ -832,12 +831,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
-				logger.Debugf("value written")
+				logger.Test(ctx, "value written")
 			}
 
 			// value from main key
 			{
-				logger.Debugf("loading value")
+				logger.Test(ctx, "loading value")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{
@@ -846,14 +845,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					&badgerdb_operation_models_v4.IndexOpts{},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// indexed list
 			{
-				logger.Debugf("loading value for indexed list")
+				logger.Test(ctx, "loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -866,7 +865,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				result := bytes.Join([][]byte{emailKey, usernameKey}, []byte(bsSeparator))
 				require.Equal(t, result, retrievedValue)
@@ -874,7 +873,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			// indexed list
 			{
-				logger.Debugf("loading value for indexed list")
+				logger.Test(ctx, "loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -887,7 +886,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				result := bytes.Join([][]byte{emailKey, usernameKey}, []byte(bsSeparator))
 				require.Equal(t, result, retrievedValue)
@@ -895,7 +894,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			// value from index item - AndComputational
 			{
-				logger.Debugf("loading value from index item")
+				logger.Test(ctx, "loading value from index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -909,14 +908,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// value from index item - OrComputational
 			{
-				logger.Debugf("loading value from index item")
+				logger.Test(ctx, "loading value from index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -930,14 +929,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// value from index item - and computational - two items
 			{
-				logger.Debugf("loading value for index item")
+				logger.Test(ctx, "loading value for index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -951,14 +950,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// value from index item - or computational - two items
 			{
-				logger.Debugf("loading value for index item")
+				logger.Test(ctx, "loading value for index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -972,14 +971,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// DELETE - single key
 			{
-				logger.Debugf("deleting value")
+				logger.Test(ctx, "deleting value")
 				err = op.
 					Operate(dbMemoryInfo).
 					Delete(
@@ -995,12 +994,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
-				logger.Debugf("value deleted")
+				logger.Test(ctx, "value deleted")
 			}
 
 			// value from main key
 			{
-				logger.Debugf("loading value")
+				logger.Test(ctx, "loading value")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{
@@ -1009,14 +1008,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					&badgerdb_operation_models_v4.IndexOpts{},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// indexed list
 			{
-				logger.Debugf("loading value for indexed list")
+				logger.Test(ctx, "loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1029,7 +1028,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				result := bytes.Join([][]byte{emailKey}, []byte(bsSeparator))
 				require.Equal(t, result, retrievedValue)
@@ -1037,7 +1036,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 
 			// value from index item - AndComputational
 			{
-				logger.Debugf("loading value from index item")
+				logger.Test(ctx, "loading value from index item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1051,13 +1050,13 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.Error(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				require.Equal(t, []byte{}, retrievedValue)
 			}
 
 			// value from index item - One
 			{
-				logger.Debugf("loading value from indexed item")
+				logger.Test(ctx, "loading value from indexed item")
 				_, err = op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1070,12 +1069,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.Error(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 			}
 
 			// value from index item - One
 			{
-				logger.Debugf("loading value for indexed item")
+				logger.Test(ctx, "loading value for indexed item")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1089,14 +1088,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 				require.Equal(t, storeValue, retrievedValue)
 			}
 
 			// DELETE - cascade
 			{
-				logger.Debugf("deleting value")
+				logger.Test(ctx, "deleting value")
 				err = op.
 					Operate(dbMemoryInfo).
 					Delete(
@@ -1113,12 +1112,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
-				logger.Debugf("value deleted")
+				logger.Test(ctx, "value deleted")
 			}
 
 			// value from main key
 			{
-				logger.Debugf("loading value")
+				logger.Test(ctx, "loading value")
 				_, err = op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{
@@ -1127,12 +1126,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					&badgerdb_operation_models_v4.IndexOpts{},
 				)
 				require.Error(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 			}
 
 			// indexed list
 			{
-				logger.Debugf("loading value for indexed list")
+				logger.Test(ctx, "loading value for indexed list")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1145,21 +1144,21 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					},
 				)
 				require.Error(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				require.Equal(t, []byte(nil), retrievedValue)
 			}
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 
@@ -1167,9 +1166,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 		"item already created",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -1179,12 +1178,12 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -1193,14 +1192,14 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
 
 			storeKey := []byte("key-test-to-store")
 			storeValue := []byte("value test to store")
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Create(
@@ -1213,9 +1212,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Create(
@@ -1228,9 +1227,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.Error(t, err)
-			logger.Debugf("value written")
+			logger.Test(ctx, "value written")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -1240,10 +1239,10 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.NoError(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 			t.Log("retrieved value ->", string(retrievedValue))
 
-			logger.Debugf("deleting value")
+			logger.Test(ctx, "deleting value")
 			err = op.
 				Operate(dbMemoryInfo).
 				Delete(
@@ -1256,9 +1255,9 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 					list_operator.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
-			logger.Debugf("value deleted")
+			logger.Test(ctx, "value deleted")
 
-			logger.Debugf("loading value")
+			logger.Test(ctx, "loading value")
 			retrievedValue, err = op.Operate(dbMemoryInfo).Load(
 				ctx,
 				&badgerdb_operation_models_v4.Item{
@@ -1268,19 +1267,19 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 				&badgerdb_operation_models_v4.IndexOpts{},
 			)
 			require.Error(t, err)
-			logger.Debugf("value loaded")
+			logger.Test(ctx, "value loaded")
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 }
@@ -1293,10 +1292,10 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 		"happy path - Create_Multiples_List_Delete",
 		func(t *testing.T) {
 			ctx, _ := context.WithCancel(context.Background())
-			logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+			logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 			s := serializer.NewJsonSerializer()
 
-			logger.Infof("opening badger local manager")
+			logger.Test(ctx, "opening badger local manager")
 			db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 			require.NoError(t, err)
 
@@ -1306,12 +1305,12 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 			op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 			require.NoError(t, err)
 
-			logger.Debugf("starting manager")
+			logger.Test(ctx, "starting manager")
 			err = m.Start()
 			require.NoError(t, err)
-			logger.Debugf("manager started")
+			logger.Test(ctx, "manager started")
 
-			logger.Debugf("creating store")
+			logger.Test(ctx, "creating store")
 			dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 				Name:         "operations-db-integration-test",
 				Path:         "operations-db-integration-test",
@@ -1320,11 +1319,11 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 			}
 			err = m.CreateStore(ctx, dbInfoOpTest)
 			require.NoError(t, err)
-			logger.Debugf("store created")
+			logger.Test(ctx, "store created")
 
 			storeList, err := m.ListStoreMemoryInfo(ctx, 0, 0)
 			require.NoError(t, err)
-			logger.Debugf("stores", go_logger.Field{"stores": storeList})
+			logger.Test(ctx, "stores list result", "stores", storeList)
 
 			dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
@@ -1366,7 +1365,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 
 					// UPSERT
 					{
-						logger.Debugf("writing value")
+						logger.Test(ctx, "writing value")
 						err = op.
 							Operate(dbMemoryInfo).
 							Upsert(
@@ -1384,13 +1383,13 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 								list_operator.DefaultRetrialOps,
 							)
 						require.NoError(t, err)
-						logger.Debugf("value written")
+						logger.Test(ctx, "value written")
 					}
 				}
 
 				// list default
 				{
-					logger.Debugf("listing default pagination values")
+					logger.Test(ctx, "listing default pagination values")
 					defaultPaginatedRetrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
 							ctx,
@@ -1399,13 +1398,13 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 							&badgerdb_management_models_v4.Pagination{},
 						)
 					require.NoError(t, err)
-					logger.Debugf("values loaded")
+					logger.Test(ctx, "values loaded")
 					t.Log("retrieved value ->", defaultPaginatedRetrievedValues)
 				}
 
 				// list all
 				{
-					logger.Debugf("listing all values")
+					logger.Test(ctx, "listing all values")
 					retrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
 							ctx,
@@ -1418,13 +1417,13 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 							&badgerdb_management_models_v4.Pagination{},
 						)
 					require.NoError(t, err)
-					logger.Debugf("values loaded")
+					logger.Test(ctx, "values loaded")
 					t.Log("retrieved value ->", retrievedValues)
 				}
 
 				// list paginated
 				{
-					logger.Debugf("listing values paginated")
+					logger.Test(ctx, "listing values paginated")
 					paginatedRetrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
 							ctx,
@@ -1440,13 +1439,13 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 							},
 						)
 					require.NoError(t, err)
-					logger.Debugf("values loaded")
+					logger.Test(ctx, "values loaded")
 					t.Log("retrieved value ->", paginatedRetrievedValues)
 				}
 
 				// list items
 				{
-					logger.Debugf("listing list items values")
+					logger.Test(ctx, "listing list items values")
 					p0, err := s.Serialize(people[0].Email)
 					require.NoError(t, err)
 					p1, err := s.Serialize(people[1].Email)
@@ -1468,7 +1467,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 
 				// list items
 				{
-					logger.Debugf("listing list items values")
+					logger.Test(ctx, "listing list items values")
 					p0, err := s.Serialize(people[0].Email)
 					require.NoError(t, err)
 					p1, err := s.Serialize(people[1].Email)
@@ -1517,7 +1516,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 
 				// list all
 				{
-					logger.Debugf("listing all values")
+					logger.Test(ctx, "listing all values")
 					retrievedValues, err := op.Operate(dbMemoryInfo).
 						List(
 							ctx,
@@ -1530,22 +1529,22 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 							&badgerdb_management_models_v4.Pagination{},
 						)
 					require.NoError(t, err)
-					logger.Debugf("values loaded")
+					logger.Test(ctx, "values loaded")
 					t.Log("retrieved value ->", retrievedValues)
 				}
 			}
 
-			logger.Debugf("deleting store")
+			logger.Test(ctx, "deleting store")
 			err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 			require.NoError(t, err)
-			logger.Debugf("store deleted")
+			logger.Test(ctx, "store deleted")
 
-			logger.Debugf("shutting down stores")
+			logger.Test(ctx, "shutting down stores")
 			m.ShutdownStores()
 			m.Shutdown()
-			logger.Debugf("stores shut down")
+			logger.Test(ctx, "stores shut down")
 
-			logger.Infof("cleaned up all successfully")
+			logger.Test(ctx, "cleaned up all successfully")
 		},
 	)
 }
@@ -1571,10 +1570,10 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	}
 
 	ctx, _ := context.WithCancel(context.Background())
-	logger := go_logger.NewGoLogger(ctx, nil, &go_logger.Opts{Debug: debugMode}).FromCtx(ctx)
+	logger := slogx.New() // logger := slogx.New(slogx.WithLogLevel(slogx.LevelTest))
 	s := serializer.NewJsonSerializer()
 
-	logger.Infof("opening badger local manager")
+	logger.Test(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(InternalLocalManagement))
 	require.NoError(t, err)
 
@@ -1584,12 +1583,12 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	op, err := NewBadgerOperatorV4(ctx, WithManager(m))
 	require.NoError(t, err)
 
-	logger.Debugf("starting manager")
+	logger.Test(ctx, "starting manager")
 	err = m.Start()
 	require.NoError(t, err)
-	logger.Debugf("manager started")
+	logger.Test(ctx, "manager started")
 
-	logger.Debugf("creating store")
+	logger.Test(ctx, "creating store")
 	dbInfoOpTest := &badgerdb_management_models_v4.DBInfo{
 		Name:         "operations-db-integration-test",
 		Path:         "operations-db-integration-test",
@@ -1598,7 +1597,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	}
 	err = m.CreateStore(ctx, dbInfoOpTest)
 	require.NoError(t, err)
-	logger.Debugf("store created")
+	logger.Test(ctx, "store created")
 
 	dbMemoryInfo, err := m.GetDBMemoryInfo(ctx, dbInfoOpTest.Name)
 	require.NoError(t, err)
@@ -1615,7 +1614,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 	t.Run(
 		"happy path",
 		func(t *testing.T) {
-			logger.Debugf("writing value")
+			logger.Test(ctx, "writing value")
 
 			// create with indexes
 			{
@@ -1636,13 +1635,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
-				logger.Debugf("value written")
+				logger.Test(ctx, "value written")
 			}
 
 			t.Run(
 				"errors items already created",
 				func(t *testing.T) {
-					logger.Debugf("writing value")
+					logger.Test(ctx, "writing value")
 
 					// fail for main key
 					{
@@ -1663,7 +1662,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 								list_operator.DefaultRetrialOps,
 							)
 						require.Error(t, err)
-						logger.Debugf("value written")
+						logger.Test(ctx, "value written")
 					}
 
 					newStoreKey, err := s.Serialize("new-main-key")
@@ -1688,14 +1687,14 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 								list_operator.DefaultRetrialOps,
 							)
 						require.Error(t, err)
-						logger.Debugf("value written")
+						logger.Test(ctx, "value written")
 					}
 				},
 			)
 
 			// load value
 			{
-				logger.Debugf("loading value")
+				logger.Test(ctx, "loading value")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{
@@ -1705,13 +1704,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 					&badgerdb_operation_models_v4.IndexOpts{},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 			}
 
 			// load from index - one | straight search
 			{
-				logger.Debugf("loading value from index")
+				logger.Test(ctx, "loading value from index")
 				retrievedValueFromIdx, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{
@@ -1728,13 +1727,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValueFromIdx))
 			}
 
 			// load from index - or computational
 			{
-				logger.Debugf("loading value from index - or computational")
+				logger.Test(ctx, "loading value from index - or computational")
 				retrievedValueFromIdxOr, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1748,13 +1747,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValueFromIdxOr))
 			}
 
 			// load from index - and computational
 			{
-				logger.Debugf("loading value from index - and computational")
+				logger.Test(ctx, "loading value from index - and computational")
 				retrievedValueFromIdxAnd, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1768,13 +1767,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValueFromIdxAnd))
 			}
 
 			// load from index - index only
 			{
-				logger.Debugf("loading value from index - and computational")
+				logger.Test(ctx, "loading value from index - and computational")
 				retrievedValue, err := op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{},
@@ -1788,13 +1787,13 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 				t.Log("retrieved value ->", string(retrievedValue))
 			}
 
 			// Delete - cascade
 			{
-				logger.Debugf("deleting value")
+				logger.Test(ctx, "deleting value")
 				err = op.
 					Operate(dbMemoryInfo).
 					Delete(
@@ -1812,12 +1811,12 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 						list_operator.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
-				logger.Debugf("value deleted")
+				logger.Test(ctx, "value deleted")
 			}
 
 			// load to check
 			{
-				logger.Debugf("loading value")
+				logger.Test(ctx, "loading value")
 				_, err = op.Operate(dbMemoryInfo).Load(
 					ctx,
 					&badgerdb_operation_models_v4.Item{
@@ -1827,23 +1826,23 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 					&badgerdb_operation_models_v4.IndexOpts{},
 				)
 				require.Error(t, err)
-				logger.Debugf("value loaded")
+				logger.Test(ctx, "value loaded")
 			}
 		},
 	)
 
 	// delete store
 	{
-		logger.Debugf("deleting store")
+		logger.Test(ctx, "deleting store")
 		err = m.DeleteStore(ctx, dbInfoOpTest.Name)
 		require.NoError(t, err)
-		logger.Debugf("store deleted")
+		logger.Test(ctx, "store deleted")
 	}
 
-	logger.Debugf("shutting down stores")
+	logger.Test(ctx, "shutting down stores")
 	m.ShutdownStores()
 	m.Shutdown()
-	logger.Debugf("stores shut down")
+	logger.Test(ctx, "stores shut down")
 
-	logger.Infof("cleaned up all successfully")
+	logger.Test(ctx, "cleaned up all successfully")
 }

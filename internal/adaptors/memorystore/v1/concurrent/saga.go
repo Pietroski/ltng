@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
 	"log"
+
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 )
@@ -18,7 +19,7 @@ func ResponseAccumulator(respSigChan ...chan error) error {
 			if err == nil {
 				err = sigErr
 			} else {
-				err = fmt.Errorf("%s: %w", sigErr, err)
+				err = err.(*errorsx.Error).Wrap(sigErr, "error in response accumulator")
 			}
 		}
 	}
@@ -259,7 +260,7 @@ func (s *createSaga) createIndexItemOnDiskOnThread(
 				if errAcc == nil {
 					errAcc = err
 				} else {
-					errAcc = fmt.Errorf("%v: %w", errAcc, err)
+					errAcc = errAcc.(*errorsx.Error).Wrap(err, "error in response accumulator")
 				}
 			}
 		}

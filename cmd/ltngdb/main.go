@@ -5,17 +5,17 @@ import (
 	"log"
 	"os"
 
+	"gitlab.com/pietroski-software-company/golang/devex/env"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	go_env_extractor "gitlab.com/pietroski-software-company/tools/env-extractor/go-env-extractor/pkg/tools/env-extractor"
 	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
-	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
-	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
-	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
-	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
+	badgerdbenginev4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
+	ltngdbenginev2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
+	ltngnodeconfig "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
+	commonmodel "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
 
 func main() {
@@ -32,22 +32,22 @@ func main() {
 	validator := go_validator.NewStructValidator()
 	binder := go_binder.NewStructBinder(s, validator)
 
-	cfg := &ltng_node_config.Config{}
-	err = go_env_extractor.LoadEnvs(cfg)
+	cfg := &ltngnodeconfig.Config{}
+	err = env.Load(cfg)
 	if err != nil {
 		logger.Error(ctx, "failed to load ltng-node configs", "error", err)
 
 		return
 	}
 
-	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
-	case common_model.BadgerDBV4EngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
-	case common_model.LightningEngineV2EngineVersionType:
+	switch commonmodel.ToEngineVersionType(cfg.Node.Engine.Engine) {
+	case commonmodel.BadgerDBV4EngineVersionType:
+		badgerdbenginev4.StartV4(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
+	case commonmodel.LightningEngineV2EngineVersionType:
 		fallthrough
-	case common_model.DefaultEngineVersionType:
+	case commonmodel.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdb_engine_v2.StartV2(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
+		ltngdbenginev2.StartV2(ctx, cancelFn, cfg, logger, s, binder, os.Exit)
 	}
 }
