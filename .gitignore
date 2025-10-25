@@ -11,7 +11,7 @@
 .ltngdb-docker-ltngdb-engine
 .ltngdb-docker-badgerdb-engine
 
-ltngdb
+bin/**/*
 
 .ltng_database
 .ltng_file_queue

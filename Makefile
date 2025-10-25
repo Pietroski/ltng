@@ -37,7 +37,7 @@ mock-generate:
 	go mod vendor
 
 go-build:
-	@go build -ldflags="-w -s" -o cmd/badgerdb/grpc/lightning-db-node cmd/badgerdb/grpc/main.go
+	@go build -ldflags="-w -s" -o ./bin/ltngdb cmd/ltngdb/main.go
 
 run: export-envs
 	@go run cmd/badgerdb/grpc/main.go
