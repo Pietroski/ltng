@@ -11,8 +11,6 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/env"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
 	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
@@ -98,9 +96,6 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	logger := slogx.New()
 
 	s := serializer.NewJsonSerializer()
-	validator := go_validator.NewStructValidator()
-	binder := go_binder.NewStructBinder(s, validator)
-
 	cfg := &ltng_node_config.Config{}
 	err = env.Load(cfg)
 	if err != nil {
@@ -111,7 +106,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 
 	switch common_model.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case common_model.BadgerDBV4EngineVersionType:
-		badgerdb_engine_v4.StartV4(ctx, cancel, cfg, logger, s, binder, func(code int) {
+		badgerdb_engine_v4.StartV4(ctx, cancel, cfg, logger, s, func(code int) {
 			logger.Debug(ctx, "os.Exit", "code", code)
 		})
 	case common_model.LightningEngineV2EngineVersionType:
@@ -119,7 +114,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	case common_model.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdb_engine_v2.StartV2(ctx, cancel, cfg, logger, s, binder, func(code int) {
+		ltngdb_engine_v2.StartV2(ctx, cancel, cfg, logger, s, func(code int) {
 			logger.Debug(ctx, "os.Exit", "code", code)
 		})
 	}

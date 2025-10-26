@@ -94,9 +94,6 @@ github.com/vmihailenco/msgpack/v5/msgpcode
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
 github.com/vmihailenco/tagparser/v2/internal/parser
-# gitlab.com/pietroski-software-company/devex/golang/serializer v0.0.1
-## explicit; go 1.23
-gitlab.com/pietroski-software-company/devex/golang/serializer/models
 # gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/env
@@ -136,15 +133,6 @@ gitlab.com/pietroski-software-company/golang/devex/tracer
 # gitlab.com/pietroski-software-company/golang/devex/validator v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/validator
-# gitlab.com/pietroski-software-company/tools/binder/go-binder v1.0.23
-## explicit; go 1.23
-gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder
-gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks
-# gitlab.com/pietroski-software-company/tools/validator/go-validator v1.2.29
-## explicit; go 1.23
-gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/parsers/strings
-gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators
-gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators/custom
 # go.opentelemetry.io/auto/sdk v1.2.1
 ## explicit; go 1.24.0
 go.opentelemetry.io/auto/sdk
@@ -234,7 +222,7 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/api v0.0.0-20251014184007-4626949a642f
+# google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations

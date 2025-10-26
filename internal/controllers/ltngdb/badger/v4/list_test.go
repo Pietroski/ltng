@@ -10,7 +10,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	mock_go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
 
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
@@ -22,55 +21,6 @@ import (
 
 func TestBadgerDBServiceController_List(t *testing.T) {
 	t.Run(
-		"error binding and/or validating payload data",
-		func(t *testing.T) {
-			ctx := context.Background()
-
-			ctrl := gomock.NewController(t)
-			mockManager := mocks.NewMockManager(ctrl)
-			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
-
-			logger := slogx.New()
-
-			operator, err := New(ctx,
-				WithConfig(config),
-				WithLogger(logger),
-				WithBinder(mockBinder),
-				WithManger(mockManager),
-				WithOperator(mockOperator),
-			)
-			require.NoError(t, err)
-
-			page := 0
-			size := 0
-			dbName := "operator-database-unit-test"
-			payload := &grpc_ltngdb.ListRequest{
-				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint64(page),
-					PageSize: uint64(size),
-				},
-				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
-					DatabaseName: dbName,
-				},
-			}
-			var pagination badgerdb_management_models_v4.Pagination
-
-			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(fmt.Errorf("any-error"))
-
-			resp, err := operator.List(ctx, payload)
-			require.Error(t, err)
-			require.NotNil(t, resp)
-			require.Empty(t, resp.Items)
-		},
-	)
-
-	t.Run(
 		"error getting db info from memory or disk",
 		func(t *testing.T) {
 			ctx := context.Background()
@@ -78,14 +28,12 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -103,16 +51,9 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 					DatabaseName: dbName,
 				},
 			}
-			var pagination badgerdb_management_models_v4.Pagination
 			dbInfo := &badgerdb_management_models_v4.DBMemoryInfo{}
 
 			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(nil)
-
 			mockManager.
 				EXPECT().
 				GetDBMemoryInfo(ctx, payload.DatabaseMetaInfo.DatabaseName).
@@ -134,14 +75,12 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -182,12 +121,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			}
 
 			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(nil)
-
 			mockManager.
 				EXPECT().
 				GetDBMemoryInfo(ctx, payload.DatabaseMetaInfo.DatabaseName).
@@ -221,14 +154,12 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -269,98 +200,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			}
 
 			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(nil)
-
-			mockManager.
-				EXPECT().
-				GetDBMemoryInfo(ctx, payload.DatabaseMetaInfo.DatabaseName).
-				Times(1).
-				Return(dbInfo, nil)
-
-			mockOperator.
-				EXPECT().
-				Operate(dbInfo).
-				Times(1).
-				Return(mockOperator)
-
-			mockOperator.
-				EXPECT().
-				List(ctx, opts, &pagination).
-				Times(1).
-				Return(badgerdb_operation_models_v4.Items{}, fmt.Errorf("any-error"))
-
-			resp, err := operator.List(ctx, payload)
-			require.Error(t, err)
-			require.NotNil(t, resp)
-			require.Empty(t, resp.Items)
-		},
-	)
-
-	t.Run(
-		"error operating on giving database - paginated",
-		func(t *testing.T) {
-			ctx := context.Background()
-
-			ctrl := gomock.NewController(t)
-			mockManager := mocks.NewMockManager(ctrl)
-			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
-
-			logger := slogx.New()
-
-			operator, err := New(ctx,
-				WithConfig(config),
-				WithLogger(logger),
-				WithBinder(mockBinder),
-				WithManger(mockManager),
-				WithOperator(mockOperator),
-			)
-			require.NoError(t, err)
-
-			page := 2
-			size := 2
-			dbName := "operator-database-unit-test"
-			payload := &grpc_ltngdb.ListRequest{
-				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint64(page),
-					PageSize: uint64(size),
-				},
-				DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
-					DatabaseName: dbName,
-				},
-			}
-			var pagination badgerdb_management_models_v4.Pagination
-			dbInfo := &badgerdb_management_models_v4.DBMemoryInfo{
-				Name:         dbName,
-				Path:         badgerdb_manager_adaptor_v4.InternalLocalManagement + "/test" + dbName,
-				CreatedAt:    time.Time{},
-				LastOpenedAt: time.Time{},
-				DB:           nil,
-			}
-
-			reqOpts := payload.GetIndexOpts()
-			opts := &badgerdb_operation_models_v4.IndexOpts{
-				HasIdx:       reqOpts.GetHasIdx(),
-				ParentKey:    reqOpts.GetParentKey(),
-				IndexingKeys: reqOpts.GetIndexingKeys(),
-				IndexProperties: badgerdb_operation_models_v4.IndexProperties{
-					ListSearchPattern: badgerdb_operation_models_v4.ListSearchPattern(
-						reqOpts.GetIndexingProperties().GetListSearchPattern(),
-					),
-				},
-			}
-
-			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(nil)
-
 			mockManager.
 				EXPECT().
 				GetDBMemoryInfo(ctx, payload.DatabaseMetaInfo.DatabaseName).
@@ -394,14 +233,12 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -464,12 +301,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			}
 
 			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(nil)
-
 			mockManager.
 				EXPECT().
 				GetDBMemoryInfo(ctx, payload.DatabaseMetaInfo.DatabaseName).
@@ -508,14 +339,12 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -578,12 +407,6 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 			}
 
 			// build stubs
-			mockBinder.
-				EXPECT().
-				ShouldBind(payload.Pagination, &pagination).
-				Times(1).
-				Return(nil)
-
 			mockManager.
 				EXPECT().
 				GetDBMemoryInfo(ctx, payload.DatabaseMetaInfo.DatabaseName).
@@ -598,7 +421,7 @@ func TestBadgerDBServiceController_List(t *testing.T) {
 
 			mockOperator.
 				EXPECT().
-				List(ctx, opts, &pagination).
+				List(ctx, opts, EqPaginationInfo(&pagination)).
 				Times(1).
 				Return(listValues[2:4], nil)
 

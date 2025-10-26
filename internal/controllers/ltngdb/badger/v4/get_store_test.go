@@ -10,11 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
@@ -23,54 +19,16 @@ import (
 
 func TestBadgerDBManagerServiceController_GetStore(t *testing.T) {
 	t.Run(
-		"fails to get a store - invalid",
-		func(t *testing.T) {
-			ctx := context.Background()
-			logger := slogx.New()
-
-			ctrl := gomock.NewController(t)
-			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mocks.NewMockManager(ctrl)
-			service, err := New(ctx,
-				WithConfig(config),
-				WithLogger(logger),
-				WithBinder(mockedBinder),
-				WithManger(manager),
-			)
-			require.NoError(t, err)
-
-			dataName := "any-string"
-			payload := &grpc_ltngdb.GetStoreRequest{
-				Name: dataName,
-			}
-			var r badgerdb_management_models_v4.GetStoreRequest
-			mockedBinder.
-				EXPECT().
-				ShouldBind(gomock.Eq(payload), gomock.Eq(&r)).
-				Times(1).
-				Return(fmt.Errorf("any-error"))
-			resp, err := service.GetStore(ctx, payload)
-			require.Error(t, err)
-			require.NotNil(t, resp)
-			t.Log(resp)
-		},
-	)
-
-	t.Run(
 		"fails to get a store - internal",
 		func(t *testing.T) {
 			ctx := context.Background()
 			logger := slogx.New()
-			s := serializer.NewJsonSerializer()
-			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(binder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)
@@ -97,16 +55,12 @@ func TestBadgerDBManagerServiceController_GetStore(t *testing.T) {
 		func(t *testing.T) {
 			ctx := context.Background()
 			logger := slogx.New()
-			s := serializer.NewJsonSerializer()
-			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(binder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)

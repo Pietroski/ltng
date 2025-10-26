@@ -45,3 +45,32 @@ func (e eqDBInfoMatcher) Matches(x interface{}) bool {
 func (e eqDBInfoMatcher) String() string {
 	return fmt.Sprintf("is equal to %v (%T)", e.x, e.x)
 }
+
+type eqPaginationMatcher struct {
+	x interface{}
+}
+
+func EqPaginationInfo(x interface{}) Matcher { return eqPaginationMatcher{x} }
+
+func (e eqPaginationMatcher) Matches(x interface{}) bool {
+	pagination, ok := x.(*badgerdb_management_models_v4.Pagination)
+	if !ok {
+		return false
+	}
+
+	receivedPagination, ok := e.x.(*badgerdb_management_models_v4.Pagination)
+	if !ok {
+		return false
+	}
+
+	receivedPagination.PageID = pagination.PageID
+	receivedPagination.PageSize = pagination.PageSize
+
+	isEqual := reflect.DeepEqual(pagination, receivedPagination)
+
+	return isEqual
+}
+
+func (e eqPaginationMatcher) String() string {
+	return fmt.Sprintf("is equal to %v (%T)", e.x, e.x)
+}

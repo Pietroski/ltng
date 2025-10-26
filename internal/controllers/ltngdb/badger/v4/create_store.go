@@ -16,17 +16,9 @@ func (c *Controller) CreateStore(
 	ctx context.Context,
 	req *grpc_ltngdb.CreateStoreRequest,
 ) (*grpc_ltngdb.CreateStoreResponse, error) {
-	var r badgerdb_management_models_v4.CreateStoreRequest
-	if err := c.binder.ShouldBind(req, &r); err != nil {
-		c.logger.Error(ctx, "error binding data", "error", err)
-
-		err = status.Error(codes.InvalidArgument, err.Error())
-		return &grpc_ltngdb.CreateStoreResponse{}, err
-	}
-
 	payload := &badgerdb_management_models_v4.DBInfo{
-		Name:         r.Name,
-		Path:         r.Path,
+		Name:         req.GetName(),
+		Path:         req.GetPath(),
 		CreatedAt:    time.Now(),
 		LastOpenedAt: time.Now(),
 	}

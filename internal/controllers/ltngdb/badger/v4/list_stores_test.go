@@ -10,12 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
-
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	grpc_pagination "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
@@ -24,95 +19,16 @@ import (
 
 func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 	t.Run(
-		"fails to list stores - no pagination - invalid",
-		func(t *testing.T) {
-			ctx := context.Background()
-			logger := slogx.New()
-
-			ctrl := gomock.NewController(t)
-			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mocks.NewMockManager(ctrl)
-			service, err := New(ctx,
-				WithConfig(config),
-				WithLogger(logger),
-				WithBinder(mockedBinder),
-				WithManger(manager),
-			)
-			require.NoError(t, err)
-
-			payload := &grpc_ltngdb.ListStoresRequest{
-				Pagination: &grpc_pagination.Pagination{
-					PageId:   0,
-					PageSize: 0,
-				},
-			}
-			var r badgerdb_management_models_v4.Pagination
-			mockedBinder.
-				EXPECT().
-				ShouldBind(gomock.Eq(payload.Pagination), gomock.Eq(&r)).
-				Times(1).
-				Return(fmt.Errorf("any-error"))
-			respList, err := service.ListStores(ctx, payload)
-			require.Error(t, err)
-			require.NotNil(t, respList)
-			require.Nil(t, respList.DbsInfos)
-			t.Log(respList)
-		},
-	)
-
-	t.Run(
-		"fails to list stores - pagination - invalid",
-		func(t *testing.T) {
-			ctx := context.Background()
-			logger := slogx.New()
-
-			ctrl := gomock.NewController(t)
-			mockedBinder := mock_binder.NewMockBinder(ctrl)
-			manager := mocks.NewMockManager(ctrl)
-			service, err := New(ctx,
-				WithConfig(config),
-				WithLogger(logger),
-				WithBinder(mockedBinder),
-				WithManger(manager),
-			)
-			require.NoError(t, err)
-
-			size, page := 2, 2
-			payload := &grpc_ltngdb.ListStoresRequest{
-				Pagination: &grpc_pagination.Pagination{
-					PageId:   uint64(page),
-					PageSize: uint64(size),
-				},
-			}
-			var r badgerdb_management_models_v4.Pagination
-			mockedBinder.
-				EXPECT().
-				ShouldBind(gomock.Eq(payload.Pagination), gomock.Eq(&r)).
-				Times(1).
-				Return(fmt.Errorf("any-error"))
-			respList, err := service.ListStores(ctx, payload)
-			require.Error(t, err)
-			require.NotNil(t, respList)
-			require.Nil(t, respList.DbsInfos)
-			t.Log(respList)
-		},
-	)
-
-	t.Run(
 		"fails to list stores - no pagination - internal",
 		func(t *testing.T) {
 			ctx := context.Background()
 			logger := slogx.New()
-			s := serializer.NewJsonSerializer()
-			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(binder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)
@@ -142,16 +58,12 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 		func(t *testing.T) {
 			ctx := context.Background()
 			logger := slogx.New()
-			s := serializer.NewJsonSerializer()
-			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(binder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)
@@ -182,16 +94,12 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 		func(t *testing.T) {
 			ctx := context.Background()
 			logger := slogx.New()
-			s := serializer.NewJsonSerializer()
-			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(binder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)
@@ -252,16 +160,12 @@ func TestBadgerDBManagerServiceController_ListStores(t *testing.T) {
 		func(t *testing.T) {
 			ctx := context.Background()
 			logger := slogx.New()
-			s := serializer.NewJsonSerializer()
-			validator := go_validator.NewStructValidator()
-			binder := go_binder.NewStructBinder(s, validator)
 
 			ctrl := gomock.NewController(t)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(binder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)

@@ -9,8 +9,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	mock_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	grpc_query_config "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/queries/config"
@@ -24,12 +22,10 @@ func Test_CheckLightingNodeEngine(t *testing.T) {
 			logger := slogx.New()
 
 			ctrl := gomock.NewController(t)
-			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockedBinder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)
@@ -49,12 +45,10 @@ func Test_CheckLightingNodeEngine(t *testing.T) {
 			logger := slogx.New()
 
 			ctrl := gomock.NewController(t)
-			mockedBinder := mock_binder.NewMockBinder(ctrl)
 			manager := mocks.NewMockManager(ctrl)
 			service, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockedBinder),
 				WithManger(manager),
 			)
 			require.NoError(t, err)

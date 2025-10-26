@@ -62,8 +62,8 @@ type (
 
 	BadgerOperatorV4 struct {
 		manager    Manager
-		dbInfo     *badgerdb_management_models_v4.DBMemoryInfo
 		serializer serializer_models.Serializer
+		dbInfo     *badgerdb_management_models_v4.DBMemoryInfo
 
 		chainedOperator *co.ChainOperator
 		listOperator    *lo.ListOperator
@@ -87,9 +87,8 @@ func NewBadgerOperatorV4(
 // Operate operates in the given database.
 func (o *BadgerOperatorV4) Operate(dbInfo *badgerdb_management_models_v4.DBMemoryInfo) Operator {
 	no := &BadgerOperatorV4{
-		manager:    o.manager,
-		dbInfo:     dbInfo,
-		serializer: o.serializer,
+		manager: o.manager,
+		dbInfo:  dbInfo,
 	}
 
 	return no
@@ -98,9 +97,8 @@ func (o *BadgerOperatorV4) Operate(dbInfo *badgerdb_management_models_v4.DBMemor
 // operateInternally operates in the given database.
 func (o *BadgerOperatorV4) operate(dbInfo *badgerdb_management_models_v4.DBMemoryInfo) *BadgerOperatorV4 {
 	no := &BadgerOperatorV4{
-		manager:    o.manager,
-		dbInfo:     dbInfo,
-		serializer: o.serializer,
+		manager: o.manager,
+		dbInfo:  dbInfo,
 	}
 
 	return no

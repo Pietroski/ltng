@@ -7,11 +7,11 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger/v4"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
-	"gitlab.com/pietroski-software-company/golang/devex/serializer"
-	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
@@ -84,7 +84,7 @@ type (
 		ctx           context.Context
 		db            *badger.DB
 		logger        slogx.SLogger
-		serializer    serializer_models.Serializer
+		serializer    serializermodels.Serializer
 		badgerMapping *sync.Map
 		reqMapping    *sync.Map
 		mtx           *sync.Mutex
@@ -95,10 +95,10 @@ func NewBadgerLocalManagerV4(
 	ctx context.Context, opts ...options.Option,
 ) (*BadgerLocalManagerV4, error) {
 	m := &BadgerLocalManagerV4{
-		ctx:        ctx,
-		serializer: serializer.NewJsonSerializer(),
-		logger:     slogx.New(),
+		ctx:    ctx,
+		logger: slogx.New(),
 
+		serializer:    serializer.NewJsonSerializer(),
 		badgerMapping: &sync.Map{},
 		reqMapping:    &sync.Map{},
 		mtx:           &sync.Mutex{},

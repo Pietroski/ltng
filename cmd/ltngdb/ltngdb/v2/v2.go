@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net"
 
-	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/servermanager"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
@@ -22,8 +21,7 @@ func StartV2(
 	cancelFn context.CancelFunc,
 	cfg *ltng_node_config.Config,
 	logger slogx.SLogger,
-	s serializer_models.Serializer,
-	binder go_binder.Binder,
+	_ serializermodels.Serializer,
 	exiter func(code int),
 ) {
 	logger.Debug(ctx, "opening ltngdb engine v2")
@@ -36,8 +34,7 @@ func StartV2(
 
 	controller, err := ltngdb_controller_v2.New(ctx,
 		ltngdb_controller_v2.WithConfig(cfg),
-		//ltngdb_controller_v2.WithLogger(logger),
-		ltngdb_controller_v2.WithBinder(binder),
+		ltngdb_controller_v2.WithLogger(logger),
 		ltngdb_controller_v2.WithEngine(engine),
 	)
 	if err != nil {
@@ -80,7 +77,7 @@ func StartV2(
 
 	httpFactory, err := http_ltngdb_factory_v2.New(ctx,
 		http_ltngdb_factory_v2.WithConfig(cfg),
-		//http_ltngdb_factory_v2.WithLogger(logger),
+		http_ltngdb_factory_v2.WithLogger(logger),
 		http_ltngdb_factory_v2.WithListener(httpListener),
 	)
 	if err != nil {

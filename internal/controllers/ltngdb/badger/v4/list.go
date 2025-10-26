@@ -15,11 +15,9 @@ func (c *Controller) List(
 	ctx context.Context,
 	req *grpc_ltngdb.ListRequest,
 ) (*grpc_ltngdb.ListResponse, error) {
-	var r badgerdb_management_models_v4.Pagination
-	if err := c.binder.ShouldBind(req.GetPagination(), &r); err != nil {
-		err = status.Error(codes.InvalidArgument, err.Error())
-		c.logger.Error(ctx, "error binding and/or validating payload data", "error", err)
-		return &grpc_ltngdb.ListResponse{}, err
+	pagination := &badgerdb_management_models_v4.Pagination{
+		PageID:   req.GetPagination().GetPageId(),
+		PageSize: req.GetPagination().GetPageSize(),
 	}
 
 	dbInfo, err := c.manager.GetDBMemoryInfo(ctx, req.GetDatabaseMetaInfo().GetDatabaseName())
@@ -42,7 +40,7 @@ func (c *Controller) List(
 	}
 
 	var operationList badgerdb_operation_models_v4.Items
-	operationList, err = c.operator.Operate(dbInfo).List(ctx, opts, &r)
+	operationList, err = c.operator.Operate(dbInfo).List(ctx, opts, pagination)
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
 		c.logger.Error(ctx, "error to list items", "db_info", dbInfo, "error", err)

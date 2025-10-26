@@ -4,10 +4,7 @@ import (
 	"context"
 
 	"gitlab.com/pietroski-software-company/golang/devex/options"
-	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder"
-	go_validator "gitlab.com/pietroski-software-company/tools/validator/go-validator/pkg/tools/validators"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
@@ -21,7 +18,6 @@ type (
 
 		cfg      *ltng_node_config.Config
 		logger   slogx.SLogger
-		binder   go_binder.Binder
 		manager  v4.Manager
 		operator v4.Operator
 	}
@@ -51,11 +47,7 @@ func defaultControllerV4(
 				},
 			},
 		},
-		logger: slogx.New(),
-		binder: go_binder.NewStructBinder(
-			serializer.NewRawBinarySerializer(),
-			go_validator.NewStructValidator(),
-		),
+		logger:   slogx.New(),
 		manager:  nil,
 		operator: nil,
 	}

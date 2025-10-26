@@ -15,18 +15,14 @@ func (c *Controller) ListStores(
 	ctx context.Context,
 	req *grpc_ltngdb.ListStoresRequest,
 ) (*grpc_ltngdb.ListStoresResponse, error) {
-	var r badgerdb_management_models_v4.Pagination
-	if err := c.binder.ShouldBind(req.Pagination, &r); err != nil {
-		c.logger.Error(ctx, "error binding data", "error", err)
-
-		err = status.Error(codes.InvalidArgument, err.Error())
-		return &grpc_ltngdb.ListStoresResponse{}, err
-	}
-
-	dbInfoList, err := c.manager.ListStoreInfo(ctx, int(r.PageSize), int(r.PageID))
+	dbInfoList, err := c.manager.ListStoreInfo(ctx,
+		int(req.GetPagination().GetPageSize()),
+		int(req.GetPagination().GetPageId()))
 	if err != nil {
 		c.logger.Error(ctx, "error listing store info",
-			"page_id", r.PageID, "page_size", r.PageSize, "error", err)
+			"page_id", req.GetPagination().GetPageId(),
+			"page_size", req.GetPagination().GetPageSize(),
+			"error", err)
 
 		err = status.Error(codes.Internal, err.Error())
 		return &grpc_ltngdb.ListStoresResponse{}, err

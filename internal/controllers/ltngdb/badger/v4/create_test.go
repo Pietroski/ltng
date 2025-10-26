@@ -10,8 +10,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
-	mock_go_binder "gitlab.com/pietroski-software-company/tools/binder/go-binder/pkg/tools/binder/mocks"
-
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
@@ -29,14 +27,12 @@ func TestBadgerDBServiceController_Set(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -74,14 +70,12 @@ func TestBadgerDBServiceController_Set(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
@@ -157,14 +151,12 @@ func TestBadgerDBServiceController_Set(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockManager := mocks.NewMockManager(ctrl)
 			mockOperator := mocks.NewMockOperator(ctrl)
-			mockBinder := mock_go_binder.NewMockBinder(ctrl)
 
 			logger := slogx.New()
 
 			operator, err := New(ctx,
 				WithConfig(config),
 				WithLogger(logger),
-				WithBinder(mockBinder),
 				WithManger(mockManager),
 				WithOperator(mockOperator),
 			)
