@@ -14,7 +14,7 @@ import (
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	localexecx "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
 func TestLTNGEngineFlow(t *testing.T) {
@@ -1580,8 +1580,8 @@ func TestCheckFileCount(t *testing.T) {
 
 func prepareTest(t *testing.T) context.Context {
 	ctx := context.Background()
-	err := localexecx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
-	err = localexecx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
+	err := osx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
+	err = osx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
 	require.NoError(t, err)
 
 	return ctx

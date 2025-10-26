@@ -10,7 +10,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/saga"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -252,19 +252,19 @@ func (e *LTNGEngine) deleteStore(
 		return nil
 	}
 	deleteRowFromRelationalStoreRollback := func() error {
-		if err := execx.CpExec(ctx,
+		if err := osx.CpExec(ctx,
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
 			return errorsx.Errorf("failed to re-copy tmp stats file %s: %v", info.Name, err)
 		}
 
-		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
+		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
 			e.logger.Error(ctx, "failed to delete tmp stats dir",
 				"store_name", info.Name, "err", err)
 		}
 
-		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
+		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
 			e.logger.Error(ctx, "failed to delete tmp data dir",
 				"store_name", info.Name, "err", err)
 		}
@@ -274,7 +274,7 @@ func (e *LTNGEngine) deleteStore(
 
 	copyStatsFile := func() error {
 		// copy stats file to tmp del stats path
-		if err := execx.CpExec(ctx,
+		if err := osx.CpExec(ctx,
 			ltngenginemodels.GetStatsFilepath(info.Name),
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 		); err != nil {
@@ -285,7 +285,7 @@ func (e *LTNGEngine) deleteStore(
 	}
 	copyStatsFileRollback := func() error {
 		// delete stats file from tmp del stats path
-		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
+		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
 			return errorsx.Errorf("failed to delete %s tmp store stats: %v", info.Name, err)
 		}
 
@@ -294,7 +294,7 @@ func (e *LTNGEngine) deleteStore(
 
 	copyDataPath := func() error {
 		// copy data store to tmp del path
-		if err := execx.CpExec(ctx,
+		if err := osx.CpExec(ctx,
 			ltngenginemodels.GetDataPathWithSep(info.Path),
 			ltngenginemodels.GetTmpDelDataPathWithSep(info.Name),
 		); err != nil {
@@ -305,7 +305,7 @@ func (e *LTNGEngine) deleteStore(
 	}
 	copyDataPathRollback := func() error {
 		// delete all files from store directory
-		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
+		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
 			return errorsx.Errorf("failed to delete %s tmp data store: %v", info.Name, err)
 		}
 
@@ -314,14 +314,14 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteStatsPath := func() error {
 		// delete stats file
-		if err := execx.DelFileExec(ctx, ltngenginemodels.GetStatsFilepath(info.Name)); err != nil {
+		if err := osx.DelFileExec(ctx, ltngenginemodels.GetStatsFilepath(info.Name)); err != nil {
 			return errorsx.Errorf("failed to delete %s stats file: %v", info.Name, err)
 		}
 
 		return nil
 	}
 	deleteStatsPathRollback := func() error {
-		if err := execx.CpExec(ctx,
+		if err := osx.CpExec(ctx,
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
@@ -333,14 +333,14 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteDataPath := func() error {
 		// delete all files from store directory // delExec // DelDirsWithoutSepBothOSExec <-> DelStoreDirsExec
-		if err := execx.DelDirsBothOSExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
+		if err := osx.DelDirsBothOSExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
 			return errorsx.Errorf("failed to delete %s data store: %v", info.Name, err)
 		}
 
 		return nil
 	}
 	deleteDataPathRollback := func() error {
-		if err := execx.CpExec(ctx,
+		if err := osx.CpExec(ctx,
 			ltngenginemodels.GetTmpDelDataPathWithSep(info.Name),
 			ltngenginemodels.GetDataPathWithSep(info.Path+ltngenginemodels.Sep+info.Name),
 		); err != nil {
@@ -352,12 +352,12 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteTmpDataAndStatsPath := func() error {
 		// delete tmp stats path
-		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
+		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
 			return errorsx.Errorf("failed to remove tmp del path %s store: %v", info.Name, err)
 		}
 
 		// delete tmp stats path
-		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
+		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
 			return errorsx.Errorf("failed to remove tmp del path %s store: %v", info.Name, err)
 		}
 

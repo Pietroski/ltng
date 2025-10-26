@@ -1387,8 +1387,8 @@ func TestQueue_Nack(t *testing.T) {
 
 func Test_DeleteTestFileQueue(t *testing.T) {
 	ctx := context.Background()
-	err := execx.DelHardExec(ctx, ltngDBBasePath)
+	err := osx.DelHardExec(ctx, ltngDBBasePath)
 	require.NoError(t, err)
-	err = execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err = osx.DelHardExec(ctx, ltngFileQueueBasePath)
 	require.NoError(t, err)
 }

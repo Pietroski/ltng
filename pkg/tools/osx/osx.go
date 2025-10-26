@@ -1,4 +1,4 @@
-package execx
+package osx
 
 import (
 	"context"

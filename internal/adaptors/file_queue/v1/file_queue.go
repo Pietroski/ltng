@@ -19,7 +19,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -444,7 +444,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, dat
 		return errorsx.Wrap(err, "error republishing index: error resetting reader")
 	}
 
-	if err = execx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath); err != nil {
+	if err = osx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath); err != nil {
 		return errorsx.Wrap(err, "error republishing index: error executing cpfile")
 	}
 
@@ -453,7 +453,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, dat
 	}
 
 	if err = fq.WriteOnCursor(ctx, data); err != nil {
-		if err = execx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath); err != nil {
+		if err = osx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath); err != nil {
 			return errorsx.Wrap(err, "error republishing index: error executing reverse cpfile")
 		}
 

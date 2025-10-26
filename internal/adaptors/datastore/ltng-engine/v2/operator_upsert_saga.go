@@ -12,7 +12,7 @@ import (
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
 type upsertSaga struct {
@@ -246,7 +246,7 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
 			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
-			if err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
+			if err := osx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
 				close(v.RespSignal)
 				return
@@ -302,7 +302,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 					tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 
-					if err := execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
+					if err := osx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
 						return nil, err
 					}
 				}
@@ -409,7 +409,7 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
 			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
 
-			if err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
+			if err := osx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
 				close(v.RespSignal)
 				return

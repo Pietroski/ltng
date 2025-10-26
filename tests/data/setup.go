@@ -46,7 +46,7 @@ type TestBench interface {
 }
 
 func DockerComposeUp[T TestBench](tb T) {
-	_, err := execx.Executor(exec.Command("sh", "-c",
+	_, err := osx.Executor(exec.Command("sh", "-c",
 		fmt.Sprintf("docker compose -f %s up -d --build --remove-orphans",
 			relativePath+dockerComposePath),
 	))
@@ -64,7 +64,7 @@ func DockerComposeUp[T TestBench](tb T) {
 
 func DockerComposeDown[T TestBench](tb T) {
 	tb.Cleanup(func() {
-		_, err := execx.Executor(exec.Command("sh", "-c",
+		_, err := osx.Executor(exec.Command("sh", "-c",
 			fmt.Sprintf("docker compose -f %s down",
 				relativePath+dockerComposePath),
 		))
@@ -76,7 +76,7 @@ func DockerComposeDown[T TestBench](tb T) {
 func waitForContainer[T TestBench](tb T, containerName string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		bs, err := execx.Executor(exec.Command("sh", "-c",
+		bs, err := osx.Executor(exec.Command("sh", "-c",
 			fmt.Sprintf("docker inspect --format='{{.State.Running}}' %s", containerName)))
 		tb.Logf("output: %s", bs)
 		if err == nil && strings.TrimSpace(string(bs)) == "true" {
@@ -245,16 +245,16 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 
 func CleanupDirectories[T TestBench](tb T) {
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	_, err := osx.DelHardExec(ctx, ltngFileQueueBasePath)
 	require.NoError(tb, err)
-	_, err = execx.DelHardExec(ctx, ltngdbBasePath)
+	_, err = osx.DelHardExec(ctx, ltngdbBasePath)
 	require.NoError(tb, err)
-	_, err = execx.DelHardExec(ctx, dbBasePath)
+	_, err = osx.DelHardExec(ctx, dbBasePath)
 	require.NoError(tb, err)
 }
 
 func CleanupProcesses[T TestBench](tb T) {
-	bs, err := execx.Executor(exec.Command("sh", "-c", "lsof -ti:50000-51000 | xargs kill -9"))
+	bs, err := osx.Executor(exec.Command("sh", "-c", "lsof -ti:50000-51000 | xargs kill -9"))
 	require.NoError(tb, err)
 	tb.Logf("Cleaning up processes: %s", bs)
 }
