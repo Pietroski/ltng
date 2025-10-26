@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
@@ -18,7 +17,6 @@ import (
 
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
 const (
@@ -604,7 +602,7 @@ func testConsumerConcurrently(
 	// generate & publish events
 	events := generateEventList(t, ltngqueue.serializer, queue, testCase.eventCount)
 	eventMap := eventListToSafeEventMap(events)
-	eventMapCheck := safe.NewGenericMap[*queuemodels.Event]()
+	eventMapCheck := syncx.NewGenericMap[*queuemodels.Event]()
 	for i := 0; i < testCase.eventCount; i++ {
 		op.Op(func() {
 			event := events[i]
@@ -636,7 +634,7 @@ func testConsumerConcurrently(
 	}
 
 	count := new(atomic.Uint64)
-	consumedEvents := safe.NewTicketStorage[*queuemodels.Event](testCase.eventCount)
+	consumedEvents := syncx.NewTicketStorage[*queuemodels.Event](testCase.eventCount)
 	go func() {
 		for _, receiver := range receiverList {
 			go func() {
@@ -980,8 +978,8 @@ func eventListToEventMap(
 
 func eventListToSafeEventMap(
 	eventList []*queuemodels.Event,
-) *safe.GenericMap[*queuemodels.Event] {
-	eventMap := safe.NewGenericMap[*queuemodels.Event]()
+) *syncx.GenericMap[*queuemodels.Event] {
+	eventMap := syncx.NewGenericMap[*queuemodels.Event]()
 	for _, event := range eventList {
 		eventMap.Set(event.EventID, event)
 	}

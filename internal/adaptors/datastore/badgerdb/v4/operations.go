@@ -11,7 +11,6 @@ import (
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	co "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/chained-operator"
 	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
@@ -65,8 +64,7 @@ type (
 		serializer serializer_models.Serializer
 		dbInfo     *badgerdb_management_models_v4.DBMemoryInfo
 
-		chainedOperator *co.ChainOperator
-		listOperator    *lo.ListOperator
+		listOperator *lo.ListOperator
 
 		// TODO: add a context global retrial opts
 	}
@@ -76,8 +74,7 @@ func NewBadgerOperatorV4(
 	ctx context.Context, opts ...options.Option,
 ) (*BadgerOperatorV4, error) {
 	o := &BadgerOperatorV4{
-		serializer:      serializer.NewJsonSerializer(),
-		chainedOperator: co.NewChainOperator(),
+		serializer: serializer.NewJsonSerializer(),
 	}
 	options.ApplyOptions(o, opts...)
 

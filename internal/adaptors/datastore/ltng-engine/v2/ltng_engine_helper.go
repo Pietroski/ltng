@@ -10,13 +10,13 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
 func newLTNGEngine(
@@ -39,9 +39,9 @@ func newLTNGEngine(
 		fq:                     fq,
 		fileManager:            rw.NewFileManager(ctx),
 		memoryStore:            memorystorev1.New(ctx),
-		storeFileMapping:       safe.NewGenericMap[*ltngenginemodels.FileInfo](),
-		itemFileMapping:        safe.NewGenericMap[*ltngenginemodels.FileInfo](),
-		markedAsDeletedMapping: safe.NewGenericMap[struct{}](),
+		storeFileMapping:       syncx.NewGenericMap[*ltngenginemodels.FileInfo](),
+		itemFileMapping:        syncx.NewGenericMap[*ltngenginemodels.FileInfo](),
+		markedAsDeletedMapping: syncx.NewGenericMap[struct{}](),
 		serializer:             serializer.NewRawBinarySerializer(),
 		logger:                 logger,
 	}

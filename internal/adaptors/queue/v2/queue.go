@@ -16,6 +16,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltngenginev2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
@@ -24,7 +25,6 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
 const signalTransmitterBufferSize = 1 << 4
@@ -47,11 +47,11 @@ type Queue struct {
 	queueInfoStore *ltngenginemodels.StoreInfo
 	ltngdbengine   *ltngenginev2.LTNGEngine
 
-	fqMainMapping       *safe.GenericMap[*queuemodels.QueuePublisher]
-	fqDownstreamMapping *safe.GenericMap[*safe.GenericMap[*queuemodels.QueueSignaler]]
+	fqMainMapping       *syncx.GenericMap[*queuemodels.QueuePublisher]
+	fqDownstreamMapping *syncx.GenericMap[*syncx.GenericMap[*queuemodels.QueueSignaler]]
 
-	senderGroupMapping *safe.GenericMap[*safe.GenericMap[*queuemodels.QueueOrchestrator]]
-	eventMapTracker    *safe.GenericMap[*queuemodels.EventTracker]
+	senderGroupMapping *syncx.GenericMap[*syncx.GenericMap[*queuemodels.QueueOrchestrator]]
+	eventMapTracker    *syncx.GenericMap[*queuemodels.EventTracker]
 
 	retryCountLimit uint64
 
@@ -78,11 +78,11 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 
 		ltngdbengine: ltngdbengine,
 
-		fqMainMapping:       safe.NewGenericMap[*queuemodels.QueuePublisher](),
-		fqDownstreamMapping: safe.NewGenericMap[*safe.GenericMap[*queuemodels.QueueSignaler]](),
+		fqMainMapping:       syncx.NewGenericMap[*queuemodels.QueuePublisher](),
+		fqDownstreamMapping: syncx.NewGenericMap[*syncx.GenericMap[*queuemodels.QueueSignaler]](),
 
-		senderGroupMapping: safe.NewGenericMap[*safe.GenericMap[*queuemodels.QueueOrchestrator]](),
-		eventMapTracker:    safe.NewGenericMap[*queuemodels.EventTracker](),
+		senderGroupMapping: syncx.NewGenericMap[*syncx.GenericMap[*queuemodels.QueueOrchestrator]](),
+		eventMapTracker:    syncx.NewGenericMap[*queuemodels.EventTracker](),
 
 		retryCountLimit: 5,
 		awaitTimeout:    time.Second * 5,
@@ -125,7 +125,7 @@ func (q *Queue) Close() error {
 		return true
 	})
 
-	q.fqDownstreamMapping.Range(func(key string, value *safe.GenericMap[*queuemodels.QueueSignaler]) bool {
+	q.fqDownstreamMapping.Range(func(key string, value *syncx.GenericMap[*queuemodels.QueueSignaler]) bool {
 		value.Range(func(key string, value *queuemodels.QueueSignaler) bool {
 			//for !value.IsClosed.Load() {
 			//	runtime.Gosched()
@@ -221,7 +221,7 @@ func (q *Queue) createQueueSignaler(
 
 	fqdm, ok := q.fqDownstreamMapping.Get(lockKey)
 	if !ok {
-		fqdm = safe.NewGenericMap[*queuemodels.QueueSignaler]()
+		fqdm = syncx.NewGenericMap[*queuemodels.QueueSignaler]()
 		q.fqDownstreamMapping.Set(lockKey, fqdm)
 	}
 
@@ -253,7 +253,7 @@ func (q *Queue) getQueueSignaler(
 
 	fqdm, ok := q.fqDownstreamMapping.Get(lockKey)
 	if !ok {
-		fqdm = safe.NewGenericMap[*queuemodels.QueueSignaler]()
+		fqdm = syncx.NewGenericMap[*queuemodels.QueueSignaler]()
 		q.fqDownstreamMapping.Set(lockKey, fqdm)
 	}
 
@@ -481,7 +481,7 @@ func (q *Queue) SubscribeToQueue(
 
 	subscriptionQueue, ok := q.senderGroupMapping.Get(lockKey)
 	if !ok {
-		subscriptionQueue = safe.NewGenericMap[*queuemodels.QueueOrchestrator]()
+		subscriptionQueue = syncx.NewGenericMap[*queuemodels.QueueOrchestrator]()
 		q.senderGroupMapping.Set(lockKey, subscriptionQueue)
 	}
 
@@ -489,8 +489,8 @@ func (q *Queue) SubscribeToQueue(
 	if !isOk {
 		subscriptionQueueGroup = &queuemodels.QueueOrchestrator{
 			Queue: queue,
-			PublishList: safe.NewTicketStorageLoop[*queuemodels.Publisher](
-				safe.WithTicketStorageSize[*queuemodels.Publisher](0),
+			PublishList: syncx.NewTicketStorageLoop[*queuemodels.Publisher](
+				syncx.WithTicketStorageSize[*queuemodels.Publisher](0),
 			),
 		}
 

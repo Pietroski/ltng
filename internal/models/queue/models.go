@@ -5,8 +5,9 @@ import (
 	"os"
 	"sync/atomic"
 
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
+
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/safe"
 )
 
 type QueueDistributionType int32
@@ -151,7 +152,7 @@ const (
 
 type QueueOrchestrator struct {
 	Queue       *Queue
-	PublishList *safe.TicketStorageLoop[*Publisher]
+	PublishList *syncx.TicketStorageLoop[*Publisher]
 }
 
 type Publisher struct {
