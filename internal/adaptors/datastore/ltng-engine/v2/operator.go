@@ -131,8 +131,8 @@ func (e *LTNGEngine) listItems(
 ) (*ltngenginemodels.ListItemsResult, error) {
 	relationalItemStore := dbMetaInfo.RelationalInfo()
 	lockKey := relationalItemStore.LockName(ltngenginemodels.RelationalDataStore)
-	e.opMtx.Lock(lockKey, struct{}{})
-	defer e.opMtx.Unlock(lockKey)
+	e.kvLock.Lock(lockKey, struct{}{})
+	defer e.kvLock.Unlock(lockKey)
 
 	if i, err := e.memoryStore.ListItems(
 		ctx, dbMetaInfo, pagination, opts,

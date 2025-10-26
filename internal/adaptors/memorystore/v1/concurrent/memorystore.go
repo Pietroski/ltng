@@ -6,20 +6,16 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	go_cache "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/cache"
 )
 
 type LTNGCacheEngine struct {
-	opMtx *lock.EngineLock
-
 	opSaga *opSaga
 	cache  go_cache.Cacher
 }
 
 func New(ctx context.Context, opts ...options.Option) *LTNGCacheEngine {
 	engine := &LTNGCacheEngine{
-		opMtx: lock.NewEngineLock(),
 		cache: go_cache.New(),
 	}
 	options.ApplyOptions(engine, opts...)

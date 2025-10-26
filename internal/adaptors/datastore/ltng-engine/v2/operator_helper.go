@@ -715,8 +715,8 @@ func (e *LTNGEngine) upsertRelationalData(
 	relationalPath := relationalInfo.Path
 	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
 
-	e.opMtx.Lock(relationalLockKey, struct{}{})
-	defer e.opMtx.Unlock(relationalLockKey)
+	e.kvLock.Lock(relationalLockKey, struct{}{})
+	defer e.kvLock.Unlock(relationalLockKey)
 
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {
@@ -841,8 +841,8 @@ func (e *LTNGEngine) deleteRelationalData(
 	relationalPath := relationalInfo.Path
 	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
 
-	e.opMtx.Lock(relationalLockKey, struct{}{})
-	defer e.opMtx.Unlock(relationalLockKey)
+	e.kvLock.Lock(relationalLockKey, struct{}{})
+	defer e.kvLock.Unlock(relationalLockKey)
 
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {

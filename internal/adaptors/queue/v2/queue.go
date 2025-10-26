@@ -22,7 +22,6 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
@@ -34,8 +33,8 @@ type Queue struct {
 
 	logger slogx.SLogger
 
-	opMtx *lock.EngineLock
-	mtx   *sync.RWMutex
+	kvLock *syncx.KVLock
+	mtx    *sync.RWMutex
 	//op    *concurrent.OffThread
 
 	awaitTimeout time.Duration
@@ -69,8 +68,8 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 
 		logger: slogx.New(),
 
-		opMtx: lock.NewEngineLock(),
-		mtx:   &sync.RWMutex{},
+		kvLock: syncx.NewKVLock(),
+		mtx:    &sync.RWMutex{},
 		//op:    concurrent.New("ltng-queue"),
 
 		serializer:  serializer.NewRawBinarySerializer(),
@@ -155,8 +154,8 @@ func (q *Queue) CreateQueue(
 	queue *queuemodels.Queue,
 ) (qp *queuemodels.QueuePublisher, err error) {
 	lockKey := queue.GetLockKey()
-	q.opMtx.Lock(lockKey, struct{}{})
-	defer q.opMtx.Unlock(lockKey)
+	q.kvLock.Lock(lockKey, struct{}{})
+	defer q.kvLock.Unlock(lockKey)
 
 	if err = queue.Validate(); err != nil {
 		return nil, errorsx.Wrap(err, "error validating queue")
@@ -475,8 +474,8 @@ func (q *Queue) SubscribeToQueue(
 	publisher *queuemodels.Publisher,
 ) error {
 	lockKey := queue.GetLockKey()
-	q.opMtx.Lock(lockKey, struct{}{})
-	defer q.opMtx.Unlock(lockKey)
+	q.kvLock.Lock(lockKey, struct{}{})
+	defer q.kvLock.Unlock(lockKey)
 	completeLockKey := queue.GetCompleteLockKey()
 
 	subscriptionQueue, ok := q.senderGroupMapping.Get(lockKey)
@@ -509,8 +508,8 @@ func (q *Queue) UnsubscribeFromQueue(
 	publisher *queuemodels.Publisher,
 ) error {
 	lockKey := queue.GetLockKey()
-	q.opMtx.Lock(lockKey, struct{}{})
-	defer q.opMtx.Unlock(lockKey)
+	q.kvLock.Lock(lockKey, struct{}{})
+	defer q.kvLock.Unlock(lockKey)
 	completeLockKey := queue.GetCompleteLockKey()
 
 	subscriptionQueue, ok := q.senderGroupMapping.Get(lockKey)
@@ -834,8 +833,8 @@ func (q *Queue) Ack(
 		return nil, errorsx.Wrap(err, "error validating event")
 	}
 
-	q.opMtx.Lock(event.EventID, struct{}{})
-	defer q.opMtx.Unlock(event.EventID)
+	q.kvLock.Lock(event.EventID, struct{}{})
+	defer q.kvLock.Unlock(event.EventID)
 
 	//eventID := event.EventID
 	// TODO: remove from the timed-base-store
@@ -856,8 +855,8 @@ func (q *Queue) Ack(
 }
 
 func (q *Queue) Nack(_ context.Context, event *queuemodels.Event) (*queuemodels.Event, error) {
-	q.opMtx.Lock(event.EventID, struct{}{})
-	defer q.opMtx.Unlock(event.EventID)
+	q.kvLock.Lock(event.EventID, struct{}{})
+	defer q.kvLock.Unlock(event.EventID)
 
 	//eventID := event.EventID
 	// TODO: republish

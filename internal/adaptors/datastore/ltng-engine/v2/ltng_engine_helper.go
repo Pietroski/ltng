@@ -15,7 +15,6 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -34,7 +33,7 @@ func newLTNGEngine(
 
 	engine := &LTNGEngine{
 		ctx:                    ctx,
-		opMtx:                  lock.NewEngineLock(),
+		kvLock:                 syncx.NewKVLock(),
 		mtx:                    new(sync.RWMutex),
 		fq:                     fq,
 		fileManager:            rw.NewFileManager(ctx),

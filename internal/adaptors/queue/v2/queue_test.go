@@ -16,7 +16,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
 const (

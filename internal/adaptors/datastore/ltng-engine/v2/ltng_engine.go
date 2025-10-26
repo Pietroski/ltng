@@ -12,7 +12,6 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -20,7 +19,7 @@ type (
 	LTNGEngine struct {
 		ctx context.Context
 
-		opMtx       *lock.EngineLock
+		kvLock      *syncx.KVLock
 		mtx         *sync.RWMutex
 		opSaga      *opSaga
 		serializer  serializer_models.Serializer

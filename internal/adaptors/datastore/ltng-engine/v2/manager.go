@@ -22,8 +22,8 @@ func (e *LTNGEngine) createStore(
 	ctx context.Context,
 	info *ltngenginemodels.StoreInfo,
 ) (store *ltngenginemodels.StoreInfo, err error) {
-	e.opMtx.Lock(info.Name, struct{}{})
-	defer e.opMtx.Unlock(info.Name)
+	e.kvLock.Lock(info.Name, struct{}{})
+	defer e.kvLock.Unlock(info.Name)
 
 	if info.Path == "" {
 		return nil, fmt.Errorf("missing path")
@@ -199,8 +199,8 @@ func (e *LTNGEngine) loadStore(
 	ctx context.Context,
 	info *ltngenginemodels.StoreInfo,
 ) (*ltngenginemodels.StoreInfo, error) {
-	e.opMtx.Lock(info.Name, struct{}{})
-	defer e.opMtx.Unlock(info.Name)
+	e.kvLock.Lock(info.Name, struct{}{})
+	defer e.kvLock.Unlock(info.Name)
 
 	fi, err := e.loadStoreFromMemoryOrDisk(ctx, info)
 	if err != nil {
@@ -214,8 +214,8 @@ func (e *LTNGEngine) deleteStore(
 	ctx context.Context,
 	info *ltngenginemodels.StoreInfo,
 ) error {
-	e.opMtx.Lock(info.Name, struct{}{})
-	defer e.opMtx.Unlock(info.Name)
+	e.kvLock.Lock(info.Name, struct{}{})
+	defer e.kvLock.Unlock(info.Name)
 
 	fileStats, ok := e.storeFileMapping.Get(info.Name)
 	if ok {
@@ -449,8 +449,8 @@ func (e *LTNGEngine) listStores(
 
 	relationalInfoManager := ltngenginemodels.DBManagerStoreInfo.RelationalInfo()
 
-	e.opMtx.Lock(relationalInfoManager.Name, struct{}{})
-	defer e.opMtx.Unlock(relationalInfoManager.Name)
+	e.kvLock.Lock(relationalInfoManager.Name, struct{}{})
+	defer e.kvLock.Unlock(relationalInfoManager.Name)
 
 	fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx)
 	if err != nil {

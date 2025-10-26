@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/lock"
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 )
 
 type Register struct {
-	opLock        *lock.EngineLock
+	kvLock        *syncx.KVLock
 	mtx           *sync.Mutex
 	pidStrMapping map[string]struct{}
 	pidCounter    uint64
@@ -22,51 +22,51 @@ type Register struct {
 
 func New(ctx context.Context) *Register {
 	return &Register{
-		opLock:        lock.NewEngineLock(),
+		kvLock:        syncx.NewKVLock(),
 		mtx:           &sync.Mutex{},
 		pidStrMapping: make(map[string]struct{}, initialPidStrMapSize),
 	}
 }
 
 func (reg *Register) Register(pidStr string) {
-	//reg.opLock.Lock(pidStr, struct{}{})
-	//defer reg.opLock.Unlock(pidStr)
+	//reg.kvLock.Lock(pidStr, struct{}{})
+	//defer reg.kvLock.Unlock(pidStr)
 	reg.mtx.Lock()
 	defer reg.mtx.Unlock()
 	reg.pidStrMapping[pidStr] = struct{}{}
 }
 
 func (reg *Register) UnRegister(pidStr string) {
-	//reg.opLock.Lock(pidStr, struct{}{})
-	//defer reg.opLock.Unlock(pidStr)
+	//reg.kvLock.Lock(pidStr, struct{}{})
+	//defer reg.kvLock.Unlock(pidStr)
 	reg.mtx.Lock()
 	defer reg.mtx.Unlock()
 	delete(reg.pidStrMapping, pidStr)
 }
 
 func (reg *Register) PidCount() int {
-	//reg.opLock.Lock(generalLockKey, struct{}{})
-	//defer reg.opLock.Unlock(generalLockKey)
+	//reg.kvLock.Lock(generalLockKey, struct{}{})
+	//defer reg.kvLock.Unlock(generalLockKey)
 	reg.mtx.Lock()
 	defer reg.mtx.Unlock()
 	return len(reg.pidStrMapping)
 }
 
 func (reg *Register) Count() {
-	reg.opLock.Lock(counterLockKey, struct{}{})
-	defer reg.opLock.Unlock(counterLockKey)
+	reg.kvLock.Lock(counterLockKey, struct{}{})
+	defer reg.kvLock.Unlock(counterLockKey)
 	reg.pidCounter++
 }
 
 func (reg *Register) CountEnd() {
-	reg.opLock.Lock(counterLockKey, struct{}{})
-	defer reg.opLock.Unlock(counterLockKey)
+	reg.kvLock.Lock(counterLockKey, struct{}{})
+	defer reg.kvLock.Unlock(counterLockKey)
 	reg.pidCounter--
 }
 
 func (reg *Register) CountNumber() uint64 {
-	reg.opLock.Lock(counterLockKey, struct{}{})
-	defer reg.opLock.Unlock(counterLockKey)
+	reg.kvLock.Lock(counterLockKey, struct{}{})
+	defer reg.kvLock.Unlock(counterLockKey)
 	return reg.pidCounter
 }
 
