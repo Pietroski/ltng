@@ -2,21 +2,20 @@ package integration_test
 
 import (
 	"context"
-	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/golang/devex/execx"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
+
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	models_badgerdb_v4_management "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	models_badgerdb_v4_operation "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
-	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
 
@@ -179,7 +178,7 @@ func testBadgerDBEngine(t *testing.T) {
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {
 				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
-					Create(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+					Create(ets.Ctx, item, opts, saga.DefaultRetrialOps)
 			}))
 			assert.NoError(t, err)
 		}
@@ -223,7 +222,7 @@ func testBadgerDBEngine(t *testing.T) {
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {
 				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
-					Upsert(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+					Upsert(ets.Ctx, item, opts, saga.DefaultRetrialOps)
 			}))
 			assert.NoError(t, err)
 		}
@@ -250,7 +249,7 @@ func testBadgerDBEngine(t *testing.T) {
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {
 				err = ets.BadgerDBEngine.Operator.Operate(dbMemoryInfo).
-					Upsert(ets.Ctx, item, opts, list_operator.DefaultRetrialOps)
+					Upsert(ets.Ctx, item, opts, saga.DefaultRetrialOps)
 			}))
 			assert.NoError(t, err)
 		}
@@ -286,10 +285,8 @@ func TestReadFromFQ(t *testing.T) {
 }
 
 func TestCheckFileCount(t *testing.T) {
-	bs, err := execx.Executor(exec.Command(
-		"sh", "-c",
+	err := execx.Run("sh", "-c",
 		"find .ltngdb/v2/stores/user-store -maxdepth 1 -type f | wc -l",
-	))
+	)
 	require.NoError(t, err)
-	t.Log(strings.TrimSpace(string(bs)))
 }

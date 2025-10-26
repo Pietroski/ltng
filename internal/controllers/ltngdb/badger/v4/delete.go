@@ -6,8 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
+
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -40,7 +41,7 @@ func (c *Controller) Delete(
 	}
 
 	reqRetrialOpts := req.GetRetrialOpts()
-	retrialOpts := &list_operator.RetrialOpts{
+	retrialOpts := &saga.RetrialOpts{
 		RetrialOnErr: reqRetrialOpts.GetRetrialOnError(),
 		RetrialCount: int(reqRetrialOpts.GetRetrialCount()),
 	}

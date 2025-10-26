@@ -8,8 +8,9 @@ import (
 	"os"
 	"time"
 
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
+
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -367,30 +368,30 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         copyToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          copyToTmpFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: discardTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          discardTmpFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         removeMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          removeMainFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: reopenMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          reopenMainFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
 
-	if err = lo.New(operations...).Operate(); err != nil {
+	if err = saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 
@@ -535,30 +536,30 @@ func (e *LTNGEngine) updateRelationalStats(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         copyToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          copyToTmpFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: discardTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          discardTmpFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         removeMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          removeMainFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: reopenMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          reopenMainFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
 
-	if err = lo.New(operations...).Operate(); err != nil {
+	if err = saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 
@@ -706,30 +707,30 @@ func (e *LTNGEngine) upsertRelationalStats(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         copyToTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          copyToTmpFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: discardTmpFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          discardTmpFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         removeMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          removeMainFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: reopenMainFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          reopenMainFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
 
-	if err = lo.New(operations...).Operate(); err != nil {
+	if err = saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 

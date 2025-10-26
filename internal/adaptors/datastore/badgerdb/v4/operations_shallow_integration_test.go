@@ -10,13 +10,14 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
 	"gitlab.com/pietroski-software-company/golang/devex/random"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 var debugMode = false
@@ -72,7 +73,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value written")
@@ -100,7 +101,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value deleted")
@@ -178,7 +179,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value written")
@@ -193,7 +194,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value re-written")
@@ -221,7 +222,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value deleted")
@@ -328,7 +329,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						IndexingKeys:    [][]byte{emailKey, usernameKey},
 						IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 					},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value written")
@@ -374,7 +375,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 						},
 					},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value deleted")
@@ -493,7 +494,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						IndexingKeys:    [][]byte{emailKey, usernameKey},
 						IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 					},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value written")
@@ -538,7 +539,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						},
 						IndexingKeys: [][]byte{emailKey},
 					},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value deleted")
@@ -657,7 +658,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						IndexingKeys:    [][]byte{emailKey, usernameKey},
 						IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 					},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value written")
@@ -703,7 +704,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 						},
 					},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value deleted")
@@ -828,7 +829,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							IndexingKeys:    [][]byte{emailKey, usernameKey},
 							IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 						},
-						list_operator.DefaultRetrialOps,
+						saga.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Test(ctx, "value written")
@@ -991,7 +992,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 							},
 							IndexingKeys: [][]byte{usernameKey},
 						},
-						list_operator.DefaultRetrialOps,
+						saga.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Test(ctx, "value deleted")
@@ -1109,7 +1110,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 								IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 							},
 						},
-						list_operator.DefaultRetrialOps,
+						saga.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Test(ctx, "value deleted")
@@ -1209,7 +1210,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value written")
@@ -1224,7 +1225,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.Error(t, err)
 			logger.Test(ctx, "value written")
@@ -1252,7 +1253,7 @@ func Test_Integration_Create_Load_Delete(t *testing.T) {
 						Value: storeValue,
 					},
 					&badgerdb_operation_models_v4.IndexOpts{},
-					list_operator.DefaultRetrialOps,
+					saga.DefaultRetrialOps,
 				)
 			require.NoError(t, err)
 			logger.Test(ctx, "value deleted")
@@ -1380,7 +1381,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 									IndexingKeys:    [][]byte{emailKey, usernameKey},
 									IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 								},
-								list_operator.DefaultRetrialOps,
+								saga.DefaultRetrialOps,
 							)
 						require.NoError(t, err)
 						logger.Test(ctx, "value written")
@@ -1509,7 +1510,7 @@ func Test_Integration_Create_Multiples_List_Delete(t *testing.T) {
 									IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 								},
 							},
-							list_operator.DefaultRetrialOps,
+							saga.DefaultRetrialOps,
 						)
 					}
 				}
@@ -1632,7 +1633,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 							IndexingKeys:    [][]byte{field4IdxKeyKey, field5IdxKeyKey},
 							IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 						},
-						list_operator.DefaultRetrialOps,
+						saga.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Test(ctx, "value written")
@@ -1659,7 +1660,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 									IndexingKeys:    [][]byte{field4IdxKeyKey, field5IdxKeyKey},
 									IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 								},
-								list_operator.DefaultRetrialOps,
+								saga.DefaultRetrialOps,
 							)
 						require.Error(t, err)
 						logger.Test(ctx, "value written")
@@ -1684,7 +1685,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 									IndexingKeys:    [][]byte{field4IdxKeyKey, field5IdxKeyKey},
 									IndexProperties: badgerdb_operation_models_v4.IndexProperties{},
 								},
-								list_operator.DefaultRetrialOps,
+								saga.DefaultRetrialOps,
 							)
 						require.Error(t, err)
 						logger.Test(ctx, "value written")
@@ -1808,7 +1809,7 @@ func Test_Integration_Create_Multiples_Load_Delete(t *testing.T) {
 								IndexDeletionBehaviour: badgerdb_operation_models_v4.Cascade,
 							},
 						},
-						list_operator.DefaultRetrialOps,
+						saga.DefaultRetrialOps,
 					)
 				require.NoError(t, err)
 				logger.Test(ctx, "value deleted")

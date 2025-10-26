@@ -246,7 +246,7 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
 			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
-			if _, err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
+			if err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
 				close(v.RespSignal)
 				return
@@ -302,7 +302,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 					tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 
-					if _, err := execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
+					if err := execx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
 						return nil, err
 					}
 				}
@@ -409,7 +409,7 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
 			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
 
-			if _, err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
+			if err := execx.MvFileExec(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
 				close(v.RespSignal)
 				return

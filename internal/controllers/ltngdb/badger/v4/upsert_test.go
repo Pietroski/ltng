@@ -9,12 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+
 	badgerdb_manager_adaptor_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4/mocks"
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -113,7 +114,7 @@ func TestBadgerDBServiceController_Upsert(t *testing.T) {
 			}
 
 			reqRetrialOpts := payload.GetRetrialOpts()
-			retrialOpts := &list_operator.RetrialOpts{
+			retrialOpts := &saga.RetrialOpts{
 				RetrialOnErr: reqRetrialOpts.GetRetrialOnError(),
 				RetrialCount: int(reqRetrialOpts.GetRetrialCount()),
 			}
@@ -194,7 +195,7 @@ func TestBadgerDBServiceController_Upsert(t *testing.T) {
 			}
 
 			reqRetrialOpts := payload.GetRetrialOpts()
-			retrialOpts := &list_operator.RetrialOpts{
+			retrialOpts := &saga.RetrialOpts{
 				RetrialOnErr: reqRetrialOpts.GetRetrialOnError(),
 				RetrialCount: int(reqRetrialOpts.GetRetrialCount()),
 			}

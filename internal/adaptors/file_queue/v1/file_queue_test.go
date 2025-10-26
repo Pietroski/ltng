@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
@@ -29,7 +30,7 @@ type TestData struct {
 
 func TestFileQueue(t *testing.T) {
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
 
@@ -204,7 +205,7 @@ func TestFileQueueDisordered(t *testing.T) {
 
 func TestFileQueueMultipleWrites(t *testing.T) {
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
 
@@ -268,7 +269,7 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 
 func TestFileQueueConcurrent(t *testing.T) {
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 	require.NoError(t, err)
 	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 	require.NoError(t, err)
@@ -472,7 +473,7 @@ func BenchmarkFileQueueActions(b *testing.B) {
 func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 	b.Run("write, read & pop", func(b *testing.B) {
 		ctx := context.Background()
-		_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+		err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 		require.NoError(b, err)
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
@@ -556,7 +557,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 
 	b.Run("write, read, pop", func(b *testing.B) {
 		ctx := context.Background()
-		_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+		err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 		require.NoError(b, err)
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
@@ -598,7 +599,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 
 	b.Run("write, read, pop", func(b *testing.B) {
 		ctx := context.Background()
-		_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+		err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 		require.NoError(b, err)
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)
@@ -674,7 +675,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 
 	b.Run("write, read, pop", func(b *testing.B) {
 		ctx := context.Background()
-		_, err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
+		err := execx.DelHardExec(ctx, ltngFileQueueBasePath)
 		require.NoError(b, err)
 		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
 		require.NoError(b, err)

@@ -6,9 +6,11 @@ import (
 	"io"
 	"os"
 
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
+
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -128,65 +130,65 @@ func (e *LTNGEngine) createStore(
 		return e.insertRelationalStats(ctx, store)
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         statsFileCreation,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          statsFileCreation,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: statsFileDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          statsFileDeletion,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         mainStoreCreation,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          mainStoreCreation,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: mainStoreDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         indexStoreCreation,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: indexStoreDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          mainStoreDeletion,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         indexListStoreCreation,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          indexStoreCreation,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: indexListStoreDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         relationalStoreCreation,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: relationalStoreDeletion,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          indexStoreDeletion,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         relationalStoreStatsUpdate,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          indexListStoreCreation,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Do:          indexListStoreDeletion,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Do:          relationalStoreCreation,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Do:          relationalStoreDeletion,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Do:          relationalStoreStatsUpdate,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
-	if err = lo.New(operations...).Operate(); err != nil {
+	if err = saga.NewListOperator(operations...).Operate(); err != nil {
 		return nil, err
 	}
 
@@ -250,21 +252,21 @@ func (e *LTNGEngine) deleteStore(
 		return nil
 	}
 	deleteRowFromRelationalStoreRollback := func() error {
-		if bs, err := execx.CpExec(ctx,
+		if err := execx.CpExec(ctx,
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
-			return fmt.Errorf("failed to re-copy tmp stats file %s - output: %s: %w", info.Name, bs, err)
+			return errorsx.Errorf("failed to re-copy tmp stats file %s: %v", info.Name, err)
 		}
 
-		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
+		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
 			e.logger.Error(ctx, "failed to delete tmp stats dir",
-				"store_name", info.Name, "output", string(bs), "err", err)
+				"store_name", info.Name, "err", err)
 		}
 
-		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
+		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
 			e.logger.Error(ctx, "failed to delete tmp data dir",
-				"store_name", info.Name, "output", string(bs), "err", err)
+				"store_name", info.Name, "err", err)
 		}
 
 		return nil
@@ -272,19 +274,19 @@ func (e *LTNGEngine) deleteStore(
 
 	copyStatsFile := func() error {
 		// copy stats file to tmp del stats path
-		if bs, err := execx.CpExec(ctx,
+		if err := execx.CpExec(ctx,
 			ltngenginemodels.GetStatsFilepath(info.Name),
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 		); err != nil {
-			return fmt.Errorf("error copying %s store stats - output: %s: %w", info.Name, bs, err)
+			return errorsx.Errorf("failed to copy %s store stats: %v", info.Name, err)
 		}
 
 		return nil
 	}
 	copyStatsFileRollback := func() error {
 		// delete stats file from tmp del stats path
-		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("error deleting %s tmp store stats - output: %s: %w", info.Name, bs, err)
+		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to delete %s tmp store stats: %v", info.Name, err)
 		}
 
 		return nil
@@ -292,19 +294,19 @@ func (e *LTNGEngine) deleteStore(
 
 	copyDataPath := func() error {
 		// copy data store to tmp del path
-		if bs, err := execx.CpExec(ctx,
+		if err := execx.CpExec(ctx,
 			ltngenginemodels.GetDataPathWithSep(info.Path),
 			ltngenginemodels.GetTmpDelDataPathWithSep(info.Name),
 		); err != nil {
-			return fmt.Errorf("error copying %s store data - output: %s: %w", info.Name, bs, err)
+			return errorsx.Errorf("failed to copy %s store data: %v", info.Name, err)
 		}
 
 		return nil
 	}
 	copyDataPathRollback := func() error {
 		// delete all files from store directory
-		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("failed deleting %s tmp data store - output: %s: %w", info.Name, bs, err)
+		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to delete %s tmp data store: %v", info.Name, err)
 		}
 
 		return nil
@@ -312,19 +314,18 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteStatsPath := func() error {
 		// delete stats file
-		if bs, err := execx.DelFileExec(ctx, ltngenginemodels.GetStatsFilepath(info.Name)); err != nil {
-			return fmt.Errorf("failed to relete %s stats file - output: %s: %w", info.Name, bs, err)
+		if err := execx.DelFileExec(ctx, ltngenginemodels.GetStatsFilepath(info.Name)); err != nil {
+			return errorsx.Errorf("failed to delete %s stats file: %v", info.Name, err)
 		}
 
 		return nil
 	}
 	deleteStatsPathRollback := func() error {
-		if bs, err := execx.CpExec(ctx,
+		if err := execx.CpExec(ctx,
 			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
-			return fmt.Errorf(
-				"error de-copying %s store stats file - output: %s: %w", info.Name, bs, err)
+			return errorsx.Errorf("failed to re-copy tmp stats file %s: %v", info.Name, err)
 		}
 
 		return nil
@@ -332,18 +333,18 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteDataPath := func() error {
 		// delete all files from store directory // delExec // DelDirsWithoutSepBothOSExec <-> DelStoreDirsExec
-		if bs, err := execx.DelDirsBothOSExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
-			return fmt.Errorf("failed to delete %s data store - output: %s: %w", info.Name, bs, err)
+		if err := execx.DelDirsBothOSExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
+			return errorsx.Errorf("failed to delete %s data store: %v", info.Name, err)
 		}
 
 		return nil
 	}
 	deleteDataPathRollback := func() error {
-		if bs, err := execx.CpExec(ctx,
+		if err := execx.CpExec(ctx,
 			ltngenginemodels.GetTmpDelDataPathWithSep(info.Name),
 			ltngenginemodels.GetDataPathWithSep(info.Path+ltngenginemodels.Sep+info.Name),
 		); err != nil {
-			return fmt.Errorf("error de-copying %s data store - output: %s: %w", info.Name, bs, err)
+			return errorsx.Errorf("failed to de-copy tmp data file %s: %v", info.Name, err)
 		}
 
 		return nil
@@ -351,78 +352,78 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteTmpDataAndStatsPath := func() error {
 		// delete tmp stats path
-		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("failed to remove tmp del path %s store - output: %s: %w", info.Name, bs, err)
+		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to remove tmp del path %s store: %v", info.Name, err)
 		}
 
 		// delete tmp stats path
-		if bs, err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
-			return fmt.Errorf("failed to remove tmp del path %s store - output: %s: %w", info.Name, bs, err)
+		if err := execx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to remove tmp del path %s store: %v", info.Name, err)
 		}
 
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         deleteRowFromRelationalStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          deleteRowFromRelationalStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteRowFromRelationalStoreRollback,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          deleteRowFromRelationalStoreRollback,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         copyStatsFile,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          copyStatsFile,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: copyStatsFileRollback,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         copyDataPath,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: copyDataPathRollback,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          copyStatsFileRollback,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         deleteStatsPath,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          copyDataPath,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteStatsPathRollback,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         deleteDataPath,
-				RetrialOpts: lo.DefaultRetrialOps,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteDataPathRollback,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          copyDataPathRollback,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         deleteTmpDataAndStatsPath,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          deleteStatsPath,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Do:          deleteStatsPathRollback,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Do:          deleteDataPath,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Do:          deleteDataPathRollback,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Do:          deleteTmpDataAndStatsPath,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
 
-	if err := lo.New(operations...).Operate(); err != nil {
+	if err := saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 

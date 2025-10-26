@@ -100,6 +100,9 @@ gitlab.com/pietroski-software-company/golang/devex/env
 # gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/errorsx
+# gitlab.com/pietroski-software-company/golang/devex/execx v0.0.4
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/execx
 # gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/middlewares/gRPC
@@ -109,6 +112,9 @@ gitlab.com/pietroski-software-company/golang/devex/options
 # gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/random
+# gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/saga
 # gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/serializer

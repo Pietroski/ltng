@@ -13,10 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
+	saga "gitlab.com/pietroski-software-company/golang/devex/saga"
 	v4 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	models_badgerdb_v4_management "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	models_badgerdb_v4_operation "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	list_operator "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -45,7 +45,7 @@ func (m *MockOperator) EXPECT() *MockOperatorMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockOperator) Create(ctx context.Context, item *models_badgerdb_v4_operation.Item, opts *models_badgerdb_v4_operation.IndexOpts, retrialOpts *list_operator.RetrialOpts) error {
+func (m *MockOperator) Create(ctx context.Context, item *models_badgerdb_v4_operation.Item, opts *models_badgerdb_v4_operation.IndexOpts, retrialOpts *saga.RetrialOpts) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, item, opts, retrialOpts)
 	ret0, _ := ret[0].(error)
@@ -59,7 +59,7 @@ func (mr *MockOperatorMockRecorder) Create(ctx, item, opts, retrialOpts any) *go
 }
 
 // Delete mocks base method.
-func (m *MockOperator) Delete(ctx context.Context, item *models_badgerdb_v4_operation.Item, opts *models_badgerdb_v4_operation.IndexOpts, retrialOpts *list_operator.RetrialOpts) error {
+func (m *MockOperator) Delete(ctx context.Context, item *models_badgerdb_v4_operation.Item, opts *models_badgerdb_v4_operation.IndexOpts, retrialOpts *saga.RetrialOpts) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, item, opts, retrialOpts)
 	ret0, _ := ret[0].(error)
@@ -132,7 +132,7 @@ func (mr *MockOperatorMockRecorder) Operate(dbInfo any) *gomock.Call {
 }
 
 // Upsert mocks base method.
-func (m *MockOperator) Upsert(ctx context.Context, item *models_badgerdb_v4_operation.Item, opts *models_badgerdb_v4_operation.IndexOpts, retrialOpts *list_operator.RetrialOpts) error {
+func (m *MockOperator) Upsert(ctx context.Context, item *models_badgerdb_v4_operation.Item, opts *models_badgerdb_v4_operation.IndexOpts, retrialOpts *saga.RetrialOpts) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upsert", ctx, item, opts, retrialOpts)
 	ret0, _ := ret[0].(error)

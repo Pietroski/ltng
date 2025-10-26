@@ -479,7 +479,7 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 			lockStrKey := itemInfoData.DBMetaInfo.LockName(strItemKey)
-			if _, err := execx.MvFileExec(itemInfoData.Ctx,
+			if err := execx.MvFileExec(itemInfoData.Ctx,
 				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.tmpDelPath, strItemKey),
 			); err != nil {
@@ -510,7 +510,7 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(ctx context.Context) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
 
-			if _, err := execx.MvFileExec(itemInfoData.Ctx, ltngenginemodels.RawPathWithSepForFile(
+			if err := execx.MvFileExec(itemInfoData.Ctx, ltngenginemodels.RawPathWithSepForFile(
 				itemInfoData.TmpDelPaths.tmpDelPath, strItemKey), filePath,
 			); err != nil {
 				// log
@@ -540,7 +540,7 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 					}
 				}
 
-				if _, err := execx.MvFileExec(itemInfoData.Ctx,
+				if err := execx.MvFileExec(itemInfoData.Ctx,
 					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
 					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
 				); err != nil {
@@ -565,7 +565,7 @@ func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 			for _, item := range itemInfoData.IndexList {
 				strItemKey := hex.EncodeToString(item.Value)
 
-				if _, err := execx.MvFileExec(itemInfoData.Ctx,
+				if err := execx.MvFileExec(itemInfoData.Ctx,
 					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
 					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
 				); err != nil {
@@ -586,7 +586,7 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.C
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionIndexListItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
-			if _, err := execx.MvFileExec(itemInfoData.Ctx,
+			if err := execx.MvFileExec(itemInfoData.Ctx,
 				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
 				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexListTmpDelPath, strItemKey),
 			); err != nil {
@@ -616,7 +616,7 @@ func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(ctx context.Cont
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackIndexListItemChannel,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
-			if _, err := execx.MvFileExec(itemInfoData.Ctx,
+			if err := execx.MvFileExec(itemInfoData.Ctx,
 				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
 				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexListTmpDelPath, strItemKey),
 			); err != nil {
@@ -655,8 +655,8 @@ func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
 	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles,
 		func(itemInfoData *deleteItemInfoData) {
-			_, err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx, itemInfoData.TmpDelPaths.tmpDelPath)
-			if err != nil {
+			if err := execx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx,
+				itemInfoData.TmpDelPaths.tmpDelPath); err != nil {
 				itemInfoData.RespSignal <- err
 				//close(itemInfoData.RespSignal)
 				return
@@ -872,7 +872,7 @@ func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 					}
 				}
 
-				if _, err := execx.MvFileExec(itemInfoData.Ctx,
+				if err := execx.MvFileExec(itemInfoData.Ctx,
 					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
 					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
 				); err != nil {
@@ -898,7 +898,7 @@ func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 			for _, item := range itemInfoData.IndexList {
 				strItemKey := hex.EncodeToString(item.Value)
 
-				if _, err := execx.MvFileExec(itemInfoData.Ctx,
+				if err := execx.MvFileExec(itemInfoData.Ctx,
 					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
 					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
 				); err != nil {
@@ -987,7 +987,7 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 	ctxrunner.WithCancellation(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionDelTmpFiles,
 		func(itemInfoData *deleteItemInfoData) {
-			if _, err := execx.DelDirsWithoutSepBothOSExec(ctx,
+			if err := execx.DelDirsWithoutSepBothOSExec(ctx,
 				ltngenginemodels.DBTmpDelDataPath+itemInfoData.TmpDelPaths.tmpDelPath,
 			); err != nil {
 				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting tmp files")

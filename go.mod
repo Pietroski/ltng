@@ -11,9 +11,11 @@ require (
 	github.com/stretchr/testify v1.11.1
 	gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
 	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
+	gitlab.com/pietroski-software-company/golang/devex/execx v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
+	gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.7
 	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.4

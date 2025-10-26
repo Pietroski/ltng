@@ -7,15 +7,15 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger/v4"
-	"gitlab.com/pietroski-software-company/golang/devex/serializer"
-	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
+	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 const (
@@ -137,36 +137,36 @@ func (m *BadgerLocalManagerV4) CreateStore(
 		return m.deleteFromMemoryAndDisk(ctx, indexedInfoName)
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         createStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          createStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         createIndexedStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          createIndexedStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          deleteStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         createIndexedListStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          createIndexedListStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIndexedStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          deleteIndexedStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
 
-	if err := lo.New(operations...).Operate(); err != nil {
+	if err := saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 
@@ -205,36 +205,36 @@ func (m *BadgerLocalManagerV4) DeleteStore(
 		return m.deleteFromMemoryAndDisk(ctx, indexedListInfoName)
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         deleteStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          deleteStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         deleteIndexedStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          deleteIndexedStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: createStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          createStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         deleteIndexedListStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Action: &saga.Action{
+				Do:          deleteIndexedListStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: createIndexedStore,
-				RetrialOpts: lo.DefaultRetrialOps,
+			Rollback: &saga.Rollback{
+				Do:          createIndexedStore,
+				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 	}
 
-	if err = lo.New(operations...).Operate(); err != nil {
+	if err = saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 

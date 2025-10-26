@@ -444,8 +444,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, dat
 		return errorsx.Wrap(err, "error republishing index: error resetting reader")
 	}
 
-	_, err = execx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath)
-	if err != nil {
+	if err = execx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath); err != nil {
 		return errorsx.Wrap(err, "error republishing index: error executing cpfile")
 	}
 
@@ -454,8 +453,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, dat
 	}
 
 	if err = fq.WriteOnCursor(ctx, data); err != nil {
-		_, err = execx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath)
-		if err != nil {
+		if err = execx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath); err != nil {
 			return errorsx.Wrap(err, "error republishing index: error executing reverse cpfile")
 		}
 

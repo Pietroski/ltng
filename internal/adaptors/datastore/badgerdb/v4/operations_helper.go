@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 const (
@@ -48,7 +48,7 @@ func (o *BadgerOperatorV4) deleteCascadeByIdx(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *lo.RetrialOpts,
+	retrialOpts *saga.RetrialOpts,
 ) error {
 	if opts != nil && opts.HasIdx && len(opts.IndexingKeys) == 1 {
 		idxOp, err := o.indexedStoreOperator(ctx)
@@ -71,7 +71,7 @@ func (o *BadgerOperatorV4) deleteCascade(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *lo.RetrialOpts,
+	retrialOpts *saga.RetrialOpts,
 ) error {
 	txn := o.dbInfo.DB.NewTransaction(true)
 	var deleteFn = func() error {
@@ -139,53 +139,53 @@ func (o *BadgerOperatorV4) deleteCascade(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         deleteFn,
+			Action: &saga.Action{
+				Do:          deleteFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         deleteIdxFn,
+			Action: &saga.Action{
+				Do:          deleteIdxFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteRollbackFn,
-				RetrialOpts: retrialOpts,
-			},
-		},
-		{
-			Action: &lo.Action{
-				Act:         deleteIdxListFn,
-				RetrialOpts: retrialOpts,
-			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: createIdxFn,
+			Rollback: &saga.Rollback{
+				Do:          deleteRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         commitFn,
+			Action: &saga.Action{
+				Do:          deleteIdxListFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: createIdxListFn,
+			Rollback: &saga.Rollback{
+				Do:          createIdxFn,
+				RetrialOpts: retrialOpts,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Do:          commitFn,
+				RetrialOpts: retrialOpts,
+			},
+			Rollback: &saga.Rollback{
+				Do:          createIdxListFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 	}
 
-	return lo.New(operations...).Operate()
+	return saga.NewListOperator(operations...).Operate()
 }
 
 func (o *BadgerOperatorV4) deleteIdxOnly(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *lo.RetrialOpts,
+	retrialOpts *saga.RetrialOpts,
 ) error {
 	idxOp, err := o.indexedStoreOperator(ctx)
 	if err != nil {
@@ -255,40 +255,40 @@ func (o *BadgerOperatorV4) deleteIdxOnly(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         deleteIdxFn,
+			Action: &saga.Action{
+				Do:          deleteIdxFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIdxRollbackFn,
+			Rollback: &saga.Rollback{
+				Do:          deleteIdxRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         updateIdxListRelationFn,
+			Action: &saga.Action{
+				Do:          updateIdxListRelationFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: createIdxFn,
+			Rollback: &saga.Rollback{
+				Do:          createIdxFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         commitFn,
+			Action: &saga.Action{
+				Do:          commitFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: updateIdxListRelationRollbackFn,
+			Rollback: &saga.Rollback{
+				Do:          updateIdxListRelationRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 	}
 
-	return lo.New(operations...).Operate()
+	return saga.NewListOperator(operations...).Operate()
 }
 
 func removeBytes(obj, index []byte) [][]byte {

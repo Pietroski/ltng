@@ -6,12 +6,12 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
 	badgerdb_management_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	badgerdb_operation_models_v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	lo "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/list-operator"
 )
 
 type (
@@ -22,19 +22,19 @@ type (
 			ctx context.Context,
 			item *badgerdb_operation_models_v4.Item,
 			opts *badgerdb_operation_models_v4.IndexOpts,
-			retrialOpts *lo.RetrialOpts,
+			retrialOpts *saga.RetrialOpts,
 		) error
 		Upsert(
 			ctx context.Context,
 			item *badgerdb_operation_models_v4.Item,
 			opts *badgerdb_operation_models_v4.IndexOpts,
-			retrialOpts *lo.RetrialOpts,
+			retrialOpts *saga.RetrialOpts,
 		) error
 		Delete(
 			ctx context.Context,
 			item *badgerdb_operation_models_v4.Item,
 			opts *badgerdb_operation_models_v4.IndexOpts,
-			retrialOpts *lo.RetrialOpts,
+			retrialOpts *saga.RetrialOpts,
 		) error
 		Load(
 			ctx context.Context,
@@ -64,7 +64,7 @@ type (
 		serializer serializer_models.Serializer
 		dbInfo     *badgerdb_management_models_v4.DBMemoryInfo
 
-		listOperator *lo.ListOperator
+		listOperator *saga.ListOperator
 
 		// TODO: add a context global retrial opts
 	}
@@ -106,7 +106,7 @@ func (o *BadgerOperatorV4) Create(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *lo.RetrialOpts,
+	retrialOpts *saga.RetrialOpts,
 ) error {
 	txn := o.dbInfo.DB.NewTransaction(true)
 	var createFn = func() error {
@@ -123,22 +123,22 @@ func (o *BadgerOperatorV4) Create(
 			return nil
 		}
 
-		operations := []*lo.Operation{
+		operations := []*saga.Operation{
 			{
-				Action: &lo.Action{
-					Act:         createFn,
+				Action: &saga.Action{
+					Do:          createFn,
 					RetrialOpts: retrialOpts,
 				},
 			},
 			{
-				Action: &lo.Action{
-					Act:         commitCreateStage,
+				Action: &saga.Action{
+					Do:          commitCreateStage,
 					RetrialOpts: retrialOpts,
 				},
 			},
 		}
 
-		return lo.New(operations...).Operate()
+		return saga.NewListOperator(operations...).Operate()
 	}
 
 	idxOp, err := o.indexedStoreOperator(ctx)
@@ -195,42 +195,42 @@ func (o *BadgerOperatorV4) Create(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         createFn,
+			Action: &saga.Action{
+				Do:          createFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         createIdxsFn,
+			Action: &saga.Action{
+				Do:          createIdxsFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         createIdxListFn,
+			Action: &saga.Action{
+				Do:          createIdxListFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIdxsRollbackFn,
+			Rollback: &saga.Rollback{
+				Do:          deleteIdxsRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         commitStage,
+			Action: &saga.Action{
+				Do:          commitStage,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIdxListRollbackFn,
+			Rollback: &saga.Rollback{
+				Do:          deleteIdxListRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 	}
 
-	return lo.New(operations...).Operate()
+	return saga.NewListOperator(operations...).Operate()
 }
 
 // Upsert updates or creates the key value no matter if the key already exists or not.
@@ -238,7 +238,7 @@ func (o *BadgerOperatorV4) Upsert(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *lo.RetrialOpts,
+	retrialOpts *saga.RetrialOpts,
 ) error {
 	txn := o.dbInfo.DB.NewTransaction(true)
 	var upsertFn = func() error {
@@ -254,22 +254,22 @@ func (o *BadgerOperatorV4) Upsert(
 			return nil
 		}
 
-		operations := []*lo.Operation{
+		operations := []*saga.Operation{
 			{
-				Action: &lo.Action{
-					Act:         upsertFn,
+				Action: &saga.Action{
+					Do:          upsertFn,
 					RetrialOpts: retrialOpts,
 				},
 			},
 			{
-				Action: &lo.Action{
-					Act:         commitCreateStage,
+				Action: &saga.Action{
+					Do:          commitCreateStage,
 					RetrialOpts: retrialOpts,
 				},
 			},
 		}
 
-		return lo.New(operations...).Operate()
+		return saga.NewListOperator(operations...).Operate()
 	}
 
 	// TODO: Take all the indexes, traverse, compare, delete or/and add it
@@ -383,42 +383,42 @@ func (o *BadgerOperatorV4) Upsert(
 		return nil
 	}
 
-	operations := []*lo.Operation{
+	operations := []*saga.Operation{
 		{
-			Action: &lo.Action{
-				Act:         upsertFn,
+			Action: &saga.Action{
+				Do:          upsertFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         upsertIdxsFn,
+			Action: &saga.Action{
+				Do:          upsertIdxsFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         upsertIdxListFn,
+			Action: &saga.Action{
+				Do:          upsertIdxListFn,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIdxsRollbackFn,
+			Rollback: &saga.Rollback{
+				Do:          deleteIdxsRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 		{
-			Action: &lo.Action{
-				Act:         commitStage,
+			Action: &saga.Action{
+				Do:          commitStage,
 				RetrialOpts: retrialOpts,
 			},
-			Rollback: &lo.RollbackAction{
-				RollbackAct: deleteIdxListRollbackFn,
+			Rollback: &saga.Rollback{
+				Do:          deleteIdxListRollbackFn,
 				RetrialOpts: retrialOpts,
 			},
 		},
 	}
 
-	return lo.New(operations...).Operate()
+	return saga.NewListOperator(operations...).Operate()
 }
 
 // Delete deletes the given key entry if present.
@@ -426,7 +426,7 @@ func (o *BadgerOperatorV4) Delete(
 	ctx context.Context,
 	item *badgerdb_operation_models_v4.Item,
 	opts *badgerdb_operation_models_v4.IndexOpts,
-	retrialOpts *lo.RetrialOpts,
+	retrialOpts *saga.RetrialOpts,
 ) error {
 	if !opts.HasIdx {
 		return o.delete(item.Key)

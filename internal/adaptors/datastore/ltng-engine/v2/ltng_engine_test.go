@@ -3,19 +3,18 @@ package v2
 import (
 	"context"
 	"math"
-	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	localexecx "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
 )
 
 func TestLTNGEngineFlow(t *testing.T) {
@@ -1573,18 +1572,16 @@ func TestReadFromFQ(t *testing.T) {
 }
 
 func TestCheckFileCount(t *testing.T) {
-	bs, err := execx.Executor(exec.Command(
-		"sh", "-c",
+	err := execx.Run("sh", "-c",
 		"find .ltngdb/v1/stores/test-path -maxdepth 1 -type f | wc -l",
-	))
+	)
 	require.NoError(t, err)
-	t.Log(strings.TrimSpace(string(bs)))
 }
 
 func prepareTest(t *testing.T) context.Context {
 	ctx := context.Background()
-	_, err := execx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
-	_, err = execx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
+	err := localexecx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
+	err = localexecx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
 	require.NoError(t, err)
 
 	return ctx
