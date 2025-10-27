@@ -1,4 +1,4 @@
-package integration_test
+package db_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/golang/devex/servermanager/pprofx"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
@@ -36,13 +37,13 @@ func TestClientsLocally(t *testing.T) {
 
 func TestLTNGDBClient(t *testing.T) {
 	var err error
-	err = os.Setenv("LTNG_ENGINE", common_model.LightningEngineV2EngineVersionType.String())
+	err = os.Setenv("LTNG_DB_ENGINE", common_model.LightningEngineV2EngineVersionType.String())
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_SERVER_PORT", "50050")
+	err = os.Setenv("LTNG_DB_SERVER_PORT", "50050")
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
+	err = os.Setenv("LTNG_DB_SERVER_NETWORK", "tcp")
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_UI_ADDR", "7070")
+	err = os.Setenv("LTNG_DB_UI_ADDR", "7070")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -54,6 +55,7 @@ func TestLTNGDBClient(t *testing.T) {
 	defer func() {
 		time.Sleep(time.Millisecond * 5_000)
 		cancel()
+		time.Sleep(time.Millisecond * 5_000)
 	}()
 
 	time.Sleep(time.Millisecond * 500)
@@ -61,7 +63,7 @@ func TestLTNGDBClient(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 50)
 	cts = data.InitLocalClientTestSuite(t, common_model.LightningEngineV2EngineVersionType)
 
-	t.Log("Test_LTNGDB_Client_Engine")
+	t.Log("Test_LTNG_DB_Client_Engine")
 	testLTNGDBClient(t)
 }
 
@@ -232,19 +234,19 @@ func testLTNGDBClient(t *testing.T) {
 
 func TestBadgerDBClient(t *testing.T) {
 	var err error
-	err = os.Setenv("LTNG_ENGINE", common_model.BadgerDBV4EngineVersionType.String())
+	err = os.Setenv("LTNG_DB_ENGINE", common_model.BadgerDBV4EngineVersionType.String())
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_SERVER_PORT", "50051")
+	err = os.Setenv("LTNG_DB_SERVER_PORT", "50051")
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_SERVER_NETWORK", "tcp")
+	err = os.Setenv("LTNG_DB_SERVER_NETWORK", "tcp")
 	require.NoError(t, err)
-	err = os.Setenv("LTNG_UI_ADDR", "7071")
+	err = os.Setenv("LTNG_DB_UI_ADDR", "7071")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	offThread := syncx.NewThreadOperator("TestMain")
 	offThread.Op(func() {
-		main(ctx, cancel)
+		main(ctx, cancel, pprofx.WithPprofPort("7072"))
 	})
 	defer offThread.Wait()
 	defer func() {
@@ -601,8 +603,6 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 	defer func() {
 		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
 	}()
-
-	// Profiling is now handled at the TestClients level
 
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",

@@ -13,12 +13,12 @@ require (
 	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6
 	gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8
-	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.8
+	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.9
 	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
-	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.10
+	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.12
 	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5
 	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2

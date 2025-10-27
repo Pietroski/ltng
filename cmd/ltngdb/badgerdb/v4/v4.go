@@ -6,8 +6,10 @@ import (
 	"net"
 
 	"github.com/dgraph-io/badger/v4"
-	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/servermanager/pprofx"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
+	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/servermanager"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
@@ -24,6 +26,7 @@ func StartV4(
 	logger slogx.SLogger,
 	_ serializermodels.Serializer,
 	exitter func(code int),
+	opts ...options.Option,
 ) {
 	logger.Debug(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
@@ -93,7 +96,7 @@ func StartV4(
 
 	servermanager.New(ctx, cancelFn,
 		servermanager.WithExiter(exitter),
-		servermanager.WithPprofServer(ctx),
+		servermanager.WithPprofServer(ctx, append(opts, pprofx.WithPprofLogger(logger))...),
 		servermanager.WithServers(servermanager.ServerMapping{
 			"lightning-node-badger-db-engine-v4": factory,
 		}),

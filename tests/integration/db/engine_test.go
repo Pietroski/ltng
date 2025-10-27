@@ -1,4 +1,4 @@
-package integration_test
+package db_test
 
 import (
 	"context"
@@ -30,8 +30,8 @@ func TestEngines(t *testing.T) {
 	t.Log("testLTNGDBEngineV2")
 	testLTNGDBEngineV2(t)
 
-	//t.Log("testBadgerDBEngine")
-	//testBadgerDBEngine(t)
+	t.Log("testBadgerDBEngine")
+	testBadgerDBEngine(t)
 }
 
 func testLTNGDBEngineV2(t *testing.T) {
@@ -285,8 +285,9 @@ func TestReadFromFQ(t *testing.T) {
 }
 
 func TestCheckFileCount(t *testing.T) {
-	err := execx.Run("sh", "-c",
+	out, err := execx.RunOutput("sh", "-c",
 		"find .ltngdb/v2/stores/user-store -maxdepth 1 -type f | wc -l",
 	)
 	require.NoError(t, err)
+	t.Log(string(out))
 }

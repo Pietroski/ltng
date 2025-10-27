@@ -74,7 +74,7 @@ func newOpSaga(ctx context.Context, e *LTNGEngine) *opSaga {
 
 func (op *opSaga) ListenAndTrigger(ctx context.Context) {
 	ctx = context.WithValue(ctx, "thread", "operator_saga-ListenAndTrigger")
-	// TODO: we need to be able to close the channel to stop the loop
+	// TODO: we need to be able to close the channel to stop the loop - DONE BUT CONFIRM IT!!
 	loop.RunFromChannel(ctx,
 		op.crudChannels.OpSagaChannel.QueueChannel.Ch,
 		func(_ struct{}) {

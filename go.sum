@@ -69,8 +69,8 @@ gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6 h1:ss/Ko0xQpmo6I
 gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6/go.mod h1:emKct6ZwvUY+LB/Hw7bun6GHDR0XWxeLPCU87ekxXMQ=
 gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8 h1:sdf0KMIJd84LwsPcfErDw3ZUbkRA9hgOsOT139Thq0k=
 gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8/go.mod h1:JC3kZbQQD/d03632Uq19TACGy3OuUD8jdnBtogF1Ob0=
-gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.8 h1:OOYcdYPkoOs5S6/wfM/u5nE0SP+xNEfQ4U+fWvnywlI=
-gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.8/go.mod h1:RQALMCVe3Rl8MwId3mWfF54dD8/SMrQSOHhJT54FUGw=
+gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.9 h1:WCn8ntn8894rgETMo0CcW3sFS2vM7+t1kUJpKP0fZvE=
+gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.9/go.mod h1:9PYp+emdZZ6rhk4kKymWppLSXISTvUePq3vqp+RrCRo=
 gitlab.com/pietroski-software-company/golang/devex/options v0.0.1 h1:n8Om/jzCR4OO4qw62lYrQvwidDlRYBhORBkmZUFJ5mo=
 gitlab.com/pietroski-software-company/golang/devex/options v0.0.1/go.mod h1:w7bu5J7d5PtH/xOckanmUvheqDQcT2Zzs4zE+MzZpF8=
 gitlab.com/pietroski-software-company/golang/devex/random v0.0.2 h1:6nAHplXXMtGI5sUBvK6u0sIHDnfMJijasn7ZD0fmAjQ=
@@ -79,8 +79,8 @@ gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2 h1:Tpgd5gjMebebFh
 gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2/go.mod h1:7EshCHouQf3LkSB40y1hSlx34jotomIes56XNHf5Pyc=
 gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1 h1:WGU/xXCCnogAMzpojaZMBsF8W28BVbfiE6tFBUdnTVw=
 gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1/go.mod h1:EeB0qvs577CZm/Rtit7Yvg6Usjvcy6Xfon6KBiCLtDE=
-gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.10 h1:LaSqhAWxKq5OCZO+VP75cg4HpNBB6YsxOo4GzGuom4w=
-gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.10/go.mod h1:Ec3U10MR+ODCjiZcpOZ3RexOBaA7IjF7YZAJbHCeNAQ=
+gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.12 h1:ZB5yzpU/Koae8R4WPTYnMzmsKTq619+07g5LcX77FiI=
+gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.12/go.mod h1:Ec3U10MR+ODCjiZcpOZ3RexOBaA7IjF7YZAJbHCeNAQ=
 gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5 h1:/4j+hxfDL6+6baVU6wY/DYyDZbCUwpoqvc8EEL8oK/g=
 gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5/go.mod h1:l39ILy5aPrgNJJHYCpc6UoJ4chZg1c59Lt8EUHX/r/Q=
 gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.4 h1:ZzyAV4zrQgExMNE+Vvk/dFsVIkq6QMb41CsiolkmxiI=

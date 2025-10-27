@@ -1,4 +1,4 @@
-package integration_test
+package db_test
 
 import (
 	"bufio"
@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"gitlab.com/pietroski-software-company/golang/devex/env"
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
@@ -17,6 +18,9 @@ import (
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
+
+//err = execx.Run("sh", "-c", "lsof -ti:7001 | xargs kill -9")
+//require.NoError(t, err)
 
 func ReadEnvFile(filename string) (map[string]string, error) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
@@ -88,12 +92,13 @@ const (
 //	os.Exit(m.Run())
 //}
 
-func main(ctx context.Context, cancel context.CancelFunc) {
-	//ctx, cancelFn := context.WithCancel(context.Background())
-	//defer cancelFn()
-
+func main(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	opts ...options.Option,
+) {
 	var err error
-	logger := slogx.New()
+	logger := slogx.New(slogx.WithSLogLevel(slogx.LevelTest))
 
 	s := serializer.NewJsonSerializer()
 	cfg := &ltng_node_config.Config{}
@@ -108,7 +113,7 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	case common_model.BadgerDBV4EngineVersionType:
 		badgerdb_engine_v4.StartV4(ctx, cancel, cfg, logger, s, func(code int) {
 			logger.Debug(ctx, "os.Exit", "code", code)
-		})
+		}, opts...)
 	case common_model.LightningEngineV2EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:
@@ -116,6 +121,6 @@ func main(ctx context.Context, cancel context.CancelFunc) {
 	default:
 		ltngdb_engine_v2.StartV2(ctx, cancel, cfg, logger, s, func(code int) {
 			logger.Debug(ctx, "os.Exit", "code", code)
-		})
+		}, opts...)
 	}
 }

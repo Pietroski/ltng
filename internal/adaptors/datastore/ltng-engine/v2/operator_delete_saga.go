@@ -249,7 +249,7 @@ func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 					itemInfoData.DBMetaInfo.Path, strItemKey),
 				); os.IsNotExist(err) {
 					s.deleteSaga.opSaga.e.logger.Error(ctx, "file does not exist",
-						"item_info_data", itemInfoData, "err", err)
+						"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 					itemInfoData.RespSignal <- errorsx.Wrap(err, "file does not exist")
 					close(itemInfoData.RespSignal)
 					return
@@ -285,7 +285,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 	err := <-deleteItemFromDiskRespSignal
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete action item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -299,7 +299,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete action relational item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -315,7 +315,7 @@ func (s *deleteCascadeSaga) noIndexTrigger(
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx,
 			"error on triggering delete action item info data delete temporary records",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -365,7 +365,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 		deleteIndexingListItemFromDiskOnThreadRespSignal,
 	); err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete indexed action item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -380,7 +380,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 	err = <-deleteRelationalItemFromDiskOnThreadRespSignal
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on triggering delete indexed action relational item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -397,7 +397,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx,
 			"error on triggering delete indexed action item info data temporary records",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		//close(itemInfoData.RespSignal)
@@ -427,7 +427,7 @@ func (s *deleteCascadeSaga) noIndexRollback(
 	err := <-recreateItemOnDiskRespSignal
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on rolling back trigger for item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 	}
 
 	deleteTemporaryRecordsFromDiskOnThreadRespSignal := make(chan error, 1)
@@ -439,7 +439,7 @@ func (s *deleteCascadeSaga) noIndexRollback(
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx,
 			"error on triggering item info data delete temporary records action",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 	}
 }
 
@@ -469,7 +469,7 @@ func (s *deleteCascadeSaga) indexRollback(
 		recreateIndexListItemOnDiskRespSignal,
 	); err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx, "error on rolling back trigger for item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 	}
 
 	deleteTemporaryRecordsFromDiskOnThreadRespSignal := make(chan error, 1)
@@ -481,7 +481,7 @@ func (s *deleteCascadeSaga) indexRollback(
 	if err != nil {
 		s.deleteSaga.opSaga.e.logger.Error(ctx,
 			"error on triggering item info data delete temporary records action",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 	}
 }
 

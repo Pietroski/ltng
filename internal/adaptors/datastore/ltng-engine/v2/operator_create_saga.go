@@ -78,7 +78,7 @@ func (s *createSaga) noIndexTrigger(
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on triggering create action itemInfoData",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
 		return
@@ -90,7 +90,7 @@ func (s *createSaga) noIndexTrigger(
 	err = <-createRelationalItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on trigger create action itemInfoData relational",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -121,7 +121,7 @@ func (s *createSaga) indexTrigger(
 		createIndexItemListOnDiskRespSignal,
 	); err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -134,7 +134,7 @@ func (s *createSaga) indexTrigger(
 	err := <-createRelationalItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data relational",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -163,7 +163,7 @@ func (s *createSaga) noIndexRollback(
 	err := <-deleteItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 	}
 }
 
@@ -187,7 +187,7 @@ func (s *createSaga) indexRollback(
 		deleteIndexItemListOnDiskRespSignal,
 	); err != nil {
 		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
-			"item_info_data", itemInfoData, "err", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
 	}
 }
 

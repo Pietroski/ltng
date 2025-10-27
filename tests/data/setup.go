@@ -11,6 +11,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
@@ -24,7 +25,7 @@ import (
 )
 
 const (
-	relativePath      = "../../"
+	relativePath      = "../../../"
 	dockerComposePath = "build/orchestrator/docker-compose-test.yml"
 )
 
@@ -206,7 +207,8 @@ func InitLocalClientTestSuite[T TestBench](tb T, engineType common_model.EngineV
 }
 
 func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
-	ctx := context.Background()
+	ctx, err := tracer.New().Trace(context.Background())
+	require.NoError(tb, err)
 	CleanupDirectories(tb)
 
 	ltngDBEngineV2, err := ltng_engine_v2.New(ctx)

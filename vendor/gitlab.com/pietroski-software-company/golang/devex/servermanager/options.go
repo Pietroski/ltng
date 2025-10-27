@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"gitlab.com/pietroski-software-company/golang/devex/options"
-	"gitlab.com/pietroski-software-company/golang/devex/servermanager/internal/pprof"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
+
+	"gitlab.com/pietroski-software-company/golang/devex/servermanager/pprofx"
 )
 
 func WithContextCancellation(ctx context.Context, cancel context.CancelFunc) options.Option {
@@ -26,8 +27,8 @@ func WithContextCancellation(ctx context.Context, cancel context.CancelFunc) opt
 func WithPprofServer(ctx context.Context, opts ...options.Option) options.Option {
 	return func(i interface{}) {
 		if c, ok := i.(*handler); ok {
-			c.serverMapping[pprof.DefaultPprofServerNameKey] =
-				pprof.NewPProfServer(ctx, opts...)
+			c.serverMapping[pprofx.DefaultPprofServerNameKey] =
+				pprofx.NewPProfServer(ctx, opts...)
 		}
 	}
 }

@@ -138,7 +138,7 @@ func (s *upsertSaga) indexTrigger(
 		upsertIndexItemListOnDiskRespSignal,
 	); err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert indexed action item info data",
-			"item_info_data", itemInfoData, "error", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -152,7 +152,7 @@ func (s *upsertSaga) indexTrigger(
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx,
 			"error on trigger upsert indexed action item info data relational",
-			"item_info_data", itemInfoData, "error", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -165,7 +165,7 @@ func (s *upsertSaga) indexTrigger(
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data cleanup",
-			"item_info_data", itemInfoData, "error", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "error", err)
 		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
 		itemInfoData.RespSignal <- err
 		close(itemInfoData.RespSignal)
@@ -194,7 +194,7 @@ func (s *upsertSaga) noIndexRollback(
 	err := <-deleteItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error rolling back trigger for upsert item info data",
-			"item_info_data", itemInfoData, "error", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "error", err)
 	}
 }
 
@@ -218,7 +218,7 @@ func (s *upsertSaga) indexRollback(
 		deleteIndexItemListOnDiskRespSignal,
 	); err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error rolling back trigger for indexed upsert item info data",
-			"item_info_data", itemInfoData, "error", err)
+			"item_info_data", itemInfoData.DBMetaInfo, "error", err)
 	}
 }
 

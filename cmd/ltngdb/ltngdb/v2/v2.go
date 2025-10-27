@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net"
 
+	"gitlab.com/pietroski-software-company/golang/devex/options"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/servermanager"
+	"gitlab.com/pietroski-software-company/golang/devex/servermanager/pprofx"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
@@ -23,6 +25,7 @@ func StartV2(
 	logger slogx.SLogger,
 	_ serializermodels.Serializer,
 	exiter func(code int),
+	opts ...options.Option,
 ) {
 	logger.Debug(ctx, "opening ltngdb engine v2")
 	engine, err := ltng_engine_v2.New(ctx)
@@ -89,7 +92,7 @@ func StartV2(
 	servermanager.New(ctx, cancelFn,
 		servermanager.WithExiter(exiter),
 		servermanager.WithLogger(logger),
-		servermanager.WithPprofServer(ctx),
+		servermanager.WithPprofServer(ctx, append(opts, pprofx.WithPprofLogger(logger))...),
 		servermanager.WithServers(servermanager.ServerMapping{
 			"lightning-node-server-engine-v2":    factory,
 			"lightning-node-server-engine-v2-ui": httpFactory,
