@@ -31,7 +31,7 @@ func StartV4(
 	logger.Debug(ctx, "opening badger local manager")
 	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
 	if err != nil {
-		logger.Error(ctx, "opening badger local manager", err)
+		logger.Error(ctx, "error opening badger local manager", "error", err)
 
 		return
 	}
