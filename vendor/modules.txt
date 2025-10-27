@@ -106,7 +106,7 @@ gitlab.com/pietroski-software-company/golang/devex/execx
 # gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/loop
-# gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.7
+# gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.8
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/middlewares/gRPC
 # gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
@@ -123,14 +123,14 @@ gitlab.com/pietroski-software-company/golang/devex/saga
 gitlab.com/pietroski-software-company/golang/devex/serializer
 gitlab.com/pietroski-software-company/golang/devex/serializer/internal/bytesx
 gitlab.com/pietroski-software-company/golang/devex/serializer/models
-# gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.9
+# gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.10
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/servermanager
 gitlab.com/pietroski-software-company/golang/devex/servermanager/internal/pprof
 # gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/slogx
-# gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.3
+# gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/syncx
 # gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.2

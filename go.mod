@@ -13,14 +13,14 @@ require (
 	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6
 	gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8
-	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.7
+	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.8
 	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
-	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.9
+	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.10
 	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5
-	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.3
+	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.4
 	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 	go.uber.org/mock v0.6.0
 	golang.org/x/sys v0.37.0
@@ -58,3 +58,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+//replace gitlab.com/pietroski-software-company/golang/devex/syncx => /Users/pietroski/Documents/PTK_SWE/golang/devex/syncx

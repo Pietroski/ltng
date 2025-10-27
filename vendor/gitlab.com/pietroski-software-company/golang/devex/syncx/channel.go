@@ -37,6 +37,16 @@ func (ch *Channel[T]) Send(v T) (sent bool) {
 		return false
 	}
 
+	for !ch.lock.CompareAndSwap(false, true) {
+		runtime.Gosched()
+	}
+	// Release the lock before returning
+	defer ch.lock.Store(false)
+
+	if ch.isClosed.Load() {
+		return false
+	}
+
 	ch.Ch <- v
 	return true
 }

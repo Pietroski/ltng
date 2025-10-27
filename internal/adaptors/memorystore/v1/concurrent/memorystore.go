@@ -48,7 +48,7 @@ func (engine *LTNGCacheEngine) CreateItem(
 		Opts:       opts,
 		RespSignal: respSignal,
 	}
-	engine.opSaga.crudChannels.OpSagaChannel.InfoChannel <- itemInfoData
+	engine.opSaga.crudChannels.OpSagaChannel.InfoChannel.Send(itemInfoData)
 	if err := <-respSignal; err != nil {
 		return nil, err
 	}
