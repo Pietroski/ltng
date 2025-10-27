@@ -54,6 +54,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.Error(t, err)
 				require.Nil(t, info)
 				t.Log(info)
+
+				ltngEngine.Close()
 			})
 
 			t.Run("detect last opened at difference after closing", func(t *testing.T) {
@@ -119,6 +121,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					t.Log(info)
 
 					assertLOFromHistory(t, infoHistory)
+
+					ltngEngine.Close()
 				})
 
 				t.Run("with restart", func(t *testing.T) {
@@ -184,6 +188,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					t.Log(info)
 
 					assertLOFromHistory(t, infoHistory)
+
+					ltngEngine.Close()
 				})
 			})
 		})
@@ -243,6 +249,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, info)
 			t.Log(info)
+
+			ltngEngine.Close()
 		})
 
 		t.Run("for inexistent store", func(t *testing.T) {
@@ -256,6 +264,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 				Path: "delete-inexistent-path",
 			})
 			require.Error(t, err)
+
+			ltngEngine.Close()
 		})
 	})
 
@@ -1585,6 +1595,15 @@ func prepareTest(t *testing.T) context.Context {
 	require.NoError(t, err)
 
 	return ctx
+}
+
+func prepareTestWithCancel(t *testing.T) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	err := osx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
+	err = osx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
+	require.NoError(t, err)
+
+	return ctx, cancel
 }
 
 func assertLOFromHistory(t *testing.T, history []*ltngenginemodels.StoreInfo) {

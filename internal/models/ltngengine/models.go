@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"os"
 	"time"
+
+	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 )
 
 const (
@@ -106,18 +108,18 @@ type (
 	}
 
 	OpChannels struct {
-		QueueChannel                  chan struct{}
-		InfoChannel                   chan *ItemInfoData
-		ActionItemChannel             chan *ItemInfoData
-		RollbackItemChannel           chan *ItemInfoData
-		ActionIndexItemChannel        chan *ItemInfoData
-		RollbackIndexItemChannel      chan *ItemInfoData
-		ActionIndexListItemChannel    chan *ItemInfoData
-		RollbackIndexListItemChannel  chan *ItemInfoData
-		ActionRelationalItemChannel   chan *ItemInfoData
-		RollbackRelationalItemChannel chan *ItemInfoData
+		QueueChannel                  *syncx.Channel[struct{}]
+		InfoChannel                   *syncx.Channel[*ItemInfoData]
+		ActionItemChannel             *syncx.Channel[*ItemInfoData]
+		RollbackItemChannel           *syncx.Channel[*ItemInfoData]
+		ActionIndexItemChannel        *syncx.Channel[*ItemInfoData]
+		RollbackIndexItemChannel      *syncx.Channel[*ItemInfoData]
+		ActionIndexListItemChannel    *syncx.Channel[*ItemInfoData]
+		RollbackIndexListItemChannel  *syncx.Channel[*ItemInfoData]
+		ActionRelationalItemChannel   *syncx.Channel[*ItemInfoData]
+		RollbackRelationalItemChannel *syncx.Channel[*ItemInfoData]
 
-		CleanUpUpsert chan *ItemInfoData
+		CleanUpUpsert *syncx.Channel[*ItemInfoData]
 	}
 
 	CrudChannels struct {
@@ -129,18 +131,17 @@ type (
 )
 
 func (opChan *OpChannels) Close() {
-	close(opChan.QueueChannel)
-	close(opChan.InfoChannel)
-	close(opChan.ActionItemChannel)
-	close(opChan.RollbackItemChannel)
-	close(opChan.ActionIndexItemChannel)
-	close(opChan.RollbackIndexItemChannel)
-	close(opChan.ActionIndexListItemChannel)
-	close(opChan.RollbackIndexListItemChannel)
-	close(opChan.ActionRelationalItemChannel)
-	close(opChan.RollbackRelationalItemChannel)
-
-	close(opChan.CleanUpUpsert)
+	opChan.QueueChannel.Close()
+	opChan.InfoChannel.Close()
+	opChan.ActionItemChannel.Close()
+	opChan.RollbackItemChannel.Close()
+	opChan.ActionIndexItemChannel.Close()
+	opChan.RollbackIndexItemChannel.Close()
+	opChan.ActionIndexListItemChannel.Close()
+	opChan.RollbackIndexListItemChannel.Close()
+	opChan.ActionRelationalItemChannel.Close()
+	opChan.RollbackRelationalItemChannel.Close()
+	opChan.CleanUpUpsert.Close()
 }
 
 type OpNatureType string
@@ -164,19 +165,29 @@ const ChannelLimit = 1 << 8 // 1 << 15
 
 func MakeOpChannels() *OpChannels {
 	return &OpChannels{
-		QueueChannel: make(chan struct{}, ChannelLimit),
-		InfoChannel:  make(chan *ItemInfoData, ChannelLimit),
+		QueueChannel: syncx.NewChannel[struct{}](syncx.WithChannelSize[struct{}](ChannelLimit)),
+		InfoChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
 
-		ActionItemChannel:             make(chan *ItemInfoData, ChannelLimit),
-		RollbackItemChannel:           make(chan *ItemInfoData, ChannelLimit),
-		ActionIndexItemChannel:        make(chan *ItemInfoData, ChannelLimit),
-		RollbackIndexItemChannel:      make(chan *ItemInfoData, ChannelLimit),
-		ActionIndexListItemChannel:    make(chan *ItemInfoData, ChannelLimit),
-		RollbackIndexListItemChannel:  make(chan *ItemInfoData, ChannelLimit),
-		ActionRelationalItemChannel:   make(chan *ItemInfoData, ChannelLimit),
-		RollbackRelationalItemChannel: make(chan *ItemInfoData, ChannelLimit),
+		ActionItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		RollbackItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		ActionIndexItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		RollbackIndexItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		ActionIndexListItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		RollbackIndexListItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		ActionRelationalItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
+		RollbackRelationalItemChannel: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
 
-		CleanUpUpsert: make(chan *ItemInfoData, ChannelLimit),
+		CleanUpUpsert: syncx.NewChannel[*ItemInfoData](
+			syncx.WithChannelSize[*ItemInfoData](ChannelLimit)),
 	}
 }
 

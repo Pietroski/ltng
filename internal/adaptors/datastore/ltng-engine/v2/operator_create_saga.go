@@ -7,10 +7,10 @@ import (
 	"os"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 )
 
 type createSaga struct {
@@ -56,8 +56,8 @@ func newCreateSaga(ctx context.Context, opSaga *opSaga) *createSaga {
 
 func (s *createSaga) ListenAndTrigger(ctx context.Context) {
 	ctx = context.WithValue(ctx, "thread", "operator_create_saga-ListenAndTrigger")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.InfoChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.InfoChannel.Ch,
 		func(itemInfoData *ltngenginemodels.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
 				s.noIndexTrigger(ctx, itemInfoData)
@@ -74,7 +74,7 @@ func (s *createSaga) noIndexTrigger(
 ) {
 	createItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateItemOnDisk := itemInfoData.WithRespChan(createItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
+	s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Send(itemInfoDataForCreateItemOnDisk)
 	err := <-createItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on triggering create action itemInfoData",
@@ -86,7 +86,7 @@ func (s *createSaga) noIndexTrigger(
 
 	createRelationalItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateRelationalItemOnDisk := itemInfoData.WithRespChan(createRelationalItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
+	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Send(itemInfoDataForCreateRelationalItemOnDisk)
 	err = <-createRelationalItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on trigger create action itemInfoData relational",
@@ -111,9 +111,9 @@ func (s *createSaga) indexTrigger(
 	createIndexItemListOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateIndexItemListOnDisk := itemInfoData.WithRespChan(createIndexItemListOnDiskRespSignal)
 
-	s.opSaga.crudChannels.CreateChannels.ActionItemChannel <- itemInfoDataForCreateItemOnDisk
-	s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel <- itemInfoDataForCreateIndexItemOnDisk
-	s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel <- itemInfoDataForCreateIndexItemListOnDisk
+	s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Send(itemInfoDataForCreateItemOnDisk)
+	s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel.Send(itemInfoDataForCreateIndexItemOnDisk)
+	s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel.Send(itemInfoDataForCreateIndexItemListOnDisk)
 
 	if err := ResponseAccumulator(
 		createItemOnDiskRespSignal,
@@ -130,7 +130,7 @@ func (s *createSaga) indexTrigger(
 
 	createRelationalItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCreateRelationalItemOnDisk := itemInfoData.WithRespChan(createRelationalItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel <- itemInfoDataForCreateRelationalItemOnDisk
+	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Send(itemInfoDataForCreateRelationalItemOnDisk)
 	err := <-createRelationalItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data relational",
@@ -159,7 +159,7 @@ func (s *createSaga) noIndexRollback(
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
-	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel <- itemInfoDataForDeleteItemOnDisk
+	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Send(itemInfoDataForDeleteItemOnDisk)
 	err := <-deleteItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
@@ -177,9 +177,9 @@ func (s *createSaga) indexRollback(
 	deleteIndexItemListOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteIndexItemListOnDisk := itemInfoData.WithRespChan(deleteIndexItemListOnDiskRespSignal)
 
-	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel <- itemInfoDataForDeleteItemOnDisk
-	s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel <- itemInfoDataForDeleteIndexItemOnDisk
-	s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel <- itemInfoDataForDeleteIndexItemListOnDisk
+	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Send(itemInfoDataForDeleteItemOnDisk)
+	s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel.Send(itemInfoDataForDeleteIndexItemOnDisk)
+	s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel.Send(itemInfoDataForDeleteIndexItemListOnDisk)
 
 	if err := ResponseAccumulator(
 		deleteItemOnDiskRespSignal,
@@ -196,8 +196,8 @@ func (s *createSaga) createItemOnDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "createItemOnDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.createItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
@@ -210,8 +210,8 @@ func (s *createSaga) deleteItemOnDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "deleteItemOnDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.RollbackItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
@@ -226,8 +226,8 @@ func (s *createSaga) createIndexItemOnDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "createIndexItemOnDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			op := syncx.NewThreadOperator("createIndexItemOnDisk")
 			for _, indexKey := range v.Opts.IndexingKeys {
@@ -256,8 +256,8 @@ func (s *createSaga) deleteIndexItemFromDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "deleteIndexItemFromDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			var errAcc error
 			for _, indexKey := range v.Opts.IndexingKeys {
@@ -282,8 +282,8 @@ func (s *createSaga) createIndexListItemOnDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "createIndexListItemOnDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.createItemOnDisk(ctx,
 				v.DBMetaInfo.IndexListInfo(),
@@ -302,8 +302,8 @@ func (s *createSaga) deleteIndexListItemFromDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "deleteIndexListItemFromDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
@@ -318,8 +318,8 @@ func (s *createSaga) createRelationalItemOnDiskOnThread(
 	ctx context.Context,
 ) {
 	ctx = context.WithValue(ctx, "thread", "createRelationalItemOnDiskOnThread")
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err

@@ -53,14 +53,13 @@ func (ch *Channel[T]) Close() {
 	for !ch.lock.CompareAndSwap(false, true) {
 		runtime.Gosched()
 	}
+	// Release the lock before returning
+	defer ch.lock.Store(false)
 
 	if ch.isClosed.Load() {
-		// Release the lock before returning
-		ch.lock.Store(false)
 		return
 	}
 
 	ch.isClosed.Store(true)
 	close(ch.Ch)
-	ch.lock.Store(false)
 }

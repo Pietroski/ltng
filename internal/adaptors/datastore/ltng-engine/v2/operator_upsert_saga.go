@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"os"
 
+	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
@@ -60,8 +60,8 @@ func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 }
 
 func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.InfoChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.InfoChannel.Ch,
 		func(itemInfoData *ltngenginemodels.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
 				s.noIndexTrigger(ctx, itemInfoData)
@@ -78,7 +78,7 @@ func (s *upsertSaga) noIndexTrigger(
 ) {
 	upsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertItemOnDisk := itemInfoData.WithRespChan(upsertItemOnDiskRespSignal)
-	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel <- itemInfoDataForUpsertItemOnDisk
+	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel.Send(itemInfoDataForUpsertItemOnDisk)
 	err := <-upsertItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data",
@@ -90,7 +90,7 @@ func (s *upsertSaga) noIndexTrigger(
 
 	upsertRelationalItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertRelationalItemOnDisk := itemInfoData.WithRespChan(upsertRelationalItemOnDiskRespSignal)
-	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel <- itemInfoDataForUpsertRelationalItemOnDisk
+	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel.Send(itemInfoDataForUpsertRelationalItemOnDisk)
 	err = <-upsertRelationalItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data relational",
@@ -103,7 +103,7 @@ func (s *upsertSaga) noIndexTrigger(
 
 	cleanUpUpsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCleanUpUpsertItemOnDisk := itemInfoData.WithRespChan(cleanUpUpsertItemOnDiskRespSignal)
-	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert <- itemInfoDataForCleanUpUpsertItemOnDisk
+	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert.Send(itemInfoDataForCleanUpUpsertItemOnDisk)
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data cleanup",
@@ -128,9 +128,9 @@ func (s *upsertSaga) indexTrigger(
 	upsertIndexItemListOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertIndexItemListOnDisk := itemInfoData.WithRespChan(upsertIndexItemListOnDiskRespSignal)
 
-	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel <- itemInfoDataForUpsertItemOnDisk
-	s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel <- itemInfoDataForUpsertIndexItemOnDisk
-	s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel <- itemInfoDataForUpsertIndexItemListOnDisk
+	s.opSaga.crudChannels.UpsertChannels.ActionItemChannel.Send(itemInfoDataForUpsertItemOnDisk)
+	s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel.Send(itemInfoDataForUpsertIndexItemOnDisk)
+	s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel.Send(itemInfoDataForUpsertIndexItemListOnDisk)
 
 	if err := ResponseAccumulator(
 		upsertItemOnDiskRespSignal,
@@ -147,7 +147,7 @@ func (s *upsertSaga) indexTrigger(
 
 	upsertRelationalItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertRelationalItemOnDisk := itemInfoData.WithRespChan(upsertRelationalItemOnDiskRespSignal)
-	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel <- itemInfoDataForUpsertRelationalItemOnDisk
+	s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel.Send(itemInfoDataForUpsertRelationalItemOnDisk)
 	err := <-upsertRelationalItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx,
@@ -161,7 +161,7 @@ func (s *upsertSaga) indexTrigger(
 
 	cleanUpUpsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForCleanUpUpsertItemOnDisk := itemInfoData.WithRespChan(cleanUpUpsertItemOnDiskRespSignal)
-	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert <- itemInfoDataForCleanUpUpsertItemOnDisk
+	s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert.Send(itemInfoDataForCleanUpUpsertItemOnDisk)
 	err = <-cleanUpUpsertItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error on trigger upsert action item info data cleanup",
@@ -190,7 +190,7 @@ func (s *upsertSaga) noIndexRollback(
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
-	s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel <- itemInfoDataForDeleteItemOnDisk
+	s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel.Send(itemInfoDataForDeleteItemOnDisk)
 	err := <-deleteItemOnDiskRespSignal
 	if err != nil {
 		s.opSaga.e.logger.Error(itemInfoData.Ctx, "error rolling back trigger for upsert item info data",
@@ -208,9 +208,9 @@ func (s *upsertSaga) indexRollback(
 	deleteIndexItemListOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteIndexItemListOnDisk := itemInfoData.WithRespChan(deleteIndexItemListOnDiskRespSignal)
 
-	s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel <- itemInfoDataForDeleteItemOnDisk
-	s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel <- itemInfoDataForDeleteIndexItemOnDisk
-	s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel <- itemInfoDataForDeleteIndexItemListOnDisk
+	s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel.Send(itemInfoDataForDeleteItemOnDisk)
+	s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel.Send(itemInfoDataForDeleteIndexItemOnDisk)
+	s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel.Send(itemInfoDataForDeleteIndexItemListOnDisk)
 
 	if err := ResponseAccumulator(
 		deleteItemOnDiskRespSignal,
@@ -226,8 +226,8 @@ func (s *upsertSaga) indexRollback(
 func (s *upsertSaga) upsertItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
@@ -239,8 +239,8 @@ func (s *upsertSaga) upsertItemOnDiskOnThread(
 func (s *upsertSaga) deleteItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
@@ -261,8 +261,8 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
 			if err != nil {
@@ -320,8 +320,8 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
 			if err != nil {
@@ -383,8 +383,8 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.upsertItemOnDisk(ctx,
 				v.DBMetaInfo.IndexListInfo(),
@@ -402,8 +402,8 @@ func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
 			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
@@ -424,8 +424,8 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
@@ -437,8 +437,8 @@ func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 func (s *upsertSaga) cleanUpUpsert(
 	ctx context.Context,
 ) {
-	ctxrunner.WithCancellation(ctx,
-		s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert,
+	loop.RunFromChannel(ctx,
+		s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert.Ch,
 		func(v *ltngenginemodels.ItemInfoData) {
 			{
 				strItemKey := hex.EncodeToString(v.Item.Key)

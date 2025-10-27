@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializer_models "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
@@ -22,7 +23,6 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -636,7 +636,7 @@ func (q *Queue) consumerThread(
 ) {
 	eventChannel := make(chan *queuemodels.Event, queueSignaler.SignalTransmissionRate)
 	go func() {
-		ctxhandler.WithCancelLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
+		loop.RunWithLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
 			// do not consume if there is no active subscribers
 			orchestrator := q.getQueueSubscribers(ctx, queueSignaler.Queue)
 			if orchestrator == nil {
@@ -650,7 +650,7 @@ func (q *Queue) consumerThread(
 	}()
 
 	go func() {
-		ctxhandler.WithCancelLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
+		loop.RunWithLimit(ctx, queueSignaler.SignalTransmissionRate, func() error {
 			q.handleEventLifecycle(ctx, queueSignaler, eventChannel)
 
 			return nil

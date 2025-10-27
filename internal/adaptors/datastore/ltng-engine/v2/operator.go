@@ -66,7 +66,7 @@ func (e *LTNGEngine) createItem(
 	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err
 	}
-	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
+	e.opSaga.crudChannels.OpSagaChannel.QueueChannel.Send(struct{}{})
 	_, _ = e.memoryStore.CreateItem(ctx, dbMetaInfo, item, opts)
 
 	return item, nil
@@ -88,7 +88,7 @@ func (e *LTNGEngine) upsertItem(
 	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err
 	}
-	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
+	e.opSaga.crudChannels.OpSagaChannel.QueueChannel.Send(struct{}{})
 	_, _ = e.memoryStore.UpsertItem(ctx, dbMetaInfo, item, opts)
 
 	return item, nil
@@ -110,7 +110,7 @@ func (e *LTNGEngine) deleteItem(
 	if err := e.fq.WriteOnCursor(ctx, itemInfoData); err != nil {
 		return nil, err
 	}
-	e.opSaga.crudChannels.OpSagaChannel.QueueChannel <- struct{}{}
+	e.opSaga.crudChannels.OpSagaChannel.QueueChannel.Send(struct{}{})
 	if opts.IndexProperties.IndexDeletionBehaviour != ltngenginemodels.IndexOnly {
 		e.markedAsDeletedMapping.Set(dbMetaInfo.LockName(hex.EncodeToString(item.Key)), struct{}{})
 	} else if opts.IndexProperties.IndexDeletionBehaviour == ltngenginemodels.IndexOnly {

@@ -94,16 +94,19 @@ github.com/vmihailenco/msgpack/v5/msgpcode
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
 github.com/vmihailenco/tagparser/v2/internal/parser
-# gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
+# gitlab.com/pietroski-software-company/golang/devex/env v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/env
-# gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
+# gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/errorsx
-# gitlab.com/pietroski-software-company/golang/devex/execx v0.0.4
+# gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/execx
-# gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.4
+# gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/loop
+# gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.7
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/middlewares/gRPC
 # gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
@@ -120,23 +123,23 @@ gitlab.com/pietroski-software-company/golang/devex/saga
 gitlab.com/pietroski-software-company/golang/devex/serializer
 gitlab.com/pietroski-software-company/golang/devex/serializer/internal/bytesx
 gitlab.com/pietroski-software-company/golang/devex/serializer/models
-# gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.7
+# gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.9
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/servermanager
 gitlab.com/pietroski-software-company/golang/devex/servermanager/internal/pprof
-# gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.4
+# gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/slogx
-# gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.1
+# gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.3
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/syncx
-# gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.1
+# gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/tokens/models
 # gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/tracer
-# gitlab.com/pietroski-software-company/golang/devex/validator v0.0.4
+# gitlab.com/pietroski-software-company/golang/devex/validator v0.0.5
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/validator
 # go.opentelemetry.io/auto/sdk v1.2.1

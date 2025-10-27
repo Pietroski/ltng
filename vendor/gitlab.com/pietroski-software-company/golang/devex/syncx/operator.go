@@ -26,16 +26,16 @@ type (
 	OffThread struct {
 		name       string
 		wg         *sync.WaitGroup
-		limiter    chan struct{}
-		errChan    chan error
-		resultChan chan any
+		limiter    *Channel[struct{}]
+		errChan    *Channel[error]
+		resultChan *Channel[any]
 	}
 )
 
 func WithThreadLimit(threadLimit int) options.Option {
 	return func(i interface{}) {
 		if c, ok := i.(*OffThread); ok {
-			c.limiter = make(chan struct{}, threadLimit)
+			c.limiter = NewChannel[struct{}](WithChannelSize[struct{}](threadLimit))
 		}
 	}
 }
@@ -43,7 +43,7 @@ func WithThreadLimit(threadLimit int) options.Option {
 func WithErrChanLimit(threadLimit int) options.Option {
 	return func(i interface{}) {
 		if c, ok := i.(*OffThread); ok {
-			c.errChan = make(chan error, threadLimit)
+			c.errChan = NewChannel[error](WithChannelSize[error](threadLimit))
 		}
 	}
 }
@@ -51,7 +51,7 @@ func WithErrChanLimit(threadLimit int) options.Option {
 func WithResultChanLimit(threadLimit int) options.Option {
 	return func(i interface{}) {
 		if c, ok := i.(*OffThread); ok {
-			c.resultChan = make(chan any, threadLimit)
+			c.resultChan = NewChannel[any](WithChannelSize[any](threadLimit))
 		}
 	}
 }
@@ -60,9 +60,9 @@ func NewThreadOperator(name string, opts ...options.Option) *OffThread {
 	op := &OffThread{
 		name:       name,
 		wg:         &sync.WaitGroup{},
-		limiter:    make(chan struct{}, defaultLimit),
-		errChan:    make(chan error, defaultMaxChanSize),
-		resultChan: make(chan any, defaultMaxChanSize),
+		limiter:    NewChannel[struct{}](WithChannelSize[struct{}](defaultLimit)),
+		errChan:    NewChannel[error](WithChannelSize[error](defaultMaxChanSize)),
+		resultChan: NewChannel[any](WithChannelSize[any](defaultMaxChanSize)),
 	}
 	options.ApplyOptions(op, opts...)
 
@@ -71,10 +71,10 @@ func NewThreadOperator(name string, opts ...options.Option) *OffThread {
 
 func (op *OffThread) Op(fn func()) {
 	op.wg.Add(1)
-	op.limiter <- struct{}{}
+	op.limiter.Send(struct{}{})
 	go func() {
 		defer func() {
-			<-op.limiter
+			<-op.limiter.Ch
 			op.wg.Done()
 		}()
 		fn()
@@ -83,20 +83,20 @@ func (op *OffThread) Op(fn func()) {
 
 func (op *OffThread) OpX(fn func() (any, error)) {
 	op.wg.Add(1)
-	op.limiter <- struct{}{}
+	op.limiter.Send(struct{}{})
 	go func() {
 		defer func() {
-			<-op.limiter
+			<-op.limiter.Ch
 			op.wg.Done()
 		}()
 		result, err := fn()
 		if err != nil {
-			op.errChan <- err
+			op.errChan.Send(err)
 			return
 		}
 
 		if result != nil {
-			op.resultChan <- result
+			op.resultChan.Send(result)
 		}
 	}()
 }
@@ -104,11 +104,11 @@ func (op *OffThread) OpX(fn func() (any, error)) {
 func (op *OffThread) WaitAndWrapErr() (err error) {
 	op.wg.Wait()
 
-	close(op.limiter)
-	close(op.errChan)
-	close(op.resultChan)
+	op.limiter.Close()
+	op.errChan.Close()
+	op.resultChan.Close()
 
-	for v := range op.errChan {
+	for v := range op.errChan.Ch {
 		if v != nil {
 			if err == nil {
 				err = v
@@ -123,13 +123,13 @@ func (op *OffThread) WaitAndWrapErr() (err error) {
 }
 
 func (op *OffThread) Collect() chan any {
-	return op.resultChan
+	return op.resultChan.Ch
 }
 
 func (op *OffThread) Wait() {
 	op.wg.Wait()
 
-	close(op.limiter)
-	close(op.errChan)
-	close(op.resultChan)
+	op.limiter.Close()
+	op.errChan.Close()
+	op.resultChan.Close()
 }

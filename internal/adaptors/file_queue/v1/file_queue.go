@@ -13,12 +13,12 @@ import (
 	"golang.org/x/sys/unix"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxhandler"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
@@ -745,13 +745,13 @@ func (fq *FileQueue) ReaderPooler(
 	ctx context.Context,
 	handler func(ctx context.Context, bs []byte) error,
 ) error {
-	ctxhandler.WithCancellation(ctx, func() error {
+	loop.Run(ctx, func() error {
 		//time.Sleep(time.Millisecond * 50)
 		bs, err := fq.Read(ctx)
 		if err != nil {
 			// log.Printf("error reading file queue: %v", err)
 			if err == io.EOF {
-				return ctxhandler.ErrEnded
+				return loop.ErrEnded
 			}
 
 			return err

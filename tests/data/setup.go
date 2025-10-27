@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
@@ -20,7 +20,7 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/execx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
 const (
@@ -46,10 +46,10 @@ type TestBench interface {
 }
 
 func DockerComposeUp[T TestBench](tb T) {
-	_, err := osx.Executor(exec.Command("sh", "-c",
+	err := execx.Run("sh", "-c",
 		fmt.Sprintf("docker compose -f %s up -d --build --remove-orphans",
 			relativePath+dockerComposePath),
-	))
+	)
 	require.NoError(tb, err)
 
 	time.Sleep(2 * time.Second)
@@ -64,10 +64,10 @@ func DockerComposeUp[T TestBench](tb T) {
 
 func DockerComposeDown[T TestBench](tb T) {
 	tb.Cleanup(func() {
-		_, err := osx.Executor(exec.Command("sh", "-c",
+		err := execx.Run("sh", "-c",
 			fmt.Sprintf("docker compose -f %s down",
 				relativePath+dockerComposePath),
-		))
+		)
 		require.NoError(tb, err)
 	})
 }
@@ -76,10 +76,9 @@ func DockerComposeDown[T TestBench](tb T) {
 func waitForContainer[T TestBench](tb T, containerName string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		bs, err := osx.Executor(exec.Command("sh", "-c",
-			fmt.Sprintf("docker inspect --format='{{.State.Running}}' %s", containerName)))
-		tb.Logf("output: %s", bs)
-		if err == nil && strings.TrimSpace(string(bs)) == "true" {
+		output, err := execx.RunOutput("sh", "-c",
+			fmt.Sprintf("docker inspect --format='{{.State.Running}}' %s", containerName))
+		if err == nil && strings.TrimSpace(string(output)) == "true" {
 			// Optional: Add additional check for port readiness
 			if err = checkPortReady("localhost", "50050", 5*time.Second); err == nil {
 				return nil
@@ -245,18 +244,17 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 
 func CleanupDirectories[T TestBench](tb T) {
 	ctx := context.Background()
-	_, err := osx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err := osx.DelHardExec(ctx, ltngFileQueueBasePath)
 	require.NoError(tb, err)
-	_, err = osx.DelHardExec(ctx, ltngdbBasePath)
+	err = osx.DelHardExec(ctx, ltngdbBasePath)
 	require.NoError(tb, err)
-	_, err = osx.DelHardExec(ctx, dbBasePath)
+	err = osx.DelHardExec(ctx, dbBasePath)
 	require.NoError(tb, err)
 }
 
 func CleanupProcesses[T TestBench](tb T) {
-	bs, err := osx.Executor(exec.Command("sh", "-c", "lsof -ti:50000-51000 | xargs kill -9"))
+	err := execx.Run("sh", "-c", "lsof -ti:50000-51000 | xargs kill -9")
 	require.NoError(tb, err)
-	tb.Logf("Cleaning up processes: %s", bs)
 }
 
 func SetTestDeadline[T TestBench](tb T) {

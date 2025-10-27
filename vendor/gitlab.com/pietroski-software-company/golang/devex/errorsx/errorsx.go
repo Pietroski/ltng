@@ -169,10 +169,32 @@ func (e *Error) As(target any) bool {
 	return false
 }
 
+func Is(err error, target error) bool {
+	e, ok := err.(*Error)
+	if !ok {
+		return false
+	}
+
+	return e.Is(target)
+}
+
 // Is implements the errors.Is interface.
 func (e *Error) Is(target error) bool {
-	if t, ok := target.(*Error); ok {
-		return e.message == t.message
+	if e == nil || target == nil {
+		return e == target
+	}
+
+	t, ok := target.(*Error)
+	if !ok {
+		return false
+	}
+
+	for e != nil {
+		if e.message == t.message {
+			return true
+		}
+
+		e = e.next
 	}
 
 	return false
@@ -271,6 +293,10 @@ func (e *Error) Error() string {
 
 // StackTrace returns the formatted stack trace.
 func (e *Error) StackTrace() string {
+	if e == nil || len(e.stacktrace) <= 0 {
+		return ""
+	}
+
 	var buf strings.Builder
 
 	frames := runtime.CallersFrames(e.stacktrace)

@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/process"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/ctx/ctxrunner"
 )
 
 func ResponseAccumulator(respSigChan ...chan error) error {
@@ -74,8 +74,9 @@ func newOpSaga(ctx context.Context, e *LTNGEngine) *opSaga {
 
 func (op *opSaga) ListenAndTrigger(ctx context.Context) {
 	ctx = context.WithValue(ctx, "thread", "operator_saga-ListenAndTrigger")
-	ctxrunner.WithCancellation(ctx,
-		op.crudChannels.OpSagaChannel.QueueChannel,
+	// TODO: we need to be able to close the channel to stop the loop
+	loop.RunFromChannel(ctx,
+		op.crudChannels.OpSagaChannel.QueueChannel.Ch,
 		func(_ struct{}) {
 			op.listenAndTrigger(ctx)
 		},
@@ -103,11 +104,11 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 
 	switch itemInfoData.OpType {
 	case ltngenginemodels.OpTypeCreate:
-		op.crudChannels.CreateChannels.InfoChannel <- &itemInfoData
+		op.crudChannels.CreateChannels.InfoChannel.Send(&itemInfoData)
 	case ltngenginemodels.OpTypeUpsert:
-		op.crudChannels.UpsertChannels.InfoChannel <- &itemInfoData
+		op.crudChannels.UpsertChannels.InfoChannel.Send(&itemInfoData)
 	case ltngenginemodels.OpTypeDelete:
-		op.crudChannels.DeleteChannels.InfoChannel <- &itemInfoData
+		op.crudChannels.DeleteChannels.InfoChannel.Send(&itemInfoData)
 	default:
 		op.e.logger.Error(ctx, "unknown op type", "op_type", itemInfoData.OpType)
 		return
@@ -121,6 +122,11 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 }
 
 func (op *opSaga) Close() {
+	op.crudChannels.OpSagaChannel.Close()
+	op.crudChannels.CreateChannels.Close()
+	op.crudChannels.UpsertChannels.Close()
+	op.crudChannels.DeleteChannels.Close()
+
 	op.cancel()
 	op.offThread.Wait()
 }

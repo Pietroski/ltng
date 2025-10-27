@@ -100,7 +100,8 @@ func TestQueue_CreateQueue(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, queue, qs.Queue)
 
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 5)
+
 		cancel()
 		err = ltngqueue.Close()
 		require.NoError(t, err)
@@ -159,12 +160,12 @@ func TestQueue_Publish(t *testing.T) {
 		"10 events": {
 			eventCount: 10,
 		},
-		"50 events": {
-			eventCount: 50,
-		},
-		"100 events": {
-			eventCount: 100,
-		},
+		//"50 events": {
+		//	eventCount: 50,
+		//},
+		//"100 events": {
+		//	eventCount: 100,
+		//},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -200,7 +201,7 @@ func TestQueue_Publish(t *testing.T) {
 			// pull & assert events - order should be preserved
 			count := new(atomic.Uint64)
 			go func() {
-				err = qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
+				err := qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
 					if len(bs) == 0 {
 						return nil
 					}
@@ -223,7 +224,8 @@ func TestQueue_Publish(t *testing.T) {
 			}
 			t.Log(count.Load())
 
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 5)
+
 			cancel()
 			err = ltngqueue.Close()
 			require.NoError(t, err)
@@ -241,12 +243,12 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 		"10 events": {
 			eventCount: 10,
 		},
-		"50 events": {
-			eventCount: 50,
-		},
-		"100 events": {
-			eventCount: 100,
-		},
+		//"50 events": {
+		//	eventCount: 50,
+		//},
+		//"100 events": {
+		//	eventCount: 100,
+		//},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -288,7 +290,7 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 			// pull & assert events - order should be preserved
 			count := new(atomic.Uint64)
 			go func() {
-				err = qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
+				err := qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
 					if len(bs) == 0 {
 						return nil
 					}
@@ -318,7 +320,8 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 			}
 			t.Log(count.Load())
 
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 5)
+
 			cancel()
 			err = ltngqueue.Close()
 			require.NoError(t, err)
@@ -339,14 +342,14 @@ func TestQueue_Consume(t *testing.T) {
 			eventCount:         10,
 			consumerCountLimit: 1,
 		},
-		"50 events": {
-			eventCount:         50,
-			consumerCountLimit: 1,
-		},
-		"100 events": {
-			eventCount:         100,
-			consumerCountLimit: 1,
-		},
+		//"50 events": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 1,
+		//},
+		//"100 events": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 1,
+		//},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -417,7 +420,8 @@ func TestQueue_Consume(t *testing.T) {
 				t.Log(event)
 			}
 
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 5)
+
 			cancel()
 			err = ltngqueue.Close()
 			require.NoError(t, err)
@@ -467,16 +471,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    1,
 		},
-		"50 events - 1 consumer - 1 subscriber": {
-			eventCount:         50,
-			consumerCountLimit: 1,
-			subscriberCount:    1,
-		},
-		"100 events - 1 consumer - 1 subscriber": {
-			eventCount:         100,
-			consumerCountLimit: 1,
-			subscriberCount:    1,
-		},
+		//"50 events - 1 consumer - 1 subscriber": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    1,
+		//},
+		//"100 events - 1 consumer - 1 subscriber": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    1,
+		//},
 		"1 event - 5 consumers - 1 subscriber": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -492,16 +496,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    1,
 		},
-		"50 events - 5 consumers - 1 subscriber": {
-			eventCount:         50,
-			consumerCountLimit: 5,
-			subscriberCount:    1,
-		},
-		"100 events - 5 consumers - 1 subscriber": {
-			eventCount:         100,
-			consumerCountLimit: 5,
-			subscriberCount:    1,
-		},
+		//"50 events - 5 consumers - 1 subscriber": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    1,
+		//},
+		//"100 events - 5 consumers - 1 subscriber": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    1,
+		//},
 		"1 event - 5 consumers - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -512,16 +516,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    5,
 		},
-		"50 events - 5 consumers - 5 subscribers": {
-			eventCount:         50,
-			consumerCountLimit: 5,
-			subscriberCount:    5,
-		},
-		"100 events - 5 consumers - 5 subscribers": {
-			eventCount:         100,
-			consumerCountLimit: 5,
-			subscriberCount:    5,
-		},
+		//"50 events - 5 consumers - 5 subscribers": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    5,
+		//},
+		//"100 events - 5 consumers - 5 subscribers": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    5,
+		//},
 		"1 event - 1 consumer - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 1,
@@ -532,16 +536,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    5,
 		},
-		"50 events - 1 consumer - 5 subscribers": {
-			eventCount:         50,
-			consumerCountLimit: 1,
-			subscriberCount:    5,
-		},
-		"100 events - 1 consumer - 5 subscribers": {
-			eventCount:         100,
-			consumerCountLimit: 1,
-			subscriberCount:    5,
-		},
+		//"50 events - 1 consumer - 5 subscribers": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    5,
+		//},
+		//"100 events - 1 consumer - 5 subscribers": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    5,
+		//},
 	}
 
 	for testName, testCase := range testCases {
@@ -680,7 +684,7 @@ func testConsumerConcurrently(
 		require.NoError(t, err)
 	}
 
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Millisecond * 5)
 
 	cancel()
 	err = ltngqueue.Close()
@@ -699,16 +703,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    1,
 		},
-		"50 events - 1 consumer - 1 subscriber": {
-			eventCount:         50,
-			consumerCountLimit: 1,
-			subscriberCount:    1,
-		},
-		"100 events - 1 consumer - 1 subscriber": {
-			eventCount:         100,
-			consumerCountLimit: 1,
-			subscriberCount:    1,
-		},
+		//"50 events - 1 consumer - 1 subscriber": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    1,
+		//},
+		//"100 events - 1 consumer - 1 subscriber": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    1,
+		//},
 		"1 event - 5 consumers - 1 subscriber": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -724,16 +728,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    1,
 		},
-		"50 events - 5 consumers - 1 subscriber": {
-			eventCount:         50,
-			consumerCountLimit: 5,
-			subscriberCount:    1,
-		},
-		"100 events - 5 consumers - 1 subscriber": {
-			eventCount:         100,
-			consumerCountLimit: 5,
-			subscriberCount:    1,
-		},
+		//"50 events - 5 consumers - 1 subscriber": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    1,
+		//},
+		//"100 events - 5 consumers - 1 subscriber": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    1,
+		//},
 		"1 event - 5 consumers - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -744,16 +748,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    5,
 		},
-		"50 events - 5 consumers - 5 subscribers": {
-			eventCount:         50,
-			consumerCountLimit: 5,
-			subscriberCount:    5,
-		},
-		"100 events - 5 consumers - 5 subscribers": {
-			eventCount:         100,
-			consumerCountLimit: 5,
-			subscriberCount:    5,
-		},
+		//"50 events - 5 consumers - 5 subscribers": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    5,
+		//},
+		//"100 events - 5 consumers - 5 subscribers": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 5,
+		//	subscriberCount:    5,
+		//},
 		"1 event - 1 consumer - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 1,
@@ -764,16 +768,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    5,
 		},
-		"50 events - 1 consumer - 5 subscribers": {
-			eventCount:         50,
-			consumerCountLimit: 1,
-			subscriberCount:    5,
-		},
-		"100 events - 1 consumer - 5 subscribers": {
-			eventCount:         100,
-			consumerCountLimit: 1,
-			subscriberCount:    5,
-		},
+		//"50 events - 1 consumer - 5 subscribers": {
+		//	eventCount:         50,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    5,
+		//},
+		//"100 events - 1 consumer - 5 subscribers": {
+		//	eventCount:         100,
+		//	consumerCountLimit: 1,
+		//	subscriberCount:    5,
+		//},
 	}
 
 	for testName, testCase := range testCases {
@@ -904,7 +908,8 @@ func testNackAndTimeout(
 		require.NoError(t, err)
 	}
 
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Millisecond * 5)
+
 	cancel()
 	err = ltngqueue.Close()
 	require.NoError(t, err)

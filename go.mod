@@ -9,17 +9,18 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.0
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/pietroski-software-company/golang/devex/env v0.0.3
-	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.2
-	gitlab.com/pietroski-software-company/golang/devex/execx v0.0.4
-	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.4
+	gitlab.com/pietroski-software-company/golang/devex/env v0.0.4
+	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4
+	gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6
+	gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8
+	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.7
 	gitlab.com/pietroski-software-company/golang/devex/options v0.0.1
 	gitlab.com/pietroski-software-company/golang/devex/random v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/saga v0.0.2
 	gitlab.com/pietroski-software-company/golang/devex/serializer v0.0.1
-	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.7
-	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.4
-	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.1
+	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.9
+	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5
+	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.3
 	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 	go.uber.org/mock v0.6.0
 	golang.org/x/sys v0.37.0
@@ -42,8 +43,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.1 // indirect
-	gitlab.com/pietroski-software-company/golang/devex/validator v0.0.4 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.2 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/validator v0.0.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
