@@ -698,8 +698,8 @@ func eventListToSafeEventMap(
 
 func Test_DeleteTestFileQueue(t *testing.T) {
 	ctx := context.Background()
-	err := osx.DelHardExec(ctx, ltngDBBasePath)
+	err := osx.DelHard(ctx, ltngDBBasePath)
 	require.NoError(t, err)
-	err = osx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err = osx.DelHard(ctx, ltngFileQueueBasePath)
 	require.NoError(t, err)
 }

@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 
@@ -26,7 +25,7 @@ func (e *LTNGEngine) createStore(
 	defer e.kvLock.Unlock(info.Name)
 
 	if info.Path == "" {
-		return nil, fmt.Errorf("missing path")
+		return nil, errorsx.New("missing path")
 	}
 
 	if fi, err := e.loadStoreFromMemoryOrDisk(ctx, info); err == nil {
@@ -36,7 +35,7 @@ func (e *LTNGEngine) createStore(
 	statsFileCreation := func() error {
 		fi, err := e.createStatsStoreOnDisk(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error creating %s store stats: %w", info.Name, err)
+			return errorsx.Errorf("error creating %s store stats", info.Name).Wrap(err, "error")
 		}
 		store = fi.FileData.Header.StoreInfo
 		e.storeFileMapping.Set(info.Name, fi)
@@ -46,7 +45,7 @@ func (e *LTNGEngine) createStore(
 	statsFileDeletion := func() error {
 		err = e.deleteStore(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error deleting %s store stats: %w", info.Name, err)
+			return errorsx.Errorf("error deleting %s store stats", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -55,7 +54,7 @@ func (e *LTNGEngine) createStore(
 	mainStoreCreation := func() error {
 		err = e.createDataPathOnDisk(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error creating %s store: %w", info.Name, err)
+			return errorsx.Errorf("error creating %s store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -63,7 +62,7 @@ func (e *LTNGEngine) createStore(
 	mainStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, info)
 		if err != nil {
-			return fmt.Errorf("error creating %s store: %w", info.Name, err)
+			return errorsx.Errorf("error creating %s store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -73,7 +72,7 @@ func (e *LTNGEngine) createStore(
 	indexStoreCreation := func() error {
 		err = e.createDataPathOnDisk(ctx, indexInfo)
 		if err != nil {
-			return fmt.Errorf("error creating %s index store: %w", info.Name, err)
+			return errorsx.Errorf("error creating %s index store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -81,7 +80,7 @@ func (e *LTNGEngine) createStore(
 	indexStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, indexInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index store: %w", info.Name, err)
+			return errorsx.Errorf("error deleting %s index store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -91,7 +90,7 @@ func (e *LTNGEngine) createStore(
 	indexListStoreCreation := func() error {
 		err = e.createDataPathOnDisk(ctx, indexListInfo)
 		if err != nil {
-			return fmt.Errorf("error creating %s index-list store: %w", info.Name, err)
+			return errorsx.Errorf("error creating %s index-list store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -99,7 +98,7 @@ func (e *LTNGEngine) createStore(
 	indexListStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, indexListInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index-list store: %w", info.Name, err)
+			return errorsx.Errorf("error deleting %s index-list store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -108,11 +107,13 @@ func (e *LTNGEngine) createStore(
 	relationalInfo := info.RelationalInfo()
 	relationalStoreCreation := func() error {
 		if err = e.createDataPathOnDisk(ctx, relationalInfo); err != nil {
-			return fmt.Errorf("error creating %s relational store: %w", relationalInfo.Name, err)
+			return errorsx.Errorf("error creating %s relational store", relationalInfo.Name).
+				Wrap(err, "error")
 		}
 
 		if _, err = e.createRelationalItemStore(ctx, info); err != nil {
-			return fmt.Errorf("error creating %s relational store header item: %w", relationalInfo.Name, err)
+			return errorsx.Errorf("error creating %s relational store header item", relationalInfo.Name).
+				Wrap(err, "error")
 		}
 
 		return nil
@@ -120,7 +121,8 @@ func (e *LTNGEngine) createStore(
 	relationalStoreDeletion := func() error {
 		err = e.DeleteStore(ctx, relationalInfo)
 		if err != nil {
-			return fmt.Errorf("error deleting %s index-list store: %w", relationalInfo.Name, err)
+			return errorsx.Errorf("error deleting %s relational store", relationalInfo.Name).
+				Wrap(err, "error")
 		}
 
 		return nil
@@ -242,29 +244,32 @@ func (e *LTNGEngine) deleteStore(
 	deleteRowFromRelationalStore := func() error {
 		fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx)
 		if err != nil {
-			return fmt.Errorf("error opening %s manager relational store: %w", info.Name, err)
+			return errorsx.Errorf("error opening %s manager relational store", info.Name).
+				Wrap(err, "error")
 		}
 
 		if err = e.deleteFromRelationalStats(ctx, fi, []byte(info.Name)); err != nil {
-			return fmt.Errorf("error deleting manager store stats from relation store: %w", err)
+			return errorsx.Errorf("error deleting manager store stats from relation store %s", info.Name).
+				Wrap(err, "error")
 		}
 
 		return nil
 	}
 	deleteRowFromRelationalStoreRollback := func() error {
-		if err := osx.CpExec(ctx,
-			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
+		if err := osx.CpFile(ctx,
+			ltngenginemodels.GetTmpDelStatsPathFile(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
-			return errorsx.Errorf("failed to re-copy tmp stats file %s: %v", info.Name, err)
+			return errorsx.Errorf("failed to re-copy tmp stats file %s", info.Name).
+				Wrap(err, "error")
 		}
 
-		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
+		if err := osx.DelHard(ctx, ltngenginemodels.GetTmpDelStatsPath(info.Name)); err != nil {
 			e.logger.Error(ctx, "failed to delete tmp stats dir",
 				"store_name", info.Name, "err", err)
 		}
 
-		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
+		if err := osx.DelHard(ctx, ltngenginemodels.GetTmpDelDataPath(info.Name)); err != nil {
 			e.logger.Error(ctx, "failed to delete tmp data dir",
 				"store_name", info.Name, "err", err)
 		}
@@ -273,10 +278,11 @@ func (e *LTNGEngine) deleteStore(
 	}
 
 	copyStatsFile := func() error {
+		// TODO: fix it
 		// copy stats file to tmp del stats path
-		if err := osx.CpExec(ctx,
+		if err := osx.CpFile(ctx,
 			ltngenginemodels.GetStatsFilepath(info.Name),
-			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
+			ltngenginemodels.GetTmpDelStatsPathFile(info.Name),
 		); err != nil {
 			return errorsx.Errorf("failed to copy %s store stats: %v", info.Name, err)
 		}
@@ -285,8 +291,8 @@ func (e *LTNGEngine) deleteStore(
 	}
 	copyStatsFileRollback := func() error {
 		// delete stats file from tmp del stats path
-		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
-			return errorsx.Errorf("failed to delete %s tmp store stats: %v", info.Name, err)
+		if err := osx.DelHard(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to delete %s tmp store stats", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -294,19 +300,19 @@ func (e *LTNGEngine) deleteStore(
 
 	copyDataPath := func() error {
 		// copy data store to tmp del path
-		if err := osx.CpExec(ctx,
+		if _, err := osx.CpOnlyFilesFromDirAsync(ctx,
 			ltngenginemodels.GetDataPathWithSep(info.Path),
 			ltngenginemodels.GetTmpDelDataPathWithSep(info.Name),
 		); err != nil {
-			return errorsx.Errorf("failed to copy %s store data: %v", info.Name, err)
+			return errorsx.Errorf("failed to copy %s store data", info.Name).Wrap(err, "error")
 		}
 
 		return nil
 	}
 	copyDataPathRollback := func() error {
 		// delete all files from store directory
-		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
-			return errorsx.Errorf("failed to delete %s tmp data store: %v", info.Name, err)
+		if err := osx.DelHard(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to delete %s tmp data store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -314,18 +320,19 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteStatsPath := func() error {
 		// delete stats file
-		if err := osx.DelFileExec(ctx, ltngenginemodels.GetStatsFilepath(info.Name)); err != nil {
-			return errorsx.Errorf("failed to delete %s stats file: %v", info.Name, err)
+		if err := osx.DelRecursive(ctx, ltngenginemodels.GetStatsFilepath(info.Name)); err != nil {
+			return errorsx.Errorf("failed to delete %s stats file", info.Name).Wrap(err, "error")
 		}
 
 		return nil
 	}
 	deleteStatsPathRollback := func() error {
-		if err := osx.CpExec(ctx,
-			ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name),
+		// TODO: test this so this needs to be reached out.
+		if err := osx.CpFile(ctx,
+			ltngenginemodels.GetTmpDelStatsPathFile(info.Name),
 			ltngenginemodels.GetStatsFilepath(info.Name),
 		); err != nil {
-			return errorsx.Errorf("failed to re-copy tmp stats file %s: %v", info.Name, err)
+			return errorsx.Errorf("failed to re-copy tmp stats file %s", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -334,17 +341,18 @@ func (e *LTNGEngine) deleteStore(
 	deleteDataPath := func() error {
 		// delete all files from store directory // delExec // DelDirsWithoutSepBothOSExec <-> DelStoreDirsExec
 		if err := osx.DelDirsBothOSExec(ctx, ltngenginemodels.GetDataPath(info.Path)); err != nil {
-			return errorsx.Errorf("failed to delete %s data store: %v", info.Name, err)
+			return errorsx.Errorf("failed to delete %s data store", info.Name).Wrap(err, "error")
 		}
 
 		return nil
 	}
 	deleteDataPathRollback := func() error {
-		if err := osx.CpExec(ctx,
+		// TODO: test this so this needs to be reached out.
+		if _, err := osx.CpOnlyFilesFromDirAsync(ctx,
 			ltngenginemodels.GetTmpDelDataPathWithSep(info.Name),
 			ltngenginemodels.GetDataPathWithSep(info.Path+ltngenginemodels.Sep+info.Name),
 		); err != nil {
-			return errorsx.Errorf("failed to de-copy tmp data file %s: %v", info.Name, err)
+			return errorsx.Errorf("failed to de-copy tmp data file %s", info.Name).Wrap(err, "error")
 		}
 
 		return nil
@@ -352,13 +360,15 @@ func (e *LTNGEngine) deleteStore(
 
 	deleteTmpDataAndStatsPath := func() error {
 		// delete tmp stats path
-		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
-			return errorsx.Errorf("failed to remove tmp del path %s store: %v", info.Name, err)
+		if err := osx.DelHard(ctx, ltngenginemodels.GetTmpDelDataPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to remove tmp del path %s store", info.Name).
+				Wrap(err, "error")
 		}
 
 		// delete tmp stats path
-		if err := osx.DelHardExec(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
-			return errorsx.Errorf("failed to remove tmp del path %s store: %v", info.Name, err)
+		if err := osx.DelHard(ctx, ltngenginemodels.GetTmpDelStatsPathWithSep(info.Name)); err != nil {
+			return errorsx.Errorf("failed to remove tmp del path %s store", info.Name).
+				Wrap(err, "error")
 		}
 
 		return nil
@@ -444,7 +454,7 @@ func (e *LTNGEngine) listStores(
 
 		matchBox = make([]*ltngenginemodels.StoreInfo, pLimit)
 	} else {
-		return nil, fmt.Errorf("invalid pagination")
+		return nil, errorsx.New("invalid pagination")
 	}
 
 	relationalInfoManager := ltngenginemodels.DBManagerStoreInfo.RelationalInfo()
@@ -454,14 +464,14 @@ func (e *LTNGEngine) listStores(
 
 	fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error creating %s relational store: %w",
-			relationalInfoManager.Name, err)
+		return nil, errorsx.Errorf("error creating %s relational store",
+			relationalInfoManager.Name).Wrap(err, "error")
 	}
 
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {
-		return nil, fmt.Errorf("error creating %s file reader: %w",
-			relationalInfoManager.Name, err)
+		return nil, errorsx.Errorf("error creating %s file reader",
+			relationalInfoManager.Name).Wrap(err, "error")
 	}
 
 	var count int
@@ -473,8 +483,8 @@ func (e *LTNGEngine) listStores(
 				break
 			}
 
-			return nil, fmt.Errorf("error reading lines from %s file: %w",
-				relationalInfoManager.Name, err)
+			return nil, errorsx.Errorf("error reading lines from %s file",
+				relationalInfoManager.Name).Wrap(err, "error")
 		}
 		if bs == nil {
 			continue

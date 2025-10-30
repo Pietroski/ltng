@@ -246,11 +246,11 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 
 func CleanupDirectories[T TestBench](tb T) {
 	ctx := context.Background()
-	err := osx.DelHardExec(ctx, ltngFileQueueBasePath)
+	err := osx.DelHard(ctx, ltngFileQueueBasePath)
 	require.NoError(tb, err)
-	err = osx.DelHardExec(ctx, ltngdbBasePath)
+	err = osx.DelHard(ctx, ltngdbBasePath)
 	require.NoError(tb, err)
-	err = osx.DelHardExec(ctx, dbBasePath)
+	err = osx.DelHard(ctx, dbBasePath)
 	require.NoError(tb, err)
 }
 

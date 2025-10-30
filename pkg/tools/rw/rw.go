@@ -34,7 +34,7 @@ func (e *FileManager) OpenCreateTruncatedFile(
 	_ context.Context,
 	filePath string,
 ) (*os.File, error) {
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFileOp)
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, ltngenginemodels.DBFileOp) // |os.O_EXCL
 	if err != nil {
 		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
 	}

@@ -33,7 +33,7 @@ const (
 	DBTmpDelDataPath  = RubbishBasePath + "/del-tmp-store"
 	DBTmpDelStatsPath = RubbishBasePath + "/del-tmp-store-stats"
 
-	SuffixSep                  = "-"
+	InnerSep                   = "-"
 	DBIndexStoreSuffixName     = "indexed"
 	DBIndexStoreSuffixPath     = "/indexed"
 	DBIndexListStoreSuffixName = "indexed-list"
@@ -52,7 +52,7 @@ const (
 	RelationalDataStoreFile = RelationalDataStore + Ext
 	ListingItemsFromStore   = "listing-items-from-store"
 
-	DBFilePerm = 0750
+	DBFilePerm = 0740 // 0750
 	DBFileOp   = 0644
 	DBFileRead = 0444
 )
@@ -234,7 +234,7 @@ func (i *ItemInfoData) WithRespChan(sigChan chan error) *ItemInfoData {
 
 func (storeInfo *StoreInfo) IndexInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + SuffixSep + DBIndexStoreSuffixName,
+		Name:         storeInfo.Name + InnerSep + DBIndexStoreSuffixName,
 		Path:         storeInfo.Path + DBIndexStoreSuffixPath,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
@@ -243,7 +243,7 @@ func (storeInfo *StoreInfo) IndexInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) IndexListInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + SuffixSep + DBIndexListStoreSuffixName,
+		Name:         storeInfo.Name + InnerSep + DBIndexListStoreSuffixName,
 		Path:         storeInfo.Path + DBIndexListStoreSuffixPath,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
@@ -252,7 +252,7 @@ func (storeInfo *StoreInfo) IndexListInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) RelationalInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + SuffixSep + DBRelationalName,
+		Name:         storeInfo.Name + InnerSep + DBRelationalName,
 		Path:         storeInfo.Path + DBRelationalPath,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
@@ -261,7 +261,7 @@ func (storeInfo *StoreInfo) RelationalInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) TmpRelationalInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + SuffixSep + DBRelationalName + SuffixSep + Tmp,
+		Name:         storeInfo.Name + InnerSep + DBRelationalName + InnerSep + Tmp,
 		Path:         storeInfo.Path + DBRelationalPath + TmpPath,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
@@ -294,28 +294,28 @@ func (msi *ManagerStoreMetaInfo) LockName(key string) string {
 
 func (msi *ManagerStoreMetaInfo) IndexInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + SuffixSep + DBIndexStoreSuffixName,
+		Name: msi.Name + InnerSep + DBIndexStoreSuffixName,
 		Path: msi.Path + DBIndexStoreSuffixPath,
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) IndexListInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + SuffixSep + DBIndexListStoreSuffixName,
+		Name: msi.Name + InnerSep + DBIndexListStoreSuffixName,
 		Path: msi.Path + DBIndexListStoreSuffixPath,
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) RelationalInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + SuffixSep + DBRelationalName,
+		Name: msi.Name + InnerSep + DBRelationalName,
 		Path: msi.Path + DBRelationalPath,
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) TmpRelationalInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + SuffixSep + DBRelationalName + SuffixSep + Tmp,
+		Name: msi.Name + InnerSep + DBRelationalName + InnerSep + Tmp,
 		Path: msi.Path + DBRelationalPath + TmpPath,
 	}
 }

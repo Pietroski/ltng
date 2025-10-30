@@ -1,7 +1,7 @@
 package ltngenginemodels
 
 func GetFileLockName(base, key string) string {
-	return base + SuffixSep + key
+	return base + InnerSep + key
 }
 
 func GetDataPath(path string) string {
@@ -26,6 +26,7 @@ func GetDataFilepath(path, filename string) string {
 
 func GetTmpDataFilepath(path, filename string) string {
 	return GetDataPathWithSep(path) + TmpPrefix + filename + Ext
+	//return GetDataPathWithSep(path) + Tmp + Sep + filename + Ext
 }
 
 func GetStatsFilepath(storeName string) string {
@@ -54,6 +55,10 @@ func GetTmpDelDataFilePath(path, filename string) string {
 
 func GetTmpDelStatsPathWithSep(path string) string {
 	return DBTmpDelStatsPath + Sep + path + Sep
+}
+
+func GetTmpDelStatsPathFile(filename string) string {
+	return DBTmpDelStatsPath + Sep + filename + Sep + filename + Ext
 }
 
 func RawPathWithSepForFile(rawPathWithSep, filename string) string {

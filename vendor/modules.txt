@@ -133,6 +133,9 @@ gitlab.com/pietroski-software-company/golang/devex/slogx
 # gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/syncx
+# gitlab.com/pietroski-software-company/golang/devex/testingx v0.0.7
+## explicit; go 1.25.1
+gitlab.com/pietroski-software-company/golang/devex/testingx
 # gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.2
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/tokens/models

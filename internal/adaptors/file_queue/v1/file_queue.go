@@ -444,7 +444,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, dat
 		return errorsx.Wrap(err, "error republishing index: error resetting reader")
 	}
 
-	if err = osx.CpFileExec(ctx, fq.fullPath, fq.fullTmpPath); err != nil {
+	if err = osx.CpFile(ctx, fq.fullPath, fq.fullTmpPath); err != nil {
 		return errorsx.Wrap(err, "error republishing index: error executing cpfile")
 	}
 
@@ -453,7 +453,7 @@ func (fq *FileQueue) safelyRepublishIndex(ctx context.Context, index []byte, dat
 	}
 
 	if err = fq.WriteOnCursor(ctx, data); err != nil {
-		if err = osx.MvFileExec(ctx, fq.fullTmpPath, fq.fullPath); err != nil {
+		if err = osx.MvFile(ctx, fq.fullTmpPath, fq.fullPath); err != nil {
 			return errorsx.Wrap(err, "error republishing index: error executing reverse cpfile")
 		}
 
@@ -813,12 +813,29 @@ func (fq *FileQueue) CheckAndClose() bool {
 	if fq.readerCursor == fq.writeCursor {
 		fq.writeCursor = 0
 		fq.readerCursor = 0
+		// if err := fq.file.Truncate(0); err != nil {
+		// 	log.Printf("error truncating file: %v", err)
+		// }
+
+		// if err := fq.file.Close(); err != nil {
+		// 	log.Printf("error closing file: %v", err)
+		// }
+
+		// Skip if already closed to avoid benign errors and needless ops.
+		// if rw.IsFileClosed(fq.file) {
+		// 	return true
+		// }
+
 		if err := fq.file.Truncate(0); err != nil {
-			log.Printf("error truncating file: %v", err)
+			if !errors.Is(err, os.ErrClosed) {
+				log.Printf("error truncating file: %v", err)
+			}
 		}
 
 		if err := fq.file.Close(); err != nil {
-			log.Printf("error closing file: %v", err)
+			if !errors.Is(err, os.ErrClosed) {
+				log.Printf("error closing file: %v", err)
+			}
 		}
 
 		return true

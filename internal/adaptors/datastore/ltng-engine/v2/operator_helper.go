@@ -11,7 +11,6 @@ import (
 	"time"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -623,16 +622,16 @@ func (e *LTNGEngine) upsertItemOnDisk(
 	tmpFilePath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
 
 	// TODO: revisit upsert functionality
-	{
-		if err = osx.MvFileExec(ctx, filePath, tmpFilePath); err != nil {
-			return err
-		}
-		defer func() {
-			if err != nil {
-				err = osx.MvFileExec(ctx, tmpFilePath, filePath)
-			}
-		}()
-	}
+	//{
+	//	if err = osx.MvFile(ctx, filePath, tmpFilePath); err != nil {
+	//		return err
+	//	}
+	//	defer func() {
+	//		if err != nil {
+	//			err = osx.MvFile(ctx, tmpFilePath, filePath)
+	//		}
+	//	}()
+	//}
 
 	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
 	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)

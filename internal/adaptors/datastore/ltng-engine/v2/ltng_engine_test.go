@@ -1590,8 +1590,8 @@ func TestCheckFileCount(t *testing.T) {
 
 func prepareTest(t *testing.T) context.Context {
 	ctx := context.Background()
-	err := osx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
-	err = osx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
+	err := osx.DelHard(ctx, ltngenginemodels.FQBasePath)
+	err = osx.DelHard(ctx, ltngenginemodels.DBBasePath)
 	require.NoError(t, err)
 
 	return ctx
@@ -1599,8 +1599,8 @@ func prepareTest(t *testing.T) context.Context {
 
 func prepareTestWithCancel(t *testing.T) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
-	err := osx.DelHardExec(ctx, ltngenginemodels.FQBasePath)
-	err = osx.DelHardExec(ctx, ltngenginemodels.DBBasePath)
+	err := osx.DelHard(ctx, ltngenginemodels.FQBasePath)
+	err = osx.DelHard(ctx, ltngenginemodels.DBBasePath)
 	require.NoError(t, err)
 
 	return ctx, cancel

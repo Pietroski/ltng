@@ -91,6 +91,11 @@ raw-bench-report-no-race:
 raw-testbench-report.sh:
 	./scripts/docs/raw-testbench-report.sh
 
+ltngdbengine-tests:
+	go clean -testcache
+	# go test -v -race -cover ./tests/integration/lightning-db/...
+	go test -v -race -cover ./internal/adaptors/datastore/ltng-engine/v2 -run TestLTNGEngineFlow > ltng-engine-v2-test-output.txt
+
 ########################################################################################################################
 
 pull-latest:

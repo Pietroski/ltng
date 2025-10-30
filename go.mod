@@ -43,6 +43,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	gitlab.com/pietroski-software-company/golang/devex/testingx v0.0.7 // indirect
 	gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.2 // indirect
 	gitlab.com/pietroski-software-company/golang/devex/validator v0.0.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
