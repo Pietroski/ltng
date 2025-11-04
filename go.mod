@@ -21,6 +21,7 @@ require (
 	gitlab.com/pietroski-software-company/golang/devex/servermanager v0.0.12
 	gitlab.com/pietroski-software-company/golang/devex/slogx v0.0.5
 	gitlab.com/pietroski-software-company/golang/devex/syncx v0.0.4
+	gitlab.com/pietroski-software-company/golang/devex/testingx v0.0.7
 	gitlab.com/pietroski-software-company/golang/devex/tracer v0.0.2
 	go.uber.org/mock v0.6.0
 	golang.org/x/sys v0.37.0
@@ -43,7 +44,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	gitlab.com/pietroski-software-company/golang/devex/testingx v0.0.7 // indirect
 	gitlab.com/pietroski-software-company/golang/devex/tokens v0.0.2 // indirect
 	gitlab.com/pietroski-software-company/golang/devex/validator v0.0.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
