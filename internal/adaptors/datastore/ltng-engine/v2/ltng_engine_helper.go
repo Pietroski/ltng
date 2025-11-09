@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"os"
 	"runtime"
 	"sync"
 
@@ -14,15 +13,13 @@ import (
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	memorystorev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/memorystore/v1"
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
 func newLTNGEngine(
 	ctx context.Context, opts ...options.Option,
 ) (*LTNGEngine, error) {
-	logger := slogx.New()
-
 	fq, err := filequeuev1.New(ctx,
 		filequeuev1.GenericFileQueueFilePath,
 		filequeuev1.GenericFileQueueFileName,
@@ -38,11 +35,12 @@ func newLTNGEngine(
 		fq:                     fq,
 		fileManager:            rw.NewFileManager(ctx),
 		memoryStore:            memorystorev1.New(ctx),
-		storeFileMapping:       syncx.NewGenericMap[*ltngenginemodels.FileInfo](),
-		itemFileMapping:        syncx.NewGenericMap[*ltngenginemodels.FileInfo](),
+		storeFileMapping:       syncx.NewGenericMap[*ltngdata.FileInfo](),
+		itemFileMapping:        syncx.NewGenericMap[*ltngdata.FileInfo](),
 		markedAsDeletedMapping: syncx.NewGenericMap[struct{}](),
 		serializer:             serializer.NewRawBinarySerializer(),
-		logger:                 logger,
+		logger:                 slogx.New(),
+		mngrStoreInfo:          ltngdata.DBManagerStoreInfo,
 	}
 	options.ApplyOptions(engine, opts...)
 
@@ -50,25 +48,19 @@ func newLTNGEngine(
 		return nil, err
 	}
 
-	//engine.opSaga = newOpSaga(ctx, engine)
 	return engine, nil
 }
 
 func (e *LTNGEngine) init(ctx context.Context) error {
-	if err := e.createStatsPathOnDisk(ctx); err != nil {
-		return err
+	if err := e.createStatsPathsOnDisk(ctx, e.mngrStoreInfo); err != nil {
+		return errorsx.Wrap(err, "failed initializing file queue")
 	}
-	if _, err := e.createOrOpenRelationalStatsStoreOnDisk(ctx); err != nil {
-		return errorsx.Wrap(err, "failed creating store stats manager on-disk")
+
+	if err := e.createDataPathsOnDisk(ctx, e.mngrStoreInfo); err != nil {
+		return errorsx.Wrap(err, "failed initializing file queue")
 	}
-	if err := os.MkdirAll(
-		ltngenginemodels.DBTmpDelDataPath, ltngenginemodels.DBFilePerm,
-	); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(
-		ltngenginemodels.DBTmpDelStatsPath, ltngenginemodels.DBFilePerm,
-	); err != nil {
+
+	if _, err := e.createOpenRelationalStatsStoreOnDisk(ctx); err != nil {
 		return err
 	}
 
@@ -88,7 +80,7 @@ func (e *LTNGEngine) close() {
 
 func (e *LTNGEngine) closeStores() {
 	e.storeFileMapping.RangeAndDelete(
-		func(fileStore string, value *ltngenginemodels.FileInfo) bool {
+		func(fileStore string, value *ltngdata.FileInfo) bool {
 			if !rw.IsFileClosed(value.File) {
 				if err := value.File.Close(); err != nil {
 					e.logger.Error(e.ctx, "error closing file from store",
@@ -109,7 +101,7 @@ func (e *LTNGEngine) closeItems() {
 		runtime.Gosched()
 	}
 
-	e.itemFileMapping.RangeAndDelete(func(fileItem string, value *ltngenginemodels.FileInfo) bool {
+	e.itemFileMapping.RangeAndDelete(func(fileItem string, value *ltngdata.FileInfo) bool {
 		if !rw.IsFileClosed(value.File) {
 			if err := value.File.Close(); err != nil {
 				e.logger.Error(e.ctx, "error closing file from item store",

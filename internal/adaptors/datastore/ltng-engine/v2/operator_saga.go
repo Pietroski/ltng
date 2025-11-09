@@ -8,7 +8,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/process"
 )
 
@@ -41,7 +41,7 @@ type opSaga struct {
 	fq           *filequeuev1.FileQueue
 	cancel       context.CancelFunc
 	offThread    *syncx.OffThread
-	crudChannels *ltngenginemodels.CrudChannels
+	crudChannels *ltngdata.CrudChannels
 	pidRegister  *process.Register
 }
 
@@ -52,11 +52,11 @@ func newOpSaga(ctx context.Context, e *LTNGEngine) *opSaga {
 		fq:        e.fq,
 		cancel:    cancel,
 		offThread: syncx.NewThreadOperator("OpSaga", syncx.WithThreadLimit(threadLimit)),
-		crudChannels: &ltngenginemodels.CrudChannels{
-			OpSagaChannel:  ltngenginemodels.MakeOpChannels(),
-			CreateChannels: ltngenginemodels.MakeOpChannels(),
-			UpsertChannels: ltngenginemodels.MakeOpChannels(),
-			DeleteChannels: ltngenginemodels.MakeOpChannels(),
+		crudChannels: &ltngdata.CrudChannels{
+			OpSagaChannel:  ltngdata.MakeOpChannels(),
+			CreateChannels: ltngdata.MakeOpChannels(),
+			UpsertChannels: ltngdata.MakeOpChannels(),
+			DeleteChannels: ltngdata.MakeOpChannels(),
 		},
 		pidRegister: process.New(ctx),
 	}
@@ -92,7 +92,8 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 		return
 	}
 
-	var itemInfoData ltngenginemodels.ItemInfoData
+	// TODO: change it for a item info wrapper after this...
+	var itemInfoData ltngdata.ItemInfoData
 	if err = op.e.serializer.Deserialize(bs, &itemInfoData); err != nil {
 		op.e.logger.Error(ctx, "error deserializing item info data from file queue", "error", err)
 		return
@@ -100,14 +101,14 @@ func (op *opSaga) listenAndTrigger(ctx context.Context) {
 
 	respSignalChan := make(chan error)
 	itemInfoData.RespSignal = respSignalChan
-	itemInfoData.Ctx = context.Background()
+	itemInfoData.Ctx = ctx // TODO: check if it fixes the tracing issue...
 
 	switch itemInfoData.OpType {
-	case ltngenginemodels.OpTypeCreate:
+	case ltngdata.OpTypeCreate:
 		op.crudChannels.CreateChannels.InfoChannel.Send(&itemInfoData)
-	case ltngenginemodels.OpTypeUpsert:
+	case ltngdata.OpTypeUpsert:
 		op.crudChannels.UpsertChannels.InfoChannel.Send(&itemInfoData)
-	case ltngenginemodels.OpTypeDelete:
+	case ltngdata.OpTypeDelete:
 		op.crudChannels.DeleteChannels.InfoChannel.Send(&itemInfoData)
 	default:
 		op.e.logger.Error(ctx, "unknown op type", "op_type", itemInfoData.OpType)

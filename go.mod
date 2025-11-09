@@ -10,7 +10,7 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/stretchr/testify v1.11.1
 	gitlab.com/pietroski-software-company/golang/devex/env v0.0.4
-	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4
+	gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.7
 	gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6
 	gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8
 	gitlab.com/pietroski-software-company/golang/devex/middlewares v0.0.9
@@ -60,4 +60,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-//replace gitlab.com/pietroski-software-company/golang/devex/syncx => /Users/pietroski/Documents/PTK_SWE/golang/devex/syncx
+//replace gitlab.com/pietroski-software-company/golang/devex/errorsx => /Users/pietroski/Documents/PTK_SWE/golang/devex/errorsx

@@ -4,32 +4,34 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"time"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
 func (e *LTNGEngine) createRelationalItemStore(
 	ctx context.Context,
-	info *ltngenginemodels.StoreInfo,
-) (*ltngenginemodels.FileInfo, error) {
-	file, err := e.fileManager.OpenCreateTruncatedFile(ctx,
-		ltngenginemodels.GetDataFilepath(info.RelationalInfo().Path, ltngenginemodels.RelationalDataStore),
+	info *ltngdata.StoreInfo,
+) (*ltngdata.FileInfo, error) {
+	file, err := e.fileManager.CreateFileIfNotExists(ctx,
+		ltngdata.GetRelationalDataFilepath(info.Path, ltngdata.RelationalDataStoreKey),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	timeNow := time.Now().UTC().Unix()
-	fileData := &ltngenginemodels.FileData{
-		Key: []byte(ltngenginemodels.RelationalDataStore),
-		Header: &ltngenginemodels.Header{
-			ItemInfo: &ltngenginemodels.ItemInfo{
+	fileData := &ltngdata.FileData{
+		Key: []byte(ltngdata.RelationalDataStoreKey),
+		Header: &ltngdata.Header{
+			ItemInfo: &ltngdata.ItemInfo{
 				CreatedAt:    timeNow,
 				LastOpenedAt: timeNow,
 			},
@@ -43,13 +45,13 @@ func (e *LTNGEngine) createRelationalItemStore(
 		return nil, err
 	}
 
-	fi := &ltngenginemodels.FileInfo{
+	fi := &ltngdata.FileInfo{
 		File:       file,
 		FileData:   fileData,
 		HeaderSize: uint32(len(bs)),
-		DataSize:   uint32(len(fileData.Data)),
+		DataSize:   uint32(len(bs)),
 	}
-	e.itemFileMapping.Set(info.RelationalInfo().LockName(ltngenginemodels.RelationalDataStore), fi)
+	e.itemFileMapping.Set(info.RelationalInfo().LockName(ltngdata.RelationalDataStoreKey), fi)
 
 	return fi, nil
 }
@@ -58,38 +60,47 @@ func (e *LTNGEngine) createRelationalItemStore(
 
 func (e *LTNGEngine) loadItemFromMemoryOrDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	updateRelationalData bool,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+) (*ltngdata.Item, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 	fi, ok := e.itemFileMapping.Get(dbMetaInfo.LockName(strItemKey))
 	if !ok {
 		var err error
-		fi, err = e.loadItemFromDisk(ctx, dbMetaInfo, item, updateRelationalData)
+		fi, err = e.loadItemFromDisk(ctx, dbMetaInfo, item)
 		if err != nil {
 			return nil, err
 		}
 		e.itemFileMapping.Set(dbMetaInfo.LockName(strItemKey), fi)
 
-		return &ltngenginemodels.Item{
+		return &ltngdata.Item{
 			Key:   fi.FileData.Key,
 			Value: fi.FileData.Data,
 		}, nil
 	}
+
+	//if fi.FileData != nil {
+	//	return &ltngdata.Item{
+	//		Key:   fi.FileData.Key,
+	//		Value: fi.FileData.Data,
+	//	}, nil
+	//}
 
 	bs, err := e.fileManager.ReadAll(ctx, fi.File)
 	if err != nil {
 		return nil, err
 	}
 
-	var itemFileData ltngenginemodels.FileData
+	var itemFileData ltngdata.FileData
 	err = e.serializer.Deserialize(bs, &itemFileData)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ltngenginemodels.Item{
+	//fi.FileData = &itemFileData
+	//e.itemFileMapping.Set(dbMetaInfo.LockName(strItemKey), fi)
+
+	return &ltngdata.Item{
 		Key:   itemFileData.Key,
 		Value: itemFileData.Data,
 	}, nil
@@ -97,52 +108,24 @@ func (e *LTNGEngine) loadItemFromMemoryOrDisk(
 
 func (e *LTNGEngine) loadItemFromDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	updateRelationalData bool,
-) (*ltngenginemodels.FileInfo, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+) (*ltngdata.FileInfo, error) {
 	strItemKey := hex.EncodeToString(item.Key)
-	filepath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
+	filepath := ltngdata.GetDataFilepath(dbMetaInfo.Path, strItemKey)
 	bs, file, err := e.fileManager.OpenReadWholeFile(ctx, filepath)
 	if err != nil {
-		return nil, fmt.Errorf("error openning to read whole file %s: %w", filepath, err)
+		return nil, errorsx.Wrapf(err, "error openning to read whole file %s", filepath)
 	}
 
-	var fileData ltngenginemodels.FileData
+	var fileData ltngdata.FileData
 	err = e.serializer.Deserialize(bs, &fileData)
 	if err != nil {
 		return nil, err
 	}
 	fileData.Header.ItemInfo.LastOpenedAt = time.Now().UTC().Unix()
 
-	tmpFilepath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
-	tmpFile, err := e.fileManager.OpenCreateTruncatedFile(ctx, tmpFilepath)
-	if err != nil {
-		return nil, fmt.Errorf("error openning temporary file to upsert metadata %s: %w", tmpFilepath, err)
-	}
-
-	if _, err = e.fileManager.WriteToFile(ctx, tmpFile, fileData); err != nil {
-		return nil, fmt.Errorf("error writing item metadata to file: %w", err)
-	}
-
-	if err = os.Rename(tmpFilepath, filepath); err != nil {
-		return nil, fmt.Errorf("error renaming temporary file %s to %s: %w", tmpFilepath, filepath, err)
-	}
-
-	if updateRelationalData {
-		fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		if err = e.upsertRelationalData(
-			ctx, dbMetaInfo, &fileData, fi,
-		); err != nil {
-			return nil, fmt.Errorf("failed to update store stats manager file: %w", err)
-		}
-	}
-
-	return &ltngenginemodels.FileInfo{
+	return &ltngdata.FileInfo{
 		File:     file,
 		FileData: &fileData,
 		DataSize: uint32(len(fileData.Data)),
@@ -153,9 +136,9 @@ func (e *LTNGEngine) loadItemFromDisk(
 
 func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*ltngenginemodels.FileInfo, error) {
-	relationalLockKey := dbMetaInfo.RelationalInfo().LockName(ltngenginemodels.RelationalDataStore)
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+) (*ltngdata.FileInfo, error) {
+	relationalLockKey := dbMetaInfo.RelationalInfo().LockName(ltngdata.RelationalDataStoreKey)
 	fi, ok := e.itemFileMapping.Get(relationalLockKey)
 	if !ok {
 		var err error
@@ -168,32 +151,30 @@ func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 		return fi, nil
 	}
 
-	//if isFileClosed(fi.File) {
-	//	return nil, os.ErrClosed
-	//}
-
 	return fi, nil
 }
 
 func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*ltngenginemodels.FileInfo, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+) (*ltngdata.FileInfo, error) {
 	f, err := e.fileManager.OpenFile(ctx,
-		ltngenginemodels.GetDataFilepath(dbMetaInfo.RelationalInfo().Path, ltngenginemodels.RelationalDataStore))
+		ltngdata.GetRelationalDataFilepath(dbMetaInfo.Path, ltngdata.RelationalDataStoreKey))
 	if err != nil {
 		return nil, err
 	}
 
-	fi := &ltngenginemodels.FileInfo{
+	fi := &ltngdata.FileInfo{
 		File: f,
 	}
+
+	// TODO: consider using sync pool here?
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {
 		return nil, err
 	}
 
-	var fileData ltngenginemodels.FileData
+	var fileData ltngdata.FileData
 	err = e.serializer.Deserialize(reader.RawHeader, &fileData)
 	if err != nil {
 		return nil, err
@@ -204,21 +185,19 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	fi.HeaderSize = uint32(len(reader.RawHeader))
 	fi.DataSize = uint32(len(fileData.Data))
 
-	return fi, e.upsertRelationalData(
-		ctx, dbMetaInfo, &fileData, fi,
-	)
+	return fi, nil
 }
 
 // #####################################################################################################################
 
-var itemMarkedAsDeletedErr = errors.New("item marked as deleted")
+var itemMarkedAsDeletedErr = errorsx.New("item already marked as deleted")
 
 func (e *LTNGEngine) searchMemoryFirst(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	if item != nil {
 		return e.searchMemoryByKeyOrParentKey(ctx, dbMetaInfo, item, opts)
 	} else if opts != nil {
@@ -236,22 +215,22 @@ func (e *LTNGEngine) searchMemoryFirst(
 
 func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	var strItemKey string
 	if item != nil {
 		strItemKey = hex.EncodeToString(item.Key)
 	} else if opts != nil && opts.ParentKey != nil {
 		strItemKey = hex.EncodeToString(opts.ParentKey)
 	} else {
-		return nil, fmt.Errorf("invalid search filter - item and opts are null")
+		return nil, errorsx.New("invalid search filter: item and opts are null")
 	}
 
 	lockKey := dbMetaInfo.LockName(strItemKey)
 	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
-		return nil, fmt.Errorf("item %v|%v is marked as deleted: %w", item, opts, itemMarkedAsDeletedErr)
+		return nil, errorsx.Wrapf(itemMarkedAsDeletedErr, "%+v is marked as deleted", *opts)
 	}
 
 	if i, err := e.memoryStore.LoadItem(
@@ -260,25 +239,25 @@ func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
 		return i, nil
 	}
 
-	return nil, fmt.Errorf("no items in memory")
+	return nil, errorsx.New("no items in memory")
 }
 
 func (e *LTNGEngine) searchMemoryByIndex(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	_ *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	_ *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	for _, indexItem := range opts.IndexingKeys {
 		strItemKey := hex.EncodeToString(indexItem)
 		lockKey := dbMetaInfo.IndexInfo().LockName(strItemKey)
 		_, ok := e.markedAsDeletedMapping.Get(lockKey)
 		if ok {
-			return nil, fmt.Errorf("item %s is marked as deleted: %w", indexItem, itemMarkedAsDeletedErr)
+			return nil, errorsx.Wrapf(itemMarkedAsDeletedErr, "item %s is marked as deleted", indexItem)
 		}
 
 		if i, err := e.memoryStore.LoadItem(
-			ctx, dbMetaInfo, &ltngenginemodels.Item{
+			ctx, dbMetaInfo, &ltngdata.Item{
 				Key: indexItem,
 			}, opts,
 		); err == nil && i != nil {
@@ -286,38 +265,38 @@ func (e *LTNGEngine) searchMemoryByIndex(
 		}
 	}
 
-	return nil, fmt.Errorf("no items in memory")
+	return nil, errorsx.New("no items in memory")
 }
 
 // straightSearch finds the value from the index store with the [0] index list item;
 // that found value is the key to the (main) store that holds value that needs to be returned
 func (e *LTNGEngine) straightSearch(
 	ctx context.Context,
-	opts *ltngenginemodels.IndexOpts,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*ltngenginemodels.Item, error) {
+	opts *ltngdata.IndexOpts,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+) (*ltngdata.Item, error) {
 	key := opts.ParentKey
 	if key == nil && (opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0) {
-		return nil, fmt.Errorf("invalid indexing key")
+		return nil, errorsx.New("invalid indexing key")
 	} else if key == nil {
 		key = opts.IndexingKeys[0]
 	}
 
-	mainKeyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
+	mainKeyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngdata.Item{
 		Key: key,
-	}, false)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{
+	item, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngdata.Item{
 		Key: mainKeyValue.Value,
-	}, true)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &ltngenginemodels.Item{
+	return &ltngdata.Item{
 		Key:   item.Key,
 		Value: item.Value,
 	}, nil
@@ -325,46 +304,46 @@ func (e *LTNGEngine) straightSearch(
 
 func (e *LTNGEngine) andComputationalSearch(
 	ctx context.Context,
-	opts *ltngenginemodels.IndexOpts,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*ltngenginemodels.Item, error) {
+	opts *ltngdata.IndexOpts,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+) (*ltngdata.Item, error) {
 	var parentKey []byte
 	for _, key := range opts.IndexingKeys {
-		keyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
+		keyValue, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngdata.Item{
 			Key: key,
-		}, false)
+		})
 		if err != nil {
 			return nil, err
 		}
 
 		if !bytes.Equal(keyValue.Value, parentKey) && parentKey != nil {
-			return nil, fmt.Errorf("not found")
+			return nil, errorsx.New("not found")
 		}
 
 		parentKey = keyValue.Value
 	}
 
-	return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{
+	return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngdata.Item{
 		Key: parentKey,
-	}, true)
+	})
 }
 
 func (e *LTNGEngine) orComputationalSearch(
 	ctx context.Context,
-	opts *ltngenginemodels.IndexOpts,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*ltngenginemodels.Item, error) {
+	opts *ltngdata.IndexOpts,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+) (*ltngdata.Item, error) {
 	for _, key := range opts.IndexingKeys {
-		parentItem, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngenginemodels.Item{
+		parentItem, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexInfo(), &ltngdata.Item{
 			Key: key,
-		}, false)
+		})
 		if err != nil {
 			continue
 		}
 
-		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngenginemodels.Item{
+		return e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo, &ltngdata.Item{
 			Key: parentItem.Value,
-		}, true)
+		})
 	}
 
 	return nil, fmt.Errorf("no keys found")
@@ -374,10 +353,10 @@ func (e *LTNGEngine) orComputationalSearch(
 
 func (e *LTNGEngine) listPaginatedItems(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	pagination *ltngenginemodels.Pagination,
-) (*ltngenginemodels.ListItemsResult, error) {
-	var matchBox []*ltngenginemodels.Item
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	pagination *ltngdata.Pagination,
+) (*ltngdata.ListItemsResult, error) {
+	var matchBox []*ltngdata.Item
 	var idx, limit uint64
 	if pagination.IsValid() {
 		if pagination.PaginationCursor > 0 {
@@ -387,9 +366,9 @@ func (e *LTNGEngine) listPaginatedItems(
 		idx = (pagination.PageID - 1) * pagination.PageSize
 		limit = pagination.PageID * pagination.PageSize
 
-		matchBox = make([]*ltngenginemodels.Item, limit)
+		matchBox = make([]*ltngdata.Item, limit)
 	} else {
-		return nil, fmt.Errorf("invalid pagination")
+		return nil, errorsx.New("invalid pagination")
 	}
 
 	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
@@ -414,7 +393,7 @@ func (e *LTNGEngine) listPaginatedItems(
 			return nil, err
 		}
 
-		var fileData ltngenginemodels.FileData
+		var fileData ltngdata.FileData
 		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
 			return nil, err
 		}
@@ -423,16 +402,16 @@ func (e *LTNGEngine) listPaginatedItems(
 			continue
 		}
 
-		matchBox[idx] = &ltngenginemodels.Item{
+		matchBox[idx] = &ltngdata.Item{
 			Key:   fileData.Key,
 			Value: fileData.Data,
 		}
 		count++
 	}
 
-	return &ltngenginemodels.ListItemsResult{
+	return &ltngdata.ListItemsResult{
 		Items: matchBox[:count],
-		Pagination: &ltngenginemodels.Pagination{
+		Pagination: &ltngdata.Pagination{
 			PageID:           pagination.PageID + 1,
 			PageSize:         pagination.PageSize,
 			PaginationCursor: uint64(reader.Cursor),
@@ -442,19 +421,19 @@ func (e *LTNGEngine) listPaginatedItems(
 
 func (e *LTNGEngine) listPaginatedItemsFromCursor(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	pagination *ltngenginemodels.Pagination,
-) (*ltngenginemodels.ListItemsResult, error) {
-	var matchBox []*ltngenginemodels.Item
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	pagination *ltngdata.Pagination,
+) (*ltngdata.ListItemsResult, error) {
+	var matchBox []*ltngdata.Item
 	var idx, limit uint64
 
 	if pagination.IsValid() {
 		idx = (pagination.PageID - 1) * pagination.PageSize
 		limit = idx * pagination.PageSize
 
-		matchBox = make([]*ltngenginemodels.Item, limit)
+		matchBox = make([]*ltngdata.Item, limit)
 	} else {
-		return nil, fmt.Errorf("invalid pagination")
+		return nil, errorsx.New("invalid pagination")
 	}
 
 	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
@@ -482,20 +461,20 @@ func (e *LTNGEngine) listPaginatedItemsFromCursor(
 			return nil, err
 		}
 
-		var fileData ltngenginemodels.FileData
+		var fileData ltngdata.FileData
 		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
 			return nil, err
 		}
 
-		matchBox[idx] = &ltngenginemodels.Item{
+		matchBox[idx] = &ltngdata.Item{
 			Key:   fileData.Key,
 			Value: fileData.Data,
 		}
 	}
 
-	return &ltngenginemodels.ListItemsResult{
+	return &ltngdata.ListItemsResult{
 		Items: matchBox,
-		Pagination: &ltngenginemodels.Pagination{
+		Pagination: &ltngdata.Pagination{
 			PageID:           pagination.PageID + 1,
 			PageSize:         pagination.PageSize,
 			PaginationCursor: uint64(reader.Cursor),
@@ -505,9 +484,9 @@ func (e *LTNGEngine) listPaginatedItemsFromCursor(
 
 func (e *LTNGEngine) listAllItems(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*ltngenginemodels.ListItemsResult, error) {
-	var matchBox []*ltngenginemodels.Item
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+) (*ltngdata.ListItemsResult, error) {
+	var matchBox []*ltngdata.Item
 
 	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
 	if err != nil {
@@ -530,7 +509,7 @@ func (e *LTNGEngine) listAllItems(
 			return nil, err
 		}
 
-		var fileData ltngenginemodels.FileData
+		var fileData ltngdata.FileData
 		if err = e.serializer.Deserialize(bs, &fileData); err != nil {
 			return nil, err
 		}
@@ -539,32 +518,32 @@ func (e *LTNGEngine) listAllItems(
 			continue
 		}
 
-		matchBox = append(matchBox, &ltngenginemodels.Item{
+		matchBox = append(matchBox, &ltngdata.Item{
 			Key:   fileData.Key,
 			Value: fileData.Data,
 		})
 	}
 
-	return &ltngenginemodels.ListItemsResult{Items: matchBox}, nil
+	return &ltngdata.ListItemsResult{Items: matchBox}, nil
 }
 
 // loadIndexingList it returns all the indexing list a parent key has
 func (e *LTNGEngine) loadIndexingList(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	opts *ltngenginemodels.IndexOpts,
-) ([]*ltngenginemodels.Item, error) {
-	rawIndexingList, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngenginemodels.Item{
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	opts *ltngdata.IndexOpts,
+) ([]*ltngdata.Item, error) {
+	rawIndexingList, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngdata.Item{
 		Key: opts.ParentKey,
-	}, false)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	indexingList := bytes.Split(rawIndexingList.Value, []byte(ltngenginemodels.BytesSep))
-	itemList := make([]*ltngenginemodels.Item, len(indexingList))
+	indexingList := bytes.Split(rawIndexingList.Value, []byte(ltngdata.BsSep))
+	itemList := make([]*ltngdata.Item, len(indexingList))
 	for i, item := range indexingList {
-		itemList[i] = &ltngenginemodels.Item{
+		itemList[i] = &ltngdata.Item{
 			Key:   opts.ParentKey,
 			Value: item,
 		}
@@ -577,20 +556,20 @@ func (e *LTNGEngine) loadIndexingList(
 
 func (e *LTNGEngine) createItemOnDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
 ) error {
 	strItemKey := hex.EncodeToString(item.Key)
-	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
+	filePath := ltngdata.GetDataFilepath(dbMetaInfo.Path, strItemKey)
 
-	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
-	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)
+	fileData := ltngdata.NewFileData(dbMetaInfo, item)
+	file, err := e.fileManager.CreateFileIfNotExists(ctx, filePath)
 	if err != nil {
-		return fmt.Errorf("error opening/creating a truncated file at %s: %w", filePath, err)
+		return errorsx.Wrapf(err, "error opening/creating a file at %s", filePath)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
-		return err
+		return errorsx.Wrapf(err, "error writing to file at %s", filePath)
 	}
 
 	return nil
@@ -598,49 +577,50 @@ func (e *LTNGEngine) createItemOnDisk(
 
 func (e *LTNGEngine) createRelationalItemOnDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
 ) error {
-	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
+	fileData := ltngdata.NewFileData(dbMetaInfo, item)
 
 	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
 	if err != nil {
-		return fmt.Errorf("error creating %s relational store: %w",
-			dbMetaInfo.RelationalInfo().Name, err)
+		return errorsx.Wrapf(err, "error creating %s relational store",
+			dbMetaInfo.RelationalInfo().Name)
 	}
 
-	return e.upsertRelationalData(ctx, dbMetaInfo, fileData, fi)
+	if err = e.upsertRelationalData(ctx, fileData, fi); err != nil {
+		return errorsx.Wrapf(err, "error upserting relational data to %s store",
+			dbMetaInfo.RelationalInfo().Name)
+	}
+
+	return nil
 }
 
 func (e *LTNGEngine) upsertItemOnDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
 ) (err error) {
 	strItemKey := hex.EncodeToString(item.Key)
-	filePath := ltngenginemodels.GetDataFilepath(dbMetaInfo.Path, strItemKey)
-	tmpFilePath := ltngenginemodels.GetTmpDataFilepath(dbMetaInfo.Path, strItemKey)
+	filePath := ltngdata.GetDataFilepath(dbMetaInfo.Path, strItemKey)
+	tmpFilePath := ltngdata.GetTemporaryDataFilepath(dbMetaInfo.Path, strItemKey)
 
-	// TODO: revisit upsert functionality
-	//{
-	//	if err = osx.MvFile(ctx, filePath, tmpFilePath); err != nil {
-	//		return err
-	//	}
-	//	defer func() {
-	//		if err != nil {
-	//			err = osx.MvFile(ctx, tmpFilePath, filePath)
-	//		}
-	//	}()
-	//}
-
-	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
-	file, err := e.fileManager.OpenCreateTruncatedFile(ctx, filePath)
+	fileData := ltngdata.NewFileData(dbMetaInfo, item)
+	file, err := e.fileManager.CreateFileIfNotExists(ctx, tmpFilePath)
 	if err != nil {
-		return fmt.Errorf("error opening/creating a temporary truncated file at %s: %w", tmpFilePath, err)
+		return errorsx.Wrapf(err, "error opening/creating a temporary truncated file at %s", tmpFilePath)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
-		return err
+		return errorsx.Wrapf(err, "error writing to file at %s", tmpFilePath)
+	}
+
+	if err = file.Close(); err != nil {
+		return errorsx.Wrapf(err, "error closing file at %s", tmpFilePath)
+	}
+
+	if err = os.Rename(tmpFilePath, filePath); err != nil {
+		return errorsx.Wrapf(err, "error renaming file to %s", filePath)
 	}
 
 	return nil
@@ -648,178 +628,105 @@ func (e *LTNGEngine) upsertItemOnDisk(
 
 func (e *LTNGEngine) upsertRelationalItemOnDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
 ) error {
-	fileData := ltngenginemodels.NewFileData(dbMetaInfo, item)
-
 	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
 	if err != nil {
-		return fmt.Errorf("error creating %s relational store: %w",
-			dbMetaInfo.RelationalInfo().Name, err)
+		return errorsx.Wrapf(err, "error creating %s relational store", dbMetaInfo.Name)
 	}
 
-	return e.upsertRelationalData(ctx, dbMetaInfo, fileData, fi)
-}
-
-// #####################################################################################################################
-
-type tmpDelPaths struct {
-	tmpDelPath           string
-	indexTmpDelPath      string
-	indexListTmpDelPath  string
-	relationalTmpDelPath string
-}
-
-func (e *LTNGEngine) createTmpDeletionPaths(
-	_ context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*tmpDelPaths, error) {
-	tmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.Path)
-	if err := os.MkdirAll(tmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
-	}
-
-	indexTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexInfo().Path)
-	if err := os.MkdirAll(indexTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
-	}
-
-	indexListTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexListInfo().Path)
-	if err := os.MkdirAll(indexListTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
-	}
-
-	relationalTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
-	if err := os.MkdirAll(relationalTmpDelPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating tmp delete store item directory: %w", err)
-	}
-
-	return &tmpDelPaths{
-		tmpDelPath:           tmpDelPath,
-		indexTmpDelPath:      indexTmpDelPath,
-		indexListTmpDelPath:  indexListTmpDelPath,
-		relationalTmpDelPath: relationalTmpDelPath,
-	}, nil
+	fileData := ltngdata.NewFileData(dbMetaInfo, item)
+	return e.upsertRelationalData(ctx, fileData, fi)
 }
 
 // #####################################################################################################################
 
 func (e *LTNGEngine) upsertRelationalData(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	fileData *ltngenginemodels.FileData,
-	fi *ltngenginemodels.FileInfo,
+	fileData *ltngdata.FileData,
+	fi *ltngdata.FileInfo,
 ) (err error) {
-	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
-	relationalPath := relationalInfo.Path
-	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
+	info := fi.FileData.Header.StoreInfo.RelationalInfo()
+	lockKey := info.LockName(ltngdata.RelationalDataStoreKey)
 
-	e.kvLock.Lock(relationalLockKey, struct{}{})
-	defer e.kvLock.Unlock(relationalLockKey)
+	e.kvLock.Lock(lockKey, struct{}{})
+	defer e.kvLock.Unlock(lockKey)
 
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {
-		return fmt.Errorf("error creating %s file reader: %w",
-			fi.File.Name(), err)
+		return errorsx.Wrapf(err, "error creating %s file reader", fi.File.Name())
 	}
 
-	var found bool
-	var upTo, from uint32
-	for {
-		var bs []byte
-		bs, err = reader.Read(ctx)
-		if err != nil {
-			if err == io.EOF {
-				break
+	upTo, from, err := reader.FindInFile(ctx, fileData.Key)
+	if err != nil {
+		if errorsx.Is(err, rw.KeyNotFoundError) {
+			if _, err = fi.File.Seek(0, 2); err != nil {
+				return errorsx.Wrap(err, "error seeking to file")
 			}
 
-			return fmt.Errorf("error reading %s file: %w", fi.File.Name(), err)
+			if _, err = e.fileManager.WriteToRelationalFile(ctx, fi.File, fileData); err != nil {
+				return errorsx.Wrapf(err, "error writing info into file %s", fi.File.Name())
+			}
+
+			return nil
 		}
 
-		if bytes.Contains(bs, fileData.Key) {
-			found = true
-			from = reader.Yield()
-			upTo = from - uint32(len(bs)+4)
-			break
-		}
+		return errorsx.Wrapf(err, "error finding %s in file", fileData.Key)
 	}
 
-	if !found {
-		if _, err = fi.File.Seek(0, 2); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
-		}
-		if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, fi.File, fileData); err != nil {
-			return fmt.Errorf("error writing info into file %s: %w", fi.File.Name(), err)
-		}
-
-		return nil
+	if err = reader.SetCursor(ctx, 0); err != nil {
+		return errorsx.Wrap(err, "error seeking to file")
 	}
 
-	if _, err = fi.File.Seek(0, 0); err != nil {
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	var tmpFile *os.File
 	{
-		relationalTmpPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
-		if err = os.MkdirAll(relationalTmpPath, os.ModePerm); err != nil {
-			return fmt.Errorf("error creating tmp delete store item directory: %w", err)
-		}
-
-		tmpFile, err = os.OpenFile(
-			ltngenginemodels.RawPathWithSepForFile(relationalTmpPath, ltngenginemodels.RelationalDataStore),
-			os.O_RDWR|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-		)
+		tmpFile, err := e.fileManager.OpenCreateFile(ctx, ltngdata.GetTemporaryRelationalDataFilepath(
+			info.Path, lockKey))
 		if err != nil {
 			return err
 		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fi.File, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying first part of the file to tmp file")
 		}
 
-		if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, tmpFile, fileData); err != nil {
-			return fmt.Errorf("error writing info into relational file %s: %w", tmpFile.Name(), err)
+		if _, err = e.fileManager.WriteToRelationalFile(ctx, tmpFile, fileData); err != nil {
+			return errorsx.Wrapf(err, "error writing info into relational file %s", tmpFile.Name())
 		}
 
 		if _, err = fi.File.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
+			return errorsx.Wrap(err, "error seeking to file")
 		}
 
 		if _, err = io.Copy(tmpFile, fi.File); err != nil {
-			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying second part of the file to tmp file")
 		}
 
 		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to sync file - %s", tmpFile.Name())
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close tmp file %s", tmpFile.Name())
 		}
 
 		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("failed to close file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close file %s", fi.File.Name())
 		}
 
-		if err = os.Rename(
-			ltngenginemodels.RawPathWithSepForFile(relationalTmpPath, ltngenginemodels.RelationalDataStore),
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore),
-		); err != nil {
-			return fmt.Errorf("error renaming tmp file: %w", err)
+		if err = osx.MvFile(ctx, tmpFile.Name(), ltngdata.GetRelationalDataFilepath(info.Path, lockKey)); err != nil {
+			return errorsx.Wrap(err, "error moving tmp file")
 		}
 
-		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx,
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore))
+		file, err := e.fileManager.OpenCreateFile(ctx, ltngdata.GetRelationalDataFilepath(
+			info.Path, lockKey))
 		if err != nil {
-			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
+			return errorsx.Wrapf(err, "error opening %s relational file", fi.File.Name())
 		}
 
 		fi.File = file
-		e.itemFileMapping.Set(relationalLockKey, fi)
+		e.itemFileMapping.Set(lockKey, fi)
 	}
 
 	return
@@ -827,22 +734,14 @@ func (e *LTNGEngine) upsertRelationalData(
 
 func (e *LTNGEngine) deleteRelationalData(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	tmpDelPaths *temporaryDeletionPaths,
+	item *ltngdata.Item,
+	fi *ltngdata.FileInfo,
 ) (err error) {
-	var fi *ltngenginemodels.FileInfo
-	fi, err = e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
-	if err != nil {
-		return err
-	}
+	info := fi.FileData.Header.StoreInfo.RelationalInfo()
+	lockKey := info.LockName(ltngdata.RelationalDataStoreKey)
 
-	relationalInfo := fi.FileData.Header.StoreInfo.RelationalInfo()
-	relationalPath := relationalInfo.Path
-	relationalLockKey := relationalInfo.LockName(ltngenginemodels.RelationalDataStore)
-
-	e.kvLock.Lock(relationalLockKey, struct{}{})
-	defer e.kvLock.Unlock(relationalLockKey)
+	e.kvLock.Lock(lockKey, struct{}{})
+	defer e.kvLock.Unlock(lockKey)
 
 	reader, err := rw.NewFileReader(ctx, fi, true)
 	if err != nil {
@@ -850,83 +749,60 @@ func (e *LTNGEngine) deleteRelationalData(
 			fi.File.Name(), err)
 	}
 
-	var deleted bool
-	var upTo, from uint32
-	for {
-		var bs []byte
-		bs, err = reader.Read(ctx)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return fmt.Errorf("error reading %s file: %w", fi.File.Name(), err)
-		}
-
-		if bytes.Contains(bs, item.Key) {
-			deleted = true
-			from = reader.Yield()
-			upTo = from - uint32(len(bs)+4)
-			break
-		}
+	upTo, from, err := reader.FindInFile(ctx, item.Key)
+	if err != nil {
+		return errorsx.Wrapf(err, "error finding key: '%s' in file %s", item.Key, fi.File.Name())
 	}
 
-	if !deleted {
-		return fmt.Errorf("key %v not deleted: key not found", item.Key)
+	if err = reader.SetCursor(ctx, 0); err != nil {
+		return errorsx.Wrap(err, "error setting file cursor")
 	}
 
-	if _, err = fi.File.Seek(0, 0); err != nil {
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	var tmpFile *os.File
 	{
-		tmpFilePath := tmpDelPaths.relationalTmpDelPath
-		tmpFile, err = os.OpenFile(
-			ltngenginemodels.RawPathWithSepForFile(tmpFilePath, ltngenginemodels.RelationalDataStore),
-			os.O_RDWR|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-		)
+		tmpFile, err := e.fileManager.OpenCreateFile(ctx,
+			ltngdata.GetTemporaryRelationalDataFilepath(info.Path, lockKey))
 		if err != nil {
 			return err
 		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fi.File, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying first part of the file to tmp file")
 		}
 
+		//if _, err = e.fileManager.WriteToRelationalFile(ctx, tmpFile, info); err != nil {
+		//	return errorsx.Wrapf(err, "error updating info into tmp file %s", tmpFile.Name())
+		//}
+
 		if _, err = fi.File.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
+			return errorsx.Wrap(err, "error seeking to file")
 		}
 
 		if _, err = io.Copy(tmpFile, fi.File); err != nil {
-			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
-		}
-
-		if err = tmpFile.Sync(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrap(err, "error copying second part of the file to tmp file")
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to close file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close tmp file %s", tmpFile.Name())
 		}
 
-		if err = os.Rename(
-			ltngenginemodels.RawPathWithSepForFile(tmpFilePath, ltngenginemodels.RelationalDataStore),
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore),
-		); err != nil {
-			return fmt.Errorf("error renaming tmp file: %w", err)
+		if err = fi.File.Close(); err != nil {
+			return errorsx.Wrapf(err, "failed to close file %s", fi.File.Name())
 		}
 
-		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx,
-			ltngenginemodels.GetDataFilepath(relationalPath, ltngenginemodels.RelationalDataStore))
+		newFilePath := ltngdata.GetRelationalDataFilepath(
+			info.Path, lockKey)
+		if err = osx.MvFile(ctx, tmpFile.Name(), newFilePath); err != nil {
+			return errorsx.Wrap(err, "error moving tmp file")
+		}
+
+		file, err := e.fileManager.OpenCreateFile(ctx, newFilePath)
 		if err != nil {
-			return fmt.Errorf("error opening %s file: %w", relationalInfo.Name, err)
+			return errorsx.Wrapf(err, "error opening %s relational file", fi.File.Name())
 		}
 
 		fi.File = file
-		e.itemFileMapping.Set(relationalLockKey, fi)
+		e.itemFileMapping.Set(lockKey, fi)
 	}
 
 	return

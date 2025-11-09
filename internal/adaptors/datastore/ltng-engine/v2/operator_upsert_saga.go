@@ -10,8 +10,8 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
@@ -62,7 +62,7 @@ func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.InfoChannel.Ch,
-		func(itemInfoData *ltngenginemodels.ItemInfoData) {
+		func(itemInfoData *ltngdata.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
 				s.noIndexTrigger(ctx, itemInfoData)
 			} else {
@@ -74,7 +74,7 @@ func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *upsertSaga) noIndexTrigger(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
 ) {
 	upsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertItemOnDisk := itemInfoData.WithRespChan(upsertItemOnDiskRespSignal)
@@ -119,7 +119,7 @@ func (s *upsertSaga) noIndexTrigger(
 }
 
 func (s *upsertSaga) indexTrigger(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
 ) {
 	upsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertItemOnDisk := itemInfoData.WithRespChan(upsertItemOnDiskRespSignal)
@@ -176,7 +176,7 @@ func (s *upsertSaga) indexTrigger(
 	close(itemInfoData.RespSignal)
 }
 
-func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngenginemodels.ItemInfoData) {
+func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngdata.ItemInfoData) {
 	if !itemInfoData.Opts.HasIdx {
 		s.noIndexRollback(ctx, itemInfoData)
 		return
@@ -186,7 +186,7 @@ func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngengi
 }
 
 func (s *upsertSaga) noIndexRollback(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
@@ -199,7 +199,7 @@ func (s *upsertSaga) noIndexRollback(
 }
 
 func (s *upsertSaga) indexRollback(
-	_ context.Context, itemInfoData *ltngenginemodels.ItemInfoData,
+	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
@@ -228,7 +228,7 @@ func (s *upsertSaga) upsertItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
 			close(v.RespSignal)
@@ -241,10 +241,10 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			tmpFilePath := ltngdata.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 			if err := osx.MvFile(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
@@ -263,7 +263,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
 			if err != nil {
 				v.RespSignal <- err
@@ -274,13 +274,13 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 			op := syncx.NewThreadOperator("upsertIndexItemOnDisk")
 			op.OpX(func() (any, error) {
 				keysToSave := bytesop.CalRightDiff(
-					ltngenginemodels.IndexListToBytesList(indexingList),
+					ltngdata.IndexListToBytesList(indexingList),
 					v.Opts.IndexingKeys)
 
 				for _, indexKey := range keysToSave {
 					if err := s.opSaga.e.createItemOnDisk(v.Ctx,
 						v.DBMetaInfo.IndexInfo(),
-						&ltngenginemodels.Item{
+						&ltngdata.Item{
 							Key:   indexKey,
 							Value: v.Opts.ParentKey,
 						},
@@ -294,13 +294,13 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 			op.OpX(func() (any, error) {
 				keysToDelete := bytesop.CalRightDiff(
 					v.Opts.IndexingKeys,
-					ltngenginemodels.IndexListToBytesList(indexingList))
+					ltngdata.IndexListToBytesList(indexingList))
 				v.IndexKeysToDelete = keysToDelete
 
 				for _, indexKey := range keysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
-					tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+					filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 					if err := osx.MvFile(ctx, filePath, tmpFilePath); err != nil {
 						return nil, err
@@ -322,7 +322,7 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
 			if err != nil {
 				v.RespSignal <- err
@@ -334,12 +334,12 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 			op.OpX(func() (any, error) {
 				keysToSave := bytesop.CalRightDiff(
 					v.Opts.IndexingKeys,
-					ltngenginemodels.IndexListToBytesList(indexingList))
+					ltngdata.IndexListToBytesList(indexingList))
 
 				for _, indexKey := range keysToSave {
 					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
 						v.DBMetaInfo.IndexInfo(),
-						&ltngenginemodels.Item{
+						&ltngdata.Item{
 							Key:   indexKey,
 							Value: v.Opts.ParentKey,
 						},
@@ -352,13 +352,13 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 			})
 			op.OpX(func() (any, error) {
 				keysToDelete := bytesop.CalRightDiff(
-					ltngenginemodels.IndexListToBytesList(indexingList),
+					ltngdata.IndexListToBytesList(indexingList),
 					v.Opts.IndexingKeys)
 
 				var errAcc error
 				for _, indexKey := range keysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+					filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 
 					if err := os.Remove(filePath); err != nil {
 						if errAcc == nil {
@@ -385,12 +385,12 @@ func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			err := s.opSaga.e.upsertItemOnDisk(ctx,
 				v.DBMetaInfo.IndexListInfo(),
-				&ltngenginemodels.Item{
+				&ltngdata.Item{
 					Key:   v.Opts.ParentKey,
-					Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngenginemodels.BytesSep)),
+					Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngdata.BsSep)),
 				},
 			)
 			v.RespSignal <- err
@@ -404,10 +404,10 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngenginemodels.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
-			tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			tmpFilePath := ltngdata.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 			if err := osx.MvFile(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
@@ -426,7 +426,7 @@ func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
 			close(v.RespSignal)
@@ -439,10 +439,10 @@ func (s *upsertSaga) cleanUpUpsert(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert.Ch,
-		func(v *ltngenginemodels.ItemInfoData) {
+		func(v *ltngdata.ItemInfoData) {
 			{
 				strItemKey := hex.EncodeToString(v.Item.Key)
-				tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.Path, strItemKey)
+				tmpFilePath := ltngdata.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
 				_ = os.Remove(tmpFilePath)
 				if !v.Opts.HasIdx {
 					v.RespSignal <- nil
@@ -454,14 +454,14 @@ func (s *upsertSaga) cleanUpUpsert(
 			{
 				for _, indexKey := range v.IndexKeysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 					_ = os.Remove(tmpFilePath)
 				}
 			}
 
 			{
 				strItemKey := hex.EncodeToString(v.Item.Key)
-				tmpFilePath := ltngenginemodels.GetTmpDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+				tmpFilePath := ltngdata.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
 				_ = os.Remove(tmpFilePath)
 			}
 

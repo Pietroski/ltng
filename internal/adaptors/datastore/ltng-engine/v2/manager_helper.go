@@ -1,147 +1,71 @@
 package v2
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"time"
 
-	"gitlab.com/pietroski-software-company/golang/devex/saga"
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
-func (e *LTNGEngine) createDataPathOnDisk(
-	_ context.Context,
-	info *ltngenginemodels.StoreInfo,
-) error {
-	path := ltngenginemodels.GetDataPath(info.Path)
-	if err := os.MkdirAll(path, ltngenginemodels.DBFilePerm); err != nil {
-		return fmt.Errorf("error creating data directory %s: %w", path, err)
-	}
-
-	return nil
-}
-
-func (e *LTNGEngine) createStatsPathOnDisk(
-	_ context.Context,
-) error {
-	path := ltngenginemodels.GetStatsPathWithSep()
-	if err := os.MkdirAll(path, ltngenginemodels.DBFilePerm); err != nil {
-		return fmt.Errorf("error creating stats directory %s: %w", path, err)
-	}
-
-	return nil
-}
-
-// #####################################################################################################################
-
-func (e *LTNGEngine) createOrOpenRelationalStatsStoreOnDisk(
+func (e *LTNGEngine) createStoreOnDisk(
 	ctx context.Context,
-) (*ltngenginemodels.FileInfo, error) {
-	info := ltngenginemodels.DBManagerStoreInfo.RelationalInfo()
-	if fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx); err == nil {
-		return fi, nil
-	}
-
-	file, err := os.OpenFile(
-		ltngenginemodels.GetStatsFilepath(info.Name),
-		os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-	)
+	info *ltngdata.StoreInfo,
+) (fi *ltngdata.FileInfo, err error) {
+	file, err := e.fileManager.OpenCreateFile(ctx,
+		ltngdata.GetStatsFilepath(info.Path, info.Name))
 	if err != nil {
 		return nil, err
 	}
 
 	info.CreatedAt = time.Now().UTC().Unix()
 	info.LastOpenedAt = info.CreatedAt
-	fileData := &ltngenginemodels.FileData{
-		Header: &ltngenginemodels.Header{
+	fileData := &ltngdata.FileData{
+		Header: &ltngdata.Header{
 			StoreInfo: info,
 		},
 	}
-	return e.writeRelationalStatsStoreToFile(ctx, file, fileData)
+
+	return e.writeFileDataToFile(ctx, file, fileData)
 }
 
-func (e *LTNGEngine) writeRelationalStatsStoreToFile(
+func (e *LTNGEngine) writeFileDataToFile(
 	ctx context.Context,
 	file *os.File,
-	fileData *ltngenginemodels.FileData,
-) (*ltngenginemodels.FileInfo, error) {
-	bs, err := e.fileManager.WriteToRelationalFile(ctx, file, fileData)
-	if err != nil {
-		return nil, fmt.Errorf("error writing file data: %w", err)
-	}
-
-	fi := &ltngenginemodels.FileInfo{
-		File:       file,
-		FileData:   fileData,
-		HeaderSize: uint32(len(bs)),
-		DataSize:   uint32(len(fileData.Data)),
-	}
-
-	return fi, nil
-}
-
-// #####################################################################################################################
-
-func (e *LTNGEngine) createStatsStoreOnDisk(
-	ctx context.Context,
-	info *ltngenginemodels.StoreInfo,
-) (*ltngenginemodels.FileInfo, error) {
-	file, err := os.OpenFile(
-		ltngenginemodels.GetStatsFilepath(info.Name),
-		os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	info.CreatedAt = time.Now().UTC().Unix()
-	info.LastOpenedAt = info.CreatedAt
-	fileData := &ltngenginemodels.FileData{
-		Header: &ltngenginemodels.Header{
-			StoreInfo: info,
-		},
-	}
-	return e.writeStatsStoreToFile(ctx, file, fileData)
-}
-
-func (e *LTNGEngine) writeStatsStoreToFile(
-	ctx context.Context,
-	file *os.File,
-	fileData *ltngenginemodels.FileData,
-) (*ltngenginemodels.FileInfo, error) {
+	fileData *ltngdata.FileData,
+) (*ltngdata.FileInfo, error) {
 	bs, err := e.fileManager.WriteToFile(ctx, file, fileData)
 	if err != nil {
-		return nil, fmt.Errorf("error writing file data: %w", err)
+		return nil, errorsx.Wrap(err, "error writing file data")
 	}
 
-	fi := &ltngenginemodels.FileInfo{
+	fi := &ltngdata.FileInfo{
 		File:       file,
 		FileData:   fileData,
 		HeaderSize: uint32(len(bs)),
 		DataSize:   uint32(len(fileData.Data)),
 	}
+
 	e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 
 	return fi, nil
 }
 
-// #####################################################################################################################
-
 func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 	ctx context.Context,
-	info *ltngenginemodels.StoreInfo,
-) (*ltngenginemodels.FileInfo, error) {
-	value, ok := e.storeFileMapping.Get(info.Name)
+	info *ltngdata.StoreInfo,
+) (fi *ltngdata.FileInfo, err error) {
+	var ok bool
+	fi, ok = e.storeFileMapping.Get(info.Name)
 	if !ok {
-		fi, err := e.loadStoreStatsFromDisk(ctx, info)
+		fi, err = e.loadStoreFromDisk(ctx, info)
 		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to load %s store info from disk: %w", info.Name, err)
+			return nil, errorsx.Wrapf(err, "failed to load '%s' store info from disk", info.Name)
 		}
 
 		e.storeFileMapping.Set(info.Name, fi)
@@ -149,99 +73,194 @@ func (e *LTNGEngine) loadStoreFromMemoryOrDisk(
 		return fi, nil
 	}
 
-	return value, nil
+	return fi, nil
 }
 
-func (e *LTNGEngine) loadStoreStatsFromDisk(
+func (e *LTNGEngine) loadStoreFromDisk(
 	ctx context.Context,
-	info *ltngenginemodels.StoreInfo,
-) (*ltngenginemodels.FileInfo, error) {
-	bs, file, err := e.fileManager.OpenReadWholeFile(ctx, ltngenginemodels.GetStatsFilepath(info.Name))
+	info *ltngdata.StoreInfo,
+) (*ltngdata.FileInfo, error) {
+	//if err = osx.MvFile(ctx,
+	//	ltngdata.GetStatsFilepath(info.Path, info.Name),
+	//	ltngdata.GetTemporaryStatsFilepath(info.Path, info.Name)); err != nil {
+	//	return nil, err
+	//}
+	//defer func() {
+	//	if err != nil && !errorsx.Is(err, osx.ErrNoSuchFileOrDirectory) {
+	//		restoringErr := osx.MvFile(ctx,
+	//			ltngdata.GetTemporaryStatsFilepath(info.Path, info.Name),
+	//			ltngdata.GetStatsFilepath(info.Path, info.Name))
+	//		if err != nil {
+	//			e.logger.Error(ctx, "failed to restore stats file", "err", restoringErr)
+	//		}
+	//
+	//		return
+	//	}
+	//}()
+
+	bs, file, err := e.fileManager.OpenReadWholeFile(ctx,
+		ltngdata.GetStatsFilepath(info.Path, info.Name))
 	if err != nil {
 		return nil, err
 	}
 
-	var fileData ltngenginemodels.FileData
+	var fileData ltngdata.FileData
 	if err = e.serializer.Deserialize(bs, &fileData); err != nil {
-		return nil, fmt.Errorf("failed to deserialize store stats: %w", err)
+		return nil, errorsx.Wrapf(err, "failed to deserialize '%s' store stats", info.Name)
 	}
 	fileData.Header.StoreInfo.LastOpenedAt = time.Now().UTC().Unix()
 
-	err = file.Truncate(0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to truncate store stats file: %w", err)
-	}
+	//file, err = e.fileManager.CreateFileIfNotExists(ctx,
+	//	ltngdata.GetStatsFilepath(info.Path, info.Name))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//fi, err = e.writeFileDataToFile(ctx, file, &fileData)
+	//if err != nil {
+	//	return nil, errorsx.Wrap(err, "error writing store stats file")
+	//}
+	//
+	//if _, err = e.updateRelationalStatsStoreFile(ctx, fi.FileData); err != nil {
+	//	return nil, errorsx.Wrap(err, "error updateRelationalStatsFile")
+	//}
 
-	fi, err := e.writeStatsStoreToFile(ctx, file, &fileData)
-	if err != nil {
-		return nil, fmt.Errorf("error writing store stats file: %w", err)
-	}
-
-	if _, err = e.updateRelationalStatsFile(ctx, fi.FileData); err != nil {
-		return nil, fmt.Errorf("error updateRelationalStatsFile: %w", err)
-	}
-
-	return fi, err
+	return &ltngdata.FileInfo{
+		File:       file,
+		FileData:   &fileData,
+		HeaderSize: uint32(len(bs)),
+		DataSize:   uint32(len(fileData.Data)),
+	}, err
 }
 
 // #####################################################################################################################
 
-func (e *LTNGEngine) loadRelationalStoreFromMemoryOrDisk(
+func (e *LTNGEngine) createOpenRelationalStatsStoreOnDisk(
 	ctx context.Context,
-) (*ltngenginemodels.FileInfo, error) {
-	value, ok := e.storeFileMapping.Get(ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name)
+) (*ltngdata.FileInfo, error) {
+	if fi, err := e.loadRelationalStatsStoreFromMemoryOrDisk(ctx); err == nil {
+		return fi, nil
+	}
+
+	info := e.mngrStoreInfo
+	file, err := e.fileManager.OpenCreateFile(ctx,
+		ltngdata.GetRelationalStatsFilepath(info.Path, info.Name))
+	if err != nil {
+		return nil, err
+	}
+
+	info.CreatedAt = time.Now().UTC().Unix()
+	info.LastOpenedAt = info.CreatedAt
+	fileData := &ltngdata.FileData{
+		Header: &ltngdata.Header{
+			StoreInfo: info,
+		},
+	}
+
+	return e.writeRelationalFileDataToFile(ctx, file, fileData)
+}
+
+func (e *LTNGEngine) writeRelationalFileDataToFile(
+	ctx context.Context,
+	file *os.File,
+	fileData *ltngdata.FileData,
+) (*ltngdata.FileInfo, error) {
+	bs, err := e.fileManager.WriteToRelationalFile(ctx, file, fileData)
+	if err != nil {
+		return nil, errorsx.Wrap(err, "error writing file data")
+	}
+
+	fi := &ltngdata.FileInfo{
+		File:       file,
+		FileData:   fileData,
+		HeaderSize: uint32(len(bs)),
+		DataSize:   uint32(len(fileData.Data)),
+	}
+
+	return fi, nil
+}
+
+func (e *LTNGEngine) loadRelationalStatsStoreFromMemoryOrDisk(
+	ctx context.Context,
+) (fi *ltngdata.FileInfo, err error) {
+	var ok bool
+	info := e.mngrStoreInfo.RelationalInfo()
+
+	fi, ok = e.storeFileMapping.Get(info.Name)
 	if !ok {
-		fi, err := e.loadRelationalStoreStatsFromDisk(ctx)
+		fi, err = e.loadRelationalStatsStoreFromDisk(ctx)
 		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to load %s store info from disk: %w",
-				ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, err)
+			return nil, errorsx.Wrapf(err, "failed to load %s store info from disk",
+				info.Name)
 		}
 
-		e.storeFileMapping.Set(ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, fi)
+		e.storeFileMapping.Set(info.Name, fi)
 
 		return fi, nil
 	}
 
-	return value, nil
+	return fi, nil
 }
 
-func (e *LTNGEngine) loadRelationalStoreStatsFromDisk(
+func (e *LTNGEngine) loadRelationalStatsStoreFromDisk(
 	ctx context.Context,
-) (*ltngenginemodels.FileInfo, error) {
+) (fi *ltngdata.FileInfo, err error) {
+	info := e.mngrStoreInfo
+
 	file, err := e.fileManager.OpenFile(ctx,
-		ltngenginemodels.GetStatsFilepath(ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name),
-	)
+		ltngdata.GetRelationalStatsFilepath(info.Path, info.Name))
 	if err != nil {
 		return nil, err
 	}
 
-	fi, err := e.fileManager.GetRelationalFileInfo(ctx, file)
+	fi, err = e.GetUpdatedRelationalFileInfo(ctx, file)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = e.updateRelationalStats(
-		ctx, fi, []byte(fi.FileData.Header.StoreInfo.Name), fi.FileData,
-	); err != nil {
-		return nil, fmt.Errorf("failed to update store stats manager file: %w", err)
-	}
+	//if err = e.updateRelationalStats(ctx, fi, fi.FileData, []byte(fi.FileData.Header.StoreInfo.Name)); err != nil {
+	//	return nil, errorsx.Wrap(err, "failed to update stats store manager file")
+	//}
 
 	return fi, nil
 }
 
-func (e *LTNGEngine) updateRelationalStatsFile(
-	ctx context.Context, fileData *ltngenginemodels.FileData,
-) (*ltngenginemodels.FileInfo, error) {
-	fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx)
+func (e *LTNGEngine) GetUpdatedRelationalFileInfo(
+	ctx context.Context, file *os.File,
+) (*ltngdata.FileInfo, error) {
+	bs, err := e.fileManager.ReadRelationalRow(ctx, file)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = e.updateRelationalStats(
-		ctx, fi, []byte(fileData.Header.StoreInfo.Name), fileData,
-	); err != nil {
-		return nil, fmt.Errorf("failed to update store stats manager file: %w", err)
+	var fileData ltngdata.FileData
+	if err = e.serializer.Deserialize(bs, &fileData); err != nil {
+		return nil, errorsx.Wrapf(err, "failed to deserialize store stats header from relational file")
+	}
+	fileData.Header.StoreInfo.LastOpenedAt = time.Now().UTC().Unix()
+
+	info := &ltngdata.FileInfo{
+		File:       file,
+		FileData:   &fileData,
+		HeaderSize: uint32(len(bs)),
+		DataSize:   uint32(len(fileData.Data)),
+	}
+
+	return info, nil
+}
+
+// #####################################################################################################################
+
+func (e *LTNGEngine) updateRelationalStatsStoreFile(
+	ctx context.Context, fileData *ltngdata.FileData,
+) (*ltngdata.FileInfo, error) {
+	fi, err := e.loadRelationalStatsStoreFromMemoryOrDisk(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = e.updateRelationalStats(ctx, fi, fileData, []byte(fileData.Header.StoreInfo.Name)); err != nil {
+		return nil, errorsx.Wrap(err, "failed to update store stats manager file")
 	}
 
 	return fi, nil
@@ -249,164 +268,68 @@ func (e *LTNGEngine) updateRelationalStatsFile(
 
 // #####################################################################################################################
 
-// TODO: change the tmp place for the relational stats file
-
 func (e *LTNGEngine) deleteFromRelationalStats(
 	ctx context.Context,
-	fi *ltngenginemodels.FileInfo,
+	fi *ltngdata.FileInfo,
+	info *ltngdata.FileData,
 	key []byte,
 ) (err error) {
-	reader, err := rw.NewFileReader(ctx, fi, true)
+	// TODO: consider putting file readers and writers and managers to a sync.pool
+	reader, err := rw.NewFileReader(ctx, fi, false)
 	if err != nil {
-		return fmt.Errorf("error creating %s file reader: %w",
-			fi.File.Name(), err)
+		return errorsx.Wrapf(err, "error creating %s file reader", fi.File.Name())
 	}
 
-	var deleted bool
-	var upTo, from uint32
-	for {
-		var bs []byte
-		bs, err = reader.Read(ctx)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return fmt.Errorf("error reading %s file: %w", fi.File.Name(), err)
-		}
-
-		if bytes.Contains(bs, key) {
-			deleted = true
-			from = reader.Yield()
-			upTo = from - uint32(len(bs)+4)
-			break
-		}
+	upTo, from, err := reader.FindInFile(ctx, key)
+	if err != nil {
+		return errorsx.Wrapf(err, "error finding key: '%s' in file %s", key, fi.File.Name())
 	}
 
-	if !deleted {
-		return fmt.Errorf("key %v not deleted: key not found", key)
+	if err = reader.SetCursor(ctx, 0); err != nil {
+		return errorsx.Wrap(err, "error setting file cursor")
 	}
 
-	if _, err = fi.File.Seek(0, 0); err != nil {
-		if err = os.Remove(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-		); err != nil {
-			return fmt.Errorf(
-				"error removing unecessary tmp %s file that failed to seek: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	var tmpFile *os.File
-	copyToTmpFile := func() error {
-		tmpFile, err = os.OpenFile(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-		)
+	{
+		tmpFile, err := e.fileManager.OpenCreateFile(ctx, ltngdata.GetTemporaryRelationalStatsFilepath(
+			info.Header.StoreInfo.Path, info.Header.StoreInfo.Name))
 		if err != nil {
 			return err
 		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fi.File, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying first part of the file to tmp file")
 		}
 
+		//if _, err = e.fileManager.WriteToRelationalFile(ctx, tmpFile, info); err != nil {
+		//	return errorsx.Wrapf(err, "error updating info into tmp file %s", tmpFile.Name())
+		//}
+
 		if _, err = fi.File.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
+			return errorsx.Wrap(err, "error seeking to file")
 		}
 
 		if _, err = io.Copy(tmpFile, fi.File); err != nil {
-			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying second part of the file to tmp file")
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close tmp file %s", tmpFile.Name())
 		}
 
-		return nil
-	}
-	discardTmpFile := func() error {
-		if _, err = fi.File.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
-		}
-
-		if err = os.Remove(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-		); err != nil {
-			return fmt.Errorf(
-				"error removing unecessary tmp %s file: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return nil
-	}
-
-	removeMainFile := func() error {
 		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("error closing original file: %w", err)
+			return errorsx.Wrapf(err, "failed to close file %s", fi.File.Name())
 		}
 
-		if err = os.Remove(ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name)); err != nil {
-			return fmt.Errorf("error removing %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
+		newFilePath := ltngdata.GetRelationalStatsFilepath(
+			info.Header.StoreInfo.Path, info.Header.StoreInfo.Name)
+		if err = osx.MvFile(ctx, tmpFile.Name(), newFilePath); err != nil {
+			return errorsx.Wrap(err, "error moving tmp file")
 		}
 
-		return nil
-	}
-	reopenMainFile := func() error {
-		fi, err = e.loadStoreFromMemoryOrDisk(ctx, ltngenginemodels.DBManagerStoreInfo.RelationalInfo())
+		file, err := e.fileManager.OpenCreateFile(ctx, newFilePath)
 		if err != nil {
-			return fmt.Errorf(
-				"error re-opening %s manager relational store: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
-
-		return nil
-	}
-
-	operations := []*saga.Operation{
-		{
-			Action: &saga.Action{
-				Do:          copyToTmpFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Do:          discardTmpFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &saga.Action{
-				Do:          removeMainFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Do:          reopenMainFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
-	}
-
-	if err = saga.NewListOperator(operations...).Operate(); err != nil {
-		return err
-	}
-
-	{ // renaming tmp file
-		if err = os.Rename(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name),
-		); err != nil {
-			return fmt.Errorf("error renaming tmp file: %w", err)
-		}
-
-		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx, ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name))
-		if err != nil {
-			return fmt.Errorf("error opening %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
+			return errorsx.Wrapf(err, "error opening %s relational file", fi.File.Name())
 		}
 
 		fi.File = file
@@ -418,365 +341,125 @@ func (e *LTNGEngine) deleteFromRelationalStats(
 
 func (e *LTNGEngine) updateRelationalStats(
 	ctx context.Context,
-	fi *ltngenginemodels.FileInfo,
+	fi *ltngdata.FileInfo,
+	info *ltngdata.FileData,
 	key []byte,
-	info *ltngenginemodels.FileData,
 ) (err error) {
+	// TODO: consider putting file readers and writers and managers to a sync.pool
 	reader, err := rw.NewFileReader(ctx, fi, false)
 	if err != nil {
-		return fmt.Errorf("error creating %s file reader: %w",
-			fi.File.Name(), err)
+		return errorsx.Wrapf(err, "error creating %s file reader", fi.File.Name())
 	}
 
-	var found bool
-	var upTo, from uint32
-	for {
-		var bs []byte
-		bs, err = reader.Read(ctx)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return fmt.Errorf("error reading %s file: %w", fi.File.Name(), err)
-		}
-
-		if bytes.Contains(bs, key) {
-			found = true
-			from = reader.Yield()
-			upTo = from - uint32(len(bs)+4)
-			break
-		}
+	upTo, from, err := reader.FindInFile(ctx, key)
+	if err != nil {
+		return errorsx.Wrapf(err, "error finding key: '%s' in file %s", key, fi.File.Name())
 	}
 
-	if !found {
-		return fmt.Errorf("key '%s' not found: key not found", key)
+	if err = reader.SetCursor(ctx, 0); err != nil {
+		return errorsx.Wrap(err, "error setting file cursor")
 	}
 
-	if _, err = fi.File.Seek(0, 0); err != nil {
-		if err = os.Remove(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-		); err != nil {
-			return fmt.Errorf("error removing unecessary tmp %s file that failed to seek: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	var tmpFile *os.File
-	copyToTmpFile := func() error {
-		tmpFile, err = os.OpenFile(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL|os.O_TRUNC, ltngenginemodels.DBFilePerm,
-		)
+	{
+		tmpFile, err := e.fileManager.OpenCreateFile(ctx, ltngdata.GetTemporaryRelationalStatsFilepath(
+			info.Header.StoreInfo.Path, info.Header.StoreInfo.Name))
 		if err != nil {
 			return err
 		}
 
 		// example pair (upTo - from) | 102 - 154
 		if _, err = io.CopyN(tmpFile, fi.File, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying first part of the file to tmp file")
 		}
 
-		if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, tmpFile, info); err != nil {
-			return fmt.Errorf("error updating info into tmp file %s: %w", tmpFile.Name(), err)
+		if _, err = e.fileManager.WriteToRelationalFile(ctx, tmpFile, info); err != nil {
+			return errorsx.Wrapf(err, "error updating info into tmp file %s", tmpFile.Name())
 		}
 
 		if _, err = fi.File.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
+			return errorsx.Wrap(err, "error seeking to file")
 		}
 
 		if _, err = io.Copy(tmpFile, fi.File); err != nil {
-			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
+			return errorsx.Wrap(err, "error copying second part of the file to tmp file")
+		}
+
+		if err = tmpFile.Sync(); err != nil {
+			return errorsx.Wrapf(err, "failed to sync file - %s", tmpFile.Name())
 		}
 
 		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %w", tmpFile.Name(), err)
+			return errorsx.Wrapf(err, "failed to close tmp file %s", tmpFile.Name())
 		}
 
-		return nil
-	}
-	discardTmpFile := func() error {
-		if _, err = fi.File.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
+		if err = fi.File.Close(); err != nil {
+			return errorsx.Wrapf(err, "failed to close file %s", fi.File.Name())
 		}
 
-		if err = os.Remove(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-		); err != nil {
-			return fmt.Errorf("error removing unecessary tmp %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
+		newFilePath := ltngdata.GetRelationalStatsFilepath(
+			info.Header.StoreInfo.Path, info.Header.StoreInfo.Name)
+		if err = osx.MvFile(ctx, tmpFile.Name(), newFilePath); err != nil {
+			return errorsx.Wrap(err, "error moving tmp file")
 		}
 
-		return nil
-	}
-
-	removeMainFile := func() error {
-		//// TODO: remove it if possible
-		//if err = fi.File.Close(); err != nil {
-		//	return fmt.Errorf("error closing original file: %w", err)
-		//}
-
-		if err = os.Remove(ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name)); err != nil {
-			return fmt.Errorf("error removing %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return nil
-	}
-	reopenMainFile := func() error {
-		fi, err = e.loadRelationalStoreFromMemoryOrDisk(ctx)
+		file, err := e.fileManager.OpenCreateFile(ctx, newFilePath)
 		if err != nil {
-			return fmt.Errorf(
-				"error re-opening %s manager relational store: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
-
-		return nil
-	}
-
-	operations := []*saga.Operation{
-		{
-			Action: &saga.Action{
-				Do:          copyToTmpFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Do:          discardTmpFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &saga.Action{
-				Do:          removeMainFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Do:          reopenMainFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
-	}
-
-	if err = saga.NewListOperator(operations...).Operate(); err != nil {
-		return err
-	}
-
-	{ // renaming tmp file
-		if err = os.Rename(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name),
-		); err != nil {
-			return fmt.Errorf("error renaming tmp file: %w", err)
-		}
-
-		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx, ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name))
-		if err != nil {
-			return fmt.Errorf("error opening %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
+			return errorsx.Wrapf(err, "error opening %s relational file", fi.File.Name())
 		}
 
 		fi.File = file
 		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
 	}
 
-	return
+	return nil
 }
 
 func (e *LTNGEngine) upsertRelationalStats(
 	ctx context.Context,
-	fi *ltngenginemodels.FileInfo,
+	fi *ltngdata.FileInfo,
+	info *ltngdata.FileData,
 	key []byte,
-	info *ltngenginemodels.FileData,
-) (err error) {
-	reader, err := rw.NewFileReader(ctx, fi, true)
-	if err != nil {
-		return fmt.Errorf("error creating %s file reader: %w",
-			fi.File.Name(), err)
-	}
-
-	var found bool
-	var upTo, from uint32
-	for {
-		var bs []byte
-		bs, err = reader.Read(ctx)
-		if err != nil {
-			if err == io.EOF {
-				break
+) error {
+	if err := e.updateRelationalStats(ctx, fi, info, key); err != nil {
+		if errorsx.Is(err, rw.KeyNotFoundError) {
+			if _, err = fi.File.Seek(0, 2); err != nil {
+				return errorsx.Wrap(err, "error seeking to file")
 			}
 
-			return fmt.Errorf("error reading %s file: %w", fi.File.Name(), err)
+			if _, err = e.writeRelationalFileDataToFile(ctx, fi.File, info); err != nil {
+				return errorsx.Wrapf(err, "error upserting info into tmp file %s", fi.File.Name())
+			}
 		}
 
-		if bytes.Contains(bs, key) {
-			found = true
-			from = reader.Yield()
-			upTo = from - uint32(len(bs)+4)
-			break
-		}
-	}
-
-	if !found {
-		if _, err = e.writeRelationalStatsStoreToFile(ctx, fi.File, info); err != nil {
-			return fmt.Errorf("error upserting info into tmp file %s: %w", fi.File.Name(), err)
-		}
-
-		return nil
-	}
-
-	if _, err = fi.File.Seek(0, 0); err != nil {
-		if err = os.Remove(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-		); err != nil {
-			return fmt.Errorf("error removing unecessary tmp %s file that failed to seek: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return fmt.Errorf("error seeking to file: %w", err)
-	}
-
-	var tmpFile *os.File
-	copyToTmpFile := func() error {
-		tmpFile, err = os.OpenFile(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-			os.O_RDWR|os.O_SYNC|os.O_CREATE|os.O_EXCL, ltngenginemodels.DBFilePerm,
-		)
-		if err != nil {
-			return err
-		}
-
-		// example pair (upTo - from) | 102 - 154
-		if _, err = io.CopyN(tmpFile, fi.File, int64(upTo)); err != nil {
-			return fmt.Errorf("error copying first part of the file to tmp file: %w", err)
-		}
-
-		if _, err = e.fileManager.WriteToRelationalFileWithNoSeek(ctx, tmpFile, info); err != nil {
-			return fmt.Errorf("error updating info into tmp file %s: %w", tmpFile.Name(), err)
-		}
-
-		if _, err = fi.File.Seek(int64(from), 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
-		}
-
-		if _, err = io.Copy(tmpFile, fi.File); err != nil {
-			return fmt.Errorf("error copying second part of the file to tmp file: %w", err)
-		}
-
-		if err = tmpFile.Close(); err != nil {
-			return fmt.Errorf("failed to sync file - %s | err: %v", tmpFile.Name(), err)
-		}
-
-		return nil
-	}
-	discardTmpFile := func() error {
-		if _, err = fi.File.Seek(0, 0); err != nil {
-			return fmt.Errorf("error seeking to file: %w", err)
-		}
-
-		if err = os.Remove(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-		); err != nil {
-			return fmt.Errorf("error removing unecessary tmp %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return nil
-	}
-
-	removeMainFile := func() error {
-		if err = fi.File.Close(); err != nil {
-			return fmt.Errorf("error closing original file: %w", err)
-		}
-
-		if err = os.Remove(ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name)); err != nil {
-			return fmt.Errorf("error removing %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		return nil
-	}
-	reopenMainFile := func() error {
-		fi, err = e.loadStoreFromMemoryOrDisk(ctx, ltngenginemodels.DBManagerStoreInfo.RelationalInfo())
-		if err != nil {
-			return fmt.Errorf(
-				"error re-opening %s manager relational store: %w",
-				fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
-
-		return nil
-	}
-
-	operations := []*saga.Operation{
-		{
-			Action: &saga.Action{
-				Do:          copyToTmpFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Do:          discardTmpFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
-		{
-			Action: &saga.Action{
-				Do:          removeMainFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Do:          reopenMainFile,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
-	}
-
-	if err = saga.NewListOperator(operations...).Operate(); err != nil {
 		return err
 	}
 
-	{ // renaming tmp file
-		if err = os.Rename(
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.TmpRelationalInfo().Name),
-			ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name),
-		); err != nil {
-			return fmt.Errorf("error renaming tmp file: %w", err)
-		}
-
-		var file *os.File
-		file, err = e.fileManager.OpenFile(ctx, ltngenginemodels.GetStatsFilepath(fi.FileData.Header.StoreInfo.Name))
-		if err != nil {
-			return fmt.Errorf("error opening %s file: %w", fi.FileData.Header.StoreInfo.Name, err)
-		}
-
-		fi.File = file
-		e.storeFileMapping.Set(fi.FileData.Header.StoreInfo.Name, fi)
-	}
-
-	return
+	return nil
 }
 
 func (e *LTNGEngine) insertRelationalStats(
 	ctx context.Context,
-	storeInfo *ltngenginemodels.StoreInfo,
+	storeInfo *ltngdata.StoreInfo,
 ) (err error) {
-	fi, err := e.loadRelationalStoreFromMemoryOrDisk(ctx)
+	fi, err := e.loadRelationalStatsStoreFromMemoryOrDisk(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating %s relational store: %w",
-			ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, err)
+		return errorsx.Wrapf(err, "error creating %s relational store",
+			ltngdata.DBManagerStoreInfo.RelationalInfo().Name)
 	}
 
 	if _, err = fi.File.Seek(0, 2); err != nil {
-		return fmt.Errorf("error seeking to the end of %s manager relational store: %w",
-			ltngenginemodels.DBManagerStoreInfo.RelationalInfo().Name, err)
+		return errorsx.Wrapf(err,
+			"error seeking to the end of %s manager relational store",
+			ltngdata.DBManagerStoreInfo.RelationalInfo().Name)
 	}
 
-	fileData := &ltngenginemodels.FileData{
-		Header: &ltngenginemodels.Header{
+	fileData := &ltngdata.FileData{
+		Header: &ltngdata.Header{
 			StoreInfo: storeInfo,
 		},
 	}
-	if _, err = e.writeRelationalStatsStoreToFile(ctx, fi.File, fileData); err != nil {
-		return fmt.Errorf("error creating %s store on relational store: %w", storeInfo.Name, err)
+	if _, err = e.writeRelationalFileDataToFile(ctx, fi.File, fileData); err != nil {
+		return errorsx.Wrapf(err, "error creating %s store on relational store", storeInfo.Name)
 	}
 
 	return nil

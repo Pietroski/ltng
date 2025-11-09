@@ -7,18 +7,18 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 )
 
 func (ltng *LTNGCacheEngine) deleteOnCascade(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	key := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strKey := hex.EncodeToString(key)
 	if err := ltng.cache.Del(ctx, strKey); err != nil {
@@ -31,7 +31,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 
 	indexListKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), item.Key},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
 	var indexingKeys [][]byte
@@ -42,7 +42,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	for _, itemKey := range indexingKeys {
 		indexKey := bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		_ = ltng.cache.Del(ctx, strIndexKey)
@@ -52,16 +52,16 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 
 	relationalKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
-	var value []*ltngenginemodels.Item
+	var value []*ltngdata.Item
 	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, errorsx.New("item not found")
+		return []*ltngdata.Item{}, errorsx.New("item not found")
 	}); err != nil {
 		return nil, nil
 	}
-	var remainingItemFromRelational []*ltngenginemodels.Item
+	var remainingItemFromRelational []*ltngdata.Item
 	for _, v := range value {
 		if bytes.Equal(v.Key, item.Key) {
 			continue
@@ -78,15 +78,15 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 
 func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	var key []byte
 	if opts.ParentKey != nil {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 	}
 	if key == nil && (opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0) {
@@ -94,7 +94,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 	} else if key == nil {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 	}
 	strKey := hex.EncodeToString(key)
@@ -110,17 +110,17 @@ func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 
 func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	_ *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	_ *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	if opts.IndexingKeys == nil || len(opts.IndexingKeys) == 0 {
 		return nil, errorsx.New("invalid indexing key relation")
 	}
 
 	secondaryKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	secondaryStrKey := hex.EncodeToString(secondaryKey)
 
@@ -132,7 +132,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	keyValue := mainKey
 	indexingKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), keyValue},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	indexingStrKey := hex.EncodeToString(indexingKey)
 
@@ -159,7 +159,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	for _, indexKey := range opts.IndexingKeys {
 		key := bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), indexKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 		strKey := hex.EncodeToString(key)
 		_ = ltng.cache.Del(ctx, strKey)
@@ -173,16 +173,16 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 
 func (ltng *LTNGCacheEngine) straightSearch(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	var key []byte
 	var strKey string
 	if opts.ParentKey != nil {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 		strKey = hex.EncodeToString(key)
 	} else if opts.IndexingKeys == nil || len(opts.IndexingKeys) != 1 {
@@ -190,7 +190,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 	} else {
 		key = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 		strKey = hex.EncodeToString(key)
 	}
@@ -202,7 +202,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 
 	key = bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.Name), keyValue},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strKey = hex.EncodeToString(key)
 	var valueValue []byte
@@ -210,7 +210,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 		return nil, err
 	}
 
-	return &ltngenginemodels.Item{
+	return &ltngdata.Item{
 		Key:   keyValue,
 		Value: valueValue,
 	}, nil
@@ -218,16 +218,16 @@ func (ltng *LTNGCacheEngine) straightSearch(
 
 func (ltng *LTNGCacheEngine) andComputationalSearch(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	var value []byte
 	var indexKey []byte
 	for _, itemKey := range opts.IndexingKeys {
 		indexKey = bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		if err := ltng.cache.Get(ctx, strIndexKey, &value, nil); err != nil {
@@ -235,8 +235,8 @@ func (ltng *LTNGCacheEngine) andComputationalSearch(
 		}
 	}
 
-	key := bytes.Split(indexKey, []byte(ltngenginemodels.BytesSliceSep))
-	return &ltngenginemodels.Item{
+	key := bytes.Split(indexKey, []byte(ltngdata.BsSep))
+	return &ltngdata.Item{
 		Key:   key[1],
 		Value: value,
 	}, nil
@@ -244,22 +244,22 @@ func (ltng *LTNGCacheEngine) andComputationalSearch(
 
 func (ltng *LTNGCacheEngine) orComputationalSearch(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	var value []byte
 	for _, itemKey := range opts.IndexingKeys {
 		indexKey := bytes.Join(
 			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		if err := ltng.cache.Get(ctx, strIndexKey, &value, nil); err != nil {
 			continue
 		} else {
-			key := bytes.Split(indexKey, []byte(ltngenginemodels.BytesSliceSep))
-			return &ltngenginemodels.Item{
+			key := bytes.Split(indexKey, []byte(ltngdata.BsSep))
+			return &ltngdata.Item{
 				Key:   key[0],
 				Value: value,
 			}, nil
@@ -273,48 +273,48 @@ func (ltng *LTNGCacheEngine) orComputationalSearch(
 
 func (ltng *LTNGCacheEngine) defaultListItems(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	pagination *ltngenginemodels.Pagination,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.ListItemsResult, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	pagination *ltngdata.Pagination,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.ListItemsResult, error) {
 	relationalKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
-	var value []*ltngenginemodels.Item
+	var value []*ltngdata.Item
 	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return []*ltngdata.Item{}, nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return &ltngenginemodels.ListItemsResult{
+	return &ltngdata.ListItemsResult{
 		Pagination: pagination.CalcNextPage(uint64(len(value))),
-		Items: (*ltngenginemodels.ItemList)(&value).
+		Items: (*ltngdata.ItemList)(&value).
 			GetItemsFromPagination(pagination),
 	}, nil
 }
 
 func (ltng *LTNGCacheEngine) allListItems(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	pagination *ltngenginemodels.Pagination,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.ListItemsResult, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	pagination *ltngdata.Pagination,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.ListItemsResult, error) {
 	relationalKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
-	var value []*ltngenginemodels.Item
+	var value []*ltngdata.Item
 	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return []*ltngdata.Item{}, nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return &ltngenginemodels.ListItemsResult{
+	return &ltngdata.ListItemsResult{
 		Pagination: pagination,
 		Items:      value,
 	}, nil
@@ -322,29 +322,29 @@ func (ltng *LTNGCacheEngine) allListItems(
 
 func (ltng *LTNGCacheEngine) indexingListItems(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	pagination *ltngenginemodels.Pagination,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.ListItemsResult, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	pagination *ltngdata.Pagination,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.ListItemsResult, error) {
 	indexListKey := bytes.Join(
 		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
 	var indexingKeys [][]byte
 	_ = ltng.cache.Get(ctx, strIndexListKey, &indexingKeys, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return []*ltngdata.Item{}, nil
 	})
 
-	items := make([]*ltngenginemodels.Item, len(indexingKeys))
+	items := make([]*ltngdata.Item, len(indexingKeys))
 	for idx, indexingKey := range indexingKeys {
-		items[idx] = &ltngenginemodels.Item{
+		items[idx] = &ltngdata.Item{
 			Key:   opts.ParentKey,
 			Value: indexingKey,
 		}
 	}
 
-	return &ltngenginemodels.ListItemsResult{
+	return &ltngdata.ListItemsResult{
 		Pagination: pagination,
 		Items:      items,
 	}, nil

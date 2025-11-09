@@ -1,65 +1,211 @@
-package ltngenginemodels
+package ltngdata
 
 import (
 	"context"
 	"encoding/hex"
 	"os"
+	"path/filepath"
 	"time"
 
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 )
 
 const (
-	FQBasePath    = ".ltngfq"
 	DBBasePath    = ".ltngdb"
+	FileExt       = ".ptk"
 	DBBaseVersion = "v2"
 
-	Stores = "stores"
-	Data   = "data"
+	BsSep = "!|ltngdb|!"
 
-	DBDataPath            = "/stores/data"
-	DBStatsPath           = "/stores/stats"
-	DBRelationalStatsPath = "/stores/stats/relational"
-	Sep                   = "/"
-	Ext                   = ".ptk"
-	ALL                   = "*"
-	ALLExt                = ALL + Ext
-	LB                    = "\n"
-	BsSep                 = "!|ltngdb|!" // "&#!;+|ltngdb|+;#!&"
-	BytesSep              = "!|ltngdb|!" // "&#!;+|ltngdb|+;#!&"
-	BytesSliceSep         = "!|ltngdb|!" // "&#!;+|ltngdb|+;#!&"
+	Stores      = "stores"
+	Stats       = "stats"
+	Data        = "data"
+	Rubbish     = "rubbish"
+	Temporary   = "temporary"
+	Indexed     = "indexed"
+	IndexedList = "indexed-list"
+	Relational  = "relational"
 
-	BasePath      = DBBasePath + DBBaseVersion
-	BaseDataPath  = BasePath + DBDataPath
-	BaseStatsPath = BasePath + DBStatsPath
+	DBManagerName = "ltngdb-engine-manager"
+	DBManagerPath = "internal/ltngdb/manager"
 
-	Rubbish           = "/rubbish"
-	RubbishBasePath   = BasePath + Rubbish
-	DBTmpDelDataPath  = RubbishBasePath + "/del-tmp-store"
-	DBTmpDelStatsPath = RubbishBasePath + "/del-tmp-store-stats"
+	RelationalDataStoreKey = "relational-data-store"
 
-	InnerSep                   = "-"
-	DBIndexStoreSuffixName     = "indexed"
-	DBIndexStoreSuffixPath     = "/indexed"
-	DBIndexListStoreSuffixName = "indexed-list"
-	DBIndexListStoreSuffixPath = "/indexed-list"
-	DBRelationalName           = "relational"
-	DBRelationalPath           = "/relational"
-	Tmp                        = "tmp"
-	TmpPath                    = "/tmp"
-	TmpPrefix                  = "tmp-"
-	TmpSuffix                  = "-tmp"
+	DBFileExec  = 0700
+	DBFileRW    = 0700
+	DBFileWrite = 0400
+	DBFileRead  = 0200
+)
 
-	DBManagerName = "ltng-engine-manager"
-	DBManagerPath = "internal/ltng-engine/manager"
+var (
+	DBBaseStatsPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats)
+	DBBaseTemporaryStatsPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Temporary)
+	//DBBaseRubishStatsPath              = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Rubbish)
+	//DBBaseTemporaryRubishStatsPath     = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Rubbish, Temporary)
+	DBBaseRelationalStatsPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Relational)
+	DBBaseTemporaryRelationalStatsPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Relational, Temporary)
 
-	RelationalDataStore     = "relational-data-store"
-	RelationalDataStoreFile = RelationalDataStore + Ext
-	ListingItemsFromStore   = "listing-items-from-store"
+	DBBaseDataPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data)
+	DBBaseTemporaryDataPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Temporary)
+	//DBBaseRubishDataPath               = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Rubbish)
+	//DBBaseTemporaryRubishDataPath      = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Rubbish, Temporary)
+	DBBaseRelationalDataPath           = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Relational)
+	DBBaseTemporaryRelationalDataPath  = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Relational, Temporary)
+	DBBaseIndexedDataPath              = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Indexed)
+	DBBaseTemporaryIndexedDataPath     = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Indexed, Temporary)
+	DBBaseIndexedListDataPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, IndexedList)
+	DBBaseTemporaryIndexedListDataPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, IndexedList, Temporary)
+)
 
-	DBFilePerm = 0644 // 0740 // 0750
-	DBFileOp   = 0644
-	DBFileRead = 0444
+// stats paths
+
+func GetStatsPath(path string) string {
+	return filepath.Join(DBBaseStatsPath, path)
+}
+
+func GetStatsFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseStatsPath, path, storeName) + FileExt
+}
+
+func GetTemporaryStatsPath(path string) string {
+	return filepath.Join(DBBaseTemporaryStatsPath, path)
+}
+
+func GetTemporaryStatsFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseTemporaryStatsPath, path, storeName) + FileExt
+}
+
+//func GetRubishStatsPath(path string) string {
+//	return filepath.Join(DBBaseRubishStatsPath, path)
+//}
+//
+//func GetRubishStatsFilepath(path, storeName string) string {
+//	return filepath.Join(DBBaseRubishStatsPath, path, storeName) + FileExt
+//}
+//
+//func GetTemporaryRubishStatsPath(path string) string {
+//	return filepath.Join(DBBaseTemporaryRubishStatsPath, path)
+//}
+//
+//func GetTemporaryRubishStatsFilepath(path, storeName string) string {
+//	return filepath.Join(DBBaseTemporaryRubishStatsPath, path, storeName) + FileExt
+//}
+
+func GetRelationalStatsPath(path string) string {
+	return filepath.Join(DBBaseRelationalStatsPath, path)
+}
+
+func GetRelationalStatsFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseRelationalStatsPath, path, storeName) + FileExt
+}
+
+func GetTemporaryRelationalStatsPath(path string) string {
+	return filepath.Join(DBBaseTemporaryRelationalStatsPath, path)
+}
+
+func GetTemporaryRelationalStatsFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseTemporaryRelationalStatsPath, path, storeName) + FileExt
+}
+
+// data paths
+
+func GetDataPath(path string) string {
+	return filepath.Join(DBBaseDataPath, path)
+}
+
+func GetDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseDataPath, path, storeName) + FileExt
+}
+
+func GetTemporaryDataPath(path string) string {
+	return filepath.Join(DBBaseTemporaryDataPath, path)
+}
+
+func GetTemporaryDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseTemporaryDataPath, path, storeName) + FileExt
+}
+
+//func GetRubishDataPath(path string) string {
+//	return filepath.Join(DBBaseRubishDataPath, path)
+//}
+//
+//func GetRubishDataFilepath(path, storeName string) string {
+//	return filepath.Join(DBBaseRubishDataPath, path, storeName) + FileExt
+//}
+//
+//func GetTemporaryRubishDataPath(path string) string {
+//	return filepath.Join(DBBaseTemporaryRubishDataPath, path)
+//}
+//
+//func GetTemporaryRubishDataFilepath(path, storeName string) string {
+//	return filepath.Join(DBBaseTemporaryRubishDataPath, path, storeName) + FileExt
+//}
+
+func GetRelationalDataPath(path string) string {
+	return filepath.Join(DBBaseRelationalDataPath, path)
+}
+
+func GetRelationalDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseRelationalDataPath, path, storeName) + FileExt
+}
+
+func GetTemporaryRelationalDataPath(path string) string {
+	return filepath.Join(DBBaseTemporaryRelationalDataPath, path)
+}
+
+func GetTemporaryRelationalDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseTemporaryRelationalDataPath, path, storeName) + FileExt
+}
+
+func GetIndexedDataPath(path string) string {
+	return filepath.Join(DBBaseIndexedDataPath, path)
+}
+
+func GetIndexedDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseIndexedDataPath, path, storeName) + FileExt
+}
+
+func GetTemporaryIndexedDataPath(path string) string {
+	return filepath.Join(DBBaseTemporaryIndexedDataPath, path)
+}
+
+func GetTemporaryIndexedDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseTemporaryIndexedDataPath, path, storeName) + FileExt
+}
+
+func GetIndexedListDataPath(path string) string {
+	return filepath.Join(DBBaseIndexedListDataPath, path)
+}
+
+func GetIndexedListDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseIndexedListDataPath, path, storeName) + FileExt
+}
+
+func GetTemporaryIndexedListDataPath(path string) string {
+	return filepath.Join(DBBaseTemporaryIndexedListDataPath, path)
+}
+
+func GetTemporaryIndexedListDataFilepath(path, storeName string) string {
+	return filepath.Join(DBBaseTemporaryIndexedListDataPath, path, storeName) + FileExt
+}
+
+// general definitions
+
+type (
+	DBInfo struct {
+		Name         string
+		Path         string
+		CreatedAt    int64
+		LastOpenedAt int64
+	}
+)
+
+func GetFileLockName(base, key string) string {
+	return base + InnerSep + key
+}
+
+const (
+	InnerSep = "-"
 )
 
 var (
@@ -72,32 +218,33 @@ var (
 type (
 	FileInfo struct {
 		File       *os.File
-		FileData   *FileData `json:"file_data,omitempty"`
-		HeaderSize uint32    `json:"headerSize,omitempty"`
-		DataSize   uint32    `json:"dataSize,omitempty"`
+		FileData   *FileData
+		HeaderSize uint32
+		DataSize   uint32
 	}
 
 	StoreInfo struct {
-		Name         string `json:"name,omitempty"`
-		Path         string `json:"path,omitempty"`
-		CreatedAt    int64  `json:"createdAt,omitempty"`
-		LastOpenedAt int64  `json:"lastOpenedAt,omitempty"`
+		Name      string
+		Path      string
+		CreatedAt int64
+		// LastOpenedAt would allow to track how long a file is opened to it can be removed from cache
+		LastOpenedAt int64
 	}
 
 	ItemInfo struct {
-		CreatedAt    int64 `json:"createdAt,omitempty"`
-		LastOpenedAt int64 `json:"lastOpenedAt,omitempty"`
+		CreatedAt    int64
+		LastOpenedAt int64
 	}
 
 	Header struct {
-		ItemInfo  *ItemInfo  `json:"itemInfo,omitempty"`
-		StoreInfo *StoreInfo `json:"storeInfo,omitempty"`
+		ItemInfo  *ItemInfo
+		StoreInfo *StoreInfo
 	}
 
 	FileData struct {
-		Key    []byte  `json:"key,omitempty"`
-		Header *Header `json:"header,omitempty"`
-		Data   []byte  `json:"data,omitempty"`
+		Key    []byte
+		Header *Header
+		Data   []byte
 	}
 
 	ItemInfoData struct {
@@ -239,8 +386,8 @@ func (i *ItemInfoData) WithRespChan(sigChan chan error) *ItemInfoData {
 
 func (storeInfo *StoreInfo) IndexInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + DBIndexStoreSuffixName,
-		Path:         storeInfo.Path + DBIndexStoreSuffixPath,
+		Name:         storeInfo.Name + InnerSep + Indexed,
+		Path:         storeInfo.Path,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
 	}
@@ -248,8 +395,8 @@ func (storeInfo *StoreInfo) IndexInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) IndexListInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + DBIndexListStoreSuffixName,
-		Path:         storeInfo.Path + DBIndexListStoreSuffixPath,
+		Name:         storeInfo.Name + InnerSep + IndexedList,
+		Path:         storeInfo.Path,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
 	}
@@ -257,17 +404,8 @@ func (storeInfo *StoreInfo) IndexListInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) RelationalInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + DBRelationalName,
-		Path:         storeInfo.Path + DBRelationalPath,
-		CreatedAt:    storeInfo.CreatedAt,
-		LastOpenedAt: storeInfo.LastOpenedAt,
-	}
-}
-
-func (storeInfo *StoreInfo) TmpRelationalInfo() *StoreInfo {
-	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + DBRelationalName + InnerSep + Tmp,
-		Path:         storeInfo.Path + DBRelationalPath + TmpPath,
+		Name:         storeInfo.Name + InnerSep + Relational,
+		Path:         storeInfo.Path,
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
 	}
@@ -299,29 +437,29 @@ func (msi *ManagerStoreMetaInfo) LockName(key string) string {
 
 func (msi *ManagerStoreMetaInfo) IndexInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + DBIndexStoreSuffixName,
-		Path: msi.Path + DBIndexStoreSuffixPath,
+		Name: msi.Name + InnerSep + InnerSep + Indexed,
+		Path: msi.Path,
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) IndexListInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + DBIndexListStoreSuffixName,
-		Path: msi.Path + DBIndexListStoreSuffixPath,
+		Name: msi.Name + InnerSep + InnerSep + IndexedList,
+		Path: msi.Path,
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) RelationalInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + DBRelationalName,
-		Path: msi.Path + DBRelationalPath,
+		Name: msi.Name + InnerSep + InnerSep + Relational,
+		Path: msi.Path,
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) TmpRelationalInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + DBRelationalName + InnerSep + Tmp,
-		Path: msi.Path + DBRelationalPath + TmpPath,
+		Name: msi.Name + InnerSep + InnerSep + Temporary,
+		Path: msi.Path,
 	}
 }
 

@@ -1,36 +1,40 @@
 package ltngenginemodels
 
+import "path/filepath"
+
 func GetFileLockName(base, key string) string {
 	return base + InnerSep + key
 }
 
+func GetStatsPath(path string) string {
+	return filepath.Join(BaseStatsPath, path)
+}
+
+func GetStatsFilepath(path, storeName string) string {
+	return filepath.Join(BaseStatsPath, path, storeName) + Ext
+}
+
+func GetRelationalStatsPath(path string) string {
+	return filepath.Join(BaseStatsPath, DBRelationalPath, path)
+}
+
 func GetDataPath(path string) string {
-	return BaseDataPath + Sep + path
+	return filepath.Join(BaseDataPath, path)
 }
 
-func GetDataPathWithSep(path string) string {
-	return GetDataPath(path) + Sep
+func GetDataFilepath(path, filename string) string {
+	return filepath.Join(BaseDataPath, path, filename) + Ext
 }
 
-func GetStatsPathWithSep() string {
-	return BaseStatsPath + Sep
-}
+// #############
 
 func GetRelationalStatsPathWithSep() string {
 	return BaseStatsPath + DBRelationalPath + Sep
 }
 
-func GetDataFilepath(path, filename string) string {
-	return GetDataPathWithSep(path) + filename + Ext
-}
-
 func GetTmpDataFilepath(path, filename string) string {
-	return GetDataPathWithSep(path) + TmpPrefix + filename + Ext
+	return GetDataPath(path) + TmpPrefix + filename + Ext
 	//return GetDataPathWithSep(path) + Tmp + Sep + filename + Ext
-}
-
-func GetStatsFilepath(storeName string) string {
-	return GetStatsPathWithSep() + storeName + Ext
 }
 
 func GetRelationalStatsFilepath(storeName string) string {

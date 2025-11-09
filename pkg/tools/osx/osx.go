@@ -2,6 +2,7 @@ package osx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -407,7 +408,7 @@ func MvFile(ctx context.Context, fromFilepath, toFilepath string) error {
 	}
 
 	// Remove destination if it exists (to match `mv -f` behavior)
-	_ = os.Remove(toFilepath)
+	//_ = os.Remove(toFilepath)
 
 	// Attempt to rename (works for same filesystem)
 	err := os.Rename(fromFilepath, toFilepath)
@@ -416,22 +417,30 @@ func MvFile(ctx context.Context, fromFilepath, toFilepath string) error {
 	}
 
 	// If rename failed (likely cross-device), fall back to copy + delete
-	if linkErr, ok := err.(*os.LinkError); ok && linkErr.Err.Error() == "invalid cross-device link" {
+	var linkErr *os.LinkError
+	if errors.As(err, &linkErr) && linkErr.Err.Error() == "invalid cross-device link" {
 		// Copy the file
 		if err := copyFile(fromFilepath, toFilepath); err != nil {
-			return fmt.Errorf("failed to copy file during move: %w", err)
+			return errorsx.Wrap(err, "failed to copy file during move")
 		}
 
 		// Delete the source file
 		if err := os.Remove(fromFilepath); err != nil {
-			return fmt.Errorf("failed to remove source file after copy: %w", err)
+			return errorsx.Wrap(err, "failed to remove source file after copy")
 		}
 
 		return nil
 	}
 
-	return fmt.Errorf("failed to move file: %w", err)
+	return errorsx.Wrap(err, "failed to move file")
 }
+
+var (
+	ErrNotExist              = errorsx.New("file not exist")
+	ErrNotFound              = errorsx.New("file not found")
+	ErrNoSuchFileOrDirectory = errorsx.New("no such file or directory")
+	ErrNotEmptyDir           = errorsx.New("directory not empty")
+)
 
 // CpFileExec copies a file from one path to another.
 func CpFileExec(ctx context.Context, fromFilepath, toFilepath string) error {
@@ -443,6 +452,102 @@ func CpFileExec(ctx context.Context, fromFilepath, toFilepath string) error {
 func MvFileExec(ctx context.Context, fromFilepath, toFilepath string) error {
 	return execx.RunContext(ctx,
 		"sh", "-c", fmt.Sprintf("mv -f %s %s", fromFilepath, toFilepath))
+}
+
+// ################################################################################################################## \\
+
+// CleanupDirs cleans up the whole directory tree by:
+// - removing all the existing files in the directory;
+// - removing the directory itself if it does not contain any children.
+// - walk into parent directories and check whether they are excludables.
+func CleanupDirs(ctx context.Context, filePath string) error {
+	if _, err := DelOnlyFilesFromDirAsync(ctx, filePath); err != nil {
+		return errorsx.Wrapf(err, "error deleting stats path: %s", filePath)
+	}
+	if err := os.Remove(filePath); err != nil {
+		if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
+			errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {
+			return nil
+		}
+
+		//if os.IsExist(err) || errors.Is(err, os.ErrNotExist) {
+		//	return nil
+		//}
+
+		return errorsx.Wrapf(err, "error removing stats path: %s", filePath)
+	}
+
+	// Walk up and remove empty parent directories
+	parent := filepath.Dir(filePath)
+	for parent != "." && parent != "/" {
+		if err := os.Remove(parent); err != nil {
+			// Stop if parent isn't empty or doesn't exist (both are OK)
+			if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
+				errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {
+				break
+			}
+			return errorsx.Wrapf(err, "error removing parent dir: %s", parent)
+		}
+		parent = filepath.Dir(parent)
+	}
+
+	return nil
+}
+
+//// CleanupDirRecursively cleans up the whole directory by:
+//// - doing everything CleanupDir does;
+//// - walk into parent directories and check whether they are excludables.
+//func CleanupDirRecursively(ctx context.Context, filePath string) error {
+//	// Clean the target directory
+//	if err := CleanupDir(ctx, filePath); err != nil {
+//		return err
+//	}
+//
+//	// Walk up and remove empty parent directories
+//	parent := filepath.Dir(filePath)
+//	for parent != "." && parent != "/" {
+//		if err := os.Remove(parent); err != nil {
+//			// Stop if parent isn't empty or doesn't exist (both are OK)
+//			if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
+//				errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {
+//				break
+//			}
+//			return errorsx.Wrapf(err, "error removing parent dir: %s", parent)
+//		}
+//		parent = filepath.Dir(parent)
+//	}
+//
+//	return nil
+//}
+
+// CleanupEmptyDirs cleans up the whole directory tree by:
+// - removing the directory itself if it does not contain any children.
+// - walk into parent directories and check whether they are excludables.
+func CleanupEmptyDirs(ctx context.Context, filePath string) error {
+	if err := os.Remove(filePath); err != nil {
+		if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
+			errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {
+			return nil
+		}
+
+		return errorsx.Wrapf(err, "error removing stats path: %s", filePath)
+	}
+
+	// Walk up and remove empty parent directories
+	parent := filepath.Dir(filePath)
+	for parent != "." && parent != "/" {
+		if err := os.Remove(parent); err != nil {
+			// Stop if parent isn't empty or doesn't exist (both are OK)
+			if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
+				errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {
+				break
+			}
+			return errorsx.Wrapf(err, "error removing parent dir: %s", parent)
+		}
+		parent = filepath.Dir(parent)
+	}
+
+	return nil
 }
 
 // ################################################################################################################## \\

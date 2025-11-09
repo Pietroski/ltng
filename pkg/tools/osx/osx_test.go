@@ -2,9 +2,12 @@ package osx
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gitlab.com/pietroski-software-company/golang/devex/testingx"
 )
 
@@ -189,4 +192,91 @@ func TestBenchmarkOnlyFileDeletions(t *testing.T) {
 		err = DelExec(ctx, srcDir)
 	}).String())
 	assert.NoError(t, err)
+}
+
+func TestMvFile(t *testing.T) {
+	t.Run("move non existent file", func(t *testing.T) {
+		ctx := context.Background()
+		err := MvFile(ctx, filepath.Join(srcDir, "file_01"), filepath.Join(dstDir, "file_01"))
+		assert.Error(t, err)
+	})
+
+	t.Run("move existent file to an existent file", func(t *testing.T) {
+		ctx := context.Background()
+		PrepareTestDirs(t)
+
+		file, err := os.OpenFile(filepath.Join(srcDir, "file_01"), os.O_RDONLY|os.O_CREATE, 0666)
+		require.NoError(t, err)
+		assert.NoError(t, file.Close())
+
+		err = MvFile(ctx, filepath.Join(srcDir, "file_01"), filepath.Join(dstDir, "file_01"))
+		t.Log(err)
+		assert.NoError(t, err)
+	})
+
+	t.Run("move existent file to an existent file", func(t *testing.T) {
+		ctx := context.Background()
+		PrepareTestDirs(t)
+
+		file, err := os.OpenFile(filepath.Join(srcDir, "file_01"), os.O_RDONLY|os.O_CREATE, 0666)
+		require.NoError(t, err)
+		defer func() {
+			assert.NoError(t, file.Close())
+		}()
+
+		err = MvFile(ctx, filepath.Join(srcDir, "file_01"), filepath.Join(dstDir, "file_01"))
+		t.Log(err)
+		assert.NoError(t, err)
+	})
+
+	t.Run("move existent file to an existent file", func(t *testing.T) {
+		ctx := context.Background()
+		PrepareTestDirs(t)
+
+		file, err := os.OpenFile(filepath.Join(dstDir, "file_01"), os.O_RDWR|os.O_CREATE, 0766)
+		require.NoError(t, err)
+		_, err = file.Write([]byte("hello-world"))
+		require.NoError(t, err)
+		assert.NoError(t, file.Close())
+
+		file, err = os.OpenFile(filepath.Join(srcDir, "file_01"), os.O_RDWR|os.O_CREATE, 0766)
+		require.NoError(t, err)
+		_, err = file.Write([]byte("hello-world\n"))
+		_, err = file.Write([]byte("hello-world again!!"))
+		require.NoError(t, err)
+		assert.NoError(t, file.Close())
+
+		err = MvFile(ctx, filepath.Join(srcDir, "file_01"), filepath.Join(dstDir, "file_01"))
+		t.Log(err)
+		assert.NoError(t, err)
+	})
+
+	t.Run("move existent file to an existent file", func(t *testing.T) {
+		PrepareTestDirs(t)
+
+		file, err := os.OpenFile(filepath.Join(dstDir, "file_01"), os.O_RDWR|os.O_CREATE, 0766)
+		require.NoError(t, err)
+		_, err = file.Write([]byte("hello-world"))
+		require.NoError(t, err)
+		assert.NoError(t, file.Close())
+
+		file, err = os.OpenFile(filepath.Join(srcDir, "file_01"), os.O_RDWR|os.O_CREATE, 0766)
+		require.NoError(t, err)
+		_, err = file.Write([]byte("hello-world\n"))
+		_, err = file.Write([]byte("hello-world again!!"))
+		require.NoError(t, err)
+		assert.NoError(t, file.Close())
+
+		err = os.Rename(filepath.Join(srcDir, "file_01"), filepath.Join(dstDir, "file_01"))
+		t.Log(err)
+		assert.NoError(t, err)
+	})
+}
+
+func TestCleanupDir(t *testing.T) {
+	PrepareTestDirs(t)
+
+	ctx := context.Background()
+	err := CleanupEmptyDirs(ctx, subDstDir)
+	t.Log(err)
 }

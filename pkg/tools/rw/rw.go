@@ -2,21 +2,26 @@ package rw
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"time"
 
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
 	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesx"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 )
 
+// TODO: Extract to two separate libs: filemanager & fileio
+
+// FileManager is responsible for file operations.
 type FileManager struct {
 	serializer serializermodels.Serializer
 }
@@ -30,57 +35,79 @@ func NewFileManager(_ context.Context, opts ...options.Option) *FileManager {
 	return fm
 }
 
-func (e *FileManager) OpenCreateTruncatedFile(
+// OpenCreateFile opens or creates a file if it does not exist.
+func (e *FileManager) OpenCreateFile(
 	_ context.Context,
 	filePath string,
 ) (*os.File, error) {
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, ltngenginemodels.DBFileOp) // |os.O_EXCL
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, ltngdata.DBFileRW)
 	if err != nil {
 		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
-	}
-
-	if err = file.Truncate(0); err != nil {
-		return nil, fmt.Errorf("error truncating %s file: %v", filePath, err)
 	}
 
 	return file, nil
 }
 
+// OpenTruncateOrCreateFile opens and truncates or creates a file.
+func (e *FileManager) OpenTruncateOrCreateFile(
+	_ context.Context,
+	filePath string,
+) (*os.File, error) {
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_TRUNC|os.O_CREATE, ltngdata.DBFileRW)
+	if err != nil {
+		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
+	}
+
+	return file, nil
+}
+
+// CreateFileIfNotExists creates a file if it does not exist.
+func (e *FileManager) CreateFileIfNotExists(
+	_ context.Context,
+	filePath string,
+) (*os.File, error) {
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, ltngdata.DBFileRW)
+	if err != nil {
+		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
+	}
+
+	return file, nil
+}
+
+// OpenReadWholeFile opens and reads the whole file.
+// This method is recommended to be used with known small to-be files.
 func (e *FileManager) OpenReadWholeFile(
 	ctx context.Context,
 	filePath string,
 ) ([]byte, *os.File, error) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, nil, fmt.Errorf("file does not exist: %s: %v", filePath, err)
+	file, err := os.OpenFile(filePath, os.O_RDWR, ltngdata.DBFileRW)
+	if err != nil {
+		return nil, nil, errorsx.Wrapf(err, "error opening %s file", filePath)
 	}
 
-	file, err := os.OpenFile(filePath, os.O_RDWR, ltngenginemodels.DBFileOp)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error opening %s file: %v", filePath, err)
+	if _, err = file.Seek(0, 0); err != nil {
+		return nil, nil, errorsx.Wrapf(err, "error seeking %s file", filePath)
 	}
 
 	bs, err := e.ReadAll(ctx, file)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error reading %s file: %v", filePath, err)
+		return nil, nil, errorsx.Wrapf(err, "error reading %s file", filePath)
 	}
 
 	if _, err = file.Seek(0, 0); err != nil {
-		return nil, nil, fmt.Errorf("error seeking %s file: %v", filePath, err)
+		return nil, nil, errorsx.Wrapf(err, "error seeking %s file", filePath)
 	}
 
 	return bs, file, nil
 }
 
+// OpenFile opens a file and it errors out if it does not exist.
 func (e *FileManager) OpenFile(
 	_ context.Context, filePath string,
 ) (*os.File, error) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("file does not exist: %v", err)
-	}
-
 	file, err := os.OpenFile(filePath, os.O_RDWR, ltngenginemodels.DBFileOp)
 	if err != nil {
-		return nil, fmt.Errorf("error opening %s file: %v", filePath, err)
+		return nil, errorsx.Wrapf(err, "error opening %s file", filePath)
 	}
 
 	return file, nil
@@ -94,7 +121,7 @@ func (e *FileManager) ReadAll(
 ) ([]byte, error) {
 	stat, err := file.Stat()
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrapf(err, "error stat %s file", file.Name())
 	}
 	size := stat.Size()
 
@@ -102,7 +129,7 @@ func (e *FileManager) ReadAll(
 
 	buf := make([]byte, size)
 	if _, err = reader.Read(buf); err != nil {
-		return nil, err
+		return nil, errorsx.Wrapf(err, "error reading %s file", file.Name())
 	}
 
 	//row, err := io.ReadAll(file)
@@ -113,7 +140,7 @@ func (e *FileManager) ReadAll(
 	// Seek back to start
 	_, err = file.Seek(0, 0)
 	if err != nil {
-		return nil, fmt.Errorf("error seeking/resetting file from %s: %v", file.Name(), err)
+		return nil, errorsx.Wrapf(err, "error seeking/resetting %s file", file.Name())
 	}
 
 	return buf, nil
@@ -133,7 +160,7 @@ func (e *FileManager) ReadRelationalRow(
 			return nil, io.EOF
 		}
 
-		return nil, fmt.Errorf("error reading row lenght from file from %s: %v", file.Name(), err)
+		return nil, errorsx.Wrapf(err, "error reading row lenght from %s file", file.Name())
 	}
 
 	rowSize := bytesx.Uint32(rawRowSize)
@@ -145,34 +172,10 @@ func (e *FileManager) ReadRelationalRow(
 			return nil, io.EOF
 		}
 
-		return nil, fmt.Errorf("error reading raw file from %s: %v", file.Name(), err)
+		return nil, errorsx.Wrapf(err, "error reading row from %s file", file.Name())
 	}
 
 	return row, nil
-}
-
-func (e *FileManager) GetRelationalFileInfo(
-	ctx context.Context, file *os.File,
-) (*ltngenginemodels.FileInfo, error) {
-	bs, err := e.ReadRelationalRow(ctx, file)
-	if err != nil {
-		return nil, err
-	}
-
-	var fileData ltngenginemodels.FileData
-	if err = e.serializer.Deserialize(bs, &fileData); err != nil {
-		return nil, fmt.Errorf("failed to deserialize store stats header from relational file: %v", err)
-	}
-	fileData.Header.StoreInfo.LastOpenedAt = time.Now().UTC().Unix()
-
-	relationalFileInfo := &ltngenginemodels.FileInfo{
-		File:       file,
-		FileData:   &fileData,
-		HeaderSize: uint32(len(bs)),
-		DataSize:   uint32(len(fileData.Data)),
-	}
-
-	return relationalFileInfo, nil
 }
 
 // #####################################################################################################################
@@ -184,10 +187,10 @@ func (e *FileManager) WriteToFile(
 ) ([]byte, error) {
 	bs, err := e.serializer.Serialize(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize db info - %s | err: %v", file.Name(), err)
+		return nil, errorsx.Wrapf(err, "failed to serialize data - %s", file.Name())
 	}
 
-	return e.WriteAndSeek(ctx, file, bs)
+	return e.writeToFile(ctx, file, bs)
 }
 
 func (e *FileManager) WriteToRelationalFile(
@@ -197,65 +200,31 @@ func (e *FileManager) WriteToRelationalFile(
 ) ([]byte, error) {
 	bs, err := e.serializer.Serialize(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize data - %s | err: %v", file.Name(), err)
+		return nil, errorsx.Wrapf(err, "failed to serialize data - %s", file.Name())
 	}
 
 	bsLen := bytesx.AddUint32(uint32(len(bs)))
 	if _, err = file.Write(bsLen); err != nil {
-		return nil, fmt.Errorf("failed to write data length to file - %s | err: %v", file.Name(), err)
+		return nil, errorsx.Wrapf(err, "failed to write data length to file - %s", file.Name())
 	}
 
-	return e.WriteAndSeek(ctx, file, bs)
+	return e.writeToFile(ctx, file, bs)
 }
 
-func (e *FileManager) WriteAndSeek(
+func (e *FileManager) writeToFile(
 	_ context.Context,
 	file *os.File,
 	data []byte,
 ) ([]byte, error) {
-	writer := bufio.NewWriter(file)
-	if _, err := writer.Write(data); err != nil {
-		return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
+	if _, err := file.Write(data); err != nil {
+		return nil, errorsx.Wrapf(err, "failed to write data to file - %s", file.Name())
 	}
 
-	if err := writer.Flush(); err != nil {
-		return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
-	}
-
-	// set the file ready to be read
-	if _, err := file.Seek(0, 0); err != nil {
-		return nil, fmt.Errorf("failed to reset file cursor - %s | err: %v", file.Name(), err)
+	if err := file.Sync(); err != nil {
+		return nil, errorsx.Wrapf(err, "failed to sync file - %s", file.Name())
 	}
 
 	return data, nil
-}
-
-func (e *FileManager) WriteToRelationalFileWithNoSeek(
-	_ context.Context,
-	file *os.File,
-	data interface{},
-) ([]byte, error) {
-	bs, err := e.serializer.Serialize(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to serialize data - %s | err: %v", file.Name(), err)
-	}
-
-	bsLen := bytesx.AddUint32(uint32(len(bs)))
-
-	writer := bufio.NewWriter(file)
-	if _, err = writer.Write(bsLen); err != nil {
-		return nil, fmt.Errorf("failed to write data length to file - %s | err: %v", file.Name(), err)
-	}
-
-	if _, err = writer.Write(bs); err != nil {
-		return nil, fmt.Errorf("failed to write data to file - %s | err: %v", file.Name(), err)
-	}
-
-	if err = writer.Flush(); err != nil {
-		return nil, fmt.Errorf("failed to sync file - %s | err: %v", file.Name(), err)
-	}
-
-	return bs, nil
 }
 
 // #####################################################################################################################
@@ -266,7 +235,6 @@ func IsFileClosed(file *os.File) bool {
 	}
 
 	_, err := file.Stat()
-	// fmt.Printf("isFileClosed: err: %v\n", err)
 	return errors.Is(err, os.ErrClosed)
 }
 
@@ -293,7 +261,7 @@ func newFileWriter(
 type (
 	FileReader struct {
 		file       *os.File
-		header     *ltngenginemodels.Header
+		header     *ltngdata.Header
 		headerSize uint32
 		hasHeader  bool
 		RawHeader  []byte
@@ -303,7 +271,7 @@ type (
 )
 
 func NewFileReader(
-	ctx context.Context, fi *ltngenginemodels.FileInfo, readHeader bool,
+	ctx context.Context, fi *ltngdata.FileInfo, readHeader bool,
 ) (*FileReader, error) {
 	fr := &FileReader{
 		file:       fi.File,
@@ -314,9 +282,8 @@ func NewFileReader(
 		fr.header = fi.FileData.Header
 	}
 
-	_, err := fr.file.Seek(0, io.SeekStart)
-	if err != nil {
-		return nil, err
+	if _, err := fr.file.Seek(0, io.SeekStart); err != nil {
+		return nil, errorsx.Wrapf(err, "failed to seek file - %s", fr.file.Name())
 	}
 
 	if !readHeader {
@@ -325,7 +292,7 @@ func NewFileReader(
 
 	bs, err := fr.Read(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrapf(err, "failed to read header - %s", fr.file.Name())
 	}
 
 	fr.headerSize = uint32(len(bs))
@@ -338,7 +305,7 @@ func NewFileReader(
 func (fr *FileReader) ReadAll(_ context.Context) (bs []byte, err error) {
 	fileStats, err := fr.file.Stat()
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrapf(err, "failed to stat file - %s", fr.file.Name())
 	}
 
 	fr.Cursor = uint32(fileStats.Size())
@@ -379,8 +346,10 @@ func (fr *FileReader) Read(_ context.Context) (bs []byte, err error) {
 
 func (fr *FileReader) SetCursor(_ context.Context, cursor uint64) error {
 	if _, err := fr.file.Seek(int64(cursor), 0); err != nil {
-		return err
+		return errorsx.Wrapf(err, "failed to seek file - %s", fr.file.Name())
 	}
+
+	fr.Cursor = uint32(cursor)
 
 	return nil
 }
@@ -388,3 +357,44 @@ func (fr *FileReader) SetCursor(_ context.Context, cursor uint64) error {
 func (fr *FileReader) Yield() uint32 {
 	return fr.Cursor
 }
+
+func (fr *FileReader) Close() error {
+	return fr.file.Close()
+}
+
+func (fr *FileReader) FindInFile(
+	ctx context.Context,
+	key []byte,
+) (
+	upTo, from uint32,
+	err error,
+) {
+	var found bool
+	for {
+		var bs []byte
+		bs, err = fr.Read(ctx)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return 0, 0, errorsx.Wrapf(err,
+				"error reading %s file", fr.file.Name())
+		}
+
+		if bytes.Contains(bs, key) {
+			found = true
+			from = fr.Yield()
+			upTo = from - uint32(len(bs)+4)
+			break
+		}
+	}
+
+	if !found {
+		return 0, 0, KeyNotFoundError.Errorf("key '%s' not found", key)
+	}
+
+	return
+}
+
+var KeyNotFoundError = errorsx.New("key not found")

@@ -97,7 +97,7 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 # gitlab.com/pietroski-software-company/golang/devex/env v0.0.4
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/env
-# gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4
+# gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.7
 ## explicit; go 1.25.1
 gitlab.com/pietroski-software-company/golang/devex/errorsx
 # gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6

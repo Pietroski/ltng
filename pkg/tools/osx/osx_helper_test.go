@@ -43,6 +43,15 @@ func PrepareTestFiles(
 	t testing.TB,
 	fileCount int,
 ) {
+	PrepareTestDirs(t)
+
+	fileContentMap := GenerateFileContentPair(fileCount)
+	CreateFiles(t, srcDir, fileContentMap)
+}
+
+func PrepareTestDirs(
+	t testing.TB,
+) {
 	var err error
 
 	err = os.RemoveAll(baseDir)
@@ -59,7 +68,4 @@ func PrepareTestFiles(
 
 	err = os.MkdirAll(subDstDir, defaultFilePerm)
 	require.NoError(t, err)
-
-	fileContentMap := GenerateFileContentPair(fileCount)
-	CreateFiles(t, srcDir, fileContentMap)
 }

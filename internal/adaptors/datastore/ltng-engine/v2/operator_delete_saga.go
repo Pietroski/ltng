@@ -10,7 +10,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
@@ -38,17 +38,9 @@ type (
 		deleteIndexOnlyChannel *deletionChannels
 	}
 
-	temporaryDeletionPaths struct {
-		tmpDelPath           string
-		indexTmpDelPath      string
-		indexListTmpDelPath  string
-		relationalTmpDelPath string
-	}
-
 	deleteItemInfoData struct {
-		*ltngenginemodels.ItemInfoData
-		IndexList   []*ltngenginemodels.Item
-		TmpDelPaths *temporaryDeletionPaths
+		*ltngdata.ItemInfoData
+		IndexList []*ltngdata.Item
 	}
 )
 
@@ -62,45 +54,44 @@ func makeDeleteChannels() *deleteChannels {
 
 func makeDeletionChannels() *deletionChannels {
 	return &deletionChannels{
-		QueueChannel: syncx.NewChannel[struct{}](syncx.WithChannelSize[struct{}](ltngenginemodels.ChannelLimit)),
+		QueueChannel: syncx.NewChannel[struct{}](syncx.WithChannelSize[struct{}](ltngdata.ChannelLimit)),
 		InfoChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 
 		ActionItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		RollbackItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		ActionIndexItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		RollbackIndexItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		ActionIndexListItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		RollbackIndexListItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		ActionRelationalItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		RollbackRelationalItemChannel: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 
 		ActionDelTmpFiles: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 		RollbackDelTmpFiles: syncx.NewChannel[*deleteItemInfoData](
-			syncx.WithChannelSize[*deleteItemInfoData](ltngenginemodels.ChannelLimit)),
+			syncx.WithChannelSize[*deleteItemInfoData](ltngdata.ChannelLimit)),
 	}
 }
 
 func (i *deleteItemInfoData) withRespChan(sigChan chan error) *deleteItemInfoData {
 	return &deleteItemInfoData{
-		ItemInfoData: &ltngenginemodels.ItemInfoData{
+		ItemInfoData: &ltngdata.ItemInfoData{
 			Ctx:        i.Ctx,
 			DBMetaInfo: i.DBMetaInfo,
 			Item:       i.Item,
 			Opts:       i.Opts,
 			RespSignal: sigChan,
 		},
-		IndexList:   i.IndexList,
-		TmpDelPaths: i.TmpDelPaths,
+		IndexList: i.IndexList,
 	}
 }
 
@@ -139,15 +130,15 @@ func (s *deleteSaga) ListenAndTrigger(ctx context.Context) {
 	ctx = context.WithValue(ctx, "thread", "operator_delete_saga-ListenAndTrigger")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.DeleteChannels.InfoChannel.Ch,
-		func(itemInfoData *ltngenginemodels.ItemInfoData) {
+		func(itemInfoData *ltngdata.ItemInfoData) {
 			switch itemInfoData.Opts.IndexProperties.IndexDeletionBehaviour {
-			case ltngenginemodels.IndexOnly:
+			case ltngdata.IndexOnly:
 				s.deleteChannels.deleteIndexOnlyChannel.InfoChannel.Send(&deleteItemInfoData{ItemInfoData: itemInfoData})
-			case ltngenginemodels.CascadeByIdx:
+			case ltngdata.CascadeByIdx:
 				s.deleteChannels.deleteCascadeByIndex.InfoChannel.Send(&deleteItemInfoData{ItemInfoData: itemInfoData})
-			case ltngenginemodels.Cascade:
+			case ltngdata.Cascade:
 				s.deleteChannels.deleteCascadeChannel.InfoChannel.Send(&deleteItemInfoData{ItemInfoData: itemInfoData})
-			case ltngenginemodels.None:
+			case ltngdata.None:
 				fallthrough
 			default:
 				itemInfoData.RespSignal <- errorsx.New("invalid index deletion behaviour")
@@ -155,38 +146,6 @@ func (s *deleteSaga) ListenAndTrigger(ctx context.Context) {
 		},
 	)
 	s.cancel()
-}
-
-func (s *deleteSaga) createTmpDeletionPaths(
-	_ context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-) (*temporaryDeletionPaths, error) {
-	tmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.Path)
-	if err := os.MkdirAll(tmpDelPath, os.ModePerm); err != nil {
-		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
-	}
-
-	indexTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexInfo().Path)
-	if err := os.MkdirAll(indexTmpDelPath, os.ModePerm); err != nil {
-		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
-	}
-
-	indexListTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.IndexListInfo().Path)
-	if err := os.MkdirAll(indexListTmpDelPath, os.ModePerm); err != nil {
-		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
-	}
-
-	relationalTmpDelPath := ltngenginemodels.GetTmpDelDataPathWithSep(dbMetaInfo.RelationalInfo().Path)
-	if err := os.MkdirAll(relationalTmpDelPath, os.ModePerm); err != nil {
-		return nil, errorsx.Wrap(err, "error creating tmp delete store item directory")
-	}
-
-	return &temporaryDeletionPaths{
-		tmpDelPath:           tmpDelPath,
-		indexTmpDelPath:      indexTmpDelPath,
-		indexListTmpDelPath:  indexListTmpDelPath,
-		relationalTmpDelPath: relationalTmpDelPath,
-	}, nil
 }
 
 // #####################################################################################################################
@@ -244,7 +203,7 @@ func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 			if _, err := s.deleteSaga.opSaga.e.memoryStore.LoadItem(ctx,
 				itemInfoData.DBMetaInfo, itemInfoData.Item, itemInfoData.Opts,
 			); err != nil {
-				if _, err = os.Stat(ltngenginemodels.GetDataFilepath(
+				if _, err = os.Stat(ltngdata.GetDataFilepath(
 					itemInfoData.DBMetaInfo.Path, strItemKey),
 				); os.IsNotExist(err) {
 					s.deleteSaga.opSaga.e.logger.Error(ctx, "file does not exist",
@@ -254,14 +213,6 @@ func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 					return
 				}
 			}
-
-			temporaryDelPaths, err := s.deleteSaga.createTmpDeletionPaths(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
-			if err != nil {
-				itemInfoData.RespSignal <- err
-				close(itemInfoData.RespSignal)
-				return
-			}
-			itemInfoData.TmpDelPaths = temporaryDelPaths
 
 			if !itemInfoData.Opts.HasIdx {
 				s.noIndexTrigger(ctx, itemInfoData)
@@ -331,7 +282,7 @@ func (s *deleteCascadeSaga) indexTrigger(
 	indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
 		itemInfoData.Ctx,
 		itemInfoData.DBMetaInfo,
-		&ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
+		&ltngdata.IndexOpts{ParentKey: itemInfoData.Item.Key},
 	)
 	if err != nil {
 		// TODO: log
@@ -491,8 +442,8 @@ func (s *deleteCascadeSaga) deleteItemFromDiskOnThread(ctx context.Context) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 			lockStrKey := itemInfoData.DBMetaInfo.LockName(strItemKey)
 			if err := osx.MvFile(itemInfoData.Ctx,
-				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
-				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.tmpDelPath, strItemKey),
+				ltngdata.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+				ltngdata.GetTemporaryDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 			); err != nil {
 				// log
 				itemInfoData.RespSignal <- err
@@ -519,11 +470,12 @@ func (s *deleteCascadeSaga) recreateItemOnDiskOnThread(ctx context.Context) {
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.RollbackItemChannel.Ch,
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
-			filePath := ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
+			filePath := ltngdata.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
 
-			if err := osx.MvFile(itemInfoData.Ctx, ltngenginemodels.RawPathWithSepForFile(
-				itemInfoData.TmpDelPaths.tmpDelPath, strItemKey), filePath,
-			); err != nil {
+			if err := osx.MvFile(
+				itemInfoData.Ctx,
+				ltngdata.GetTemporaryDataFilepath(itemInfoData.DBMetaInfo.Path,
+					strItemKey), filePath); err != nil {
 				// log
 				itemInfoData.RespSignal <- err
 				//close(itemInfoData.RespSignal)
@@ -552,8 +504,8 @@ func (s *deleteCascadeSaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 				}
 
 				if err := osx.MvFile(itemInfoData.Ctx,
-					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
-					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
+					ltngdata.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+					ltngdata.GetTemporaryIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 				); err != nil {
 					// TODO: debug log
 					itemInfoData.RespSignal <- err
@@ -577,8 +529,8 @@ func (s *deleteCascadeSaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 				strItemKey := hex.EncodeToString(item.Value)
 
 				if err := osx.MvFile(itemInfoData.Ctx,
-					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
-					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
+					ltngdata.GetTemporaryIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+					ltngdata.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 				); err != nil {
 					// TODO: debug log
 					itemInfoData.RespSignal <- err
@@ -598,8 +550,8 @@ func (s *deleteCascadeSaga) deleteIndexingListItemFromDiskOnThread(ctx context.C
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 			if err := osx.MvFile(itemInfoData.Ctx,
-				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
-				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexListTmpDelPath, strItemKey),
+				ltngdata.GetIndexedListDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+				ltngdata.GetTemporaryIndexedListDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 			); err != nil {
 				// TODO: debug log
 				itemInfoData.RespSignal <- err
@@ -628,8 +580,8 @@ func (s *deleteCascadeSaga) recreateIndexListItemOnDiskOnThread(ctx context.Cont
 		func(itemInfoData *deleteItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
 			if err := osx.MvFile(itemInfoData.Ctx,
-				ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
-				ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexListTmpDelPath, strItemKey),
+				ltngdata.GetTemporaryIndexedListDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+				ltngdata.GetIndexedListDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 			); err != nil {
 				// TODO: debug log
 				itemInfoData.RespSignal <- err
@@ -647,8 +599,15 @@ func (s *deleteCascadeSaga) deleteRelationalItemFromDiskOnThread(ctx context.Con
 	loop.RunFromChannel(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionRelationalItemChannel.Ch,
 		func(itemInfoData *deleteItemInfoData) {
-			err := s.deleteSaga.opSaga.e.deleteRelationalData(
-				itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Item, itemInfoData.TmpDelPaths)
+			fi, err := s.deleteSaga.opSaga.e.loadRelationalItemStoreFromMemoryOrDisk(ctx, itemInfoData.DBMetaInfo)
+			if err != nil {
+				itemInfoData.RespSignal <- err
+				//close(itemInfoData.RespSignal)
+				return
+			}
+
+			err = s.deleteSaga.opSaga.e.deleteRelationalData(
+				itemInfoData.Ctx, itemInfoData.Item, fi)
 			if err != nil {
 				s.deleteSaga.opSaga.e.logger.Error(itemInfoData.Ctx,
 					"error on trigger action itemInfoData delete temporary data",
@@ -668,8 +627,8 @@ func (s *deleteCascadeSaga) deleteTemporaryRecords(ctx context.Context) {
 	loop.RunFromChannel(ctx,
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.ActionDelTmpFiles.Ch,
 		func(itemInfoData *deleteItemInfoData) {
-			if err := osx.DelDirsWithoutSepBothOSExec(itemInfoData.Ctx,
-				itemInfoData.TmpDelPaths.tmpDelPath); err != nil {
+			if err := osx.CleanupDirs(itemInfoData.Ctx,
+				ltngdata.GetDataPath(itemInfoData.DBMetaInfo.Path)); err != nil {
 				itemInfoData.RespSignal <- err
 				//close(itemInfoData.RespSignal)
 				return
@@ -767,19 +726,10 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 	loop.RunFromChannel(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.InfoChannel.Ch,
 		func(itemInfoData *deleteItemInfoData) {
-			temporaryDelPaths, err := s.deleteSaga.createTmpDeletionPaths(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
-			if err != nil {
-				// TODO: log
-				itemInfoData.RespSignal <- err
-				//close(itemInfoData.RespSignal)
-				return
-			}
-			itemInfoData.TmpDelPaths = temporaryDelPaths
-
 			indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
 				itemInfoData.Ctx,
 				itemInfoData.DBMetaInfo,
-				itemInfoData.Opts, // &ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
+				itemInfoData.Opts, // &ltngdata.IndexOpts{ParentKey: itemInfoData.Item.Key},
 			)
 			if err != nil {
 				// TODO: log
@@ -801,7 +751,7 @@ func (s *deleteIdxOnlySaga) indexTrigger(
 	indexItemList, err := s.deleteSaga.opSaga.e.loadIndexingList(
 		itemInfoData.Ctx,
 		itemInfoData.DBMetaInfo,
-		&ltngenginemodels.IndexOpts{ParentKey: itemInfoData.Item.Key},
+		&ltngdata.IndexOpts{ParentKey: itemInfoData.Item.Key},
 	)
 	if err != nil {
 		// TODO: log
@@ -891,8 +841,8 @@ func (s *deleteIdxOnlySaga) deleteIndexItemFromDiskOnThread(ctx context.Context)
 				}
 
 				if err := osx.MvFile(itemInfoData.Ctx,
-					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
-					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
+					ltngdata.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+					ltngdata.GetTemporaryIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 				); err != nil {
 					// TODO: log
 					itemInfoData.RespSignal <- err
@@ -917,8 +867,8 @@ func (s *deleteIdxOnlySaga) recreateIndexItemOnDiskOnThread(ctx context.Context)
 				strItemKey := hex.EncodeToString(item.Value)
 
 				if err := osx.MvFile(itemInfoData.Ctx,
-					ltngenginemodels.RawPathWithSepForFile(itemInfoData.TmpDelPaths.indexTmpDelPath, strItemKey),
-					ltngenginemodels.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
+					ltngdata.GetTemporaryIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
+					ltngdata.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey),
 				); err != nil {
 					// TODO: log
 					itemInfoData.RespSignal <- err
@@ -953,11 +903,11 @@ func (s *deleteIdxOnlySaga) updateIndexingListItemFromDiskOnThread(ctx context.C
 				newIndexList = append(newIndexList, item.Value)
 			}
 
-			newIndexListBs := bytes.Join(newIndexList, []byte(ltngenginemodels.BytesSep))
+			newIndexListBs := bytes.Join(newIndexList, []byte(ltngdata.BsSep))
 
 			err := s.deleteSaga.opSaga.e.upsertItemOnDisk(ctx,
 				itemInfoData.DBMetaInfo.IndexListInfo(),
-				&ltngenginemodels.Item{
+				&ltngdata.Item{
 					Key:   key,
 					Value: newIndexListBs,
 				})
@@ -982,10 +932,10 @@ func (s *deleteIdxOnlySaga) rollbackIndexListItemOnDiskOnThread(ctx context.Cont
 				indexList = append(indexList, item.Value)
 			}
 
-			indexListBs := bytes.Join(indexList, []byte(ltngenginemodels.BytesSep))
+			indexListBs := bytes.Join(indexList, []byte(ltngdata.BsSep))
 			err := s.deleteSaga.opSaga.e.upsertItemOnDisk(ctx,
 				itemInfoData.DBMetaInfo.IndexListInfo(),
-				&ltngenginemodels.Item{
+				&ltngdata.Item{
 					Key:   itemInfoData.Opts.ParentKey,
 					Value: indexListBs,
 				})
@@ -1005,8 +955,8 @@ func (s *deleteIdxOnlySaga) deleteTemporaryRecords(ctx context.Context) {
 	loop.RunFromChannel(ctx,
 		s.deleteSaga.deleteChannels.deleteIndexOnlyChannel.ActionDelTmpFiles.Ch,
 		func(itemInfoData *deleteItemInfoData) {
-			if err := osx.DelDirsWithoutSepBothOSExec(ctx,
-				ltngenginemodels.DBTmpDelDataPath+itemInfoData.TmpDelPaths.tmpDelPath,
+			if err := osx.CleanupDirs(ctx,
+				ltngdata.GetIndexedDataPath(itemInfoData.DBMetaInfo.Path),
 			); err != nil {
 				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting tmp files")
 				//close(itemInfoData.RespSignal)
