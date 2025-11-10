@@ -80,24 +80,6 @@ func (e *LTNGEngine) loadStoreFromDisk(
 	ctx context.Context,
 	info *ltngdata.StoreInfo,
 ) (*ltngdata.FileInfo, error) {
-	//if err = osx.MvFile(ctx,
-	//	ltngdata.GetStatsFilepath(info.Path, info.Name),
-	//	ltngdata.GetTemporaryStatsFilepath(info.Path, info.Name)); err != nil {
-	//	return nil, err
-	//}
-	//defer func() {
-	//	if err != nil && !errorsx.Is(err, osx.ErrNoSuchFileOrDirectory) {
-	//		restoringErr := osx.MvFile(ctx,
-	//			ltngdata.GetTemporaryStatsFilepath(info.Path, info.Name),
-	//			ltngdata.GetStatsFilepath(info.Path, info.Name))
-	//		if err != nil {
-	//			e.logger.Error(ctx, "failed to restore stats file", "err", restoringErr)
-	//		}
-	//
-	//		return
-	//	}
-	//}()
-
 	bs, file, err := e.fileManager.OpenReadWholeFile(ctx,
 		ltngdata.GetStatsFilepath(info.Path, info.Name))
 	if err != nil {
@@ -109,21 +91,6 @@ func (e *LTNGEngine) loadStoreFromDisk(
 		return nil, errorsx.Wrapf(err, "failed to deserialize '%s' store stats", info.Name)
 	}
 	fileData.Header.StoreInfo.LastOpenedAt = time.Now().UTC().Unix()
-
-	//file, err = e.fileManager.CreateFileIfNotExists(ctx,
-	//	ltngdata.GetStatsFilepath(info.Path, info.Name))
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//fi, err = e.writeFileDataToFile(ctx, file, &fileData)
-	//if err != nil {
-	//	return nil, errorsx.Wrap(err, "error writing store stats file")
-	//}
-	//
-	//if _, err = e.updateRelationalStatsStoreFile(ctx, fi.FileData); err != nil {
-	//	return nil, errorsx.Wrap(err, "error updateRelationalStatsFile")
-	//}
 
 	return &ltngdata.FileInfo{
 		File:       file,
@@ -217,10 +184,6 @@ func (e *LTNGEngine) loadRelationalStatsStoreFromDisk(
 	if err != nil {
 		return nil, err
 	}
-
-	//if err = e.updateRelationalStats(ctx, fi, fi.FileData, []byte(fi.FileData.Header.StoreInfo.Name)); err != nil {
-	//	return nil, errorsx.Wrap(err, "failed to update stats store manager file")
-	//}
 
 	return fi, nil
 }

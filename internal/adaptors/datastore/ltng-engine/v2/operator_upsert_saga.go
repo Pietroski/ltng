@@ -229,7 +229,12 @@ func (s *upsertSaga) upsertItemOnDiskOnThread(
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel.Ch,
 		func(v *ltngdata.ItemInfoData) {
-			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
+			strItemKey := hex.EncodeToString(v.Item.Key)
+			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			tmpFilePath := ltngdata.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			fileData := ltngdata.NewFileData(v.DBMetaInfo, v.Item)
+
+			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData)
 			v.RespSignal <- err
 			close(v.RespSignal)
 		},
@@ -278,13 +283,15 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 					v.Opts.IndexingKeys)
 
 				for _, indexKey := range keysToSave {
-					if err := s.opSaga.e.createItemOnDisk(v.Ctx,
-						v.DBMetaInfo.IndexInfo(),
-						&ltngdata.Item{
-							Key:   indexKey,
-							Value: v.Opts.ParentKey,
-						},
-					); err != nil {
+					strKey := hex.EncodeToString(v.Item.Key)
+					filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strKey)
+					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strKey)
+					fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexInfo(), &ltngdata.Item{
+						Key:   indexKey,
+						Value: v.Opts.ParentKey,
+					})
+
+					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData); err != nil {
 						return nil, err
 					}
 				}
@@ -299,7 +306,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 
 				for _, indexKey := range keysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 					if err := osx.MvFile(ctx, filePath, tmpFilePath); err != nil {
@@ -337,13 +344,15 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 					ltngdata.IndexListToBytesList(indexingList))
 
 				for _, indexKey := range keysToSave {
-					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx,
-						v.DBMetaInfo.IndexInfo(),
-						&ltngdata.Item{
-							Key:   indexKey,
-							Value: v.Opts.ParentKey,
-						},
-					); err != nil {
+					strItemKey := hex.EncodeToString(indexKey)
+					filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexInfo(), &ltngdata.Item{
+						Key:   indexKey,
+						Value: v.Opts.ParentKey,
+					})
+
+					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData); err != nil {
 						return nil, err
 					}
 				}
@@ -386,13 +395,15 @@ func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel.Ch,
 		func(v *ltngdata.ItemInfoData) {
-			err := s.opSaga.e.upsertItemOnDisk(ctx,
-				v.DBMetaInfo.IndexListInfo(),
-				&ltngdata.Item{
-					Key:   v.Opts.ParentKey,
-					Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngdata.BsSep)),
-				},
-			)
+			strItemKey := hex.EncodeToString(v.Opts.ParentKey)
+			filePath := ltngdata.GetIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			tmpFilePath := ltngdata.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexListInfo(), &ltngdata.Item{
+				Key:   v.Opts.ParentKey,
+				Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngdata.BsSep)),
+			})
+
+			err := s.opSaga.e.upsertItemOnDisk(ctx, filePath, tmpFilePath, fileData)
 			v.RespSignal <- err
 			close(v.RespSignal)
 		},

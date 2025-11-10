@@ -21,8 +21,8 @@ import (
 
 	ltngenginev2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
 )
 
@@ -43,7 +43,7 @@ type Queue struct {
 	fileManager *rw.FileManager
 
 	// this is the in-memory store information
-	queueInfoStore *ltngenginemodels.StoreInfo
+	queueInfoStore *ltngdata.StoreInfo
 	ltngdbengine   *ltngenginev2.LTNGEngine
 
 	fqMainMapping       *syncx.GenericMap[*queuemodels.QueuePublisher]
@@ -268,8 +268,8 @@ func (q *Queue) getQueueSignaler(
 // with that we can query the messages from the queue store.
 func (q *Queue) createQueueStoreOnDB(
 	ctx context.Context, queue *queuemodels.Queue,
-) (*ltngenginemodels.StoreInfo, error) {
-	info := &ltngenginemodels.StoreInfo{
+) (*ltngdata.StoreInfo, error) {
+	info := &ltngdata.StoreInfo{
 		Name:         queue.Name,
 		Path:         queue.Path,
 		CreatedAt:    time.Now().UTC().Unix(),
@@ -284,7 +284,7 @@ func (q *Queue) createQueueStoreOnDB(
 
 func (q *Queue) saveQueueReferenceOnDB(
 	ctx context.Context, queue *queuemodels.Queue,
-) (*ltngenginemodels.Item, error) {
+) (*ltngdata.Item, error) {
 	lockKey := queue.GetLockKey()
 	bs, err := q.serializer.Serialize(queue)
 	if err != nil {
@@ -292,17 +292,17 @@ func (q *Queue) saveQueueReferenceOnDB(
 	}
 
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-	item := &ltngenginemodels.Item{
+	item := &ltngdata.Item{
 		Key:   []byte(lockKey),
 		Value: bs,
 	}
-	opts := &ltngenginemodels.IndexOpts{
+	opts := &ltngdata.IndexOpts{
 		HasIdx: false,
 	}
 
 	if queue.Group != nil {
 		completeLockKey := queue.GetCompleteLockKey()
-		opts = &ltngenginemodels.IndexOpts{
+		opts = &ltngdata.IndexOpts{
 			HasIdx:       true,
 			ParentKey:    []byte(lockKey),
 			IndexingKeys: [][]byte{[]byte(lockKey), []byte(completeLockKey)},
@@ -322,19 +322,19 @@ func (q *Queue) deleteQueueReferenceFromDB(
 ) error {
 	lockKey := queue.GetLockKey()
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-	item := &ltngenginemodels.Item{
+	item := &ltngdata.Item{
 		Key: []byte(lockKey),
 	}
-	opts := &ltngenginemodels.IndexOpts{
+	opts := &ltngdata.IndexOpts{
 		HasIdx: false,
 	}
 	//if queue.Group != nil {
 	//	completeLockKey := queue.GetCompleteLockKey()
-	//	opts = &ltngenginemodels.IndexOpts{
+	//	opts = &ltngdata.IndexOpts{
 	//		HasIdx:       true,
 	//		IndexingKeys: [][]byte{[]byte(lockKey), []byte(completeLockKey)},
-	//		IndexProperties: ltngenginemodels.IndexProperties{
-	//			IndexDeletionBehaviour: ltngenginemodels.CascadeByIdx,
+	//		IndexProperties: ltngdata.IndexProperties{
+	//			IndexDeletionBehaviour: ltngdata.CascadeByIdx,
 	//		},
 	//	}
 	//}
@@ -355,15 +355,15 @@ func (q *Queue) deleteQueueIndexReferenceFromDB(
 
 	lockKey := queue.GetLockKey()
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-	item := &ltngenginemodels.Item{
+	item := &ltngdata.Item{
 		Key: []byte(lockKey),
 	}
 	completeLockKey := queue.GetCompleteLockKey()
-	opts := &ltngenginemodels.IndexOpts{
+	opts := &ltngdata.IndexOpts{
 		HasIdx:       true,
 		IndexingKeys: [][]byte{[]byte(completeLockKey)},
-		IndexProperties: ltngenginemodels.IndexProperties{
-			IndexDeletionBehaviour: ltngenginemodels.IndexOnly,
+		IndexProperties: ltngdata.IndexProperties{
+			IndexDeletionBehaviour: ltngdata.IndexOnly,
 		},
 	}
 	_, err := q.ltngdbengine.DeleteItem(ctx, dbMetaInfo, item, opts)
@@ -395,10 +395,10 @@ func (q *Queue) getQueuePublisher(
 	qp, ok := q.fqMainMapping.Get(lockKey)
 	if !ok {
 		dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-		item := &ltngenginemodels.Item{
+		item := &ltngdata.Item{
 			Key: []byte(lockKey),
 		}
-		opts := &ltngenginemodels.IndexOpts{
+		opts := &ltngdata.IndexOpts{
 			HasIdx: false,
 		}
 		queueItem, err := q.ltngdbengine.LoadItem(ctx, dbMetaInfo, item, opts)

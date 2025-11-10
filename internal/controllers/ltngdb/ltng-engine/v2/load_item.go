@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -14,19 +14,19 @@ func (c *Controller) Load(
 	ctx context.Context,
 	req *grpc_ltngdb.LoadRequest,
 ) (*grpc_ltngdb.LoadResponse, error) {
-	dbMetaInfo := &ltngenginemodels.ManagerStoreMetaInfo{
+	dbMetaInfo := &ltngdata.ManagerStoreMetaInfo{
 		Name: req.GetDatabaseMetaInfo().GetDatabaseName(),
 		Path: req.GetDatabaseMetaInfo().GetDatabasePath(),
 	}
-	item := &ltngenginemodels.Item{
+	item := &ltngdata.Item{
 		Key: req.GetItem().GetKey(),
 	}
-	opts := &ltngenginemodels.IndexOpts{
+	opts := &ltngdata.IndexOpts{
 		HasIdx:       req.GetIndexOpts().GetHasIdx(),
 		ParentKey:    req.GetIndexOpts().GetParentKey(),
 		IndexingKeys: req.GetIndexOpts().GetIndexingKeys(),
-		IndexProperties: ltngenginemodels.IndexProperties{
-			IndexSearchPattern: ltngenginemodels.IndexSearchPattern(
+		IndexProperties: ltngdata.IndexProperties{
+			IndexSearchPattern: ltngdata.IndexSearchPattern(
 				req.GetIndexOpts().GetIndexingProperties().GetIndexSearchPattern(),
 			),
 		},

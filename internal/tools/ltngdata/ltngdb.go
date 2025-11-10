@@ -38,17 +38,13 @@ const (
 )
 
 var (
-	DBBaseStatsPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats)
-	DBBaseTemporaryStatsPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Temporary)
-	//DBBaseRubishStatsPath              = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Rubbish)
-	//DBBaseTemporaryRubishStatsPath     = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Rubbish, Temporary)
+	DBBaseStatsPath                    = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats)
+	DBBaseTemporaryStatsPath           = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Temporary)
 	DBBaseRelationalStatsPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Relational)
 	DBBaseTemporaryRelationalStatsPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Relational, Temporary)
 
-	DBBaseDataPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data)
-	DBBaseTemporaryDataPath = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Temporary)
-	//DBBaseRubishDataPath               = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Rubbish)
-	//DBBaseTemporaryRubishDataPath      = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Rubbish, Temporary)
+	DBBaseDataPath                     = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data)
+	DBBaseTemporaryDataPath            = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Temporary)
 	DBBaseRelationalDataPath           = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Relational)
 	DBBaseTemporaryRelationalDataPath  = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Relational, Temporary)
 	DBBaseIndexedDataPath              = filepath.Join(DBBasePath, DBBaseVersion, Stores, Data, Indexed)
@@ -74,22 +70,6 @@ func GetTemporaryStatsPath(path string) string {
 func GetTemporaryStatsFilepath(path, storeName string) string {
 	return filepath.Join(DBBaseTemporaryStatsPath, path, storeName) + FileExt
 }
-
-//func GetRubishStatsPath(path string) string {
-//	return filepath.Join(DBBaseRubishStatsPath, path)
-//}
-//
-//func GetRubishStatsFilepath(path, storeName string) string {
-//	return filepath.Join(DBBaseRubishStatsPath, path, storeName) + FileExt
-//}
-//
-//func GetTemporaryRubishStatsPath(path string) string {
-//	return filepath.Join(DBBaseTemporaryRubishStatsPath, path)
-//}
-//
-//func GetTemporaryRubishStatsFilepath(path, storeName string) string {
-//	return filepath.Join(DBBaseTemporaryRubishStatsPath, path, storeName) + FileExt
-//}
 
 func GetRelationalStatsPath(path string) string {
 	return filepath.Join(DBBaseRelationalStatsPath, path)
@@ -124,22 +104,6 @@ func GetTemporaryDataPath(path string) string {
 func GetTemporaryDataFilepath(path, storeName string) string {
 	return filepath.Join(DBBaseTemporaryDataPath, path, storeName) + FileExt
 }
-
-//func GetRubishDataPath(path string) string {
-//	return filepath.Join(DBBaseRubishDataPath, path)
-//}
-//
-//func GetRubishDataFilepath(path, storeName string) string {
-//	return filepath.Join(DBBaseRubishDataPath, path, storeName) + FileExt
-//}
-//
-//func GetTemporaryRubishDataPath(path string) string {
-//	return filepath.Join(DBBaseTemporaryRubishDataPath, path)
-//}
-//
-//func GetTemporaryRubishDataFilepath(path, storeName string) string {
-//	return filepath.Join(DBBaseTemporaryRubishDataPath, path, storeName) + FileExt
-//}
 
 func GetRelationalDataPath(path string) string {
 	return filepath.Join(DBBaseRelationalDataPath, path)
@@ -193,10 +157,10 @@ func GetTemporaryIndexedListDataFilepath(path, storeName string) string {
 
 type (
 	DBInfo struct {
-		Name         string
-		Path         string
-		CreatedAt    int64
-		LastOpenedAt int64
+		Name      string
+		Path      string
+		CreatedAt int64
+		// LastOpenedAt int64
 	}
 )
 
@@ -232,8 +196,7 @@ type (
 	}
 
 	ItemInfo struct {
-		CreatedAt    int64
-		LastOpenedAt int64
+		CreatedAt int64
 	}
 
 	Header struct {
@@ -351,8 +314,7 @@ func NewFileData(
 	fileData := &FileData{
 		Header: &Header{
 			ItemInfo: &ItemInfo{
-				CreatedAt:    timeNow,
-				LastOpenedAt: timeNow,
+				CreatedAt: timeNow,
 			},
 			StoreInfo: &StoreInfo{
 				Name: dbMetaInfo.Name,

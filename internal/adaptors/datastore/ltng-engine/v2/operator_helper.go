@@ -32,8 +32,7 @@ func (e *LTNGEngine) createRelationalItemStore(
 		Key: []byte(ltngdata.RelationalDataStoreKey),
 		Header: &ltngdata.Header{
 			ItemInfo: &ltngdata.ItemInfo{
-				CreatedAt:    timeNow,
-				LastOpenedAt: timeNow,
+				CreatedAt: timeNow,
 			},
 			StoreInfo: info,
 		},
@@ -123,7 +122,6 @@ func (e *LTNGEngine) loadItemFromDisk(
 	if err != nil {
 		return nil, err
 	}
-	fileData.Header.ItemInfo.LastOpenedAt = time.Now().UTC().Unix()
 
 	return &ltngdata.FileInfo{
 		File:     file,
@@ -180,7 +178,6 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 		return nil, err
 	}
 
-	fileData.Header.ItemInfo.LastOpenedAt = time.Now().UTC().Unix()
 	fi.FileData = &fileData
 	fi.HeaderSize = uint32(len(reader.RawHeader))
 	fi.DataSize = uint32(len(fileData.Data))
@@ -556,23 +553,19 @@ func (e *LTNGEngine) loadIndexingList(
 
 func (e *LTNGEngine) createItemOnDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	item *ltngdata.Item,
-) error {
-	strItemKey := hex.EncodeToString(item.Key)
-	filePath := ltngdata.GetDataFilepath(dbMetaInfo.Path, strItemKey)
-
-	fileData := ltngdata.NewFileData(dbMetaInfo, item)
+	filePath string,
+	fileData interface{},
+) (*os.File, error) {
 	file, err := e.fileManager.CreateFileIfNotExists(ctx, filePath)
 	if err != nil {
-		return errorsx.Wrapf(err, "error opening/creating a file at %s", filePath)
+		return nil, errorsx.Wrapf(err, "error opening/creating a file at %s", filePath)
 	}
 
 	if _, err = e.fileManager.WriteToFile(ctx, file, fileData); err != nil {
-		return errorsx.Wrapf(err, "error writing to file at %s", filePath)
+		return nil, errorsx.Wrapf(err, "error writing to file at %s", filePath)
 	}
 
-	return nil
+	return file, nil
 }
 
 func (e *LTNGEngine) createRelationalItemOnDisk(
@@ -580,14 +573,13 @@ func (e *LTNGEngine) createRelationalItemOnDisk(
 	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
 	item *ltngdata.Item,
 ) error {
-	fileData := ltngdata.NewFileData(dbMetaInfo, item)
-
 	fi, err := e.loadRelationalItemStoreFromMemoryOrDisk(ctx, dbMetaInfo)
 	if err != nil {
 		return errorsx.Wrapf(err, "error creating %s relational store",
 			dbMetaInfo.RelationalInfo().Name)
 	}
 
+	fileData := ltngdata.NewFileData(dbMetaInfo, item)
 	if err = e.upsertRelationalData(ctx, fileData, fi); err != nil {
 		return errorsx.Wrapf(err, "error upserting relational data to %s store",
 			dbMetaInfo.RelationalInfo().Name)
@@ -598,14 +590,9 @@ func (e *LTNGEngine) createRelationalItemOnDisk(
 
 func (e *LTNGEngine) upsertItemOnDisk(
 	ctx context.Context,
-	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	item *ltngdata.Item,
+	filePath, tmpFilePath string,
+	fileData interface{},
 ) (err error) {
-	strItemKey := hex.EncodeToString(item.Key)
-	filePath := ltngdata.GetDataFilepath(dbMetaInfo.Path, strItemKey)
-	tmpFilePath := ltngdata.GetTemporaryDataFilepath(dbMetaInfo.Path, strItemKey)
-
-	fileData := ltngdata.NewFileData(dbMetaInfo, item)
 	file, err := e.fileManager.CreateFileIfNotExists(ctx, tmpFilePath)
 	if err != nil {
 		return errorsx.Wrapf(err, "error opening/creating a temporary truncated file at %s", tmpFilePath)
@@ -681,7 +668,7 @@ func (e *LTNGEngine) upsertRelationalData(
 
 	{
 		tmpFile, err := e.fileManager.OpenCreateFile(ctx, ltngdata.GetTemporaryRelationalDataFilepath(
-			info.Path, lockKey))
+			info.Path, ltngdata.RelationalDataStoreKey))
 		if err != nil {
 			return err
 		}
@@ -715,12 +702,13 @@ func (e *LTNGEngine) upsertRelationalData(
 			return errorsx.Wrapf(err, "failed to close file %s", fi.File.Name())
 		}
 
-		if err = osx.MvFile(ctx, tmpFile.Name(), ltngdata.GetRelationalDataFilepath(info.Path, lockKey)); err != nil {
+		if err = osx.MvFile(ctx, tmpFile.Name(), ltngdata.GetRelationalDataFilepath(
+			info.Path, ltngdata.RelationalDataStoreKey)); err != nil {
 			return errorsx.Wrap(err, "error moving tmp file")
 		}
 
 		file, err := e.fileManager.OpenCreateFile(ctx, ltngdata.GetRelationalDataFilepath(
-			info.Path, lockKey))
+			info.Path, ltngdata.RelationalDataStoreKey))
 		if err != nil {
 			return errorsx.Wrapf(err, "error opening %s relational file", fi.File.Name())
 		}
@@ -760,7 +748,7 @@ func (e *LTNGEngine) deleteRelationalData(
 
 	{
 		tmpFile, err := e.fileManager.OpenCreateFile(ctx,
-			ltngdata.GetTemporaryRelationalDataFilepath(info.Path, lockKey))
+			ltngdata.GetTemporaryRelationalDataFilepath(info.Path, ltngdata.RelationalDataStoreKey))
 		if err != nil {
 			return err
 		}
@@ -791,7 +779,7 @@ func (e *LTNGEngine) deleteRelationalData(
 		}
 
 		newFilePath := ltngdata.GetRelationalDataFilepath(
-			info.Path, lockKey)
+			info.Path, ltngdata.RelationalDataStoreKey)
 		if err = osx.MvFile(ctx, tmpFile.Name(), newFilePath); err != nil {
 			return errorsx.Wrap(err, "error moving tmp file")
 		}

@@ -129,8 +129,7 @@ func (e *LTNGEngine) listItems(
 	pagination *ltngdata.Pagination,
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
-	relationalItemStore := dbMetaInfo.RelationalInfo()
-	lockKey := relationalItemStore.LockName(ltngdata.RelationalDataStoreKey)
+	lockKey := dbMetaInfo.RelationalInfo().LockName(ltngdata.RelationalDataStoreKey)
 	e.kvLock.Lock(lockKey, struct{}{})
 	defer e.kvLock.Unlock(lockKey)
 

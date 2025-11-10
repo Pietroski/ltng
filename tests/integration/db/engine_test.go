@@ -14,7 +14,7 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	models_badgerdb_v4_management "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	models_badgerdb_v4_operation "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
@@ -35,7 +35,7 @@ func TestEngines(t *testing.T) {
 }
 
 func testLTNGDBEngineV2(t *testing.T) {
-	storeInfo := &ltngenginemodels.StoreInfo{
+	storeInfo := &ltngdata.StoreInfo{
 		Name: "user-store",
 		Path: "user-store",
 	}
@@ -54,11 +54,11 @@ func testLTNGDBEngineV2(t *testing.T) {
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, ets.TS(), user)
 
-			item := &ltngenginemodels.Item{
+			item := &ltngdata.Item{
 				Key:   bvs.BsKey,
 				Value: bvs.BsValue,
 			}
-			opts := &ltngenginemodels.IndexOpts{
+			opts := &ltngdata.IndexOpts{
 				HasIdx:       true,
 				ParentKey:    bvs.BsKey,
 				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
@@ -75,13 +75,13 @@ func testLTNGDBEngineV2(t *testing.T) {
 		t.Log("ListItems")
 
 		bd := testbench.New()
-		pagination := &ltngenginemodels.Pagination{
+		pagination := &ltngdata.Pagination{
 			PageID:   1,
 			PageSize: 50,
 		}
-		opts := &ltngenginemodels.IndexOpts{
-			IndexProperties: ltngenginemodels.IndexProperties{
-				ListSearchPattern: ltngenginemodels.Default,
+		opts := &ltngdata.IndexOpts{
+			IndexProperties: ltngdata.IndexProperties{
+				ListSearchPattern: ltngdata.Default,
 			},
 		}
 		bd.CalcAvg(bd.CalcElapsed(func() {
@@ -98,11 +98,11 @@ func testLTNGDBEngineV2(t *testing.T) {
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, ets.TS(), user)
 
-			item := &ltngenginemodels.Item{
+			item := &ltngdata.Item{
 				Key:   bvs.BsKey,
 				Value: bvs.BsValue,
 			}
-			opts := &ltngenginemodels.IndexOpts{
+			opts := &ltngdata.IndexOpts{
 				HasIdx:       true,
 				ParentKey:    bvs.BsKey,
 				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
@@ -122,15 +122,15 @@ func testLTNGDBEngineV2(t *testing.T) {
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, ets.TS(), user)
 
-			item := &ltngenginemodels.Item{
+			item := &ltngdata.Item{
 				Key:   bvs.BsKey,
 				Value: bvs.BsValue,
 			}
-			opts := &ltngenginemodels.IndexOpts{
+			opts := &ltngdata.IndexOpts{
 				HasIdx:    true,
 				ParentKey: bvs.BsKey,
-				IndexProperties: ltngenginemodels.IndexProperties{
-					IndexDeletionBehaviour: ltngenginemodels.Cascade,
+				IndexProperties: ltngdata.IndexProperties{
+					IndexDeletionBehaviour: ltngdata.Cascade,
 				},
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 )
 
@@ -16,7 +16,7 @@ func (c *Controller) CreateStore(
 	ctx context.Context,
 	req *grpc_ltngdb.CreateStoreRequest,
 ) (*grpc_ltngdb.CreateStoreResponse, error) {
-	payload := &ltngenginemodels.StoreInfo{
+	payload := &ltngdata.StoreInfo{
 		Name: req.GetName(),
 		Path: req.GetPath(),
 	}
