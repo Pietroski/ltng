@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"golang.org/x/sys/unix"
 
@@ -41,6 +42,9 @@ type FileQueue struct {
 	writer      *bufio.Writer
 
 	readerCursorLocker map[uint64]uint64
+
+	writeOffset *atomic.Int64
+	readOffset  *atomic.Int64
 }
 
 func New(_ context.Context, path, filename string) (*FileQueue, error) {
@@ -69,6 +73,9 @@ func New(_ context.Context, path, filename string) (*FileQueue, error) {
 		writer:      bufio.NewWriter(file),
 
 		readerCursorLocker: make(map[uint64]uint64),
+
+		writeOffset: &atomic.Int64{},
+		readOffset:  &atomic.Int64{},
 	}
 
 	return fq, nil
@@ -868,4 +875,53 @@ func (fq *FileQueue) Init() error {
 func (fq *FileQueue) Restart() error {
 	fq.CheckAndClose()
 	return fq.Init()
+}
+
+func (fq *FileQueue) WriteAt(_ context.Context, data interface{}) error {
+	bs, err := fq.serializer.Serialize(data)
+	if err != nil {
+		return err
+	}
+	bsLen := len(bs)
+	bsBsLen := bytesx.AddUint32(uint32(bsLen))
+
+	bbw := bytesx.NewWriter(make([]byte, bsLen+4))
+	bbw.Write(bsBsLen)
+	bbw.Write(bs)
+	if _, err = fq.file.WriteAt(bbw.Bytes(), fq.writeOffset.Load()); err != nil {
+		return err
+	}
+
+	fq.writeOffset.Add(int64(4 + bsLen))
+
+	return nil
+}
+
+func (fq *FileQueue) ReadAt(ctx context.Context) ([]byte, error) {
+	if fq.readOffset.Load() >= truncateLimit {
+		return nil, io.EOF
+	}
+
+	rawRowLen := make([]byte, 4)
+	if _, err := fq.file.ReadAt(rawRowLen, fq.readOffset.Load()); err != nil {
+		if err == io.EOF {
+			_ = fq.file.Truncate(0)
+			fq.writeCursor = 0
+			fq.readerCursor = 0
+			fq.reader = bufio.NewReader(fq.file)
+			fq.writer = bufio.NewWriter(fq.file)
+		}
+
+		return nil, err
+	}
+	rowLen := bytesx.Uint32(rawRowLen)
+
+	row := make([]byte, rowLen)
+	if _, err := fq.file.ReadAt(row, fq.readOffset.Load()+4); err != nil {
+		return nil, err
+	}
+
+	fq.readOffset.Add(int64(4 + rowLen))
+
+	return row, nil
 }
