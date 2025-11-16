@@ -1,4 +1,4 @@
-package ltngqueue_engine
+package ltngqueueenginev2
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
@@ -19,11 +20,11 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
-	ltngenginev2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltngdbenginev3 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltngdbengine/v3"
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
+	ltngdbmodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/rw"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/mmap"
 )
 
 const signalTransmitterBufferSize = 1 << 4
@@ -40,11 +41,11 @@ type Queue struct {
 	awaitTimeout time.Duration
 
 	serializer  serializer_models.Serializer
-	fileManager *rw.FileManager
+	fileManager *mmap.FileManager
 
 	// this is the in-memory store information
-	queueInfoStore *ltngdata.StoreInfo
-	ltngdbengine   *ltngenginev2.LTNGEngine
+	queueInfoStore *ltngdbmodelsv3.StoreInfo
+	ltngdbengine   *ltngdbenginev3.LTNGEngine
 
 	fqMainMapping       *syncx.GenericMap[*queuemodels.QueuePublisher]
 	fqDownstreamMapping *syncx.GenericMap[*syncx.GenericMap[*queuemodels.QueueSignaler]]
@@ -58,7 +59,17 @@ type Queue struct {
 }
 
 func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
-	ltngdbengine, err := ltngenginev2.New(ctx)
+	ltngdbengine, err := ltngdbenginev3.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	fm, err := mmap.NewFileManager(
+		fileiomodels.GetFileQueueFilePath(
+			fileiomodels.FileQueueMmapVersion,
+			fileiomodels.GenericFileQueueFilePath,
+			fileiomodels.GenericFileQueueFileName,
+		))
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +84,7 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 		//op:    concurrent.New("ltng-queue"),
 
 		serializer:  serializer.NewRawBinarySerializer(),
-		fileManager: rw.NewFileManager(ctx),
+		fileManager: fm,
 
 		ltngdbengine: ltngdbengine,
 
@@ -268,8 +279,8 @@ func (q *Queue) getQueueSignaler(
 // with that we can query the messages from the queue store.
 func (q *Queue) createQueueStoreOnDB(
 	ctx context.Context, queue *queuemodels.Queue,
-) (*ltngdata.StoreInfo, error) {
-	info := &ltngdata.StoreInfo{
+) (*ltngdbmodelsv3.StoreInfo, error) {
+	info := &ltngdbmodelsv3.StoreInfo{
 		Name:         queue.Name,
 		Path:         queue.Path,
 		CreatedAt:    time.Now().UTC().Unix(),
@@ -284,7 +295,7 @@ func (q *Queue) createQueueStoreOnDB(
 
 func (q *Queue) saveQueueReferenceOnDB(
 	ctx context.Context, queue *queuemodels.Queue,
-) (*ltngdata.Item, error) {
+) (*ltngdbmodelsv3.Item, error) {
 	lockKey := queue.GetLockKey()
 	bs, err := q.serializer.Serialize(queue)
 	if err != nil {
@@ -292,17 +303,17 @@ func (q *Queue) saveQueueReferenceOnDB(
 	}
 
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-	item := &ltngdata.Item{
+	item := &ltngdbmodelsv3.Item{
 		Key:   []byte(lockKey),
 		Value: bs,
 	}
-	opts := &ltngdata.IndexOpts{
+	opts := &ltngdbmodelsv3.IndexOpts{
 		HasIdx: false,
 	}
 
 	if queue.Group != nil {
 		completeLockKey := queue.GetCompleteLockKey()
-		opts = &ltngdata.IndexOpts{
+		opts = &ltngdbmodelsv3.IndexOpts{
 			HasIdx:       true,
 			ParentKey:    []byte(lockKey),
 			IndexingKeys: [][]byte{[]byte(lockKey), []byte(completeLockKey)},
@@ -322,19 +333,19 @@ func (q *Queue) deleteQueueReferenceFromDB(
 ) error {
 	lockKey := queue.GetLockKey()
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-	item := &ltngdata.Item{
+	item := &ltngdbmodelsv3.Item{
 		Key: []byte(lockKey),
 	}
-	opts := &ltngdata.IndexOpts{
+	opts := &ltngdbmodelsv3.IndexOpts{
 		HasIdx: false,
 	}
 	//if queue.Group != nil {
 	//	completeLockKey := queue.GetCompleteLockKey()
-	//	opts = &ltngdata.IndexOpts{
+	//	opts = &ltngdbmodelsv3.IndexOpts{
 	//		HasIdx:       true,
 	//		IndexingKeys: [][]byte{[]byte(lockKey), []byte(completeLockKey)},
-	//		IndexProperties: ltngdata.IndexProperties{
-	//			IndexDeletionBehaviour: ltngdata.CascadeByIdx,
+	//		IndexProperties: ltngdbmodelsv3.IndexProperties{
+	//			IndexDeletionBehaviour: ltngdbmodelsv3.CascadeByIdx,
 	//		},
 	//	}
 	//}
@@ -355,15 +366,15 @@ func (q *Queue) deleteQueueIndexReferenceFromDB(
 
 	lockKey := queue.GetLockKey()
 	dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-	item := &ltngdata.Item{
+	item := &ltngdbmodelsv3.Item{
 		Key: []byte(lockKey),
 	}
 	completeLockKey := queue.GetCompleteLockKey()
-	opts := &ltngdata.IndexOpts{
+	opts := &ltngdbmodelsv3.IndexOpts{
 		HasIdx:       true,
 		IndexingKeys: [][]byte{[]byte(completeLockKey)},
-		IndexProperties: ltngdata.IndexProperties{
-			IndexDeletionBehaviour: ltngdata.IndexOnly,
+		IndexProperties: ltngdbmodelsv3.IndexProperties{
+			IndexDeletionBehaviour: ltngdbmodelsv3.IndexOnly,
 		},
 	}
 	_, err := q.ltngdbengine.DeleteItem(ctx, dbMetaInfo, item, opts)
@@ -395,10 +406,10 @@ func (q *Queue) getQueuePublisher(
 	qp, ok := q.fqMainMapping.Get(lockKey)
 	if !ok {
 		dbMetaInfo := q.queueInfoStore.ManagerStoreMetaInfo()
-		item := &ltngdata.Item{
+		item := &ltngdbmodelsv3.Item{
 			Key: []byte(lockKey),
 		}
-		opts := &ltngdata.IndexOpts{
+		opts := &ltngdbmodelsv3.IndexOpts{
 			HasIdx: false,
 		}
 		queueItem, err := q.ltngdbengine.LoadItem(ctx, dbMetaInfo, item, opts)
