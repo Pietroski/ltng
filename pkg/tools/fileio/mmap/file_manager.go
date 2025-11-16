@@ -25,6 +25,8 @@ type (
 	}
 )
 
+var ErrFileCannotBeOverWritten = errorsx.New("file cannot be over-written")
+
 func NewFileManager(
 	filePath string,
 ) (*FileManager, error) {
@@ -88,26 +90,26 @@ func NewFileManagerFromFile(
 
 // Write writes to an empty file only, it does not append not upsert data.
 // Use Rewrite or upserting / rewriting a file.
-func (g *FileManager) Write(data any) ([]byte, error) {
-	g.mtx.Lock()
-	defer g.mtx.Unlock()
+func (fm *FileManager) Write(data any) ([]byte, error) {
+	fm.mtx.Lock()
+	defer fm.mtx.Unlock()
 
-	if g.dataSize != 0 {
-		return nil, errorsx.New("file cannot be over-written")
+	if fm.dataSize != 0 {
+		return nil, ErrFileCannotBeOverWritten
 	}
 
-	return g.write(data)
+	return fm.write(data)
 }
 
-func (g *FileManager) Rewrite(data any) ([]byte, error) {
-	g.mtx.Lock()
-	defer g.mtx.Unlock()
+func (fm *FileManager) Rewrite(data any) ([]byte, error) {
+	fm.mtx.Lock()
+	defer fm.mtx.Unlock()
 
-	return g.write(data)
+	return fm.write(data)
 }
 
-func (g *FileManager) write(data any) ([]byte, error) {
-	bs, err := g.serializer.Serialize(data)
+func (fm *FileManager) write(data any) ([]byte, error) {
+	bs, err := fm.serializer.Serialize(data)
 	if err != nil {
 		return nil, err
 	}
@@ -116,85 +118,85 @@ func (g *FileManager) write(data any) ([]byte, error) {
 	requiredSize := uint64(4 + bsLen)
 
 	// GROWING: Must resize first (no choice)
-	if requiredSize > g.size {
-		if err = g.resize(requiredSize); err != nil {
+	if requiredSize > fm.size {
+		if err = fm.resize(requiredSize); err != nil {
 			return nil, err
 		}
 	}
 
 	// Write new data (either overwrites old data or writes to new space)
-	bytesx.PutUint32(g.data[0:4], bsLen)
-	copy(g.data[4:], bs)
+	bytesx.PutUint32(fm.data[0:4], bsLen)
+	copy(fm.data[4:], bs)
 
 	// Flush BEFORE truncating
-	if err = partialFlushMmap(g.data, requiredSize); err != nil {
+	if err = partialFlushMmap(fm.data, requiredSize); err != nil {
 		return nil, err
 	}
 
 	// SHRINKING: Truncate AFTER write is safe on disk
-	if requiredSize < g.size {
-		if err = g.resize(requiredSize); err != nil {
+	if requiredSize < fm.size {
+		if err = fm.resize(requiredSize); err != nil {
 			return nil, err
 		}
 	}
 
-	g.dataSize = requiredSize
+	fm.dataSize = requiredSize
 
 	return bs, nil
 }
 
 // Read returns the exact data that was written to the file.
-func (g *FileManager) Read() ([]byte, error) {
-	g.mtx.Lock()
-	defer g.mtx.Unlock()
+func (fm *FileManager) Read() ([]byte, error) {
+	fm.mtx.Lock()
+	defer fm.mtx.Unlock()
 
 	// Check if we have data
-	if g.dataSize == 0 {
+	if fm.dataSize == 0 {
 		return nil, errorsx.New("file is empty")
 	}
 
-	if err := validateData(g.data, g.dataSize, g.size); err != nil {
+	if err := validateData(fm.data, fm.dataSize, fm.size); err != nil {
 		// file is very likely corrupted and return it all
 		// and let the user decide what to do with it or what is left from it.
-		return g.data[4:g.dataSize], errorsx.Wrap(err, "corrupted file")
+		return fm.data[4:fm.dataSize], errorsx.Wrap(err, "corrupted file")
 	}
 
 	// return what was originally written.
 	// Return a COPY of the data, not the mmap slice
-	length := bytesx.Uint32(g.data[0:4])
+	length := bytesx.Uint32(fm.data[0:4])
 	payload := make([]byte, length)
-	copy(payload, g.data[4:4+length])
+	copy(payload, fm.data[4:4+length])
 	return payload, nil
 }
 
 // ReadRaw returns a direct slice into mmap (caller must not modify)
 // Caller must not use after Close() or concurrent Write/Rewrite
-func (g *FileManager) ReadRaw() ([]byte, error) {
-	g.mtx.Lock()
-	defer g.mtx.Unlock()
+func (fm *FileManager) ReadRaw() ([]byte, error) {
+	fm.mtx.Lock()
+	defer fm.mtx.Unlock()
 
-	if g.dataSize == 0 {
+	if fm.dataSize == 0 {
 		return nil, errorsx.New("file is empty")
 	}
 
-	return g.data[4:g.dataSize], nil
+	return fm.data[4:fm.dataSize], nil
 }
 
 // resize must be called with lock held
-func (g *FileManager) resize(newSize uint64) error {
+func (fm *FileManager) resize(newSize uint64) error {
 	// 1. Unmap
-	if err := unix.Munmap(g.data); err != nil {
+	if err := unix.Munmap(fm.data); err != nil {
 		return errorsx.Wrap(err, "unmap failed")
 	}
 
 	// 2. Truncate
-	if err := g.file.Truncate(int64(newSize)); err != nil {
+	if err := fm.file.Truncate(int64(newSize)); err != nil {
 		return errorsx.Wrap(err, "truncate failed")
 	}
 
 	// 3. Remap
 	newMmap, err := unix.Mmap(
-		int(g.file.Fd()),
+		int(fm.file.Fd()),
 		0,
 		int(newSize),
 		unix.PROT_READ|unix.PROT_WRITE,
@@ -204,31 +206,35 @@ func (g *FileManager) resize(newSize uint64) error {
 		return errorsx.Wrap(err, "remap failed")
 	}
 
-	g.data = newMmap
-	g.size = newSize
+	fm.data = newMmap
+	fm.size = newSize
 	return nil
 }
 
-func (g *FileManager) Sync() error {
-	g.mtx.Lock()
-	defer g.mtx.Unlock()
+func (fm *FileManager) Sync() error {
+	fm.mtx.Lock()
+	defer fm.mtx.Unlock()
 
-	return flushMmap(g.data)
+	return flushMmap(fm.data)
 }
 
 // Close unmaps and closes the file queue.
-func (g *FileManager) Close() error {
-	g.mtx.Lock()
-	defer g.mtx.Unlock()
+func (fm *FileManager) Close() error {
+	fm.mtx.Lock()
+	defer fm.mtx.Unlock()
 
-	if err := flushMmap(g.data); err != nil {
-		return err
+	if osx.IsFileClosed(fm.file) {
+		return nil
 	}
 
-	if err := unix.Munmap(g.data); err != nil {
-		_ = g.file.Close()
-		return err
+	if err := flushMmap(fm.data); err != nil {
+		return errorsx.Wrap(err, "flush failed")
 	}
 
-	return g.file.Close()
+	if err := unix.Munmap(fm.data); err != nil {
+		_ = fm.file.Close()
+		return errorsx.Wrap(err, "unmap failed")
+	}
+
+	return fm.file.Close()
 }

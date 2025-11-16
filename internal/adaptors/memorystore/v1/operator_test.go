@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 )

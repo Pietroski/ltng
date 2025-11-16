@@ -339,13 +339,17 @@ func (fq *FileQueue) Close() error {
 	fq.mtx.Lock()
 	defer fq.mtx.Unlock()
 
+	if osx.IsFileClosed(fq.file) {
+		return nil
+	}
+
 	if err := flushMmap(fq.data); err != nil {
-		return err
+		return errorsx.Wrap(err, "flush failed")
 	}
 
 	if err := unix.Munmap(fq.data); err != nil {
 		_ = fq.file.Close()
-		return err
+		return errorsx.Wrap(err, "unmap failed")
 	}
 
 	return fq.file.Close()

@@ -13,7 +13,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
-	v3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	v3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 )
 
 type (

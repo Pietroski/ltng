@@ -19,8 +19,7 @@ import (
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
-	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
-	ltng_engine_v3 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v3"
+	ltngdbenginev3 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltngdbengine/v3"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
@@ -31,7 +30,7 @@ const (
 )
 
 var (
-	LTNGDBEngineType   = fmt.Sprintf("LTNG_ENGINE=%s", common_model.LightningEngineV2EngineVersionType)
+	LTNGDBEngineType   = fmt.Sprintf("LTNG_ENGINE=%s", common_model.LightningEngineV3EngineVersionType)
 	BadgerDBEngineType = fmt.Sprintf("LTNG_ENGINE=%s", common_model.BadgerDBV4EngineVersionType)
 )
 
@@ -119,8 +118,7 @@ type (
 	EngineTestSuite struct {
 		Ctx            context.Context
 		Serializer     serializermodels.Serializer
-		LTNGDBEngineV2 *ltng_engine_v2.LTNGEngine
-		LTNGDBEngineV3 *ltng_engine_v3.LTNGEngine
+		LTNGDBEngineV3 *ltngdbenginev3.LTNGEngine
 		BadgerDBEngine *BadgerDBEngine
 	}
 
@@ -163,7 +161,7 @@ func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 	ctx := context.Background()
 	clientLTNG, err := ltng_client.New(ctx, &ltng_client.Params{
 		Address: "127.0.0.1:50050",
-		Engine:  common_model.LightningEngineV2EngineVersionType.String(),
+		Engine:  common_model.LightningEngineV3EngineVersionType.String(),
 	})
 	require.NoError(tb, err)
 
@@ -189,10 +187,10 @@ func InitLocalClientTestSuite[T TestBench](tb T, engineType common_model.EngineV
 	}
 
 	switch engineType {
-	case common_model.LightningEngineV2EngineVersionType:
+	case common_model.LightningEngineV3EngineVersionType:
 		clientLTNG, err := ltng_client.New(ctx, &ltng_client.Params{
 			Address: "127.0.0.1:50050",
-			Engine:  common_model.LightningEngineV2EngineVersionType.String(),
+			Engine:  common_model.LightningEngineV3EngineVersionType.String(),
 		})
 		require.NoError(tb, err)
 		clientTestSuite.LTNGDBClient = clientLTNG
@@ -213,10 +211,7 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	require.NoError(tb, err)
 	CleanupDirectories(tb)
 
-	ltngDBEngineV2, err := ltng_engine_v2.New(ctx)
-	require.NoError(tb, err)
-
-	ltngDBEngineV3, err := ltng_engine_v3.New(ctx)
+	ltngDBEngineV3, err := ltngdbenginev3.New(ctx)
 	require.NoError(tb, err)
 
 	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement).WithSyncWrites(true))
@@ -240,7 +235,6 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	return &EngineTestSuite{
 		Ctx:            ctx,
 		Serializer:     serializer.NewRawBinarySerializer(),
-		LTNGDBEngineV2: ltngDBEngineV2,
 		LTNGDBEngineV3: ltngDBEngineV3,
 		BadgerDBEngine: &BadgerDBEngine{
 			DB:       db,

@@ -11,7 +11,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 
 	badgerdbenginev4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
-	ltngdbenginev2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
+	cmdltngdbenginev3 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdbengine/v3"
 	ltngnodeconfig "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	commonmodel "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
@@ -38,11 +38,11 @@ func main() {
 	switch commonmodel.ToEngineVersionType(cfg.Node.Engine.Engine) {
 	case commonmodel.BadgerDBV4EngineVersionType:
 		badgerdbenginev4.StartV4(ctx, cancelFn, cfg, logger, s, os.Exit)
-	case commonmodel.LightningEngineV2EngineVersionType:
+	case commonmodel.LightningEngineV3EngineVersionType:
 		fallthrough
 	case commonmodel.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdbenginev2.StartV2(ctx, cancelFn, cfg, logger, s, os.Exit)
+		cmdltngdbenginev3.StartV3(ctx, cancelFn, cfg, logger, s, os.Exit)
 	}
 }

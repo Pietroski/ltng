@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
-	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
 	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 )

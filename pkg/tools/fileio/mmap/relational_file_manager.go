@@ -313,19 +313,23 @@ func (rfm *RelationalFileManager) Close() error {
 	rfm.mtx.Lock()
 	defer rfm.mtx.Unlock()
 
+	if osx.IsFileClosed(rfm.file) {
+		return nil
+	}
+
 	if err := partialFlushMmap(rfm.data, rfm.writeOffset); err != nil {
-		return err
+		return errorsx.Wrap(err, "flush failed")
 	}
 
 	if err := unix.Munmap(rfm.data); err != nil {
 		_ = rfm.file.Close()
-		return err
+		return errorsx.Wrap(err, "munmap failed")
 	}
 
 	// Truncate to actual written size
 	if err := rfm.file.Truncate(int64(rfm.writeOffset)); err != nil {
 		_ = rfm.file.Close()
-		return err
+		return errorsx.Wrap(err, "truncate failed")
 	}
 
 	return rfm.file.Close()

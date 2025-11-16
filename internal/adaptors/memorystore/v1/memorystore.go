@@ -5,7 +5,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 
-	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	go_cache "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/cache"
 )

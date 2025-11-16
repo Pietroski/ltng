@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	initialSize   = 1 << 20   // 1MB
-	maxRecordSize = 100 << 20 // 100MB
+	initialSize   = 1 << 10  // 1024B // 1 << 20   // 1MB
+	maxRecordSize = 10 << 20 // 100MB
 )
 
 func flushMmap(mmap []byte) error {
