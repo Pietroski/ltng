@@ -7,8 +7,9 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 )
 
 func (ltng *LTNGCacheEngine) createItem(
@@ -224,7 +225,7 @@ func (ltng *LTNGCacheEngine) loadItem(
 func (ltng *LTNGCacheEngine) listItems(
 	ctx context.Context,
 	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	pagination *ltngdata.Pagination,
+	pagination *pagination.Pagination,
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	if !pagination.IsValid() {

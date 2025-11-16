@@ -1,4 +1,4 @@
-package v2
+package v3
 
 import (
 	"bytes"
@@ -9,9 +9,8 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
 )
 
 type createSaga struct {
@@ -60,11 +59,11 @@ func (s *createSaga) ListenAndTrigger(ctx context.Context) {
 	ctx = context.WithValue(ctx, "thread", "operator_create_saga-ListenAndTrigger")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.InfoChannel.Ch,
-		func(itemInfoData *ltngdata.ItemInfoData) {
+		func(itemInfoData *v4.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
-				s.noIndexTrigger(ctx, itemInfoData)
+				s.noIndexTrigger(itemInfoData.Ctx, itemInfoData)
 			} else {
-				s.indexTrigger(ctx, itemInfoData)
+				s.indexTrigger(itemInfoData.Ctx, itemInfoData)
 			}
 		},
 	)
@@ -72,7 +71,7 @@ func (s *createSaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *createSaga) noIndexTrigger(
-	ctx context.Context, itemInfoData *ltngdata.ItemInfoData,
+	ctx context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	itemRespSignal := make(chan error, 1)
 	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
@@ -106,7 +105,7 @@ func (s *createSaga) noIndexTrigger(
 }
 
 func (s *createSaga) indexTrigger(
-	ctx context.Context, itemInfoData *ltngdata.ItemInfoData,
+	ctx context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	itemRespSignal := make(chan error, 1)
 	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
@@ -153,7 +152,7 @@ func (s *createSaga) indexTrigger(
 	close(itemInfoData.RespSignal)
 }
 
-func (s *createSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngdata.ItemInfoData) {
+func (s *createSaga) RollbackTrigger(ctx context.Context, itemInfoData *v4.ItemInfoData) {
 	if !itemInfoData.Opts.HasIdx {
 		s.noIndexRollback(ctx, itemInfoData)
 		return
@@ -163,7 +162,7 @@ func (s *createSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngdata
 }
 
 func (s *createSaga) noIndexRollback(
-	ctx context.Context, itemInfoData *ltngdata.ItemInfoData,
+	ctx context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	itemRespSignal := make(chan error, 1)
 	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
@@ -176,7 +175,7 @@ func (s *createSaga) noIndexRollback(
 }
 
 func (s *createSaga) indexRollback(
-	ctx context.Context, itemInfoData *ltngdata.ItemInfoData,
+	ctx context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	itemRespSignal := make(chan error, 1)
 	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
@@ -206,28 +205,25 @@ func (s *createSaga) createItemOnDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "createItemOnDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Ch,
-		func(itemInfoData *ltngdata.ItemInfoData) {
+		func(itemInfoData *v4.ItemInfoData) {
 			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
-			filePath := ltngdata.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
-			fileData := ltngdata.NewFileData(itemInfoData.DBMetaInfo.IndexInfo(), &ltngdata.Item{
+			filePath := v4.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
+			fileData := v4.NewFileData(itemInfoData.DBMetaInfo.IndexInfo(), &v4.Item{
 				Key:   itemInfoData.Item.Key,
 				Value: itemInfoData.Opts.ParentKey,
 			})
 
-			file, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
+			fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 			if err != nil {
 				s.opSaga.e.logger.Error(ctx, "error creating item on disk",
 					"item_info_data", *itemInfoData.DBMetaInfo, "err", err)
+
 				itemInfoData.RespSignal <- err
 				close(itemInfoData.RespSignal)
+
 				return
 			}
-
-			s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockName(strItemKey),
-				&ltngdata.FileInfo{
-					File:     file,
-					FileData: fileData,
-				})
+			s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockName(strItemKey), fi)
 
 			itemInfoData.RespSignal <- nil
 			close(itemInfoData.RespSignal)
@@ -241,9 +237,9 @@ func (s *createSaga) deleteItemOnDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "deleteItemOnDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			filePath := v4.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
 			err := os.Remove(filePath)
 
 			v.RespSignal <- err
@@ -258,28 +254,23 @@ func (s *createSaga) createIndexItemOnDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "createIndexItemOnDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel.Ch,
-		func(itemInfoData *ltngdata.ItemInfoData) {
+		func(itemInfoData *v4.ItemInfoData) {
 			op := syncx.NewThreadOperator("createIndexItemOnDisk")
 			for _, indexKey := range itemInfoData.Opts.IndexingKeys {
 				op.OpX(func() (any, error) {
 					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngdata.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
-					fileData := ltngdata.NewFileData(itemInfoData.DBMetaInfo.IndexInfo(),
-						&ltngdata.Item{
+					filePath := v4.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
+					fileData := v4.NewFileData(itemInfoData.DBMetaInfo.IndexInfo(),
+						&v4.Item{
 							Key:   indexKey,
 							Value: itemInfoData.Opts.ParentKey,
 						})
 
-					file, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
+					fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 					if err != nil {
 						return nil, err
 					}
-
-					s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockName(strItemKey),
-						&ltngdata.FileInfo{
-							File:     file,
-							FileData: fileData,
-						})
+					s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockName(strItemKey), fi)
 
 					return nil, nil
 				})
@@ -298,11 +289,11 @@ func (s *createSaga) deleteIndexItemFromDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "deleteIndexItemFromDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			var errAcc error
 			for _, indexKey := range v.Opts.IndexingKeys {
 				strItemKey := hex.EncodeToString(indexKey)
-				filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+				filePath := v4.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 				if err := os.Remove(filePath); err != nil {
 					if errAcc == nil {
 						errAcc = err
@@ -324,26 +315,22 @@ func (s *createSaga) createIndexListItemOnDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "createIndexListItemOnDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdata.GetIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexInfo(), &ltngdata.Item{
+			filePath := v4.GetIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			fileData := v4.NewFileData(v.DBMetaInfo.IndexInfo(), &v4.Item{
 				Key:   v.Opts.ParentKey,
-				Value: bytes.Join(v.Opts.IndexingKeys, []byte(fileio.BsSep)),
+				Value: bytes.Join(v.Opts.IndexingKeys, []byte(v4.BsSep)),
 			})
 
-			file, err := s.opSaga.e.createItemOnDisk(ctx, filePath, fileData)
+			fi, err := s.opSaga.e.createItemOnDisk(ctx, filePath, fileData)
 			if err != nil {
 				v.RespSignal <- err
 				close(v.RespSignal)
+
 				return
 			}
-
-			s.opSaga.e.itemFileMapping.Set(v.DBMetaInfo.LockName(strItemKey),
-				&ltngdata.FileInfo{
-					File:     file,
-					FileData: fileData,
-				})
+			s.opSaga.e.itemFileMapping.Set(v.DBMetaInfo.LockName(strItemKey), fi)
 
 			v.RespSignal <- nil
 			close(v.RespSignal)
@@ -357,9 +344,9 @@ func (s *createSaga) deleteIndexListItemFromDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "deleteIndexListItemFromDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
+			filePath := v4.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
 			err := os.Remove(filePath)
 			v.RespSignal <- err
 			close(v.RespSignal)
@@ -373,7 +360,7 @@ func (s *createSaga) createRelationalItemOnDiskOnThread(
 	ctx = context.WithValue(ctx, "thread", "createRelationalItemOnDiskOnThread")
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
 			close(v.RespSignal)

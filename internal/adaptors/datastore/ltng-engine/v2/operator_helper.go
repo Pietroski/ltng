@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
@@ -537,7 +538,7 @@ func (e *LTNGEngine) loadIndexingList(
 		return nil, err
 	}
 
-	indexingList := bytes.Split(rawIndexingList.Value, []byte(ltngdata.BsSep))
+	indexingList := bytes.Split(rawIndexingList.Value, []byte(fileio.BsSep))
 	itemList := make([]*ltngdata.Item, len(indexingList))
 	for i, item := range indexingList {
 		itemList[i] = &ltngdata.Item{

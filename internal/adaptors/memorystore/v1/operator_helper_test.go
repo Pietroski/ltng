@@ -13,7 +13,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	v3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
 )
 
 type (
@@ -74,7 +74,7 @@ type (
 
 type BytesValues struct {
 	BsKey, BsValue, SecondaryIndexBs, TertiaryIndexBs []byte
-	Item                                              *ltngdata.Item
+	Item                                              *v3.Item
 }
 
 func GenerateRandomUser[T TestBench](tb T) *User {
@@ -129,7 +129,7 @@ func GetUserBytesValues[T TestBench](tb T, ts *TestSuite, userData *User) *Bytes
 		BsValue:          bsValue,
 		SecondaryIndexBs: secondaryIndexBs,
 		TertiaryIndexBs:  tertiaryIndexBs,
-		Item: &ltngdata.Item{
+		Item: &v3.Item{
 			Key:   bsKey,
 			Value: bsValue,
 		},

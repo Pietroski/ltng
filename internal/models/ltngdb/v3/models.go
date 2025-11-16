@@ -1,4 +1,4 @@
-package ltngdata
+package v3
 
 import (
 	"context"
@@ -8,36 +8,43 @@ import (
 	"time"
 
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
+
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/mmap"
 )
 
 const (
-	DBBasePath    = ".ltngdb"
-	FileExt       = ".ptk"
-	DBBaseVersion = "v2"
+	FileExt  = ".ptk"
+	BsSep    = "!|ltng|!"
+	InnerSep = "-"
 
-	BsSep = "!|ltngdb|!"
+	Internal  = "internal"
+	Temporary = "temporary"
+)
 
-	Stores      = "stores"
-	Stats       = "stats"
-	Data        = "data"
-	Rubbish     = "rubbish"
-	Temporary   = "temporary"
+const (
+	DBBasePath = ".ltngdb"
+	DBName     = "ltngdb"
+	Manager    = "manager"
+
+	DBBaseVersion = "v3"
+
+	Stores = "stores"
+	Stats  = "stats"
+	Data   = "data"
+
 	Indexed     = "indexed"
 	IndexedList = "indexed-list"
 	Relational  = "relational"
 
 	DBManagerName = "ltngdb-engine-manager"
-	DBManagerPath = "internal/ltngdb/manager"
 
 	RelationalDataStoreKey = "relational-data-store"
-
-	DBFileExec  = 0700
-	DBFileRW    = 0700
-	DBFileWrite = 0400
-	DBFileRead  = 0200
 )
 
 var (
+	DBManagerPath = filepath.Join(Internal, DBName, Manager)
+
 	DBBaseStatsPath                    = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats)
 	DBBaseTemporaryStatsPath           = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Temporary)
 	DBBaseRelationalStatsPath          = filepath.Join(DBBasePath, DBBaseVersion, Stores, Stats, Relational)
@@ -168,10 +175,6 @@ func GetFileLockName(base, key string) string {
 	return base + InnerSep + key
 }
 
-const (
-	InnerSep = "-"
-)
-
 var (
 	DBManagerStoreInfo = &StoreInfo{
 		Name: DBManagerName,
@@ -181,17 +184,23 @@ var (
 
 type (
 	FileInfo struct {
-		File       *os.File
-		FileData   *FileData
-		HeaderSize uint32
-		DataSize   uint32
+		File        *os.File
+		FileData    *FileData
+		FileManager *mmap.FileManager
+	}
+
+	RelationalFileInfo struct {
+		File                  *os.File
+		FileData              *FileData
+		RelationalFileManager *mmap.RelationalFileManager
 	}
 
 	StoreInfo struct {
 		Name      string
 		Path      string
 		CreatedAt int64
-		// LastOpenedAt would allow to track how long a file is opened to it can be removed from cache
+		// LastOpenedAt would allow to track how long a file is opened to it can be removed from cache.
+		// But this is filled and keep track of only in runtime, it is not stored in the file.
 		LastOpenedAt int64
 	}
 
@@ -205,20 +214,21 @@ type (
 	}
 
 	FileData struct {
-		Key    []byte
 		Header *Header
+		Key    []byte
 		Data   []byte
 	}
 
 	ItemInfoData struct {
-		Ctx          context.Context
-		OpNatureType OpNatureType
-		OpType       OpType
-		DBMetaInfo   *ManagerStoreMetaInfo
-		Item         *Item
-		Opts         *IndexOpts
-		RespSignal   chan error
+		Ctx        context.Context
+		RespSignal chan error
 
+		TraceID           string
+		OpNatureType      OpNatureType
+		OpType            OpType
+		DBMetaInfo        *ManagerStoreMetaInfo
+		Item              *Item
+		Opts              *IndexOpts
 		IndexKeysToDelete [][]byte
 	}
 
@@ -433,7 +443,7 @@ type (
 	}
 
 	ListItemsResult struct {
-		Pagination *Pagination
+		Pagination *ltngdata.Pagination
 		Items      []*Item
 	}
 
@@ -453,7 +463,7 @@ type (
 	}
 )
 
-func (il *ItemList) GetItemsFromPagination(pagination *Pagination) []*Item {
+func (il *ItemList) GetItemsFromPagination(pagination *ltngdata.Pagination) []*Item {
 	if il == nil || len(*il) == 0 || pagination == nil {
 		return []*Item{}
 	}

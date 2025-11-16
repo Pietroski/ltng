@@ -7,7 +7,8 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 )
 
 func (ltng *LTNGCacheEngine) deleteOnCascade(
@@ -274,7 +275,7 @@ func (ltng *LTNGCacheEngine) orComputationalSearch(
 func (ltng *LTNGCacheEngine) defaultListItems(
 	ctx context.Context,
 	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	pagination *ltngdata.Pagination,
+	pagination *pagination.Pagination,
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	relationalKey := bytes.Join(
@@ -299,7 +300,7 @@ func (ltng *LTNGCacheEngine) defaultListItems(
 func (ltng *LTNGCacheEngine) allListItems(
 	ctx context.Context,
 	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	pagination *ltngdata.Pagination,
+	pagination *pagination.Pagination,
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	relationalKey := bytes.Join(
@@ -323,7 +324,7 @@ func (ltng *LTNGCacheEngine) allListItems(
 func (ltng *LTNGCacheEngine) indexingListItems(
 	ctx context.Context,
 	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	pagination *ltngdata.Pagination,
+	pagination *pagination.Pagination,
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	indexListKey := bytes.Join(

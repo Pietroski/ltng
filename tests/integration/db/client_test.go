@@ -427,12 +427,12 @@ func TestClientsWithinDocker(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 150)
 	cts = data.InitClientTestSuite(t)
 
-	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
-		testBadgerDBClientWithinDocker(t)
-	})
-
 	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
 		testLTNGDBClientWithinDocker(t)
+	})
+
+	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testBadgerDBClientWithinDocker(t)
 	})
 }
 

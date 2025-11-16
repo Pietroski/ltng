@@ -1,4 +1,4 @@
-package filequeuev1
+package fileio
 
 import (
 	"bufio"
@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 	"golang.org/x/sys/unix"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
@@ -23,7 +24,9 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
-const truncateLimit = 1 << 14
+const (
+	truncateLimit = 1 << 14
+)
 
 type FileQueue struct {
 	mtx   *sync.RWMutex
@@ -47,15 +50,19 @@ type FileQueue struct {
 }
 
 func New(_ context.Context, path, filename string) (*FileQueue, error) {
-	if err := os.MkdirAll(ltngFileQueueBasePath+sep+path, dbFilePerm); err != nil {
+	if err := os.MkdirAll(fileiomodels.GetFileQueuePath(
+		fileiomodels.FileQueueFileVersion, path), osx.FileRW); err != nil {
 		return nil, err
 	}
-	fullPath := getFilePath(path, filename)
-	fullTmpPath := getTmpFilePath(path, filename)
-	file, err := os.OpenFile(fullPath,
-		os.O_RDWR|os.O_CREATE|os.O_APPEND, dbFilePerm,
-	)
-	if err != nil { // && !strings.Contains(err.Error(), "file already exist")
+	if err := os.MkdirAll(fileiomodels.GetTemporaryFileQueuePath(
+		fileiomodels.FileQueueFileVersion, path), osx.FileRW); err != nil {
+		return nil, err
+	}
+
+	fullPath := fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueFileVersion, path, filename)
+	fullTmpPath := fileiomodels.GetTemporaryFileQueueFilePath(fileiomodels.FileQueueFileVersion, path, filename)
+	file, err := osx.OpenAppendOrCreateFile(fullPath)
+	if err != nil {
 		return nil, err
 	}
 
@@ -102,8 +109,8 @@ func (fq *FileQueue) resetWriter() error {
 }
 
 func (fq *FileQueue) Reset() error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	if err := fq.resetReader(); err != nil {
 		return err
@@ -117,8 +124,8 @@ func (fq *FileQueue) Reset() error {
 }
 
 func (fq *FileQueue) Read(ctx context.Context) ([]byte, error) {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.read(ctx)
 }
@@ -160,8 +167,8 @@ func (fq *FileQueue) yieldWriter() uint64 {
 }
 
 func (fq *FileQueue) Write(_ context.Context, data interface{}) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	if err := fq.resetWriter(); err != nil {
 		return err
@@ -188,15 +195,15 @@ func (fq *FileQueue) Write(_ context.Context, data interface{}) error {
 }
 
 func (fq *FileQueue) Pop(ctx context.Context) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.safelyTruncateFromStart(ctx)
 }
 
 func (fq *FileQueue) PopFromIndex(ctx context.Context, index []byte) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.safelyTruncateFromIndex(ctx, index)
 }
@@ -242,7 +249,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 		// recreate the pointer references to the new file - ok
 
 		var tmpFile *os.File
-		tmpFile, err = os.OpenFile(fq.fullTmpPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFilePerm)
+		tmpFile, err = osx.CreateFileIfNotExists(fq.fullTmpPath)
 		if err != nil {
 			return err
 		}
@@ -286,9 +293,7 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 
 		{ // reset file pointers
 			var file *os.File
-			file, err = os.OpenFile(fq.fullPath,
-				os.O_RDWR|os.O_APPEND, dbFilePerm,
-			)
+			file, err = osx.OpenAppend(fq.fullPath)
 			if err != nil {
 				return err
 			}
@@ -310,8 +315,8 @@ func (fq *FileQueue) safelyTruncateFromIndex(ctx context.Context, index []byte) 
 }
 
 func (fq *FileQueue) PopAndUnlockItFromIndex(ctx context.Context, index []byte) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.safelyTruncateAndUnlockItFromIndex(ctx, index)
 }
@@ -357,7 +362,7 @@ func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, ind
 		// recreate the pointer references to the new file - ok
 
 		var tmpFile *os.File
-		tmpFile, err = os.OpenFile(fq.fullTmpPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, dbFilePerm)
+		tmpFile, err = osx.CreateFileIfNotExists(fq.fullTmpPath)
 		if err != nil {
 			return err
 		}
@@ -401,9 +406,7 @@ func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, ind
 
 		{ // reset file pointers
 			var file *os.File
-			file, err = os.OpenFile(fq.fullPath,
-				os.O_RDWR|os.O_APPEND, dbFilePerm,
-			)
+			file, err = osx.OpenAppend(fq.fullPath)
 			if err != nil {
 				return err
 			}
@@ -439,8 +442,8 @@ func (fq *FileQueue) safelyTruncateAndUnlockItFromIndex(ctx context.Context, ind
 }
 
 func (fq *FileQueue) RepublishIndex(ctx context.Context, index []byte, data any) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.safelyRepublishIndex(ctx, index, data)
 }
@@ -583,8 +586,8 @@ func (fq *FileQueue) ReadAndPop(
 	ctx context.Context,
 	handler func(ctx context.Context, bs []byte) error,
 ) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	bs, err := fq.read(ctx)
 	if err != nil {
@@ -599,8 +602,8 @@ func (fq *FileQueue) ReadAndPop(
 }
 
 func (fq *FileQueue) ReadFromCursor(ctx context.Context) ([]byte, error) {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.readFromCursor(ctx)
 }
@@ -652,8 +655,8 @@ func (fq *FileQueue) readFromCursor(ctx context.Context) ([]byte, error) {
 }
 
 func (fq *FileQueue) ReadFromCursorWithoutTruncation(ctx context.Context) ([]byte, error) {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.readFromCursorWithoutTruncation(ctx)
 }
@@ -681,8 +684,8 @@ func (fq *FileQueue) readFromCursorWithoutTruncation(_ context.Context) ([]byte,
 }
 
 func (fq *FileQueue) ReadFromCursorAndLockItWithoutTruncation(ctx context.Context) ([]byte, error) {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	return fq.readFromCursorAndLockItWithoutTruncation(ctx)
 }
@@ -717,8 +720,8 @@ func (fq *FileQueue) readFromCursorAndLockItWithoutTruncation(_ context.Context)
 }
 
 func (fq *FileQueue) WriteOnCursor(_ context.Context, data interface{}) error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	if err := fq.resetWriter(); err != nil {
 		return err
@@ -789,8 +792,8 @@ func (fq *FileQueue) ReaderPooler(
 }
 
 func (fq *FileQueue) Close() error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	if err := fq.file.Close(); err != nil {
 		return err
@@ -813,8 +816,8 @@ func (fq *FileQueue) IsEmpty() (bool, error) {
 }
 
 func (fq *FileQueue) CheckAndClose() bool {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	if fq.readerCursor == fq.writeCursor {
 		fq.writeCursor = 0
@@ -851,19 +854,18 @@ func (fq *FileQueue) CheckAndClose() bool {
 }
 
 func (fq *FileQueue) Init() error {
-	fq.kvMtx.Lock(fileQueueKey, struct{}{})
-	defer fq.kvMtx.Unlock(fileQueueKey)
+	fq.kvMtx.Lock(fileiomodels.FileQueueKey, struct{}{})
+	defer fq.kvMtx.Unlock(fileiomodels.FileQueueKey)
 
 	if !osx.IsFileClosed(fq.file) {
 		return nil
 	}
 
-	file, err := os.OpenFile(fq.fullPath,
-		os.O_RDWR|os.O_CREATE|os.O_APPEND, dbFilePerm,
-	)
+	file, err := osx.OpenAppendOrCreateFile(fq.fullPath)
 	if err != nil {
 		return err
 	}
+
 	fq.file = file
 	fq.writer = bufio.NewWriter(fq.file)
 	fq.reader = bufio.NewReader(fq.file)
@@ -881,6 +883,7 @@ func (fq *FileQueue) WriteAt(_ context.Context, data interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	bsLen := len(bs)
 	bsBsLen := bytesx.AddUint32(uint32(bsLen))
 
@@ -896,7 +899,7 @@ func (fq *FileQueue) WriteAt(_ context.Context, data interface{}) error {
 	return nil
 }
 
-func (fq *FileQueue) ReadAt(ctx context.Context) ([]byte, error) {
+func (fq *FileQueue) ReadAt(_ context.Context) ([]byte, error) {
 	if fq.readOffset.Load() >= truncateLimit {
 		return nil, io.EOF
 	}

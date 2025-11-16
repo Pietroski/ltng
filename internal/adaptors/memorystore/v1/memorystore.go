@@ -5,7 +5,8 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	go_cache "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/cache"
 )
 
@@ -66,7 +67,7 @@ func (ltng *LTNGCacheEngine) LoadItem(
 func (ltng *LTNGCacheEngine) ListItems(
 	ctx context.Context,
 	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
-	pagination *ltngdata.Pagination,
+	pagination *pagination.Pagination,
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	return ltng.listItems(ctx, dbMetaInfo, pagination, opts)

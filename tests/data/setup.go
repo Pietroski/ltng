@@ -20,6 +20,7 @@ import (
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
 	ltng_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v2"
+	ltng_engine_v3 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltng-engine/v3"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
@@ -119,6 +120,7 @@ type (
 		Ctx            context.Context
 		Serializer     serializermodels.Serializer
 		LTNGDBEngineV2 *ltng_engine_v2.LTNGEngine
+		LTNGDBEngineV3 *ltng_engine_v3.LTNGEngine
 		BadgerDBEngine *BadgerDBEngine
 	}
 
@@ -214,7 +216,10 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	ltngDBEngineV2, err := ltng_engine_v2.New(ctx)
 	require.NoError(tb, err)
 
-	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
+	ltngDBEngineV3, err := ltng_engine_v3.New(ctx)
+	require.NoError(tb, err)
+
+	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement).WithSyncWrites(true))
 	require.NoError(tb, err)
 
 	badgerDBEngineManager, err := v4.NewBadgerLocalManagerV4(ctx,
@@ -236,6 +241,7 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 		Ctx:            ctx,
 		Serializer:     serializer.NewRawBinarySerializer(),
 		LTNGDBEngineV2: ltngDBEngineV2,
+		LTNGDBEngineV3: ltngDBEngineV3,
 		BadgerDBEngine: &BadgerDBEngine{
 			DB:       db,
 			Manager:  badgerDBEngineManager,

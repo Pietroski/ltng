@@ -1,4 +1,4 @@
-package v2
+package v3
 
 import (
 	"bytes"
@@ -9,10 +9,9 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio"
 
+	v4 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
@@ -63,7 +62,7 @@ func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.InfoChannel.Ch,
-		func(itemInfoData *ltngdata.ItemInfoData) {
+		func(itemInfoData *v4.ItemInfoData) {
 			if !itemInfoData.Opts.HasIdx {
 				s.noIndexTrigger(ctx, itemInfoData)
 			} else {
@@ -75,7 +74,7 @@ func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
 }
 
 func (s *upsertSaga) noIndexTrigger(
-	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
+	_ context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	upsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertItemOnDisk := itemInfoData.WithRespChan(upsertItemOnDiskRespSignal)
@@ -120,7 +119,7 @@ func (s *upsertSaga) noIndexTrigger(
 }
 
 func (s *upsertSaga) indexTrigger(
-	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
+	_ context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	upsertItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForUpsertItemOnDisk := itemInfoData.WithRespChan(upsertItemOnDiskRespSignal)
@@ -177,7 +176,7 @@ func (s *upsertSaga) indexTrigger(
 	close(itemInfoData.RespSignal)
 }
 
-func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngdata.ItemInfoData) {
+func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *v4.ItemInfoData) {
 	if !itemInfoData.Opts.HasIdx {
 		s.noIndexRollback(ctx, itemInfoData)
 		return
@@ -187,7 +186,7 @@ func (s *upsertSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngdata
 }
 
 func (s *upsertSaga) noIndexRollback(
-	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
+	_ context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
@@ -200,7 +199,7 @@ func (s *upsertSaga) noIndexRollback(
 }
 
 func (s *upsertSaga) indexRollback(
-	_ context.Context, itemInfoData *ltngdata.ItemInfoData,
+	_ context.Context, itemInfoData *v4.ItemInfoData,
 ) {
 	deleteItemOnDiskRespSignal := make(chan error, 1)
 	itemInfoDataForDeleteItemOnDisk := itemInfoData.WithRespChan(deleteItemOnDiskRespSignal)
@@ -229,13 +228,15 @@ func (s *upsertSaga) upsertItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
-			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			tmpFilePath := ltngdata.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			fileData := ltngdata.NewFileData(v.DBMetaInfo, v.Item)
+		func(v *v4.ItemInfoData) {
+			//strItemKey := hex.EncodeToString(v.Item.Key)
+			//filePath := GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			//tmpFilePath := GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			//fileData := NewFileData(v.DBMetaInfo, v.Item)
+			//
+			//err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData)
 
-			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData)
+			err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
 			close(v.RespSignal)
 		},
@@ -247,10 +248,10 @@ func (s *upsertSaga) deleteItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			tmpFilePath := ltngdata.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			filePath := v4.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			tmpFilePath := v4.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 			if err := osx.MvFile(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
@@ -269,7 +270,7 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
 			if err != nil {
 				v.RespSignal <- err
@@ -280,20 +281,27 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 			op := syncx.NewThreadOperator("upsertIndexItemOnDisk")
 			op.OpX(func() (any, error) {
 				keysToSave := bytesop.CalRightDiff(
-					ltngdata.IndexListToBytesList(indexingList),
+					v4.IndexListToBytesList(indexingList),
 					v.Opts.IndexingKeys)
 
 				for _, indexKey := range keysToSave {
-					strKey := hex.EncodeToString(v.Item.Key)
-					filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strKey)
-					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strKey)
-					fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexInfo(), &ltngdata.Item{
+					//strKey := hex.EncodeToString(v.Item.Key)
+					//filePath := GetIndexedDataFilepath(v.DBMetaInfo.Path, strKey)
+					//tmpFilePath := GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strKey)
+					//fileData := NewFileData(v.DBMetaInfo.IndexInfo(), &Item{
+					//	Key:   indexKey,
+					//	Value: v.Opts.ParentKey,
+					//})
+
+					//if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData); err != nil {
+					//	return nil, err
+					//}
+
+					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, &v4.Item{
 						Key:   indexKey,
 						Value: v.Opts.ParentKey,
-					})
-
-					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData); err != nil {
-						return nil, err
+					}); err != nil {
+						v.RespSignal <- err
 					}
 				}
 
@@ -302,13 +310,13 @@ func (s *upsertSaga) upsertIndexItemOnDiskOnThread(
 			op.OpX(func() (any, error) {
 				keysToDelete := bytesop.CalRightDiff(
 					v.Opts.IndexingKeys,
-					ltngdata.IndexListToBytesList(indexingList))
+					v4.IndexListToBytesList(indexingList))
 				v.IndexKeysToDelete = keysToDelete
 
 				for _, indexKey := range keysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
-					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					filePath := v4.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					tmpFilePath := v4.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 					if err := osx.MvFile(ctx, filePath, tmpFilePath); err != nil {
 						return nil, err
@@ -330,7 +338,7 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackIndexItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			indexingList, err := s.opSaga.e.loadIndexingList(v.Ctx, v.DBMetaInfo, v.Opts)
 			if err != nil {
 				v.RespSignal <- err
@@ -342,18 +350,25 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 			op.OpX(func() (any, error) {
 				keysToSave := bytesop.CalRightDiff(
 					v.Opts.IndexingKeys,
-					ltngdata.IndexListToBytesList(indexingList))
+					v4.IndexListToBytesList(indexingList))
 
 				for _, indexKey := range keysToSave {
-					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngdata.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
-					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
-					fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexInfo(), &ltngdata.Item{
+					//strItemKey := hex.EncodeToString(indexKey)
+					//filePath := GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					//tmpFilePath := GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					//fileData := NewFileData(v.DBMetaInfo.IndexInfo(), &Item{
+					//	Key:   indexKey,
+					//	Value: v.Opts.ParentKey,
+					//})
+					//
+					//if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData); err != nil {
+					//	return nil, err
+					//}
+
+					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, v.DBMetaInfo, &v4.Item{
 						Key:   indexKey,
 						Value: v.Opts.ParentKey,
-					})
-
-					if err := s.opSaga.e.upsertItemOnDisk(v.Ctx, filePath, tmpFilePath, fileData); err != nil {
+					}); err != nil {
 						return nil, err
 					}
 				}
@@ -362,13 +377,13 @@ func (s *upsertSaga) deleteIndexItemFromDiskOnThread(
 			})
 			op.OpX(func() (any, error) {
 				keysToDelete := bytesop.CalRightDiff(
-					ltngdata.IndexListToBytesList(indexingList),
+					v4.IndexListToBytesList(indexingList),
 					v.Opts.IndexingKeys)
 
 				var errAcc error
 				for _, indexKey := range keysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
+					filePath := v4.GetDataFilepath(v.DBMetaInfo.IndexInfo().Path, strItemKey)
 
 					if err := os.Remove(filePath); err != nil {
 						if errAcc == nil {
@@ -395,16 +410,21 @@ func (s *upsertSaga) upsertIndexListItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionIndexListItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
-			strItemKey := hex.EncodeToString(v.Opts.ParentKey)
-			filePath := ltngdata.GetIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			tmpFilePath := ltngdata.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			fileData := ltngdata.NewFileData(v.DBMetaInfo.IndexListInfo(), &ltngdata.Item{
-				Key:   v.Opts.ParentKey,
-				Value: bytes.Join(v.Opts.IndexingKeys, []byte(fileio.BsSep)),
-			})
+		func(v *v4.ItemInfoData) {
+			//strItemKey := hex.EncodeToString(v.Opts.ParentKey)
+			//filePath := GetIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			//tmpFilePath := GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			//fileData := NewFileData(v.DBMetaInfo.IndexListInfo(), &Item{
+			//	Key:   v.Opts.ParentKey,
+			//	Value: bytes.Join(v.Opts.IndexingKeys, []byte(BsSep)),
+			//})
+			//
+			//err := s.opSaga.e.upsertItemOnDisk(ctx, filePath, tmpFilePath, fileData)
 
-			err := s.opSaga.e.upsertItemOnDisk(ctx, filePath, tmpFilePath, fileData)
+			err := s.opSaga.e.upsertItemOnDisk(ctx, v.DBMetaInfo, &v4.Item{
+				Key:   v.Opts.ParentKey,
+				Value: bytes.Join(v.Opts.IndexingKeys, []byte(v4.BsSep)),
+			})
 			v.RespSignal <- err
 			close(v.RespSignal)
 		},
@@ -416,10 +436,10 @@ func (s *upsertSaga) deleteIndexListItemFromDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.RollbackIndexListItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdata.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			tmpFilePath := ltngdata.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			filePath := v4.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
+			tmpFilePath := v4.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
 
 			if err := osx.MvFile(ctx, tmpFilePath, filePath); err != nil {
 				v.RespSignal <- err
@@ -438,7 +458,7 @@ func (s *upsertSaga) upsertRelationalItemOnDiskOnThread(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.ActionRelationalItemChannel.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			err := s.opSaga.e.upsertRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
 			v.RespSignal <- err
 			close(v.RespSignal)
@@ -451,10 +471,10 @@ func (s *upsertSaga) cleanUpUpsert(
 ) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.UpsertChannels.CleanUpUpsert.Ch,
-		func(v *ltngdata.ItemInfoData) {
+		func(v *v4.ItemInfoData) {
 			{
 				strItemKey := hex.EncodeToString(v.Item.Key)
-				tmpFilePath := ltngdata.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
+				tmpFilePath := v4.GetTemporaryDataFilepath(v.DBMetaInfo.Path, strItemKey)
 				_ = os.Remove(tmpFilePath)
 				if !v.Opts.HasIdx {
 					v.RespSignal <- nil
@@ -466,14 +486,14 @@ func (s *upsertSaga) cleanUpUpsert(
 			{
 				for _, indexKey := range v.IndexKeysToDelete {
 					strItemKey := hex.EncodeToString(indexKey)
-					tmpFilePath := ltngdata.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
+					tmpFilePath := v4.GetTemporaryIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
 					_ = os.Remove(tmpFilePath)
 				}
 			}
 
 			{
 				strItemKey := hex.EncodeToString(v.Item.Key)
-				tmpFilePath := ltngdata.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
+				tmpFilePath := v4.GetTemporaryIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
 				_ = os.Remove(tmpFilePath)
 			}
 

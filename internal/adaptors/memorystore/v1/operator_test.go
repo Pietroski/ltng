@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdb/v3"
+	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 )
 
@@ -125,7 +126,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
@@ -148,7 +149,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 50,
 		}
@@ -227,7 +228,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, fetchedItem)
 
-			pagination := &ltngdata.Pagination{
+			pagination := &pagination.Pagination{
 				PageID:   1,
 				PageSize: 10,
 			}
@@ -313,7 +314,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, fetchedItem)
 
-			pagination := &ltngdata.Pagination{
+			pagination := &pagination.Pagination{
 				PageID:   1,
 				PageSize: 10,
 			}
@@ -449,7 +450,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
@@ -488,7 +489,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
@@ -583,7 +584,7 @@ func TestLTNGCacheEngine(t *testing.T) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
@@ -752,7 +753,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 
 	{ // list
 		bd := testbench.New()
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 50,
 		}
@@ -782,7 +783,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 
 	{ // list
 		bd := testbench.New()
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 50,
 		}
@@ -884,7 +885,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 			require.Error(b, err)
 			require.Nil(b, fetchedItem)
 
-			pagination := &ltngdata.Pagination{
+			pagination := &pagination.Pagination{
 				PageID:   1,
 				PageSize: 10,
 			}
@@ -987,7 +988,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 			require.Error(b, err)
 			require.Nil(b, fetchedItem)
 
-			pagination := &ltngdata.Pagination{
+			pagination := &pagination.Pagination{
 				PageID:   1,
 				PageSize: 10,
 			}
@@ -1128,7 +1129,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
@@ -1167,7 +1168,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
@@ -1267,7 +1268,7 @@ func BenchmarkLTNGCacheEngine(b *testing.B) {
 	}
 
 	{ // list
-		pagination := &ltngdata.Pagination{
+		pagination := &pagination.Pagination{
 			PageID:   1,
 			PageSize: 200,
 		}
