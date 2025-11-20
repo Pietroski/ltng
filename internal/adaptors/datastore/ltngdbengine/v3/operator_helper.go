@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
@@ -13,25 +14,26 @@ import (
 	ltngdbenginemodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/mmap"
-	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
-func (e *LTNGEngine) createRelationalItemStore(
+func (e *LTNGEngine) createRelationalDataStore(
 	_ context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) (*ltngdbenginemodelsv3.RelationalFileInfo, error) {
-	file, err := osx.CreateFileIfNotExists(ltngdbenginemodelsv3.GetRelationalDataFilepath(info.Path, ltngdbenginemodelsv3.RelationalDataStoreKey))
+	info = info.RelationalInfo()
+	file, err := osx.CreateFileIfNotExists(
+		ltngdbenginemodelsv3.GetDataFilepath(info.Path,
+			ltngdbenginemodelsv3.RelationalDataStoreKey))
 	if err != nil {
 		return nil, err
 	}
 
-	timeNow := time.Now().UTC().Unix()
 	fileData := &ltngdbenginemodelsv3.FileData{
 		Key: []byte(ltngdbenginemodelsv3.RelationalDataStoreKey),
 		Header: &ltngdbenginemodelsv3.Header{
 			ItemInfo: &ltngdbenginemodelsv3.ItemInfo{
-				CreatedAt: timeNow,
+				CreatedAt: time.Now().UTC().Unix(),
 			},
 			StoreInfo: info,
 		},
@@ -52,9 +54,22 @@ func (e *LTNGEngine) createRelationalItemStore(
 		FileData:              fileData,
 		RelationalFileManager: rfm,
 	}
-	e.relationalItemFileMapping.Set(info.RelationalInfo().LockName(ltngdbenginemodelsv3.RelationalDataStoreKey), rfi)
+	e.relationalItemFileMapping.Set(info.LockStr(), rfi)
 
 	return rfi, nil
+}
+
+func (e *LTNGEngine) deleteRelationalDataStore(
+	_ context.Context,
+	info *ltngdbenginemodelsv3.StoreInfo,
+) error {
+	info = info.RelationalInfo()
+	if err := os.Remove(info.Path); err != nil {
+		return err
+	}
+	e.relationalItemFileMapping.Delete(info.LockStr())
+
+	return nil
 }
 
 // #####################################################################################################################
@@ -92,14 +107,14 @@ func (e *LTNGEngine) loadFileInfoFromMemoryOrDisk(
 	item *ltngdbenginemodelsv3.Item,
 ) (*ltngdbenginemodelsv3.FileInfo, error) {
 	strItemKey := hex.EncodeToString(item.Key)
-	fi, ok := e.itemFileMapping.Get(dbMetaInfo.LockName(strItemKey))
+	fi, ok := e.itemFileMapping.Get(dbMetaInfo.LockStr(strItemKey))
 	if !ok {
 		var err error
 		fi, err = e.loadFileInfoFromDisk(ctx, dbMetaInfo, item)
 		if err != nil {
 			return nil, err
 		}
-		e.itemFileMapping.Set(dbMetaInfo.LockName(strItemKey), fi)
+		e.itemFileMapping.Set(dbMetaInfo.LockStr(strItemKey), fi)
 
 		return fi, nil
 	}
@@ -107,6 +122,7 @@ func (e *LTNGEngine) loadFileInfoFromMemoryOrDisk(
 	return fi, nil
 }
 
+// TODO: we will need to rethink on how we load now data from other directories...
 func (e *LTNGEngine) loadFileInfoFromDisk(
 	_ context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
@@ -142,7 +158,7 @@ func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 	ctx context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 ) (*ltngdbenginemodelsv3.RelationalFileInfo, error) {
-	relationalLockKey := dbMetaInfo.RelationalInfo().LockName(ltngdbenginemodelsv3.RelationalDataStoreKey)
+	relationalLockKey := dbMetaInfo.RelationalInfo().LockStr(ltngdbenginemodelsv3.RelationalDataStoreKey)
 	rfi, ok := e.relationalItemFileMapping.Get(relationalLockKey)
 	if !ok {
 		var err error
@@ -162,7 +178,8 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	_ context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 ) (*ltngdbenginemodelsv3.RelationalFileInfo, error) {
-	file, err := osx.OpenFile(ltngdbenginemodelsv3.GetRelationalDataFilepath(dbMetaInfo.Path, ltngdbenginemodelsv3.RelationalDataStoreKey))
+	file, err := osx.OpenFile(ltngdbenginemodelsv3.GetRelationalDataFilepath(
+		dbMetaInfo.Path, ltngdbenginemodelsv3.RelationalDataStoreKey))
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +246,7 @@ func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
 		return nil, errorsx.New("invalid search filter: item and opts are null")
 	}
 
-	lockKey := dbMetaInfo.LockName(strItemKey)
+	lockKey := dbMetaInfo.LockStr(strItemKey)
 	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
 		return nil, errorsx.Wrapf(itemMarkedAsDeletedErr, "%+v is marked as deleted", *opts)
 	}
@@ -251,7 +268,7 @@ func (e *LTNGEngine) searchMemoryByIndex(
 ) (*ltngdbenginemodelsv3.Item, error) {
 	for _, indexItem := range opts.IndexingKeys {
 		strItemKey := hex.EncodeToString(indexItem)
-		lockKey := dbMetaInfo.IndexInfo().LockName(strItemKey)
+		lockKey := dbMetaInfo.IndexInfo().LockStr(strItemKey)
 		_, ok := e.markedAsDeletedMapping.Get(lockKey)
 		if ok {
 			return nil, errorsx.Wrapf(itemMarkedAsDeletedErr, "item %s is marked as deleted", indexItem)
@@ -399,7 +416,7 @@ func (e *LTNGEngine) listPaginatedItems(
 			return nil, err
 		}
 
-		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockName(hex.EncodeToString(fileData.Key))); ok {
+		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockStr(hex.EncodeToString(fileData.Key))); ok {
 			continue
 		}
 
@@ -509,7 +526,7 @@ func (e *LTNGEngine) listAllItems(
 			return nil, err
 		}
 
-		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockName(hex.EncodeToString(fileData.Key))); ok {
+		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockStr(hex.EncodeToString(fileData.Key))); ok {
 			continue
 		}
 
@@ -575,7 +592,32 @@ func (e *LTNGEngine) createItemOnDisk(
 	}, nil
 }
 
-func (e *LTNGEngine) createRelationalItemOnDisk(
+func (e *LTNGEngine) upsertItemOnDisk(
+	ctx context.Context,
+	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
+	fileData *ltngdbenginemodelsv3.FileData,
+) (*ltngdbenginemodelsv3.FileInfo, error) {
+	fi, err := e.loadFileInfoFromMemoryOrDisk(ctx, dbMetaInfo,
+		&ltngdbenginemodelsv3.Item{
+			Key: fileData.Key,
+		})
+	if err != nil {
+		return nil, errorsx.Wrapf(err, "error loading %s item from disk",
+			dbMetaInfo.IndexListInfo().Name)
+	}
+
+	if _, err = fi.FileManager.Rewrite(fileData); err != nil {
+		return nil, errorsx.Wrapf(err, "error writing to file at %s", fi.File.Name())
+	}
+
+	fi.FileData = fileData
+
+	return fi, nil
+}
+
+// #####################################################################################################################
+
+func (e *LTNGEngine) createItemOnRelationalFile(
 	ctx context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 	item *ltngdbenginemodelsv3.Item,
@@ -595,7 +637,7 @@ func (e *LTNGEngine) createRelationalItemOnDisk(
 	return nil
 }
 
-func (e *LTNGEngine) upsertRelationalItemOnDisk(
+func (e *LTNGEngine) upsertItemOnRelationalFile(
 	ctx context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 	item *ltngdbenginemodelsv3.Item,
@@ -609,47 +651,20 @@ func (e *LTNGEngine) upsertRelationalItemOnDisk(
 	return e.upsertRelationalData(ctx, fileData, rfi)
 }
 
-func (e *LTNGEngine) upsertItemOnDisk(
-	ctx context.Context,
-	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
-	item *ltngdbenginemodelsv3.Item,
-) (err error) {
-	fi, err := e.loadFileInfoFromMemoryOrDisk(ctx, dbMetaInfo, item)
-	if err != nil {
-		return err
-	}
-
-	fileData := ltngdbenginemodelsv3.NewFileData(dbMetaInfo, item)
-	if _, err = fi.FileManager.Rewrite(fileData); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// #####################################################################################################################
-
 func (e *LTNGEngine) upsertRelationalData(
 	ctx context.Context,
 	fileData *ltngdbenginemodelsv3.FileData,
 	rfi *ltngdbenginemodelsv3.RelationalFileInfo,
 ) error {
 	info := rfi.FileData.Header.StoreInfo.RelationalInfo()
-	lockKey := info.LockName(ltngdbenginemodelsv3.RelationalDataStoreKey)
+	lockStr := info.LockStr()
 
-	e.kvLock.Lock(lockKey, struct{}{})
-	defer e.kvLock.Unlock(lockKey)
+	e.kvLock.Lock(lockStr, struct{}{})
+	defer e.kvLock.Unlock(lockStr)
 
-	if _, err := rfi.RelationalFileManager.Find(ctx, fileData.Key); err != nil {
-		if errorsx.Is(err, fileiomodels.KeyNotFoundError) {
-			if _, err = rfi.RelationalFileManager.Write(fileData); err != nil {
-				return errorsx.Wrapf(err, "error writing info into file %s", rfi.File.Name())
-			}
-
-			return nil
-		}
-
-		return errorsx.Wrapf(err, "error finding %s in file", fileData.Key)
+	_, err := rfi.RelationalFileManager.UpsertByKey(ctx, fileData.Key, fileData)
+	if err != nil {
+		return errorsx.Wrapf(err, "error upserting relational data to %s", rfi.File.Name())
 	}
 
 	return nil
@@ -661,10 +676,10 @@ func (e *LTNGEngine) deleteRelationalData(
 	rfi *ltngdbenginemodelsv3.RelationalFileInfo,
 ) (err error) {
 	info := rfi.FileData.Header.StoreInfo.RelationalInfo()
-	lockKey := info.LockName(ltngdbenginemodelsv3.RelationalDataStoreKey)
+	lockStr := info.LockStr()
 
-	e.kvLock.Lock(lockKey, struct{}{})
-	defer e.kvLock.Unlock(lockKey)
+	e.kvLock.Lock(lockStr, struct{}{})
+	defer e.kvLock.Unlock(lockStr)
 
 	if _, err = rfi.RelationalFileManager.DeleteByKey(ctx, item.Key); err != nil {
 		return errorsx.Wrapf(err, "error deleting %s from file", item.Key)

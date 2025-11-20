@@ -1,14 +1,12 @@
 package ltngdbenginev3
 
 import (
-	"bytes"
 	"context"
-	"encoding/hex"
 	"os"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
-	"gitlab.com/pietroski-software-company/golang/devex/syncx"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 
 	ltngdbenginemodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 )
@@ -26,29 +24,6 @@ func newCreateSaga(ctx context.Context, opSaga *opSaga) *createSaga {
 	}
 
 	cs.opSaga.offThread.Op(func() {
-		cs.createItemOnDiskOnThread(ctx)
-	})
-	cs.opSaga.offThread.Op(func() {
-		cs.createIndexItemOnDiskOnThread(ctx)
-	})
-	cs.opSaga.offThread.Op(func() {
-		cs.createIndexListItemOnDiskOnThread(ctx)
-	})
-	cs.opSaga.offThread.Op(func() {
-		cs.createRelationalItemOnDiskOnThread(ctx)
-	})
-
-	cs.opSaga.offThread.Op(func() {
-		cs.deleteItemOnDiskOnThread(ctx)
-	})
-	cs.opSaga.offThread.Op(func() {
-		cs.deleteIndexItemFromDiskOnThread(ctx)
-	})
-	cs.opSaga.offThread.Op(func() {
-		cs.deleteIndexListItemFromDiskOnThread(ctx)
-	})
-
-	cs.opSaga.offThread.Op(func() {
 		cs.ListenAndTrigger(ctx)
 	})
 
@@ -60,310 +35,196 @@ func (s *createSaga) ListenAndTrigger(ctx context.Context) {
 	loop.RunFromChannel(ctx,
 		s.opSaga.crudChannels.CreateChannels.InfoChannel.Ch,
 		func(itemInfoData *ltngdbenginemodelsv3.ItemInfoData) {
-			if !itemInfoData.Opts.HasIdx {
-				s.noIndexTrigger(itemInfoData.Ctx, itemInfoData)
-			} else {
-				s.indexTrigger(itemInfoData.Ctx, itemInfoData)
-			}
-		},
-	)
-	s.cancel()
-}
-
-func (s *createSaga) noIndexTrigger(
-	ctx context.Context, itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
-) {
-	itemRespSignal := make(chan error, 1)
-	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Send(itemInfoDataWithChan)
-	if err := <-itemRespSignal; err != nil {
-		s.opSaga.e.logger.Error(ctx, "error on triggering create action itemInfoData",
-			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
-
-		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
-
-		return
-	}
-
-	relationalItemRespSignal := make(chan error, 1)
-	relationalItemInfoDataWithChan := itemInfoData.WithRespChan(relationalItemRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Send(relationalItemInfoDataWithChan)
-	if err := <-relationalItemRespSignal; err != nil {
-		s.opSaga.e.logger.Error(ctx, "error on trigger create action itemInfoData relational",
-			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
-
-		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
-		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
-
-		return
-	}
-
-	itemInfoData.RespSignal <- nil
-	close(itemInfoData.RespSignal)
-}
-
-func (s *createSaga) indexTrigger(
-	ctx context.Context, itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
-) {
-	itemRespSignal := make(chan error, 1)
-	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
-	indexedItemRespSignal := make(chan error, 1)
-	indexedItemInfoDataWithChan := itemInfoData.WithRespChan(indexedItemRespSignal)
-	indexedListItemRespSignal := make(chan error, 1)
-	indexedListItemInfoDataWithChan := itemInfoData.WithRespChan(indexedListItemRespSignal)
-
-	s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Send(itemInfoDataWithChan)
-	s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel.Send(indexedItemInfoDataWithChan)
-	s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel.Send(indexedListItemInfoDataWithChan)
-
-	if err := ResponseAccumulator(
-		itemRespSignal,
-		indexedItemRespSignal,
-		indexedListItemRespSignal,
-	); err != nil {
-		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data",
-			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
-
-		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
-		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
-
-		return
-	}
-
-	relationalItemRespSignal := make(chan error, 1)
-	relationalItemInfoDataWithChan := itemInfoData.WithRespChan(relationalItemRespSignal)
-	s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Send(relationalItemInfoDataWithChan)
-	err := <-relationalItemRespSignal
-	if err != nil {
-		s.opSaga.e.logger.Error(ctx, "error on trigger create indexed action item info data relational",
-			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
-
-		itemInfoData.RespSignal <- err
-		close(itemInfoData.RespSignal)
-		s.RollbackTrigger(itemInfoData.Ctx, itemInfoData)
-
-		return
-	}
-
-	itemInfoData.RespSignal <- nil
-	close(itemInfoData.RespSignal)
-}
-
-func (s *createSaga) RollbackTrigger(ctx context.Context, itemInfoData *ltngdbenginemodelsv3.ItemInfoData) {
-	if !itemInfoData.Opts.HasIdx {
-		s.noIndexRollback(ctx, itemInfoData)
-		return
-	}
-
-	s.indexRollback(ctx, itemInfoData)
-}
-
-func (s *createSaga) noIndexRollback(
-	ctx context.Context, itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
-) {
-	itemRespSignal := make(chan error, 1)
-	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
-	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Send(itemInfoDataWithChan)
-	err := <-itemRespSignal
-	if err != nil {
-		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
-			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
-	}
-}
-
-func (s *createSaga) indexRollback(
-	ctx context.Context, itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
-) {
-	itemRespSignal := make(chan error, 1)
-	itemInfoDataWithChan := itemInfoData.WithRespChan(itemRespSignal)
-	indexedItemRespSignal := make(chan error, 1)
-	indexedItemInfoDataWithChan := itemInfoData.WithRespChan(indexedItemRespSignal)
-	indexedListItemRespSignal := make(chan error, 1)
-	indexedListItemInfoDataWithChan := itemInfoData.WithRespChan(indexedListItemRespSignal)
-
-	s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Send(itemInfoDataWithChan)
-	s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel.Send(indexedItemInfoDataWithChan)
-	s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel.Send(indexedListItemInfoDataWithChan)
-
-	if err := ResponseAccumulator(
-		itemRespSignal,
-		indexedItemRespSignal,
-		indexedListItemRespSignal,
-	); err != nil {
-		s.opSaga.e.logger.Error(ctx, "error rolling back trigger for item info data",
-			"item_info_data", itemInfoData.DBMetaInfo, "err", err)
-	}
-}
-
-// createItemOnDiskOnThread stands for createItemOnDisk on thread.
-func (s *createSaga) createItemOnDiskOnThread(
-	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "createItemOnDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionItemChannel.Ch,
-		func(itemInfoData *ltngdbenginemodelsv3.ItemInfoData) {
-			strItemKey := hex.EncodeToString(itemInfoData.Item.Key)
-			filePath := ltngdbenginemodelsv3.GetDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
-			fileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo.IndexInfo(), &ltngdbenginemodelsv3.Item{
-				Key:   itemInfoData.Item.Key,
-				Value: itemInfoData.Opts.ParentKey,
-			})
-
-			fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
-			if err != nil {
-				s.opSaga.e.logger.Error(ctx, "error creating item on disk",
-					"item_info_data", *itemInfoData.DBMetaInfo, "err", err)
-
-				itemInfoData.RespSignal <- err
+			if _, err := s.createItemInfoData(itemInfoData.Ctx, itemInfoData); err != nil {
+				itemInfoData.RespSignal <- errorsx.Wrap(err, "error creating item info data on disk")
 				close(itemInfoData.RespSignal)
 
 				return
 			}
-			s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockName(strItemKey), fi)
 
 			itemInfoData.RespSignal <- nil
 			close(itemInfoData.RespSignal)
 		},
 	)
+	s.cancel()
 }
 
-func (s *createSaga) deleteItemOnDiskOnThread(
+func (s *createSaga) createItemInfoData(
 	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "deleteItemOnDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.RollbackItemChannel.Ch,
-		func(v *ltngdbenginemodelsv3.ItemInfoData) {
-			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdbenginemodelsv3.GetDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			err := os.Remove(filePath)
-
-			v.RespSignal <- err
-			close(v.RespSignal)
-		},
-	)
+	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
+) (*ltngdbenginemodelsv3.ItemInfoData, error) {
+	return itemInfoData, saga.NewListOperator(s.buildCreateItemInfoData(ctx, itemInfoData)...).Operate()
 }
 
-func (s *createSaga) createIndexItemOnDiskOnThread(
-	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "createIndexItemOnDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionIndexItemChannel.Ch,
-		func(itemInfoData *ltngdbenginemodelsv3.ItemInfoData) {
-			op := syncx.NewThreadOperator("createIndexItemOnDisk")
-			for _, indexKey := range itemInfoData.Opts.IndexingKeys {
-				op.OpX(func() (any, error) {
-					strItemKey := hex.EncodeToString(indexKey)
-					filePath := ltngdbenginemodelsv3.GetIndexedDataFilepath(itemInfoData.DBMetaInfo.Path, strItemKey)
-					fileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo.IndexInfo(),
-						&ltngdbenginemodelsv3.Item{
-							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+func (s *createSaga) buildCreateItemInfoData(
+	_ context.Context,
+	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
+) []*saga.Operation {
+	fileData := ltngdbenginemodelsv3.NewFileData(
+		itemInfoData.DBMetaInfo, itemInfoData.Item)
 
-					fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
-					if err != nil {
-						return nil, err
-					}
-					s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockName(strItemKey), fi)
+	createItemOnDisk := func() error {
+		encodedKey := itemInfoData.EncodedKey()
+		filePath := ltngdbenginemodelsv3.GetDataFilepath(
+			itemInfoData.DBMetaInfo.Path, encodedKey)
 
-					return nil, nil
+		fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
+		if err != nil {
+			return err
+		}
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStr(encodedKey), fi)
+
+		return nil
+	}
+	deleteItemOnDisk := func() error {
+		encodedKey := itemInfoData.EncodedKey()
+		filePath := ltngdbenginemodelsv3.GetDataFilepath(
+			itemInfoData.DBMetaInfo.Path, encodedKey)
+
+		if err := os.Remove(filePath); err != nil {
+			return err
+		}
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStr(encodedKey))
+
+		return nil
+	}
+
+	createItemOnRelationalFile := func() error {
+		if err := s.opSaga.e.upsertItemOnRelationalFile(
+			itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Item); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if !itemInfoData.Opts.HasIdx {
+		return []*saga.Operation{
+			{
+				Action: &saga.Action{
+					Name:        "createItemOnDisk",
+					Do:          createItemOnDisk,
+					RetrialOpts: saga.DefaultRetrialOps,
+				},
+				Rollback: &saga.Rollback{
+					Name:        "deleteItemOnDisk",
+					Do:          deleteItemOnDisk,
+					RetrialOpts: saga.DefaultRetrialOps,
+				},
+			},
+			{
+				Action: &saga.Action{
+					Name:        "createItemOnRelationalFile",
+					Do:          createItemOnRelationalFile,
+					RetrialOpts: saga.DefaultRetrialOps,
+				},
+			},
+		}
+	}
+
+	createIndexItemOnDisk := func() error {
+		for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+			encodedKey := itemInfoData.EncodedKey()
+			filePath := ltngdbenginemodelsv3.GetDataFilepath(
+				itemInfoData.DBMetaInfo.IndexInfo().Path, encodedKey)
+			fileData := ltngdbenginemodelsv3.NewFileData(
+				itemInfoData.DBMetaInfo,
+				&ltngdbenginemodelsv3.Item{
+					Key:   indexKey,
+					Value: itemInfoData.Opts.ParentKey,
 				})
-			}
-			err := op.WaitAndWrapErr()
 
-			itemInfoData.RespSignal <- err
-			close(itemInfoData.RespSignal)
-		},
-	)
-}
-
-func (s *createSaga) deleteIndexItemFromDiskOnThread(
-	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "deleteIndexItemFromDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.RollbackIndexItemChannel.Ch,
-		func(v *ltngdbenginemodelsv3.ItemInfoData) {
-			var errAcc error
-			for _, indexKey := range v.Opts.IndexingKeys {
-				strItemKey := hex.EncodeToString(indexKey)
-				filePath := ltngdbenginemodelsv3.GetIndexedDataFilepath(v.DBMetaInfo.Path, strItemKey)
-				if err := os.Remove(filePath); err != nil {
-					if errAcc == nil {
-						errAcc = err
-					} else {
-						err = errorsx.Wrapf(err, "%v", errAcc)
-						errAcc = errorsx.Wrap(err, "error deleting item on database")
-					}
-				}
-			}
-			v.RespSignal <- errAcc
-			close(v.RespSignal)
-		},
-	)
-}
-
-func (s *createSaga) createIndexListItemOnDiskOnThread(
-	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "createIndexListItemOnDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionIndexListItemChannel.Ch,
-		func(v *ltngdbenginemodelsv3.ItemInfoData) {
-			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdbenginemodelsv3.GetIndexedListDataFilepath(v.DBMetaInfo.Path, strItemKey)
-			fileData := ltngdbenginemodelsv3.NewFileData(v.DBMetaInfo.IndexInfo(), &ltngdbenginemodelsv3.Item{
-				Key:   v.Opts.ParentKey,
-				Value: bytes.Join(v.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-			})
-
-			fi, err := s.opSaga.e.createItemOnDisk(ctx, filePath, fileData)
+			fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 			if err != nil {
-				v.RespSignal <- err
-				close(v.RespSignal)
-
-				return
+				return err
 			}
-			s.opSaga.e.itemFileMapping.Set(v.DBMetaInfo.LockName(strItemKey), fi)
+			s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.IndexInfo().LockStr(encodedKey), fi)
+		}
 
-			v.RespSignal <- nil
-			close(v.RespSignal)
-		},
-	)
-}
+		return nil
+	}
+	deleteIndexItemOnDisk := func() error {
+		encodedKey := itemInfoData.EncodedKey()
+		filePath := ltngdbenginemodelsv3.GetDataFilepath(
+			itemInfoData.DBMetaInfo.IndexInfo().Path, encodedKey)
 
-func (s *createSaga) deleteIndexListItemFromDiskOnThread(
-	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "deleteIndexListItemFromDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.RollbackIndexListItemChannel.Ch,
-		func(v *ltngdbenginemodelsv3.ItemInfoData) {
-			strItemKey := hex.EncodeToString(v.Item.Key)
-			filePath := ltngdbenginemodelsv3.GetDataFilepath(v.DBMetaInfo.IndexListInfo().Path, strItemKey)
-			err := os.Remove(filePath)
-			v.RespSignal <- err
-			close(v.RespSignal)
-		},
-	)
-}
+		if err := os.Remove(filePath); err != nil {
+			return err
+		}
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexInfo().LockStr(encodedKey))
 
-func (s *createSaga) createRelationalItemOnDiskOnThread(
-	ctx context.Context,
-) {
-	ctx = context.WithValue(ctx, "thread", "createRelationalItemOnDiskOnThread")
-	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.ActionRelationalItemChannel.Ch,
-		func(v *ltngdbenginemodelsv3.ItemInfoData) {
-			err := s.opSaga.e.createRelationalItemOnDisk(v.Ctx, v.DBMetaInfo, v.Item)
-			v.RespSignal <- err
-			close(v.RespSignal)
+		return nil
+	}
+
+	createIndexListItemOnDisk := func() error {
+		encodedKey := itemInfoData.EncodedKey()
+		filePath := ltngdbenginemodelsv3.GetDataFilepath(
+			itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedKey)
+
+		fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
+		if err != nil {
+			return err
+		}
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.IndexListInfo().LockStr(encodedKey), fi)
+
+		return nil
+	}
+	deleteIndexListItemOnDisk := func() error {
+		encodedKey := itemInfoData.EncodedKey()
+		filePath := ltngdbenginemodelsv3.GetDataFilepath(
+			itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedKey)
+
+		if err := os.Remove(filePath); err != nil {
+			return err
+		}
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStr(encodedKey))
+
+		return nil
+	}
+
+	return []*saga.Operation{
+		{
+			Action: &saga.Action{
+				Name:        "createItemOnDisk",
+				Do:          createItemOnDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Name:        "deleteItemOnDisk",
+				Do:          deleteItemOnDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
 		},
-	)
+		{
+			Action: &saga.Action{
+				Name:        "createIndexItemOnDisk",
+				Do:          createIndexItemOnDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Name:        "deleteIndexItemOnDisk",
+				Do:          deleteIndexItemOnDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Name:        "createIndexListItemOnDisk",
+				Do:          createIndexListItemOnDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Name:        "deleteIndexListItemOnDisk",
+				Do:          deleteIndexListItemOnDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Name:        "createItemOnRelationalFile",
+				Do:          createItemOnRelationalFile,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+	}
 }

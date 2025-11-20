@@ -12,9 +12,9 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 
-	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	ltngdbenginemodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/mmap"
 	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
@@ -1564,20 +1564,19 @@ func TestLTNGEngineFlow(t *testing.T) {
 }
 
 func TestReadFromFQ(t *testing.T) {
-	ctx := context.Background()
-	fq, err := filequeuev1.New(ctx,
-		filequeuev1.GenericFileQueueFilePath, filequeuev1.GenericFileQueueFileName)
+	fq, err := mmap.NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	var counter int
 	for {
-		_, err = fq.Read(ctx)
+		_, err = fq.Read()
 		if err != nil {
 			t.Log(err)
 			break
 		}
 
-		err = fq.Pop(ctx)
+		_, err = fq.Pop()
 		require.NoError(t, err)
 
 		counter++

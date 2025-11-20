@@ -14,22 +14,22 @@ func (e *LTNGEngine) createStore(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) (*ltngdbenginemodelsv3.StoreInfo, error) {
-	e.kvLock.Lock(info.Name, struct{}{})
-	defer e.kvLock.Unlock(info.Name)
+	lockStrKey := info.LockStr()
+	e.kvLock.Lock(lockStrKey, struct{}{})
+	defer e.kvLock.Unlock(lockStrKey)
 
 	if info.Path == "" {
 		return nil, errorsx.New("missing path")
 	}
 
-	if fi, err := e.loadStoreFromMemoryOrDisk(ctx, info); err == nil {
+	if fi, err := e.loadStatsStoreFromMemoryOrDisk(ctx, info); err == nil {
 		return fi.FileData.Header.StoreInfo, nil
 	}
 
-	if err := e.createFullStoreOnDisk(ctx, info); err != nil {
+	if err := e.createStoreOnDisk(ctx, info); err != nil {
 		return nil, err
 	}
 
-	// TODO: check whether we can see createdAt and LastOpenedAt; we should because it is a pointer!
 	return info, nil
 }
 
@@ -37,10 +37,11 @@ func (e *LTNGEngine) loadStore(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) (*ltngdbenginemodelsv3.StoreInfo, error) {
-	e.kvLock.Lock(info.Name, struct{}{})
-	defer e.kvLock.Unlock(info.Name)
+	lockStrKey := info.LockStr()
+	e.kvLock.Lock(lockStrKey, struct{}{})
+	defer e.kvLock.Unlock(lockStrKey)
 
-	fi, err := e.loadStoreFromMemoryOrDisk(ctx, info)
+	fi, err := e.loadStatsStoreFromMemoryOrDisk(ctx, info)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +53,9 @@ func (e *LTNGEngine) deleteStore(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) error {
-	e.kvLock.Lock(info.Name, struct{}{})
-	defer e.kvLock.Unlock(info.Name)
+	lockStrKey := info.LockStr()
+	e.kvLock.Lock(lockStrKey, struct{}{})
+	defer e.kvLock.Unlock(lockStrKey)
 
 	fileStats, ok := e.storeFileMapping.Get(info.Name)
 	if ok {
@@ -63,7 +65,7 @@ func (e *LTNGEngine) deleteStore(
 	e.storeFileMapping.Delete(info.Name)
 	e.storeFileMapping.Delete(info.RelationalInfo().Name)
 
-	return e.deleteFullStoreFromDisk(ctx, info)
+	return e.deleteFStoreFromDisk(ctx, info)
 }
 
 func (e *LTNGEngine) listStores(
@@ -74,9 +76,6 @@ func (e *LTNGEngine) listStores(
 	if pagination.IsValid() {
 		pRef := (pagination.PageID - 1) * pagination.PageSize
 		pLimit := pRef + pagination.PageSize
-		//if pLimit > uint64(len(matches)) {
-		//	pLimit = uint64(len(matches))
-		//}
 
 		matchBox = make([]*ltngdbenginemodelsv3.StoreInfo, pLimit)
 	} else {

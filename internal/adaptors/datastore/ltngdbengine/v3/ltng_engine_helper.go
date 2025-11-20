@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
@@ -61,6 +62,7 @@ func newLTNGEngine(
 	}
 	options.ApplyOptions(engine, opts...)
 
+	engine.opSaga = newOpSaga(ctx, engine)
 	if err = engine.init(ctx); err != nil {
 		return nil, err
 	}
@@ -69,27 +71,85 @@ func newLTNGEngine(
 }
 
 func (e *LTNGEngine) init(ctx context.Context) error {
-	if err := e.createStatsPathsOnDisk(ctx, e.mngrStoreInfo); err != nil {
-		return errorsx.Wrap(err, "failed initializing file queue")
-	}
+	return saga.NewListOperator(e.buildInitManagerOperations(ctx)...).Operate()
+}
 
-	//if err := e.createDataPathsOnDisk(ctx, e.mngrStoreInfo); err != nil {
-	//	return errorsx.Wrap(err, "failed initializing file queue")
-	//}
-
-	if _, err := e.createOpenRelationalStatsStoreOnDisk(ctx); err != nil {
-		return err
-	}
-
-	if _, err := e.createStoreOnDisk(ctx, e.mngrStoreInfo); err != nil {
-		if !errorsx.Is(err, mmap.ErrFileCannotBeOverWritten) {
-			return err
+func (e *LTNGEngine) buildInitManagerOperations(ctx context.Context) []*saga.Operation {
+	createManagerStatsPaths := func() error {
+		if err := e.createManagerStatsPathsOnDisk(ctx, e.mngrStoreInfo); err != nil {
+			return errorsx.Wrap(err, "failed creating manager stats paths on disk")
 		}
+
+		return nil
+	}
+	deleteManagerStatsPaths := func() error {
+		if err := e.removeEmptyManagerStatsPathsFromDisk(ctx, e.mngrStoreInfo); err != nil {
+			e.logger.Error(ctx, "failed removing empty manager stats paths from disk", "err", err)
+		}
+
+		return nil
 	}
 
-	e.opSaga = newOpSaga(ctx, e)
+	createManagerStatsStore := func() error {
+		if _, err := e.createStatsStoreOnDisk(ctx, e.mngrStoreInfo); err != nil {
+			if errorsx.Is(err, mmap.ErrFileCannotBeOverWritten) {
+				return nil
+			}
+			
+			return errorsx.Wrap(err, "failed creating stats store on disk")
+		}
 
-	return nil
+		return nil
+	}
+	deleteManagerStatsStore := func() error {
+		if err := e.deleteStatsStoreFromDisk(ctx, e.mngrStoreInfo); err != nil {
+			e.logger.Error(ctx, "failed deleting stats store from disk", "err", err)
+		}
+
+		return nil
+	}
+
+	createManagerStatsRelationalStore := func() error {
+		if _, err := e.createOpenRelationalStatsStoreOnDisk(ctx); err != nil {
+			return errorsx.Wrap(err, "failed creating relational stats store on disk")
+		}
+
+		return nil
+	}
+
+	return []*saga.Operation{
+		{
+			Action: &saga.Action{
+				Name:        "createManagerStatsPaths",
+				Do:          createManagerStatsPaths,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Name:        "deleteManagerStatsPaths",
+				Do:          deleteManagerStatsPaths,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Name:        "createManagerStatsStore",
+				Do:          createManagerStatsStore,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+			Rollback: &saga.Rollback{
+				Name:        "deleteManagerStatsStore",
+				Do:          deleteManagerStatsStore,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Name:        "createManagerStatsRelationalStore",
+				Do:          createManagerStatsRelationalStore,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+	}
 }
 
 func (e *LTNGEngine) close() {

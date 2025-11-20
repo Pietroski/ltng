@@ -92,6 +92,10 @@ func (rfm *RelationalFileManager) Write(data any) ([]byte, error) {
 	rfm.mtx.Lock()
 	defer rfm.mtx.Unlock()
 
+	return rfm.write(data)
+}
+
+func (rfm *RelationalFileManager) write(data any) ([]byte, error) {
 	bs, err := rfm.serializer.Serialize(data)
 	if err != nil {
 		return nil, err
@@ -474,7 +478,7 @@ func (rfm *RelationalFileManager) UpsertByKey(
 
 	findResult, err := rfm.findInFile(ctx, key)
 	if err != nil {
-		return nil, err
+		return rfm.write(data)
 	}
 
 	return rfm.upsertData(ctx, findResult, data)
@@ -548,26 +552,6 @@ func (rfm *RelationalFileManager) upsertData(
 	return bs, nil
 }
 
-// DeleteByKeyResult is the result definition of DeleteByKey.
-// As for reference:
-// bs is the found bs payload.
-// index is the record index, starting at 0.
-// upTo and from, giving the following []byte{}...
-// []byte{...upTo, ..., from...}
-// example: upTo = 105; from = 120
-// so when copying, you:
-// target := make([]byte, len(data)-(from-upTo))
-// copy(target, data[:upTo]); copy(target, data[from:])
-// So,
-// upTo is the offset until the found record.
-// from is the offset from the from record onwards.
-type DeleteByKeyResult struct {
-	bs    []byte
-	index uint64
-	upTo  uint64
-	from  uint64
-}
-
 func (rfm *RelationalFileManager) DeleteByKey(
 	ctx context.Context,
 	key []byte,
@@ -616,51 +600,15 @@ func (rfm *RelationalFileManager) DeleteByIndex(
 	rfm.mtx.Lock()
 	defer rfm.mtx.Unlock()
 
-	return rfm.deleteByIndex(ctx, index)
-}
-
-func (rfm *RelationalFileManager) deleteByIndex(
-	ctx context.Context,
-	index uint64,
-) (bs []byte, err error) {
-	rfm.readOffset = 0
-
-	var found bool
-	var count uint64
-	var result FindResult
-	for {
-		if err = ctx.Err(); err != nil {
-			return
-		}
-
-		bs, err = rfm.read()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return nil, errorsx.Wrapf(err, "error reading %s file", rfm.file.Name())
-		}
-
-		if count == index {
-			found = true
-			result.bs = bs
-			result.index = count
-			result.from = rfm.readOffset
-			result.upTo = result.from - uint64(len(bs)+4)
-
-			break
-		}
-
-		count++
-	}
-	if !found {
-		return nil, errorsx.Errorf("record index %d not found in %s file", index, rfm.file.Name())
-	}
-
-	if _, err = rfm.deleteByResult(ctx, result); err != nil {
+	findResult, err := rfm.getByIndex(ctx, index)
+	if err != nil {
 		return nil, err
 	}
 
-	return result.bs, nil
+	deleteResult, err := rfm.deleteByResult(ctx, findResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return deleteResult.bs, nil
 }

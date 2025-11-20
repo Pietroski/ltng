@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
@@ -100,64 +102,64 @@ func GetDataPath(path string) string {
 	return filepath.Join(DBBaseDataPath, path)
 }
 
-func GetDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseDataPath, path, storeName) + FileExt
+func GetDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseDataPath, path, filename) + FileExt
 }
 
 func GetTemporaryDataPath(path string) string {
 	return filepath.Join(DBBaseTemporaryDataPath, path)
 }
 
-func GetTemporaryDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseTemporaryDataPath, path, storeName) + FileExt
+func GetTemporaryDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseTemporaryDataPath, path, filename) + FileExt
 }
 
 func GetRelationalDataPath(path string) string {
 	return filepath.Join(DBBaseRelationalDataPath, path)
 }
 
-func GetRelationalDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseRelationalDataPath, path, storeName) + FileExt
+func GetRelationalDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseRelationalDataPath, path, filename) + FileExt
 }
 
 func GetTemporaryRelationalDataPath(path string) string {
 	return filepath.Join(DBBaseTemporaryRelationalDataPath, path)
 }
 
-func GetTemporaryRelationalDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseTemporaryRelationalDataPath, path, storeName) + FileExt
+func GetTemporaryRelationalDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseTemporaryRelationalDataPath, path, filename) + FileExt
 }
 
 func GetIndexedDataPath(path string) string {
 	return filepath.Join(DBBaseIndexedDataPath, path)
 }
 
-func GetIndexedDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseIndexedDataPath, path, storeName) + FileExt
+func GetIndexedDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseIndexedDataPath, path, filename) + FileExt
 }
 
 func GetTemporaryIndexedDataPath(path string) string {
 	return filepath.Join(DBBaseTemporaryIndexedDataPath, path)
 }
 
-func GetTemporaryIndexedDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseTemporaryIndexedDataPath, path, storeName) + FileExt
+func GetTemporaryIndexedDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseTemporaryIndexedDataPath, path, filename) + FileExt
 }
 
 func GetIndexedListDataPath(path string) string {
 	return filepath.Join(DBBaseIndexedListDataPath, path)
 }
 
-func GetIndexedListDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseIndexedListDataPath, path, storeName) + FileExt
+func GetIndexedListDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseIndexedListDataPath, path, filename) + FileExt
 }
 
 func GetTemporaryIndexedListDataPath(path string) string {
 	return filepath.Join(DBBaseTemporaryIndexedListDataPath, path)
 }
 
-func GetTemporaryIndexedListDataFilepath(path, storeName string) string {
-	return filepath.Join(DBBaseTemporaryIndexedListDataPath, path, storeName) + FileExt
+func GetTemporaryIndexedListDataFilepath(path, filename string) string {
+	return filepath.Join(DBBaseTemporaryIndexedListDataPath, path, filename) + FileExt
 }
 
 // general definitions
@@ -170,10 +172,6 @@ type (
 		// LastOpenedAt int64
 	}
 )
-
-func GetFileLockName(base, key string) string {
-	return base + InnerSep + key
-}
 
 var (
 	DBManagerStoreInfo = &StoreInfo{
@@ -344,22 +342,31 @@ func (i *ItemInfoData) WithContext(ctx context.Context) *ItemInfoData {
 }
 
 func (i *ItemInfoData) WithRespChan(sigChan chan error) *ItemInfoData {
-	return &ItemInfoData{
-		Ctx:               i.Ctx,
-		OpNatureType:      i.OpNatureType,
-		OpType:            i.OpType,
-		DBMetaInfo:        i.DBMetaInfo,
-		Item:              i.Item,
-		Opts:              i.Opts,
-		RespSignal:        sigChan,
-		IndexKeysToDelete: i.IndexKeysToDelete,
-	}
+	//return &ItemInfoData{
+	//	Ctx:        i.Ctx,
+	//	RespSignal: sigChan,
+	//
+	//	OpNatureType:      i.OpNatureType,
+	//	OpType:            i.OpType,
+	//	DBMetaInfo:        i.DBMetaInfo,
+	//	Item:              i.Item,
+	//	Opts:              i.Opts,
+	//	IndexKeysToDelete: i.IndexKeysToDelete,
+	//}
+	i.RespSignal = sigChan
+	return i
+}
+
+// EncodedKey
+// return strings.Join([]string{i.DBMetaInfo.Path, i.DBMetaInfo.Name, hex.EncodeToString(i.Item.Key)}, InnerSep)
+func (i *ItemInfoData) EncodedKey() string {
+	return hex.EncodeToString(i.Item.Key)
 }
 
 func (storeInfo *StoreInfo) IndexInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + Indexed,
-		Path:         storeInfo.Path,
+		Name:         storeInfo.Name,
+		Path:         filepath.Join(Indexed, storeInfo.Path),
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
 	}
@@ -367,8 +374,8 @@ func (storeInfo *StoreInfo) IndexInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) IndexListInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + IndexedList,
-		Path:         storeInfo.Path,
+		Name:         storeInfo.Name,
+		Path:         filepath.Join(IndexedList, storeInfo.Path),
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
 	}
@@ -376,8 +383,44 @@ func (storeInfo *StoreInfo) IndexListInfo() *StoreInfo {
 
 func (storeInfo *StoreInfo) RelationalInfo() *StoreInfo {
 	return &StoreInfo{
-		Name:         storeInfo.Name + InnerSep + Relational,
-		Path:         storeInfo.Path,
+		Name:         RelationalDataStoreKey,
+		Path:         filepath.Join(Relational, storeInfo.Path),
+		CreatedAt:    storeInfo.CreatedAt,
+		LastOpenedAt: storeInfo.LastOpenedAt,
+	}
+}
+
+func (storeInfo *StoreInfo) TemporaryInfo() *StoreInfo {
+	return &StoreInfo{
+		Name:         storeInfo.Name,
+		Path:         filepath.Join(Temporary, storeInfo.Path),
+		CreatedAt:    storeInfo.CreatedAt,
+		LastOpenedAt: storeInfo.LastOpenedAt,
+	}
+}
+
+func (storeInfo *StoreInfo) TemporaryIndexInfo() *StoreInfo {
+	return &StoreInfo{
+		Name:         storeInfo.Name,
+		Path:         filepath.Join(Temporary, Indexed, storeInfo.Path),
+		CreatedAt:    storeInfo.CreatedAt,
+		LastOpenedAt: storeInfo.LastOpenedAt,
+	}
+}
+
+func (storeInfo *StoreInfo) TemporaryIndexListInfo() *StoreInfo {
+	return &StoreInfo{
+		Name:         storeInfo.Name,
+		Path:         filepath.Join(Temporary, IndexedList, storeInfo.Path),
+		CreatedAt:    storeInfo.CreatedAt,
+		LastOpenedAt: storeInfo.LastOpenedAt,
+	}
+}
+
+func (storeInfo *StoreInfo) TemporaryRelationalInfo() *StoreInfo {
+	return &StoreInfo{
+		Name:         RelationalDataStoreKey,
+		Path:         filepath.Join(Temporary, Relational, storeInfo.Path),
 		CreatedAt:    storeInfo.CreatedAt,
 		LastOpenedAt: storeInfo.LastOpenedAt,
 	}
@@ -390,8 +433,12 @@ func (storeInfo *StoreInfo) ManagerStoreMetaInfo() *ManagerStoreMetaInfo {
 	}
 }
 
-func (storeInfo *StoreInfo) LockName(key string) string {
-	return GetFileLockName(storeInfo.Name, key)
+func (storeInfo *StoreInfo) LockStrWithKey(key string) string {
+	return strings.Join([]string{storeInfo.Path, storeInfo.Name, key}, InnerSep)
+}
+
+func (storeInfo *StoreInfo) LockStr() string {
+	return strings.Join([]string{storeInfo.Path, storeInfo.Name}, InnerSep)
 }
 
 type (
@@ -401,37 +448,58 @@ type (
 	}
 )
 
-// LockName
+// LockStr
 // msi -> managerStoreInfo
-func (msi *ManagerStoreMetaInfo) LockName(key string) string {
-	return GetFileLockName(msi.Name, key)
+func (msi *ManagerStoreMetaInfo) LockStr(key string) string {
+	return strings.Join([]string{msi.Path, msi.Name, key}, InnerSep)
 }
 
 func (msi *ManagerStoreMetaInfo) IndexInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + InnerSep + Indexed,
-		Path: msi.Path,
+		Name: msi.Name,
+		Path: filepath.Join(Indexed, msi.Path),
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) IndexListInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + InnerSep + IndexedList,
-		Path: msi.Path,
+		Name: msi.Name,
+		Path: filepath.Join(IndexedList, msi.Path),
 	}
 }
 
 func (msi *ManagerStoreMetaInfo) RelationalInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + InnerSep + Relational,
-		Path: msi.Path,
+		Name: RelationalDataStoreKey,
+		Path: filepath.Join(Relational, msi.Path),
 	}
 }
 
-func (msi *ManagerStoreMetaInfo) TmpRelationalInfo() *ManagerStoreMetaInfo {
+func (msi *ManagerStoreMetaInfo) TemporaryInfo() *ManagerStoreMetaInfo {
 	return &ManagerStoreMetaInfo{
-		Name: msi.Name + InnerSep + InnerSep + Temporary,
-		Path: msi.Path,
+		Name: msi.Name,
+		Path: filepath.Join(Temporary, msi.Path),
+	}
+}
+
+func (msi *ManagerStoreMetaInfo) TemporaryIndexInfo() *ManagerStoreMetaInfo {
+	return &ManagerStoreMetaInfo{
+		Name: msi.Name,
+		Path: filepath.Join(Temporary, Indexed, msi.Path),
+	}
+}
+
+func (msi *ManagerStoreMetaInfo) TemporaryIndexListInfo() *ManagerStoreMetaInfo {
+	return &ManagerStoreMetaInfo{
+		Name: msi.Name,
+		Path: filepath.Join(Temporary, IndexedList, msi.Path),
+	}
+}
+
+func (msi *ManagerStoreMetaInfo) TemporaryRelationalInfo() *ManagerStoreMetaInfo {
+	return &ManagerStoreMetaInfo{
+		Name: RelationalDataStoreKey,
+		Path: filepath.Join(Temporary, Relational, msi.Path),
 	}
 }
 
@@ -537,4 +605,10 @@ const (
 	Default ListSearchPattern = iota
 	All
 	IndexingList
+)
+
+// Errors
+
+var (
+	ErrStoreAlreadyExists = errorsx.New("store already exists")
 )

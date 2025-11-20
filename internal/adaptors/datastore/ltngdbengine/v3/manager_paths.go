@@ -11,11 +11,18 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
-func (e *LTNGEngine) createStatsPathsOnDisk(
+func (e *LTNGEngine) createManagerStatsPathsOnDisk(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) error {
 	return saga.NewListOperator(e.buildStatsPathOperations(ctx, info)...).Operate()
+}
+
+func (e *LTNGEngine) createStatsPathsOnDisk(
+	ctx context.Context,
+	info *ltngdbenginemodelsv3.StoreInfo,
+) error {
+	return saga.NewListOperator(e.buildStatsPathOperations(ctx, info)[0:2]...).Operate()
 }
 
 func (e *LTNGEngine) buildStatsPathOperations(
@@ -39,7 +46,7 @@ func (e *LTNGEngine) buildStatsPathOperations(
 		return nil
 	}
 	createTemporaryStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryStatsPath(info.Path)
+		path := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating temporary stats path: %s", path)
 		}
@@ -47,7 +54,7 @@ func (e *LTNGEngine) buildStatsPathOperations(
 		return nil
 	}
 	deleteTemporaryStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryStatsPath(info.Path)
+		path := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting temporary stats path: %s", path)
 		}
@@ -56,37 +63,29 @@ func (e *LTNGEngine) buildStatsPathOperations(
 	}
 
 	createRelationalStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalStatsPath(info.Path)
+		path := ltngdbenginemodelsv3.GetStatsPath(info.RelationalInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
-			return errorsx.Wrapf(err, "error creating stats path: %s", path)
+			return errorsx.Wrapf(err, "error creating relational stats path: %s", path)
 		}
 
 		return nil
 	}
 	deleteRelationalStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalStatsPath(info.Path)
+		path := ltngdbenginemodelsv3.GetStatsPath(info.RelationalInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
-			return errorsx.Wrapf(err, "error deleting stats path: %s", path)
+			return errorsx.Wrapf(err, "error deleting relational stats path: %s", path)
 		}
 
 		return nil
 	}
 	createTemporaryRelationalStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryRelationalStatsPath(info.Path)
+		path := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().RelationalInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
-			return errorsx.Wrapf(err, "error creating stats path: %s", path)
+			return errorsx.Wrapf(err, "error creating temporary relational stats path: %s", path)
 		}
 
 		return nil
 	}
-	//deleteTemporaryRelationalStatsPathOnDisk := func() error {
-	//	path := GetTemporaryRelationalStatsPath(info.Path)
-	//	if err := osx.CleanupDirs(ctx, path); err != nil {
-	//		return errorsx.Wrapf(err, "error deleting stats path: %s", path)
-	//	}
-	//
-	//	return nil
-	//}
 
 	return []*saga.Operation{
 		{
@@ -163,7 +162,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	createTemporaryDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating temporary data path: %s", path)
 		}
@@ -171,7 +170,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	deleteTemporaryDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting temporary data path: %s", path)
 		}
@@ -179,41 +178,8 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 
-	//createRubishDataPathOnDisk := func() error {
-	//	path := GetRubishDataPath(info.Path)
-	//	if err := os.MkdirAll(path, osx.FileRW); err != nil {
-	//		return errorsx.Wrapf(err, "error creating rubish data path: %s", path)
-	//	}
-	//
-	//	return nil
-	//}
-	//deleteRubishDataPathOnDisk := func() error {
-	//	path := GetRubishDataPath(info.Path)
-	//	if err := osx.CleanupDirs(ctx, path); err != nil {
-	//		return errorsx.Wrapf(err, "error deleting rubish data path: %s", path)
-	//	}
-	//
-	//	return nil
-	//}
-	//createTemporaryRubishDataPathOnDisk := func() error {
-	//	path := GetTemporaryRubishDataPath(info.Path)
-	//	if err := os.MkdirAll(path, osx.FileRW); err != nil {
-	//		return errorsx.Wrapf(err, "error creating temporary rubish data path: %s", path)
-	//	}
-	//
-	//	return nil
-	//}
-	//deleteTemporaryRubishDataPathOnDisk := func() error {
-	//	path := GetTemporaryRubishDataPath(info.Path)
-	//	if err := osx.CleanupDirs(ctx, path); err != nil {
-	//		return errorsx.Wrapf(err, "error deleting temporary rubish data path: %s", path)
-	//	}
-	//
-	//	return nil
-	//}
-
 	createRelationalDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.RelationalInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating relational data path: %s", path)
 		}
@@ -221,7 +187,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	deleteRelationalDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.RelationalInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting relational data path: %s", path)
 		}
@@ -229,7 +195,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	createTemporaryRelationalDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryRelationalDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().RelationalInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating temporary relational data path: %s", path)
 		}
@@ -237,7 +203,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	deleteTemporaryRelationalDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryRelationalDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().RelationalInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting temporary relational data path: %s", path)
 		}
@@ -246,7 +212,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 	}
 
 	createIndexedDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating indexed data path: %s", path)
 		}
@@ -254,7 +220,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	deleteIndexedDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting indexed data path: %s", path)
 		}
@@ -262,7 +228,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	createTemporaryIndexedDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryIndexedDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().IndexInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating temporary indexed data path: %s", path)
 		}
@@ -270,7 +236,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	deleteTemporaryIndexedDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryIndexedDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().IndexInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting temporary indexed data path: %s", path)
 		}
@@ -279,7 +245,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 	}
 
 	createIndexedListDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedListDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexListInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating indexed list data path: %s", path)
 		}
@@ -287,7 +253,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	deleteIndexedListDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedListDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexListInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error deleting indexed list data path: %s", path)
 		}
@@ -295,7 +261,7 @@ func (e *LTNGEngine) buildDataPathOperations(
 		return nil
 	}
 	createTemporaryIndexedListDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryIndexedListDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().IndexListInfo().Path)
 		if err := os.MkdirAll(path, osx.FileRW); err != nil {
 			return errorsx.Wrapf(err, "error creating temporary indexed list data path: %s", path)
 		}
@@ -328,30 +294,6 @@ func (e *LTNGEngine) buildDataPathOperations(
 				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
-		//{
-		//	Action: &saga.Action{
-		//		Name:        "createRubishDataPathOnDisk",
-		//		Do:          createRubishDataPathOnDisk,
-		//		RetrialOpts: saga.DefaultRetrialOps,
-		//	},
-		//	Rollback: &saga.Rollback{
-		//		Name:        "deleteRubishDataPathOnDisk",
-		//		Do:          deleteRubishDataPathOnDisk,
-		//		RetrialOpts: saga.DefaultRetrialOps,
-		//	},
-		//},
-		//{
-		//	Action: &saga.Action{
-		//		Name:        "createTemporaryRubishDataPathOnDisk",
-		//		Do:          createTemporaryRubishDataPathOnDisk,
-		//		RetrialOpts: saga.DefaultRetrialOps,
-		//	},
-		//	Rollback: &saga.Rollback{
-		//		Name:        "deleteTemporaryRubishDataPathOnDisk",
-		//		Do:          deleteTemporaryRubishDataPathOnDisk,
-		//		RetrialOpts: saga.DefaultRetrialOps,
-		//	},
-		//},
 		{
 			Action: &saga.Action{
 				Name:        "createRelationalDataPathOnDisk",
@@ -424,24 +366,43 @@ func (e *LTNGEngine) buildDataPathOperations(
 
 // ################################################################################################################## \\
 
+func (e *LTNGEngine) removeEmptyManagerStatsPathsFromDisk(
+	ctx context.Context,
+	info *ltngdbenginemodelsv3.StoreInfo,
+) error {
+	if err := e.removeEmptyStatsPathsFromDisk(ctx, info); err != nil {
+		e.logger.Error(ctx, "error cleaning up stats paths from disk",
+			"path", info.Path, "error", err)
+	}
+
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetStatsPath(
+		info.RelationalInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up relational stats path",
+			"path", info.Path, "error", err)
+	}
+
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetStatsPath(
+		info.TemporaryInfo().RelationalInfo().Path),
+	); err != nil {
+		e.logger.Error(ctx, "error cleaning up temporary relational stats path",
+			"path", info.Path, "error", err)
+	}
+
+	return nil
+}
+
 func (e *LTNGEngine) removeEmptyStatsPathsFromDisk(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) error {
 	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetStatsPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up stats path", "path", info.Path, "error", err)
+		e.logger.Error(ctx, "error cleaning up stats path",
+			"path", info.Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetTemporaryStatsPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up stats path", "path", info.Path, "error", err)
-	}
-
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetRelationalStatsPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up stats path", "path", info.Path, "error", err)
-	}
-
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetTemporaryRelationalStatsPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up stats path", "path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up temporary stats path",
+			"path", info.Path, "error", err)
 	}
 
 	return nil
@@ -452,35 +413,50 @@ func (e *LTNGEngine) removeEmptyDataPathsFromDisk(
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) error {
 	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up data path", info.Path, "error", err)
+		e.logger.Error(ctx, "error cleaning up data path",
+			"path", info.Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetTemporaryDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up tmp data path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.TemporaryInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up tmp data path",
+			"path", info.Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetIndexedDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up indexed data path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.IndexInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up indexed data path",
+			"path", info.IndexInfo().Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetTemporaryIndexedDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up tmp data indexed path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.TemporaryInfo().IndexInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up tmp data indexed path",
+			"path", info.TemporaryInfo().IndexInfo().Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetIndexedListDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up indexed list data path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.IndexListInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up indexed list data path",
+			"path", info.IndexListInfo().Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetTemporaryIndexedListDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up tmp data indexed list path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.TemporaryInfo().IndexListInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up tmp data indexed list path",
+			"path", info.TemporaryInfo().IndexListInfo().Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetRelationalDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up relational data path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.RelationalInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up relational data path",
+			"path", info.RelationalInfo().Path, "error", err)
 	}
 
-	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetTemporaryRelationalDataPath(info.Path)); err != nil {
-		e.logger.Error(ctx, "error cleaning up tmp relational data path", info.Path, "error", err)
+	if err := osx.CleanupEmptyDirs(ctx, ltngdbenginemodelsv3.GetDataPath(
+		info.TemporaryInfo().RelationalInfo().Path)); err != nil {
+		e.logger.Error(ctx, "error cleaning up tmp relational data path",
+			"path", info.TemporaryInfo().RelationalInfo().Path, "error", err)
 	}
 
 	return nil
@@ -488,7 +464,7 @@ func (e *LTNGEngine) removeEmptyDataPathsFromDisk(
 
 // ################################################################################################################## \\
 
-func (e *LTNGEngine) createFullStoreOnDisk(
+func (e *LTNGEngine) createStoreOnDisk(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) error {
@@ -513,30 +489,39 @@ func (e *LTNGEngine) buildCreateStoreOperations(
 		return e.removeEmptyDataPathsFromDisk(ctx, info)
 	}
 
-	createStoreOnDisk := func() error {
-		_, err := e.createStoreOnDisk(ctx, info)
-		if err != nil {
+	createStatsStoreOnDisk := func() error {
+		if _, err := e.createStatsStoreOnDisk(ctx, info); err != nil {
 			return err
 		}
 
 		return nil
 	}
-	deleteStoreFromDisk := func() error {
-		return os.Remove(ltngdbenginemodelsv3.GetStatsFilepath(info.Path, info.Name))
-	}
-
-	relationalStoreStatsUpdate := func() error {
-		rfi, err := e.createRelationalItemStore(ctx, info)
-		if err != nil {
+	deleteStatsStoreFromDisk := func() error {
+		if err := e.deleteStatsStoreFromDisk(ctx, info); err != nil {
 			return err
 		}
-		info = rfi.FileData.Header.StoreInfo
 
-		return e.insertRelationalStats(ctx, info)
+		return nil
 	}
-	relationalStoreDeletion := func() error {
-		if err := os.Remove(ltngdbenginemodelsv3.GetRelationalStatsFilepath(info.Path, info.Name)); err != nil {
-			e.logger.Error(ctx, "error cleaning up relational stats path", "path", info.Path, "error", err)
+
+	createRelationalStoreOnDisk := func() error {
+		if _, err := e.createRelationalDataStore(ctx, info); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	deleteRelationalStoreFromDisk := func() error {
+		if err := e.deleteRelationalDataStore(ctx, info); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	updateRelationalStatsStoreOnDisk := func() error {
+		if err := e.upsertRelationalStats(ctx, info); err != nil {
+			return err
 		}
 
 		return nil
@@ -569,25 +554,32 @@ func (e *LTNGEngine) buildCreateStoreOperations(
 		},
 		{
 			Action: &saga.Action{
-				Name:        "createStoreOnDisk",
-				Do:          createStoreOnDisk,
+				Name:        "createStatsStoreOnDisk",
+				Do:          createStatsStoreOnDisk,
 				RetrialOpts: saga.DefaultRetrialOps,
 			},
 			Rollback: &saga.Rollback{
-				Name:        "deleteStoreFromDisk",
-				Do:          deleteStoreFromDisk,
+				Name:        "deleteStatsStoreFromDisk",
+				Do:          deleteStatsStoreFromDisk,
 				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
 		{
 			Action: &saga.Action{
-				Name:        "relationalStoreStatsUpdate",
-				Do:          relationalStoreStatsUpdate,
+				Name:        "createRelationalStoreOnDisk",
+				Do:          createRelationalStoreOnDisk,
 				RetrialOpts: saga.DefaultRetrialOps,
 			},
 			Rollback: &saga.Rollback{
-				Name:        "relationalStoreDeletion",
-				Do:          relationalStoreDeletion,
+				Name:        "deleteRelationalStoreFromDisk",
+				Do:          deleteRelationalStoreFromDisk,
+				RetrialOpts: saga.DefaultRetrialOps,
+			},
+		},
+		{
+			Action: &saga.Action{
+				Name:        "updateRelationalStatsStoreOnDisk",
+				Do:          updateRelationalStatsStoreOnDisk,
 				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
@@ -595,7 +587,7 @@ func (e *LTNGEngine) buildCreateStoreOperations(
 	return operations
 }
 
-func (e *LTNGEngine) deleteFullStoreFromDisk(
+func (e *LTNGEngine) deleteFStoreFromDisk(
 	ctx context.Context,
 	info *ltngdbenginemodelsv3.StoreInfo,
 ) error {
@@ -608,7 +600,7 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 ) []*saga.Operation {
 	moveDataPathOnDisk := func() error {
 		path := ltngdbenginemodelsv3.GetDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryDataPath(info.Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
 			return errorsx.Wrapf(err, "error moving data files to tmp path: %s", path)
 		}
@@ -617,7 +609,7 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 	moveBackDataPathOnDisk := func() error {
 		path := ltngdbenginemodelsv3.GetDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryDataPath(info.Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
 			return errorsx.Wrapf(err, "error moving back data files from tmp path: %s", path)
 		}
@@ -626,8 +618,8 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 
 	moveIndexDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryIndexedDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexInfo().Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryIndexInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
 			return errorsx.Wrapf(err, "error moving indexed data files to tmp path: %s", path)
 		}
@@ -635,8 +627,8 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 		return nil
 	}
 	moveBackIndexedDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryIndexedDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexInfo().Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryIndexInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
 			return errorsx.Wrapf(err, "error moving back indexed data files to tmp path: %s", path)
 		}
@@ -645,8 +637,8 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 
 	moveIndexListDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedListDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryIndexedListDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexListInfo().Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryIndexListInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
 			return errorsx.Wrapf(err, "error moving indexed list data files to tmp path: %s", path)
 		}
@@ -654,8 +646,8 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 		return nil
 	}
 	moveBackIndexedListDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetIndexedListDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryIndexedListDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.IndexListInfo().Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryIndexListInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
 			return errorsx.Wrapf(err, "error moving back indexed list data files to tmp path: %s", path)
 		}
@@ -664,8 +656,8 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 
 	moveRelationalDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryRelationalDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.RelationalInfo().Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryRelationalInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
 			return errorsx.Wrapf(err, "error moving indexed list data files to tmp path: %s", path)
 		}
@@ -673,8 +665,8 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 		return nil
 	}
 	moveBackRelationalDataPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalDataPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryRelationalDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.RelationalInfo().Path)
+		tmpPath := ltngdbenginemodelsv3.GetDataPath(info.TemporaryRelationalInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
 			return errorsx.Wrapf(err, "error moving back indexed list data files to tmp path: %s", path)
 		}
@@ -684,7 +676,7 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 
 	moveStatsPathOnDisk := func() error {
 		path := ltngdbenginemodelsv3.GetStatsPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryStatsPath(info.Path)
+		tmpPath := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
 			return errorsx.Wrapf(err, "error moving stats files to tmp path: %s", path)
 		}
@@ -693,7 +685,7 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 	moveBackStatsPathOnDisk := func() error {
 		path := ltngdbenginemodelsv3.GetStatsPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryStatsPath(info.Path)
+		tmpPath := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().Path)
 		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
 			return errorsx.Wrapf(err, "error moving back stats files from tmp path: %s", path)
 		}
@@ -701,24 +693,24 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 		return nil
 	}
 
-	moveRelationalStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalStatsPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryRelationalStatsPath(info.Path)
-		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
-			return errorsx.Wrapf(err, "error moving relational stats files to tmp path: %s", path)
-		}
-
-		return nil
-	}
-	moveBackRelationalStatsPathOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetRelationalStatsPath(info.Path)
-		tmpPath := ltngdbenginemodelsv3.GetTemporaryRelationalStatsPath(info.Path)
-		if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
-			return errorsx.Wrapf(err, "error moving back relational stats files from tmp path: %s", path)
-		}
-
-		return nil
-	}
+	//moveRelationalStatsPathOnDisk := func() error {
+	//	path := ltngdbenginemodelsv3.GetStatsPath(info.RelationalInfo().Path)
+	//	tmpPath := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryRelationalInfo().Path)
+	//	if _, err := osx.MvOnlyFilesFromDirAsync(ctx, path, tmpPath); err != nil {
+	//		return errorsx.Wrapf(err, "error moving relational stats files to tmp path: %s", path)
+	//	}
+	//
+	//	return nil
+	//}
+	//moveBackRelationalStatsPathOnDisk := func() error {
+	//	path := ltngdbenginemodelsv3.GetStatsPath(info.RelationalInfo().Path)
+	//	tmpPath := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryRelationalInfo().Path)
+	//	if _, err := osx.MvOnlyFilesFromDirAsync(ctx, tmpPath, path); err != nil {
+	//		return errorsx.Wrapf(err, "error moving back relational stats files from tmp path: %s", path)
+	//	}
+	//
+	//	return nil
+	//}
 
 	cleanupDataPathsOnDisk := func() error {
 		path := ltngdbenginemodelsv3.GetDataPath(info.Path)
@@ -726,17 +718,17 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 			return errorsx.Wrapf(err, "error cleaning up data path: %s", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetIndexedDataPath(info.Path)
+		path = ltngdbenginemodelsv3.GetDataPath(info.IndexInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error cleaning up indexed data path: %s", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetIndexedListDataPath(info.Path)
+		path = ltngdbenginemodelsv3.GetDataPath(info.IndexListInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error cleaning up indexed list data path: %s", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetRelationalDataPath(info.Path)
+		path = ltngdbenginemodelsv3.GetDataPath(info.RelationalInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			return errorsx.Wrapf(err, "error cleaning up relational data path: %s", path)
 		}
@@ -753,10 +745,10 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 			return errorsx.Wrapf(err, "error cleaning up stats path: %s", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetRelationalStatsPath(info.Path)
-		if err := osx.CleanupDirs(ctx, path); err != nil {
-			return errorsx.Wrapf(err, "error cleaning up relational stats path: %s", path)
-		}
+		//path = ltngdbenginemodelsv3.GetStatsPath(info.RelationalInfo().Path)
+		//if err := osx.CleanupDirs(ctx, path); err != nil {
+		//	return errorsx.Wrapf(err, "error cleaning up relational stats path: %s", path)
+		//}
 
 		return nil
 	}
@@ -783,22 +775,22 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 
 	cleanupTemporaryDataPathsOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryDataPath(info.Path)
+		path := ltngdbenginemodelsv3.GetDataPath(info.TemporaryInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			e.logger.Error(ctx, "error cleaning up temporary data path", "path", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetTemporaryIndexedDataPath(info.Path)
+		path = ltngdbenginemodelsv3.GetDataPath(info.TemporaryIndexInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			e.logger.Error(ctx, "error cleaning up temporary indexed data path", "path", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetTemporaryIndexedListDataPath(info.Path)
+		path = ltngdbenginemodelsv3.GetDataPath(info.TemporaryIndexListInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			e.logger.Error(ctx, "error cleaning up temporary indexed list data path", "path", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetTemporaryRelationalDataPath(info.Path)
+		path = ltngdbenginemodelsv3.GetDataPath(info.TemporaryRelationalInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			e.logger.Error(ctx, "error cleaning up temporary relational data path", "path", path)
 		}
@@ -810,15 +802,15 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 	}
 
 	cleanupTemporaryStatsPathsOnDisk := func() error {
-		path := ltngdbenginemodelsv3.GetTemporaryStatsPath(info.Path)
+		path := ltngdbenginemodelsv3.GetStatsPath(info.TemporaryInfo().Path)
 		if err := osx.CleanupDirs(ctx, path); err != nil {
 			e.logger.Error(ctx, "error cleaning up temporary data path", "path", path)
 		}
 
-		path = ltngdbenginemodelsv3.GetTemporaryRelationalStatsPath(info.Path)
-		if err := osx.CleanupDirs(ctx, path); err != nil {
-			e.logger.Error(ctx, "error cleaning up temporary indexed data path", "path", path)
-		}
+		//path = ltngdbenginemodelsv3.GetStatsPath(info.TemporaryRelationalInfo().Path)
+		//if err := osx.CleanupDirs(ctx, path); err != nil {
+		//	e.logger.Error(ctx, "error cleaning up temporary indexed data path", "path", path)
+		//}
 
 		return nil
 	}
@@ -884,18 +876,18 @@ func (e *LTNGEngine) buildDeletionStoreOperations(
 				RetrialOpts: saga.DefaultRetrialOps,
 			},
 		},
-		{
-			Action: &saga.Action{
-				Name:        "moveRelationalStatsPathOnDisk",
-				Do:          moveRelationalStatsPathOnDisk,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-			Rollback: &saga.Rollback{
-				Name:        "moveBackRelationalStatsPathOnDisk",
-				Do:          moveBackRelationalStatsPathOnDisk,
-				RetrialOpts: saga.DefaultRetrialOps,
-			},
-		},
+		//{
+		//	Action: &saga.Action{
+		//		Name:        "moveRelationalStatsPathOnDisk",
+		//		Do:          moveRelationalStatsPathOnDisk,
+		//		RetrialOpts: saga.DefaultRetrialOps,
+		//	},
+		//	Rollback: &saga.Rollback{
+		//		Name:        "moveBackRelationalStatsPathOnDisk",
+		//		Do:          moveBackRelationalStatsPathOnDisk,
+		//		RetrialOpts: saga.DefaultRetrialOps,
+		//	},
+		//},
 		{
 			Action: &saga.Action{
 				Name:        "cleanupDataPathsOnDisk",

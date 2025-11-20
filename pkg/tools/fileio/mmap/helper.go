@@ -11,6 +11,26 @@ const (
 	maxRecordSize = 10 << 20 // 100MB
 )
 
+// DeleteByKeyResult is the result definition of DeleteByKey.
+// As for reference:
+// bs is the found bs payload.
+// index is the record index, starting at 0.
+// upTo and from, giving the following []byte{}...
+// []byte{...upTo, ..., from...}
+// example: upTo = 105; from = 120
+// so when copying, you:
+// target := make([]byte, len(data)-(from-upTo))
+// copy(target, data[:upTo]); copy(target, data[from:])
+// So,
+// upTo is the offset until the found record.
+// from is the offset from the from record onwards.
+type DeleteByKeyResult struct {
+	bs    []byte
+	index uint64
+	upTo  uint64
+	from  uint64
+}
+
 func flushMmap(mmap []byte) error {
 	return unix.Msync(mmap, unix.MS_SYNC)
 }
