@@ -2,12 +2,10 @@ package queuemodels
 
 import (
 	"fmt"
-	"os"
 	"sync/atomic"
 
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
-
-	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/mmap"
 )
 
 type QueueDistributionType int32
@@ -143,11 +141,8 @@ const (
 	QueueNameStore = "ltng_queue_store"
 	QueuePathStore = "ltng_queue/queue_store"
 
-	Publishers    = "publishers"
-	Signalers     = "signalers"
-	Sep           = string(os.PathSeparator)
-	PublishersSep = Publishers + Sep
-	SignalersSep  = Signalers + Sep
+	Publishers = "publishers"
+	Signalers  = "signalers"
 )
 
 type QueueOrchestrator struct {
@@ -172,7 +167,7 @@ type EventTracker struct {
 
 type QueuePublisher struct {
 	Queue     *Queue
-	FileQueue *filequeuev1.FileQueue
+	FileQueue *mmap.FileQueue
 
 	FirstSent *atomic.Bool
 	IsClosed  *atomic.Bool
@@ -180,7 +175,7 @@ type QueuePublisher struct {
 
 type QueueSignaler struct {
 	Queue     *Queue
-	FileQueue *filequeuev1.FileQueue
+	FileQueue *mmap.FileQueue
 
 	SignalTransmissionRate uint32
 	SignalTransmitter      chan struct{}

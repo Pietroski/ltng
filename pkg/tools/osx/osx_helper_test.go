@@ -2,6 +2,7 @@ package osx
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,13 +10,14 @@ import (
 )
 
 const (
-	baseDir = "osx_test_files"
+	baseDir = ".osx_test_files"
+)
 
-	srcDir = "osx_test_files/src_dir"
-	dstDir = "osx_test_files/dest_dir"
-
-	subSrcDir = "osx_test_files/src_dir/sub_src_dir"
-	subDstDir = "osx_test_files/dest_dir/sub_dst_dir"
+var (
+	srcDir    = filepath.Join(baseDir, "src_dir")
+	dstDir    = filepath.Join(baseDir, "dst_dir")
+	subSrcDir = filepath.Join(baseDir, "src_dir", "sub_src_dir")
+	subDstDir = filepath.Join(baseDir, "dst_dir", "sub_dst_dir")
 )
 
 func GenerateFileContentPair(count int) map[string]string {
@@ -43,6 +45,15 @@ func PrepareTestFiles(
 	t testing.TB,
 	fileCount int,
 ) {
+	PrepareTestDirs(t)
+
+	fileContentMap := GenerateFileContentPair(fileCount)
+	CreateFiles(t, srcDir, fileContentMap)
+}
+
+func PrepareTestDirs(
+	t testing.TB,
+) {
 	var err error
 
 	err = os.RemoveAll(baseDir)
@@ -59,7 +70,4 @@ func PrepareTestFiles(
 
 	err = os.MkdirAll(subDstDir, defaultFilePerm)
 	require.NoError(t, err)
-
-	fileContentMap := GenerateFileContentPair(fileCount)
-	CreateFiles(t, srcDir, fileContentMap)
 }

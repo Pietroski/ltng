@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	ltngdbmodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 )
 
 type (
@@ -29,7 +29,7 @@ type (
 
 type BytesValues struct {
 	BsKey, BsValue, SecondaryIndexBs, ExtraUpsertIndex []byte
-	Item                                               *ltngenginemodels.Item
+	Item                                               *ltngdbmodelsv3.Item
 }
 
 func GenerateRandomUser[T TestBench](tb T) *User {
@@ -87,7 +87,7 @@ func GetUserBytesValues[T TestBench](tb T, ts *TestSuite, userData *User) *Bytes
 		BsValue:          bsValue,
 		SecondaryIndexBs: secondaryIndexBs,
 		ExtraUpsertIndex: extraUpsertIndexBs,
-		Item: &ltngenginemodels.Item{
+		Item: &ltngdbmodelsv3.Item{
 			Key:   bsKey,
 			Value: bsValue,
 		},

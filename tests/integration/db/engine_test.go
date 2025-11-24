@@ -14,7 +14,8 @@ import (
 	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	models_badgerdb_v4_management "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	models_badgerdb_v4_operation "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	ltngdbmodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
+	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
@@ -27,23 +28,23 @@ func TestEngines(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 100)
 	ets = data.InitEngineTestSuite(t)
 
-	t.Log("testLTNGDBEngineV2")
-	testLTNGDBEngineV2(t)
+	t.Log("testLTNGDBEngineV3")
+	testLTNGDBEngineV3(t)
 
 	t.Log("testBadgerDBEngine")
 	testBadgerDBEngine(t)
 }
 
-func testLTNGDBEngineV2(t *testing.T) {
-	storeInfo := &ltngenginemodels.StoreInfo{
+func testLTNGDBEngineV3(t *testing.T) {
+	storeInfo := &ltngdbmodelsv3.StoreInfo{
 		Name: "user-store",
 		Path: "user-store",
 	}
 	dbMetaInfo := storeInfo.ManagerStoreMetaInfo()
-	_, err := ets.LTNGDBEngineV2.CreateStore(ets.Ctx, storeInfo)
+	_, err := ets.LTNGDBEngineV3.CreateStore(ets.Ctx, storeInfo)
 	require.NoError(t, err)
 
-	store, err := ets.LTNGDBEngineV2.LoadStore(ets.Ctx, storeInfo)
+	store, err := ets.LTNGDBEngineV3.LoadStore(ets.Ctx, storeInfo)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
@@ -54,17 +55,17 @@ func testLTNGDBEngineV2(t *testing.T) {
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, ets.TS(), user)
 
-			item := &ltngenginemodels.Item{
+			item := &ltngdbmodelsv3.Item{
 				Key:   bvs.BsKey,
 				Value: bvs.BsValue,
 			}
-			opts := &ltngenginemodels.IndexOpts{
+			opts := &ltngdbmodelsv3.IndexOpts{
 				HasIdx:       true,
 				ParentKey:    bvs.BsKey,
 				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {
-				_, err = ets.LTNGDBEngineV2.CreateItem(ets.Ctx, dbMetaInfo, item, opts)
+				_, err = ets.LTNGDBEngineV3.CreateItem(ets.Ctx, dbMetaInfo, item, opts)
 			}))
 			assert.NoError(t, err)
 		}
@@ -75,17 +76,17 @@ func testLTNGDBEngineV2(t *testing.T) {
 		t.Log("ListItems")
 
 		bd := testbench.New()
-		pagination := &ltngenginemodels.Pagination{
+		pagination := &ltngdata.Pagination{
 			PageID:   1,
 			PageSize: 50,
 		}
-		opts := &ltngenginemodels.IndexOpts{
-			IndexProperties: ltngenginemodels.IndexProperties{
-				ListSearchPattern: ltngenginemodels.Default,
+		opts := &ltngdbmodelsv3.IndexOpts{
+			IndexProperties: ltngdbmodelsv3.IndexProperties{
+				ListSearchPattern: ltngdbmodelsv3.Default,
 			},
 		}
 		bd.CalcAvg(bd.CalcElapsed(func() {
-			_, err = ets.LTNGDBEngineV2.ListItems(ets.Ctx, dbMetaInfo, pagination, opts)
+			_, err = ets.LTNGDBEngineV3.ListItems(ets.Ctx, dbMetaInfo, pagination, opts)
 		}))
 		assert.NoError(t, err)
 		t.Log(bd)
@@ -98,17 +99,17 @@ func testLTNGDBEngineV2(t *testing.T) {
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, ets.TS(), user)
 
-			item := &ltngenginemodels.Item{
+			item := &ltngdbmodelsv3.Item{
 				Key:   bvs.BsKey,
 				Value: bvs.BsValue,
 			}
-			opts := &ltngenginemodels.IndexOpts{
+			opts := &ltngdbmodelsv3.IndexOpts{
 				HasIdx:       true,
 				ParentKey:    bvs.BsKey,
 				IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {
-				_, err = ets.LTNGDBEngineV2.UpsertItem(ets.Ctx, dbMetaInfo, item, opts)
+				_, err = ets.LTNGDBEngineV3.UpsertItem(ets.Ctx, dbMetaInfo, item, opts)
 			}))
 			assert.NoError(t, err)
 		}
@@ -122,26 +123,26 @@ func testLTNGDBEngineV2(t *testing.T) {
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, ets.TS(), user)
 
-			item := &ltngenginemodels.Item{
+			item := &ltngdbmodelsv3.Item{
 				Key:   bvs.BsKey,
 				Value: bvs.BsValue,
 			}
-			opts := &ltngenginemodels.IndexOpts{
+			opts := &ltngdbmodelsv3.IndexOpts{
 				HasIdx:    true,
 				ParentKey: bvs.BsKey,
-				IndexProperties: ltngenginemodels.IndexProperties{
-					IndexDeletionBehaviour: ltngenginemodels.Cascade,
+				IndexProperties: ltngdbmodelsv3.IndexProperties{
+					IndexDeletionBehaviour: ltngdbmodelsv3.Cascade,
 				},
 			}
 			bd.CalcAvg(bd.CalcElapsed(func() {
-				_, err = ets.LTNGDBEngineV2.DeleteItem(ets.Ctx, dbMetaInfo, item, opts)
+				_, err = ets.LTNGDBEngineV3.DeleteItem(ets.Ctx, dbMetaInfo, item, opts)
 			}))
 			assert.NoError(t, err)
 		}
 		t.Log(bd)
 	}
 
-	ets.LTNGDBEngineV2.Close()
+	ets.LTNGDBEngineV3.Close()
 }
 
 func testBadgerDBEngine(t *testing.T) {

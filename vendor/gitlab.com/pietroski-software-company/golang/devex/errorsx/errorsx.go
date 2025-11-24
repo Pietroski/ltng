@@ -53,6 +53,17 @@ func Errorf(format string, args ...any) *Error {
 	}
 }
 
+func From(err error) *Error {
+	if err == nil {
+		return nil
+	}
+
+	return &Error{
+		message:    err.Error(),
+		stacktrace: callers(),
+	}
+}
+
 // Wrap wraps the error
 //
 // Also, to further know:
@@ -131,6 +142,16 @@ func (e *Error) Wrapf(err error, format string, args ...any) *Error {
 	}
 }
 
+// Errorf formats according to a format specifier and returns the string as an error.
+func (e *Error) Errorf(format string, args ...any) *Error {
+	return &Error{
+		message:    fmt.Sprintf(format, args...),
+		stacktrace: e.stacktrace,
+		errType:    e.errType,
+		next:       e,
+	}
+}
+
 // WithRetriable sets a retriable error type to the *Error instance.
 func (e *Error) WithRetriable() *Error {
 	e.errType = RetriableErr
@@ -190,7 +211,10 @@ func (e *Error) Is(target error) bool {
 	}
 
 	for e != nil {
-		if e.message == t.message {
+		//if e.message == t.message {
+		//	return true
+		//}
+		if strings.Contains(e.message, t.message) {
 			return true
 		}
 

@@ -1,7 +1,8 @@
-package ltngqueue_engine
+package ltngqueueenginev2
 
 import (
 	"context"
+	"io"
 	"runtime"
 	"sync/atomic"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
@@ -201,7 +203,12 @@ func TestQueue_Publish(t *testing.T) {
 			// pull & assert events - order should be preserved
 			count := new(atomic.Uint64)
 			go func() {
-				err := qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
+				loop.Run(ctx, func() error {
+					bs, err := qs.FileQueue.Read()
+					if err != io.EOF {
+						assert.NoError(t, err)
+					}
+
 					if len(bs) == 0 {
 						return nil
 					}
@@ -214,9 +221,26 @@ func TestQueue_Publish(t *testing.T) {
 
 					assert.EqualValues(t, events[count.Load()], &event)
 					count.Add(1)
+
 					return nil
 				})
-				assert.NoError(t, err)
+
+				//err := qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
+				//	if len(bs) == 0 {
+				//		return nil
+				//	}
+				//
+				//	var event queuemodels.Event
+				//	err = ltngqueue.serializer.Deserialize(bs, &event)
+				//	assert.NoError(t, err)
+				//	err = event.Validate()
+				//	assert.NoError(t, err)
+				//
+				//	assert.EqualValues(t, events[count.Load()], &event)
+				//	count.Add(1)
+				//	return nil
+				//})
+				//assert.NoError(t, err)
 			}()
 
 			for count.Load() != uint64(testCase.eventCount) {
@@ -290,7 +314,12 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 			// pull & assert events - order should be preserved
 			count := new(atomic.Uint64)
 			go func() {
-				err := qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
+				loop.Run(ctx, func() error {
+					bs, err := qs.FileQueue.Read()
+					if err != io.EOF {
+						assert.NoError(t, err)
+					}
+
 					if len(bs) == 0 {
 						return nil
 					}
@@ -312,7 +341,30 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 					count.Add(1)
 					return nil
 				})
-				assert.NoError(t, err)
+
+				//err := qs.FileQueue.ReaderPooler(ctx, func(ctx context.Context, bs []byte) error {
+				//	if len(bs) == 0 {
+				//		return nil
+				//	}
+				//
+				//	var event queuemodels.Event
+				//	err = ltngqueue.serializer.Deserialize(bs, &event)
+				//	assert.NoError(t, err)
+				//	err = event.Validate()
+				//	assert.NoError(t, err)
+				//
+				//	e, ok := eventMap[event.EventID]
+				//	assert.True(t, ok)
+				//	assert.EqualValues(t, e, &event)
+				//
+				//	_, ok = eventMapCheck[event.EventID]
+				//	assert.False(t, ok)
+				//	eventMapCheck[event.EventID] = e
+				//
+				//	count.Add(1)
+				//	return nil
+				//})
+				//assert.NoError(t, err)
 			}()
 
 			for count.Load() != uint64(testCase.eventCount) {

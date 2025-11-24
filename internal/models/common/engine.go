@@ -14,6 +14,8 @@ const (
 	LightningEngineV1EngineVersionType EngineVersionType = "LIGHTNING_ENGINE_V1"
 	// LightningEngineV2EngineVersionType lighting-engine engine type
 	LightningEngineV2EngineVersionType EngineVersionType = "LIGHTNING_ENGINE_V2"
+	// LightningEngineV3EngineVersionType lighting-engine engine type
+	LightningEngineV3EngineVersionType EngineVersionType = "LIGHTNING_ENGINE_V3"
 )
 
 func ToEngineVersionType(e string) EngineVersionType {

@@ -65,6 +65,12 @@ gitlab.com/pietroski-software-company/golang/devex/env v0.0.4 h1:SqJ/ixhqYWS8s7e
 gitlab.com/pietroski-software-company/golang/devex/env v0.0.4/go.mod h1:wiOeU3nDzbeTjsBCydOBDUD4pgZk5Q5Y9cjEXHqsPSU=
 gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4 h1:AS9YDMoycwHHL+WV1gYGoq/Y/8+4EYK1Ge30dMsqmuk=
 gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.4/go.mod h1:3QrmOPoGSymweIfvwht0L4TzvJNqUypVVJjGr7UuQNo=
+gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.5 h1:ou/p3FFEQ1RUdWNQfJRONv4iecLSNPWe8wDIYiWI3C4=
+gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.5/go.mod h1:3QrmOPoGSymweIfvwht0L4TzvJNqUypVVJjGr7UuQNo=
+gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.6 h1:rdcN/8X1ZPFUvUv63s253xK8F9CAfgETsGKoILmqN3U=
+gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.6/go.mod h1:3QrmOPoGSymweIfvwht0L4TzvJNqUypVVJjGr7UuQNo=
+gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.7 h1:Wlkvb2DNSgcSsJPlBH/nsHipt0mt5MQqa73dvRGOUvU=
+gitlab.com/pietroski-software-company/golang/devex/errorsx v0.0.7/go.mod h1:3QrmOPoGSymweIfvwht0L4TzvJNqUypVVJjGr7UuQNo=
 gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6 h1:ss/Ko0xQpmo6I9ypv4oz3ymAe1pewnyBMAtpFiCgTgk=
 gitlab.com/pietroski-software-company/golang/devex/execx v0.0.6/go.mod h1:emKct6ZwvUY+LB/Hw7bun6GHDR0XWxeLPCU87ekxXMQ=
 gitlab.com/pietroski-software-company/golang/devex/loop v0.0.8 h1:sdf0KMIJd84LwsPcfErDw3ZUbkRA9hgOsOT139Thq0k=

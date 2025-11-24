@@ -1,14 +1,14 @@
-package ltngqueue_engine
+package ltngqueueenginev2
 
 import (
 	"context"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	ltngdbmodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	queuemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/queue"
 )
 
-func (q *Queue) runQueueMigration(ctx context.Context) (*ltngenginemodels.StoreInfo, error) {
-	info := &ltngenginemodels.StoreInfo{
+func (q *Queue) runQueueMigration(ctx context.Context) (*ltngdbmodelsv3.StoreInfo, error) {
+	info := &ltngdbmodelsv3.StoreInfo{
 		Name: queuemodels.QueueNameStore,
 		Path: queuemodels.QueuePathStore,
 	}

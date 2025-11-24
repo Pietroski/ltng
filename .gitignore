@@ -40,3 +40,7 @@ playground
 # doc report
 docs/outputs/**
 !docs/outputs/.gitkeep
+
+# test files
+.osx_test_files
+**/*/.osx_test_files

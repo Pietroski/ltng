@@ -37,7 +37,7 @@ func TestClientsLocally(t *testing.T) {
 
 func TestLTNGDBClient(t *testing.T) {
 	var err error
-	err = os.Setenv("LTNG_DB_ENGINE", common_model.LightningEngineV2EngineVersionType.String())
+	err = os.Setenv("LTNG_DB_ENGINE", common_model.LightningEngineV3EngineVersionType.String())
 	require.NoError(t, err)
 	err = os.Setenv("LTNG_DB_SERVER_PORT", "50050")
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestLTNGDBClient(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 
 	users = data.GenerateRandomUsers(t, 50)
-	cts = data.InitLocalClientTestSuite(t, common_model.LightningEngineV2EngineVersionType)
+	cts = data.InitLocalClientTestSuite(t, common_model.LightningEngineV3EngineVersionType)
 
 	t.Log("Test_LTNG_DB_Client_Engine")
 	testLTNGDBClient(t)
@@ -427,12 +427,12 @@ func TestClientsWithinDocker(t *testing.T) {
 	users = data.GenerateRandomUsers(t, 150)
 	cts = data.InitClientTestSuite(t)
 
-	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
-		testBadgerDBClientWithinDocker(t)
-	})
-
 	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
 		testLTNGDBClientWithinDocker(t)
+	})
+
+	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testBadgerDBClientWithinDocker(t)
 	})
 }
 

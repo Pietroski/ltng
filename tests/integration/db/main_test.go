@@ -14,7 +14,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	badgerdb_engine_v4 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/badgerdb/v4"
-	ltngdb_engine_v2 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdb/v2"
+	cmdltngdbenginev3 "gitlab.com/pietroski-software-company/lightning-db/cmd/ltngdb/ltngdbengine/v3"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 )
@@ -114,12 +114,12 @@ func main(
 		badgerdb_engine_v4.StartV4(ctx, cancel, cfg, logger, s, func(code int) {
 			logger.Debug(ctx, "os.Exit", "code", code)
 		}, opts...)
-	case common_model.LightningEngineV2EngineVersionType:
+	case common_model.LightningEngineV3EngineVersionType:
 		fallthrough
 	case common_model.DefaultEngineVersionType:
 		fallthrough
 	default:
-		ltngdb_engine_v2.StartV2(ctx, cancel, cfg, logger, s, func(code int) {
+		cmdltngdbenginev3.StartV3(ctx, cancel, cfg, logger, s, func(code int) {
 			logger.Debug(ctx, "os.Exit", "code", code)
 		}, opts...)
 	}

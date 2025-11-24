@@ -7,19 +7,20 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 
-	ltngenginemodels "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngengine"
+	ltngdata "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/bytesop"
+	pagination "gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 )
 
 func (ltng *LTNGCacheEngine) createItem(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
+		[]byte(ltngdata.BsSep),
 	)
 	strKey := hex.EncodeToString(key)
 	if err := ltng.cache.Set(ctx, strKey, item.Value); err != nil {
@@ -32,8 +33,8 @@ func (ltng *LTNGCacheEngine) createItem(
 
 	for _, itemKey := range opts.IndexingKeys {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
+			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		if err := ltng.cache.Set(ctx, strIndexKey, opts.ParentKey); err != nil {
@@ -42,8 +43,8 @@ func (ltng *LTNGCacheEngine) createItem(
 	}
 
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), opts.ParentKey},
+		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
 	if err := ltng.cache.Set(ctx, strIndexListKey, opts.IndexingKeys); err != nil {
@@ -51,17 +52,17 @@ func (ltng *LTNGCacheEngine) createItem(
 	}
 
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
+		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
-	var value []*ltngenginemodels.Item
+	var value []*ltngdata.Item
 	if err := ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return []*ltngdata.Item{}, nil
 	}); err != nil {
 		return nil, err
 	}
-	value = append(value, &ltngenginemodels.Item{
+	value = append(value, &ltngdata.Item{
 		Key:   item.Key,
 		Value: item.Value,
 	})
@@ -74,13 +75,13 @@ func (ltng *LTNGCacheEngine) createItem(
 
 func (ltng *LTNGCacheEngine) upsertItem(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
+		[]byte(ltngdata.BsSep),
 	)
 	strKey := hex.EncodeToString(key)
 	if err := ltng.cache.Set(ctx, strKey, item.Value); err != nil {
@@ -92,8 +93,8 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	}
 
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), opts.ParentKey},
+		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
 	var indexingKeys [][]byte
@@ -104,8 +105,8 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	keysToSave := bytesop.CalRightDiff(indexingKeys, opts.IndexingKeys)
 	for _, itemKey := range keysToSave {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
+			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		if err := ltng.cache.Set(ctx, strIndexKey, opts.ParentKey); err != nil {
@@ -116,8 +117,8 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	keysToDelete := bytesop.CalRightDiff(opts.IndexingKeys, indexingKeys)
 	for _, itemKey := range keysToDelete {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
+			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
 		if err := ltng.cache.Del(ctx, strIndexKey); err != nil {
@@ -130,26 +131,26 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	}
 
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
-		[]byte(ltngenginemodels.BytesSliceSep),
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
+		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
-	var value []*ltngenginemodels.Item
+	var value []*ltngdata.Item
 	_ = ltng.cache.Get(ctx, strRelationalKey, &value, func() (interface{}, error) {
-		return []*ltngenginemodels.Item{}, nil
+		return []*ltngdata.Item{}, nil
 	})
 	var found bool
 	for idx, itemValue := range value {
 		if bytes.Equal(item.Key, itemValue.Key) {
 			found = true
-			value[idx] = &ltngenginemodels.Item{
+			value[idx] = &ltngdata.Item{
 				Key:   item.Key,
 				Value: item.Value,
 			}
 		}
 	}
 	if !found {
-		value = append(value, &ltngenginemodels.Item{
+		value = append(value, &ltngdata.Item{
 			Key:   item.Key,
 			Value: item.Value,
 		})
@@ -163,18 +164,18 @@ func (ltng *LTNGCacheEngine) upsertItem(
 
 func (ltng *LTNGCacheEngine) deleteItem(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	switch opts.IndexProperties.IndexDeletionBehaviour {
-	case ltngenginemodels.Cascade:
+	case ltngdata.Cascade:
 		return ltng.deleteOnCascade(ctx, dbMetaInfo, item, opts)
-	case ltngenginemodels.CascadeByIdx:
+	case ltngdata.CascadeByIdx:
 		return ltng.deleteOnCascadeByIdx(ctx, dbMetaInfo, item, opts)
-	case ltngenginemodels.IndexOnly:
+	case ltngdata.IndexOnly:
 		return ltng.deleteIdxOnly(ctx, dbMetaInfo, item, opts)
-	case ltngenginemodels.None:
+	case ltngdata.None:
 		fallthrough
 	default:
 		return nil, errorsx.New("invalid index deletion behaviour")
@@ -183,18 +184,18 @@ func (ltng *LTNGCacheEngine) deleteItem(
 
 func (ltng *LTNGCacheEngine) loadItem(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	item *ltngenginemodels.Item,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.Item, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	item *ltngdata.Item,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.Item, error) {
 	if opts == nil {
 		return nil, errorsx.New("invalid index deletion behaviour")
 	}
 
 	if !opts.HasIdx {
 		key := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.Name), item.Key},
-			[]byte(ltngenginemodels.BytesSliceSep),
+			[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
+			[]byte(ltngdata.BsSep),
 		)
 		strKey := hex.EncodeToString(key)
 
@@ -203,18 +204,18 @@ func (ltng *LTNGCacheEngine) loadItem(
 			return nil, err
 		}
 
-		return &ltngenginemodels.Item{
+		return &ltngdata.Item{
 			Key:   item.Key,
 			Value: value,
 		}, nil
 	}
 
 	switch opts.IndexProperties.IndexSearchPattern {
-	case ltngenginemodels.AndComputational:
+	case ltngdata.AndComputational:
 		return ltng.andComputationalSearch(ctx, dbMetaInfo, item, opts)
-	case ltngenginemodels.OrComputational:
+	case ltngdata.OrComputational:
 		return ltng.orComputationalSearch(ctx, dbMetaInfo, item, opts)
-	case ltngenginemodels.One:
+	case ltngdata.One:
 		fallthrough
 	default:
 		return ltng.straightSearch(ctx, dbMetaInfo, item, opts)
@@ -223,20 +224,20 @@ func (ltng *LTNGCacheEngine) loadItem(
 
 func (ltng *LTNGCacheEngine) listItems(
 	ctx context.Context,
-	dbMetaInfo *ltngenginemodels.ManagerStoreMetaInfo,
-	pagination *ltngenginemodels.Pagination,
-	opts *ltngenginemodels.IndexOpts,
-) (*ltngenginemodels.ListItemsResult, error) {
+	dbMetaInfo *ltngdata.ManagerStoreMetaInfo,
+	pagination *pagination.Pagination,
+	opts *ltngdata.IndexOpts,
+) (*ltngdata.ListItemsResult, error) {
 	if !pagination.IsValid() {
 		return nil, errorsx.New("invalid pagination")
 	}
 
 	switch opts.IndexProperties.ListSearchPattern {
-	case ltngenginemodels.IndexingList:
+	case ltngdata.IndexingList:
 		return ltng.indexingListItems(ctx, dbMetaInfo, pagination, opts)
-	case ltngenginemodels.All:
+	case ltngdata.All:
 		return ltng.allListItems(ctx, dbMetaInfo, pagination, opts)
-	case ltngenginemodels.Default:
+	case ltngdata.Default:
 		fallthrough
 	default:
 		return ltng.defaultListItems(ctx, dbMetaInfo, pagination, opts)

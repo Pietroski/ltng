@@ -29,7 +29,7 @@ func StartV4(
 	opts ...options.Option,
 ) {
 	logger.Debug(ctx, "opening badger local manager")
-	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement))
+	db, err := badger.Open(badger.DefaultOptions(v4.InternalLocalManagement).WithSyncWrites(true))
 	if err != nil {
 		logger.Error(ctx, "error opening badger local manager", "error", err)
 
