@@ -19,7 +19,7 @@ func (ltng *LTNGCacheEngine) createItem(
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.Item, error) {
 	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
+		[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
 		[]byte(ltngdata.BsSep),
 	)
 	strKey := hex.EncodeToString(key)
@@ -33,7 +33,7 @@ func (ltng *LTNGCacheEngine) createItem(
 
 	for _, itemKey := range opts.IndexingKeys {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
@@ -43,7 +43,7 @@ func (ltng *LTNGCacheEngine) createItem(
 	}
 
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), opts.ParentKey},
 		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
@@ -52,7 +52,7 @@ func (ltng *LTNGCacheEngine) createItem(
 	}
 
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
 		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
@@ -80,7 +80,7 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.Item, error) {
 	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
+		[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
 		[]byte(ltngdata.BsSep),
 	)
 	strKey := hex.EncodeToString(key)
@@ -93,7 +93,7 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	}
 
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), opts.ParentKey},
 		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
@@ -105,7 +105,7 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	keysToSave := bytesop.CalRightDiff(indexingKeys, opts.IndexingKeys)
 	for _, itemKey := range keysToSave {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
@@ -117,7 +117,7 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	keysToDelete := bytesop.CalRightDiff(opts.IndexingKeys, indexingKeys)
 	for _, itemKey := range keysToDelete {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
@@ -131,7 +131,7 @@ func (ltng *LTNGCacheEngine) upsertItem(
 	}
 
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
 		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
@@ -194,7 +194,7 @@ func (ltng *LTNGCacheEngine) loadItem(
 
 	if !opts.HasIdx {
 		key := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.Name), item.Key},
+			[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
 			[]byte(ltngdata.BsSep),
 		)
 		strKey := hex.EncodeToString(key)

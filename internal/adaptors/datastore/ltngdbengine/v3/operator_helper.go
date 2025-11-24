@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -107,14 +108,14 @@ func (e *LTNGEngine) loadFileInfoFromMemoryOrDisk(
 	item *ltngdbenginemodelsv3.Item,
 ) (*ltngdbenginemodelsv3.FileInfo, error) {
 	strItemKey := hex.EncodeToString(item.Key)
-	fi, ok := e.itemFileMapping.Get(dbMetaInfo.LockStr(strItemKey))
+	fi, ok := e.itemFileMapping.Get(dbMetaInfo.LockStrWithKey(strItemKey))
 	if !ok {
 		var err error
 		fi, err = e.loadFileInfoFromDisk(ctx, dbMetaInfo, item)
 		if err != nil {
 			return nil, err
 		}
-		e.itemFileMapping.Set(dbMetaInfo.LockStr(strItemKey), fi)
+		e.itemFileMapping.Set(dbMetaInfo.LockStrWithKey(strItemKey), fi)
 
 		return fi, nil
 	}
@@ -158,7 +159,7 @@ func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 	ctx context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 ) (*ltngdbenginemodelsv3.RelationalFileInfo, error) {
-	relationalLockKey := dbMetaInfo.RelationalInfo().LockStr(ltngdbenginemodelsv3.RelationalDataStoreKey)
+	relationalLockKey := dbMetaInfo.RelationalInfo().LockStrWithKey(ltngdbenginemodelsv3.RelationalDataStoreKey)
 	rfi, ok := e.relationalItemFileMapping.Get(relationalLockKey)
 	if !ok {
 		var err error
@@ -246,7 +247,7 @@ func (e *LTNGEngine) searchMemoryByKeyOrParentKey(
 		return nil, errorsx.New("invalid search filter: item and opts are null")
 	}
 
-	lockKey := dbMetaInfo.LockStr(strItemKey)
+	lockKey := dbMetaInfo.LockStrWithKey(strItemKey)
 	if _, ok := e.markedAsDeletedMapping.Get(lockKey); ok {
 		return nil, errorsx.Wrapf(itemMarkedAsDeletedErr, "%+v is marked as deleted", *opts)
 	}
@@ -268,7 +269,7 @@ func (e *LTNGEngine) searchMemoryByIndex(
 ) (*ltngdbenginemodelsv3.Item, error) {
 	for _, indexItem := range opts.IndexingKeys {
 		strItemKey := hex.EncodeToString(indexItem)
-		lockKey := dbMetaInfo.IndexInfo().LockStr(strItemKey)
+		lockKey := dbMetaInfo.IndexInfo().LockStrWithKey(strItemKey)
 		_, ok := e.markedAsDeletedMapping.Get(lockKey)
 		if ok {
 			return nil, errorsx.Wrapf(itemMarkedAsDeletedErr, "item %s is marked as deleted", indexItem)
@@ -416,7 +417,7 @@ func (e *LTNGEngine) listPaginatedItems(
 			return nil, err
 		}
 
-		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockStr(hex.EncodeToString(fileData.Key))); ok {
+		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockStrWithKey(hex.EncodeToString(fileData.Key))); ok {
 			continue
 		}
 
@@ -526,7 +527,7 @@ func (e *LTNGEngine) listAllItems(
 			return nil, err
 		}
 
-		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockStr(hex.EncodeToString(fileData.Key))); ok {
+		if _, ok := e.markedAsDeletedMapping.Get(dbMetaInfo.LockStrWithKey(hex.EncodeToString(fileData.Key))); ok {
 			continue
 		}
 
@@ -594,6 +595,7 @@ func (e *LTNGEngine) createItemOnDisk(
 
 func (e *LTNGEngine) upsertItemOnDisk(
 	ctx context.Context,
+	filePath string,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 	fileData *ltngdbenginemodelsv3.FileData,
 ) (*ltngdbenginemodelsv3.FileInfo, error) {
@@ -602,12 +604,16 @@ func (e *LTNGEngine) upsertItemOnDisk(
 			Key: fileData.Key,
 		})
 	if err != nil {
+		if errors.Is(errorsx.From(err), osx.ErrNoSuchFileOrDirectory) {
+			return e.createItemOnDisk(ctx, filePath, fileData)
+		}
+
 		return nil, errorsx.Wrapf(err, "error loading %s item from disk",
 			dbMetaInfo.IndexListInfo().Name)
 	}
 
 	if _, err = fi.FileManager.Rewrite(fileData); err != nil {
-		return nil, errorsx.Wrapf(err, "error writing to file at %s", fi.File.Name())
+		return nil, errorsx.Wrapf(err, "error re-writing to file at %s", fi.File.Name())
 	}
 
 	fi.FileData = fileData
@@ -648,7 +654,12 @@ func (e *LTNGEngine) upsertItemOnRelationalFile(
 	}
 
 	fileData := ltngdbenginemodelsv3.NewFileData(dbMetaInfo, item)
-	return e.upsertRelationalData(ctx, fileData, rfi)
+	if err = e.upsertRelationalData(ctx, fileData, rfi); err != nil {
+		return errorsx.Wrapf(err, "error upserting relational data to %s store",
+			dbMetaInfo.RelationalInfo().Name)
+	}
+
+	return nil
 }
 
 func (e *LTNGEngine) upsertRelationalData(

@@ -38,7 +38,7 @@ func newUpsertSaga(ctx context.Context, opSaga *opSaga) *upsertSaga {
 func (s *upsertSaga) ListenAndTrigger(ctx context.Context) {
 	ctx = context.WithValue(ctx, "thread", "operator_create_saga-ListenAndTrigger")
 	loop.RunFromChannel(ctx,
-		s.opSaga.crudChannels.CreateChannels.InfoChannel.Ch,
+		s.opSaga.crudChannels.UpsertChannels.InfoChannel.Ch,
 		func(itemInfoData *ltngdbenginemodelsv3.ItemInfoData) {
 			if _, err := s.upsertItemInfoData(itemInfoData.Ctx, itemInfoData); err != nil {
 				itemInfoData.RespSignal <- errorsx.Wrap(err, "error upserting item info data on disk")
@@ -84,15 +84,18 @@ func (s *upsertSaga) buildUpsertItemInfoDataWithoutIndex(
 
 	copyItemsToTemporaryLocations := func() error {
 		if err := osx.CpFile(itemInfoData.Ctx, itemDataFilePath, tmpItemDataFilePath); err != nil {
-			return err
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error copying indexless item info data to temporary location on disk",
+				"from", itemDataFilePath, "to", tmpItemDataFilePath,
+				"error", err)
 		}
 
 		return nil
 	}
 	decopyItemsFromTemporaryLocations := func() error {
 		if err := osx.MvFile(itemInfoData.Ctx, tmpItemDataFilePath, itemDataFilePath); err != nil {
-			s.opSaga.e.logger.Error(itemInfoData.Ctx,
-				"error de-copying item info data on disk",
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error de-copying indexless item info data from temporary location on disk",
 				"from", tmpItemDataFilePath, "to", itemDataFilePath,
 				"error", err)
 		}
@@ -125,14 +128,14 @@ func (s *upsertSaga) buildUpsertItemInfoDataWithoutIndex(
 		fileData := ltngdbenginemodelsv3.NewFileData(
 			itemInfoData.DBMetaInfo, itemInfoData.Item)
 
-		fi, err := s.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
+		fi, err := s.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx, itemDataFilePath,
 			itemInfoData.DBMetaInfo, fileData)
 		if err != nil {
-			return err
+			return errorsx.Wrapf(err, "error upserting item info data on disk, filePath: %s", itemDataFilePath)
 		}
 
 		encodedKey := itemInfoData.EncodedKey()
-		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStr(encodedKey), fi)
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
@@ -144,7 +147,7 @@ func (s *upsertSaga) buildUpsertItemInfoDataWithoutIndex(
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStr(encodedKey))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey))
 
 		return nil
 	}
@@ -203,66 +206,67 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 	tmpItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
 		itemInfoData.DBMetaInfo.TemporaryInfo().Path, encodedStr)
 
-	indexedItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.IndexInfo().Path, encodedStr)
-	tmpIndexedItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, encodedStr)
-
 	indexedListItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
 		itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedStr)
 	tmpIndexedListItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
 		itemInfoData.DBMetaInfo.TemporaryIndexListInfo().Path, encodedStr)
 
 	relationalItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.RelationalInfo().Path, encodedStr)
+		itemInfoData.DBMetaInfo.RelationalInfo().Path, ltngdbenginemodelsv3.RelationalDataStoreKey)
 
 	copyItemsToTemporaryLocations := func() error {
 		if err := osx.CpFile(itemInfoData.Ctx, itemDataFilePath, tmpItemDataFilePath); err != nil {
-			return err
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error copying item info data to temporary location on disk",
+				"from", itemDataFilePath, "to", tmpItemDataFilePath,
+				"error", err)
 		}
 
-		if err := osx.CpFile(itemInfoData.Ctx, indexedItemDataFilePath, tmpIndexedItemDataFilePath); err != nil {
-			return err
+		if _, err := osx.CpOnlyFilesFromDir(itemInfoData.Ctx,
+			itemInfoData.DBMetaInfo.IndexInfo().Path,
+			itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path,
+		); err != nil {
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error copying indexed item info data to temporary location on disk",
+				"from", itemInfoData.DBMetaInfo.IndexInfo().Path,
+				"to", itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path,
+				"error", err)
 		}
 
 		if err := osx.CpFile(itemInfoData.Ctx, indexedListItemDataFilePath, tmpIndexedListItemDataFilePath); err != nil {
-			return err
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error copying indexed list item info data to temporary location on disk",
+				"from", indexedListItemDataFilePath, "to", tmpIndexedListItemDataFilePath,
+				"error", err)
 		}
-
-		//if err := osx.CpFile(itemInfoData.Ctx, relationalItemDataFilePath, tmpRelationalItemDataFilePath); err != nil {
-		//	return err
-		//}
 
 		return nil
 	}
 	decopyItemsFromTemporaryLocations := func() error {
 		if err := osx.MvFile(itemInfoData.Ctx, tmpItemDataFilePath, itemDataFilePath); err != nil {
-			s.opSaga.e.logger.Error(itemInfoData.Ctx,
-				"error de-copying item info data on disk",
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error de-copying item info data from temporary location on disk",
 				"from", tmpItemDataFilePath, "to", itemDataFilePath,
 				"error", err)
 		}
 
-		if err := osx.MvFile(itemInfoData.Ctx, tmpIndexedItemDataFilePath, indexedItemDataFilePath); err != nil {
-			s.opSaga.e.logger.Error(itemInfoData.Ctx,
-				"error de-copying item info data on disk",
-				"from", tmpIndexedItemDataFilePath, "to", indexedItemDataFilePath,
+		if _, err := osx.MvOnlyFilesFromDir(itemInfoData.Ctx,
+			itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path,
+			itemInfoData.DBMetaInfo.IndexInfo().Path,
+		); err != nil {
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error de-copying indexed items info data from temporary on disk",
+				"from", itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path,
+				"to", itemInfoData.DBMetaInfo.IndexInfo().Path,
 				"error", err)
 		}
 
 		if err := osx.MvFile(itemInfoData.Ctx, tmpIndexedListItemDataFilePath, indexedListItemDataFilePath); err != nil {
-			s.opSaga.e.logger.Error(itemInfoData.Ctx,
-				"error de-copying item info data on disk",
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error de-copying indexed list item info data from temporary on disk",
 				"from", tmpIndexedListItemDataFilePath, "to", indexedListItemDataFilePath,
 				"error", err)
 		}
-
-		//if err := osx.MvFile(itemInfoData.Ctx, tmpRelationalItemDataFilePath, relationalItemDataFilePath); err != nil {
-		//	s.opSaga.e.logger.Error(itemInfoData.Ctx,
-		//		"error de-copying item info data on disk",
-		//		"from", tmpRelationalItemDataFilePath, "to", relationalItemDataFilePath,
-		//		"error", err)
-		//}
 
 		{ // upsert from file into relational row
 			fm, err := mmap.NewFileManager(itemDataFilePath)
@@ -292,14 +296,14 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 		fileData := ltngdbenginemodelsv3.NewFileData(
 			itemInfoData.DBMetaInfo, itemInfoData.Item)
 
-		fi, err := s.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
+		fi, err := s.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx, itemDataFilePath,
 			itemInfoData.DBMetaInfo, fileData)
 		if err != nil {
-			return err
+			return errorsx.Wrapf(err, "failed upserting item on disk - filekey: %s", itemInfoData.Item.Key)
 		}
 
 		encodedKey := itemInfoData.EncodedKey()
-		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStr(encodedKey), fi)
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
@@ -311,7 +315,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStr(encodedKey))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey))
 
 		return nil
 	}
@@ -327,18 +331,32 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 			ltngdbenginemodelsv3.IndexListToBytesList(indexingList),
 			itemInfoData.Opts.IndexingKeys)
 
+		s.opSaga.e.logger.Info(itemInfoData.Ctx,
+			"upserting index items on disk",
+			"keysToSave", keysToSave)
 		for _, indexKey := range keysToSave {
+			encodedIndexedStr := hex.EncodeToString(indexKey)
+			filePath := ltngdbenginemodelsv3.GetDataFilepath(
+				itemInfoData.DBMetaInfo.IndexInfo().Path, encodedIndexedStr)
 			indexFileData := ltngdbenginemodelsv3.NewFileData(
 				itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 					Key:   indexKey,
 					Value: itemInfoData.Opts.ParentKey,
 				})
-			if _, err = s.opSaga.e.createItemOnDisk(
-				itemInfoData.Ctx,
-				itemInfoData.DBMetaInfo.IndexInfo().Path,
-				indexFileData,
-			); err != nil {
-				return err
+
+			s.opSaga.e.logger.Info(itemInfoData.Ctx,
+				"upserting index items on disk",
+				"keysToSave", keysToSave,
+				"filePath", filePath,
+			)
+
+			if _, err = s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, indexFileData); err != nil {
+				if errorsx.Is(errorsx.From(err), osx.ErrFileExists) {
+					continue
+				}
+
+				return errorsx.Wrapf(err,
+					"failed upserting/creating index item on disk - filekey: %s", encodedIndexedStr)
 			}
 		}
 
@@ -352,7 +370,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 			filePath := ltngdbenginemodelsv3.GetDataFilepath(
 				itemInfoData.DBMetaInfo.IndexInfo().Path, encodedIndexedStr)
 			tmpFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-				itemInfoData.DBMetaInfo.IndexInfo().Path, encodedIndexedStr)
+				itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, encodedIndexedStr)
 
 			if err = osx.MvFile(itemInfoData.Ctx, filePath, tmpFilePath); err != nil {
 				return err
@@ -378,7 +396,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 				itemInfoData.DBMetaInfo.IndexInfo().Path, encodedIndexedStr)
 
 			if err = os.Remove(filePath); err != nil {
-				s.opSaga.e.logger.Error(itemInfoData.Ctx,
+				s.opSaga.e.logger.Debug(itemInfoData.Ctx,
 					"error deleting index item from disk",
 					"filePath", filePath,
 					"error", err)
@@ -396,14 +414,15 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 					[]byte(ltngdbenginemodelsv3.BsSep)),
 			})
 
-		fi, err := s.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
+		fi, err := s.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx, indexedListItemDataFilePath,
 			itemInfoData.DBMetaInfo.IndexListInfo(), indexListFileData)
 		if err != nil {
-			return err
+			return errorsx.Wrapf(err,
+				"failed upserting index list item on disk - filekey: %s", itemInfoData.Item.Key)
 		}
 
 		encodedKey := itemInfoData.EncodedKey()
-		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStr(encodedKey), fi)
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
@@ -414,7 +433,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStr(encodedStr))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedStr))
 
 		return nil
 	}
@@ -455,9 +474,12 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 		},
 		{
 			Action: &saga.Action{
-				Name:        "upsertIndexItemOnDisk",
-				Do:          upsertIndexItemOnDisk,
-				RetrialOpts: saga.DefaultRetrialOps,
+				Name: "upsertIndexItemOnDisk",
+				Do:   upsertIndexItemOnDisk,
+				RetrialOpts: &saga.RetrialOpts{
+					RetrialOnErr: true,
+					RetrialCount: 0,
+				},
 			},
 			Rollback: &saga.Rollback{
 				Name:        "deleteIndexItemFromDisk",

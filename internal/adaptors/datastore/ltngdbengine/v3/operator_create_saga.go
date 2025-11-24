@@ -2,6 +2,7 @@ package ltngdbenginev3
 
 import (
 	"context"
+	"encoding/hex"
 	"os"
 
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
@@ -70,9 +71,9 @@ func (s *createSaga) buildCreateItemInfoData(
 
 		fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 		if err != nil {
-			return err
+			return errorsx.Wrapf(err, "error creating item info data on disk: %s", encodedKey)
 		}
-		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStr(encodedKey), fi)
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
@@ -84,7 +85,7 @@ func (s *createSaga) buildCreateItemInfoData(
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStr(encodedKey))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey))
 
 		return nil
 	}
@@ -124,7 +125,7 @@ func (s *createSaga) buildCreateItemInfoData(
 
 	createIndexItemOnDisk := func() error {
 		for _, indexKey := range itemInfoData.Opts.IndexingKeys {
-			encodedKey := itemInfoData.EncodedKey()
+			encodedKey := hex.EncodeToString(indexKey)
 			filePath := ltngdbenginemodelsv3.GetDataFilepath(
 				itemInfoData.DBMetaInfo.IndexInfo().Path, encodedKey)
 			fileData := ltngdbenginemodelsv3.NewFileData(
@@ -136,9 +137,10 @@ func (s *createSaga) buildCreateItemInfoData(
 
 			fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 			if err != nil {
-				return err
+				return errorsx.Wrapf(err,
+					"error creating indexed item info data on disk: indexKey: %s", indexKey)
 			}
-			s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.IndexInfo().LockStr(encodedKey), fi)
+			s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(encodedKey), fi)
 		}
 
 		return nil
@@ -151,7 +153,7 @@ func (s *createSaga) buildCreateItemInfoData(
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexInfo().LockStr(encodedKey))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(encodedKey))
 
 		return nil
 	}
@@ -163,9 +165,10 @@ func (s *createSaga) buildCreateItemInfoData(
 
 		fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 		if err != nil {
-			return err
+			return errorsx.Wrapf(err,
+				"error creating indexed list item list info data on disk: indexKey: %s", encodedKey)
 		}
-		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.IndexListInfo().LockStr(encodedKey), fi)
+		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
@@ -177,7 +180,7 @@ func (s *createSaga) buildCreateItemInfoData(
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStr(encodedKey))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedKey))
 
 		return nil
 	}

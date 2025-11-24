@@ -70,7 +70,7 @@ func (e *LTNGEngine) createStatsStoreOnDisk(
 ) (fi *ltngdbenginemodelsv3.FileInfo, err error) {
 	file, err := osx.OpenCreateFile(ltngdbenginemodelsv3.GetStatsFilepath(info.Path, info.Name))
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err, "failed to open/create file for stats store")
 	}
 
 	info.CreatedAt = time.Now().UTC().Unix()
@@ -83,7 +83,7 @@ func (e *LTNGEngine) createStatsStoreOnDisk(
 
 	fi, err = e.writeFileDataToFile(ctx, file, fileData)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err, "failed to write file data to file")
 	}
 
 	return fi, nil

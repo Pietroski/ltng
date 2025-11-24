@@ -448,10 +448,14 @@ type (
 	}
 )
 
+func (msi *ManagerStoreMetaInfo) LockStrWithKey(key string) string {
+	return strings.Join([]string{msi.Path, msi.Name, key}, InnerSep)
+}
+
 // LockStr
 // msi -> managerStoreInfo
-func (msi *ManagerStoreMetaInfo) LockStr(key string) string {
-	return strings.Join([]string{msi.Path, msi.Name, key}, InnerSep)
+func (msi *ManagerStoreMetaInfo) LockStr() string {
+	return strings.Join([]string{msi.Path, msi.Name}, InnerSep)
 }
 
 func (msi *ManagerStoreMetaInfo) IndexInfo() *ManagerStoreMetaInfo {

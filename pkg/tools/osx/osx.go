@@ -440,6 +440,7 @@ var (
 	ErrNotFound              = errorsx.New("file not found")
 	ErrNoSuchFileOrDirectory = errorsx.New("no such file or directory")
 	ErrNotEmptyDir           = errorsx.New("directory not empty")
+	ErrFileExists            = errorsx.New("file exists")
 )
 
 // CpFileExec copies a file from one path to another.

@@ -135,10 +135,11 @@ func (e *LTNGEngine) deleteItem(
 	}
 
 	if opts.IndexProperties.IndexDeletionBehaviour != ltngdbenginemodelsv3.IndexOnly {
-		e.markedAsDeletedMapping.Set(dbMetaInfo.LockStr(hex.EncodeToString(item.Key)), struct{}{})
+		e.markedAsDeletedMapping.Set(dbMetaInfo.LockStrWithKey(hex.EncodeToString(item.Key)), struct{}{})
 	} else if opts.IndexProperties.IndexDeletionBehaviour == ltngdbenginemodelsv3.IndexOnly {
 		for _, indexKey := range opts.IndexingKeys {
-			e.markedAsDeletedMapping.Set(dbMetaInfo.IndexInfo().LockStr(hex.EncodeToString(indexKey)), struct{}{})
+			e.markedAsDeletedMapping.Set(dbMetaInfo.IndexInfo().
+				LockStrWithKey(hex.EncodeToString(indexKey)), struct{}{})
 		}
 	}
 	_, _ = e.memoryStore.DeleteItem(ctx, dbMetaInfo, item, opts)
@@ -152,7 +153,8 @@ func (e *LTNGEngine) listItems(
 	pagination *ltngdata.Pagination,
 	opts *ltngdbenginemodelsv3.IndexOpts,
 ) (*ltngdbenginemodelsv3.ListItemsResult, error) {
-	lockKey := dbMetaInfo.RelationalInfo().LockStr(ltngdbenginemodelsv3.RelationalDataStoreKey)
+	lockKey := dbMetaInfo.RelationalInfo().
+		LockStrWithKey(ltngdbenginemodelsv3.RelationalDataStoreKey)
 	e.kvLock.Lock(lockKey, struct{}{})
 	defer e.kvLock.Unlock(lockKey)
 

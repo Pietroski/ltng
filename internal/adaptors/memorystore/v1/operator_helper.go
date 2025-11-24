@@ -18,7 +18,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.Item, error) {
 	key := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), item.Key},
+		[][]byte{[]byte(dbMetaInfo.LockStr()), item.Key},
 		[]byte(ltngdata.BsSep),
 	)
 	strKey := hex.EncodeToString(key)
@@ -31,7 +31,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	}
 
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), item.Key},
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), item.Key},
 		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)
@@ -42,7 +42,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 
 	for _, itemKey := range indexingKeys {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
@@ -52,7 +52,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascade(
 	_ = ltng.cache.Del(ctx, strIndexListKey)
 
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
 		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
@@ -86,7 +86,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 	var key []byte
 	if opts.ParentKey != nil {
 		key = bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), opts.ParentKey},
 			[]byte(ltngdata.BsSep),
 		)
 	}
@@ -94,7 +94,7 @@ func (ltng *LTNGCacheEngine) deleteOnCascadeByIdx(
 		return nil, errorsx.New("invalid indexing key")
 	} else if key == nil {
 		key = bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), opts.IndexingKeys[0]},
 			[]byte(ltngdata.BsSep),
 		)
 	}
@@ -120,7 +120,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 	}
 
 	secondaryKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
+		[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), opts.IndexingKeys[0]},
 		[]byte(ltngdata.BsSep),
 	)
 	secondaryStrKey := hex.EncodeToString(secondaryKey)
@@ -132,7 +132,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 
 	keyValue := mainKey
 	indexingKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), keyValue},
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), keyValue},
 		[]byte(ltngdata.BsSep),
 	)
 	indexingStrKey := hex.EncodeToString(indexingKey)
@@ -159,7 +159,7 @@ func (ltng *LTNGCacheEngine) deleteIdxOnly(
 
 	for _, indexKey := range opts.IndexingKeys {
 		key := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), indexKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), indexKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strKey := hex.EncodeToString(key)
@@ -182,7 +182,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 	var strKey string
 	if opts.ParentKey != nil {
 		key = bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.ParentKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), opts.ParentKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strKey = hex.EncodeToString(key)
@@ -190,7 +190,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 		return nil, errorsx.New("invalid indexing key")
 	} else {
 		key = bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), opts.IndexingKeys[0]},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), opts.IndexingKeys[0]},
 			[]byte(ltngdata.BsSep),
 		)
 		strKey = hex.EncodeToString(key)
@@ -202,7 +202,7 @@ func (ltng *LTNGCacheEngine) straightSearch(
 	}
 
 	key = bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.Name), keyValue},
+		[][]byte{[]byte(dbMetaInfo.LockStr()), keyValue},
 		[]byte(ltngdata.BsSep),
 	)
 	strKey = hex.EncodeToString(key)
@@ -227,7 +227,7 @@ func (ltng *LTNGCacheEngine) andComputationalSearch(
 	var indexKey []byte
 	for _, itemKey := range opts.IndexingKeys {
 		indexKey = bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
@@ -252,7 +252,7 @@ func (ltng *LTNGCacheEngine) orComputationalSearch(
 	var value []byte
 	for _, itemKey := range opts.IndexingKeys {
 		indexKey := bytes.Join(
-			[][]byte{[]byte(dbMetaInfo.IndexInfo().Name), itemKey},
+			[][]byte{[]byte(dbMetaInfo.IndexInfo().LockStr()), itemKey},
 			[]byte(ltngdata.BsSep),
 		)
 		strIndexKey := hex.EncodeToString(indexKey)
@@ -279,7 +279,7 @@ func (ltng *LTNGCacheEngine) defaultListItems(
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
 		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
@@ -304,7 +304,7 @@ func (ltng *LTNGCacheEngine) allListItems(
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	relationalKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.RelationalInfo().Name)},
+		[][]byte{[]byte(dbMetaInfo.RelationalInfo().LockStr())},
 		[]byte(ltngdata.BsSep),
 	)
 	strRelationalKey := hex.EncodeToString(relationalKey)
@@ -328,7 +328,7 @@ func (ltng *LTNGCacheEngine) indexingListItems(
 	opts *ltngdata.IndexOpts,
 ) (*ltngdata.ListItemsResult, error) {
 	indexListKey := bytes.Join(
-		[][]byte{[]byte(dbMetaInfo.IndexListInfo().Name), opts.ParentKey},
+		[][]byte{[]byte(dbMetaInfo.IndexListInfo().LockStr()), opts.ParentKey},
 		[]byte(ltngdata.BsSep),
 	)
 	strIndexListKey := hex.EncodeToString(indexListKey)

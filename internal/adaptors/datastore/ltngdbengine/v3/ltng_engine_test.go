@@ -441,6 +441,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
+
+				ts.ltngEngine.Close()
 			})
 
 			t.Run("delete index only", func(t *testing.T) {
@@ -612,6 +614,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
+
+				ts.ltngEngine.Close()
 			})
 
 			t.Run("upsert", func(t *testing.T) {
@@ -823,6 +827,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
+				//t.Fatal()
+
 				{
 					deleteOpts := &ltngdbenginemodelsv3.IndexOpts{
 						HasIdx: true,
@@ -894,6 +900,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
+
+				ts.ltngEngine.Close()
 			})
 
 			t.Run("detect last opened at difference after closing", func(t *testing.T) {
