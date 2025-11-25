@@ -331,9 +331,9 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 			ltngdbenginemodelsv3.IndexListToBytesList(indexingList),
 			itemInfoData.Opts.IndexingKeys)
 
-		s.opSaga.e.logger.Info(itemInfoData.Ctx,
-			"upserting index items on disk",
-			"keysToSave", keysToSave)
+		//s.opSaga.e.logger.Info(itemInfoData.Ctx,
+		//	"upserting index items on disk",
+		//	"keysToSave", keysToSave)
 		for _, indexKey := range keysToSave {
 			encodedIndexedStr := hex.EncodeToString(indexKey)
 			filePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -344,11 +344,11 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 					Value: itemInfoData.Opts.ParentKey,
 				})
 
-			s.opSaga.e.logger.Info(itemInfoData.Ctx,
-				"upserting index items on disk",
-				"keysToSave", keysToSave,
-				"filePath", filePath,
-			)
+			//s.opSaga.e.logger.Info(itemInfoData.Ctx,
+			//	"upserting index items on disk",
+			//	"keysToSave", keysToSave,
+			//	"filePath", filePath,
+			//)
 
 			if _, err = s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, indexFileData); err != nil {
 				if errorsx.Is(errorsx.From(err), osx.ErrFileExists) {

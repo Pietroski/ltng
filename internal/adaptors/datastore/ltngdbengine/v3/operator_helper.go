@@ -565,6 +565,16 @@ func (e *LTNGEngine) loadIndexingList(
 	return itemList, nil
 }
 
+func indexingListToMap(indexingList []*ltngdbenginemodelsv3.Item) map[string]*ltngdbenginemodelsv3.Item {
+	indexingMap := make(map[string]*ltngdbenginemodelsv3.Item)
+	for _, item := range indexingList {
+		strKey := hex.EncodeToString(item.Key)
+		indexingMap[strKey] = item
+	}
+
+	return indexingMap
+}
+
 // #####################################################################################################################
 
 func (e *LTNGEngine) createItemOnDisk(

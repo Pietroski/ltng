@@ -1145,6 +1145,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
+
+				ts.ltngEngine.Close()
 			})
 
 			t.Run("process and close", func(t *testing.T) {
@@ -1311,6 +1313,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(string(item.Key), string(item.Value))
 					}
 				}
+
+				ts.ltngEngine.Close()
 			})
 		})
 
@@ -1489,6 +1493,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					t.Log(string(item.Key), string(item.Value))
 				}
 			}
+
+			ts.ltngEngine.Close()
 		})
 
 		t.Run("for inexistent item", func(t *testing.T) {
@@ -1560,6 +1566,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					t.Log(string(item.Key), string(item.Value))
 				}
 			}
+
+			ts.ltngEngine.Close()
 		})
 	})
 
@@ -1568,6 +1576,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 		dbInfo := createTestStore(t, ts.ctx, ts)
 		_ = dbInfo
 		_ = ts
+
+		ts.ltngEngine.Close()
 	})
 }
 
