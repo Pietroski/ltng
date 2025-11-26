@@ -435,7 +435,7 @@ func TestQueue_Consume(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
 			ltngqueue, err := New(ctx,
-				WithTimeout(time.Millisecond),
+				WithTimeout(time.Millisecond*500),
 			)
 			require.NoError(t, err)
 
@@ -474,10 +474,11 @@ func TestQueue_Consume(t *testing.T) {
 			count := new(atomic.Uint64)
 			var consumedEvents []*queuemodels.Event
 			go func() {
-				for event := range receiver {
-					consumedEvents = append(consumedEvents, event)
-					_, err := ltngqueue.Ack(ctx, event)
+				for e := range receiver {
+					event, err := ltngqueue.Ack(ctx, e)
 					assert.NoError(t, err)
+
+					consumedEvents = append(consumedEvents, event)
 					expectedEvent := events[count.Load()]
 					assert.EqualValues(t, expectedEvent, event)
 					count.Add(1)
@@ -488,18 +489,16 @@ func TestQueue_Consume(t *testing.T) {
 				runtime.Gosched()
 			}
 			t.Log(count.Load())
-			if count.Load() < 50 {
-				t.Log("events")
-				for _, event := range events {
-					t.Log(event)
-				}
-				t.Log("consumedEvents")
-				for _, event := range consumedEvents {
-					t.Log(event)
-				}
-			}
-
-			time.Sleep(time.Millisecond * 5)
+			//if count.Load() < 50 {
+			//	t.Log("events")
+			//	for _, event := range events {
+			//		t.Log(event)
+			//	}
+			//	t.Log("consumedEvents")
+			//	for _, event := range consumedEvents {
+			//		t.Log(event)
+			//	}
+			//}
 
 			cancel()
 			err = ltngqueue.Close()
