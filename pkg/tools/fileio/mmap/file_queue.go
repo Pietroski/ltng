@@ -3,6 +3,7 @@ package mmap
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -412,6 +413,44 @@ func (fq *FileQueue) Close() error {
 	return fq.file.Close()
 }
 
+// CheckClose unmaps and closes the file queue.
+func (fq *FileQueue) CheckClose() error {
+	fq.mtx.Lock()
+	defer fq.mtx.Unlock()
+
+	if fq.readOffset != fq.writeOffset {
+		return ErrNotEmptyYet
+	}
+
+	if osx.IsFileClosed(fq.file) {
+		return nil
+	}
+
+	if err := flushMmap(fq.data); err != nil {
+		return errorsx.Wrap(err, "flush failed")
+	}
+
+	if err := unix.Munmap(fq.data); err != nil {
+		_ = fq.file.Close()
+		return errorsx.Wrap(err, "unmap failed")
+	}
+
+	return fq.file.Close()
+}
+
+func (fq *FileQueue) IsEmpty() error {
+	fq.mtx.Lock()
+	defer fq.mtx.Unlock()
+
+	if fq.readOffset >= fq.writeOffset {
+		return nil // queue is empty
+	}
+
+	return ErrNotEmptyYet
+}
+
+var ErrNotEmptyYet = errors.New("file queue is not empty")
+
 func (fq *FileQueue) findInFile(
 	ctx context.Context,
 	key []byte,
@@ -571,54 +610,4 @@ func (fq *FileQueue) DeleteByIndex(
 	}
 
 	return deleteResult.bs, nil
-}
-
-func (fq *FileQueue) ReadLock() ([]byte, error) {
-	fq.mtx.Lock()
-	defer fq.mtx.Unlock()
-
-	for cursor, ok := fq.readOffsetLock[fq.readOffset]; ok; cursor, ok = fq.readOffsetLock[fq.readOffset] {
-		fq.readOffset = cursor
-	}
-
-	bs, err := fq.read()
-	if err != nil {
-		return nil, err
-	}
-
-	offset := 4 + uint64(len(bs))
-	fq.readOffsetLock[fq.readOffset-offset] = fq.readOffset
-
-	return bs, nil
-}
-
-func (fq *FileQueue) DeleteByKeyUnlock(
-	ctx context.Context,
-	key []byte,
-) (DeleteByKeyResult, error) {
-	fq.mtx.Lock()
-	defer fq.mtx.Unlock()
-
-	findResult, err := fq.findInFile(ctx, key)
-	if err != nil {
-		return DeleteByKeyResult{}, err
-	}
-
-	deleteResult, err := fq.deleteByResult(ctx, findResult)
-	if err != nil {
-		return DeleteByKeyResult{}, err
-	}
-
-	deduct := 4 + uint64(len(deleteResult.bs))
-	newReaderCursorLocker := make(map[uint64]uint64)
-	for k, v := range fq.readOffsetLock {
-		if k == 0 {
-			continue
-		}
-
-		newReaderCursorLocker[k-deduct] = v - deduct
-	}
-	fq.readOffsetLock = newReaderCursorLocker
-
-	return deleteResult, nil
 }

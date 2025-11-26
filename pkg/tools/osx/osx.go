@@ -457,6 +457,31 @@ func MvFileExec(ctx context.Context, fromFilepath, toFilepath string) error {
 
 // ################################################################################################################## \\
 
+// SoftDirCleanup cleans up the whole directory tree by:
+// - removing all the existing files in the directory;
+// - removing the directory itself if it does not contain any children.
+func SoftDirCleanup(ctx context.Context, filePath string) error {
+	if _, err := DelOnlyFilesFromDirAsync(ctx, filePath); err != nil {
+		return errorsx.Wrapf(err, "error deleting stats path: %s", filePath)
+	}
+
+	// remove itself if there is no children anymore.
+	if err := os.Remove(filePath); err != nil {
+		if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
+			errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {
+			return nil
+		}
+
+		//if os.IsExist(err) || errors.Is(err, os.ErrNotExist) {
+		//	return nil
+		//}
+
+		return errorsx.Wrapf(err, "error removing stats path: %s", filePath)
+	}
+
+	return nil
+}
+
 // CleanupDirs cleans up the whole directory tree by:
 // - removing all the existing files in the directory;
 // - removing the directory itself if it does not contain any children.
@@ -465,6 +490,8 @@ func CleanupDirs(ctx context.Context, filePath string) error {
 	if _, err := DelOnlyFilesFromDirAsync(ctx, filePath); err != nil {
 		return errorsx.Wrapf(err, "error deleting stats path: %s", filePath)
 	}
+
+	// remove itself if there is no children anymore.
 	if err := os.Remove(filePath); err != nil {
 		if errorsx.Is(errorsx.From(err), ErrNotEmptyDir) ||
 			errors.Is(errorsx.From(err), ErrNoSuchFileOrDirectory) {

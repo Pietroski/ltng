@@ -63,7 +63,7 @@ func newLTNGEngine(
 	options.ApplyOptions(engine, opts...)
 
 	engine.opSaga = newOpSaga(ctx, engine)
-	if err = engine.init(ctx); err != nil {
+	if err = saga.NewListOperator(engine.buildInitManagerOperations(ctx)...).Operate(); err != nil {
 		return nil, err
 	}
 
@@ -71,6 +71,14 @@ func newLTNGEngine(
 }
 
 func (e *LTNGEngine) init(ctx context.Context) error {
+	//engine, err := newLTNGEngine(ctx)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//e = engine
+	//return nil
+
 	return saga.NewListOperator(e.buildInitManagerOperations(ctx)...).Operate()
 }
 
@@ -172,6 +180,10 @@ func (e *LTNGEngine) closeStores() {
 }
 
 func (e *LTNGEngine) closeItems() {
+	for e.fq.IsEmpty() != nil {
+		runtime.Gosched()
+	}
+
 	e.cancelFq()
 	if err := e.fq.Close(); err != nil {
 		e.logger.Error(e.ctx, "error closing file queue", "err", err)

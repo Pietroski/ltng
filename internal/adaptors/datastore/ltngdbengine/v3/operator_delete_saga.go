@@ -175,7 +175,7 @@ func (s *deleteCascadeSaga) ListenAndTrigger(ctx context.Context) {
 		s.deleteSaga.deleteChannels.deleteCascadeChannel.InfoChannel.Ch,
 		func(itemInfoData *deleteItemInfoData) {
 			if _, err := s.deleteItemInfoData(itemInfoData.Ctx, itemInfoData); err != nil {
-				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting item info data on disk")
+				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting item info data cascade on disk")
 				close(itemInfoData.RespSignal)
 
 				return
@@ -207,14 +207,14 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 
 	deleteItemFromDisk := func() error {
 		if err := osx.MvFile(itemInfoData.Ctx, itemDataFilePath, tmpItemDataFilePath); err != nil {
-			return err
+			return errorsx.Wrap(err, "error moving item data file to temporary path")
 		}
 
 		return nil
 	}
 	recreateItemOnDisk := func() error {
 		if err := osx.MvFile(itemInfoData.Ctx, tmpItemDataFilePath, itemDataFilePath); err != nil {
-			return err
+			return errorsx.Wrap(err, "error moving item data file from temporary path to original path")
 		}
 
 		return nil
@@ -241,7 +241,7 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 	}
 
 	nonIndexedCleanup := func() error {
-		_ = osx.CleanupDirs(itemInfoData.Ctx, itemInfoData.DBMetaInfo.Path)
+		_, _ = osx.DelOnlyFilesFromDirAsync(itemInfoData.Ctx, itemInfoData.DBMetaInfo.TemporaryInfo().Path)
 		return nil
 	}
 
@@ -276,10 +276,10 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 		}
 	}
 
-	indexedItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.IndexInfo().Path, encodedStr)
-	tmpIndexedItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, encodedStr)
+	indexedItemDataPath := ltngdbenginemodelsv3.GetDataPath(
+		itemInfoData.DBMetaInfo.IndexInfo().Path)
+	tmpIndexedItemDataPath := ltngdbenginemodelsv3.GetDataPath(
+		itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path)
 
 	indexedListItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
 		itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedStr)
@@ -288,20 +288,20 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 
 	deleteIndexedItemsFromDisk := func() error {
 		if _, err := osx.MvOnlyFilesFromDir(itemInfoData.Ctx,
-			indexedItemDataFilePath,
-			tmpIndexedItemDataFilePath,
+			indexedItemDataPath,
+			tmpIndexedItemDataPath,
 		); err != nil {
-			return err
+			return errorsx.Wrap(err, "error moving indexed item data file to temporary path")
 		}
 
 		return nil
 	}
 	recreateIndexedItemsOnDisk := func() error {
 		if _, err := osx.MvOnlyFilesFromDir(itemInfoData.Ctx,
-			tmpIndexedItemDataFilePath,
-			indexedItemDataFilePath,
+			tmpIndexedItemDataPath,
+			indexedItemDataPath,
 		); err != nil {
-			return err
+			return errorsx.Wrap(err, "error moving indexed item data file from temporary to original path")
 		}
 
 		return nil
@@ -312,7 +312,7 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 			indexedListItemDataFilePath,
 			tmpIndexedListItemDataFilePath,
 		); err != nil {
-			return err
+			return errorsx.Wrap(err, "error moving indexed list item data file to temporary path")
 		}
 
 		return nil
@@ -322,16 +322,31 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 			tmpIndexedListItemDataFilePath,
 			indexedListItemDataFilePath,
 		); err != nil {
-			return err
+			return errorsx.Wrap(err, "error moving indexed list item data file from temporary to original path")
 		}
 
 		return nil
 	}
 
 	indexedCleanup := func() error {
-		_ = osx.CleanupDirs(itemInfoData.Ctx, itemInfoData.DBMetaInfo.Path)
-		_ = osx.CleanupDirs(itemInfoData.Ctx, itemInfoData.DBMetaInfo.IndexInfo().Path)
-		_ = osx.CleanupDirs(itemInfoData.Ctx, itemInfoData.DBMetaInfo.IndexListInfo().Path)
+		if _, err := osx.DelOnlyFilesFromDirAsync(itemInfoData.Ctx, ltngdbenginemodelsv3.GetDataPath(
+			itemInfoData.DBMetaInfo.TemporaryInfo().Path)); err != nil {
+			s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error deleting temporary data path", "error", err)
+		}
+
+		if _, err := osx.DelOnlyFilesFromDirAsync(itemInfoData.Ctx, ltngdbenginemodelsv3.GetDataPath(
+			itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path)); err != nil {
+			s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error deleting temporary indexed data path", "error", err)
+		}
+
+		if _, err := osx.DelOnlyFilesFromDirAsync(itemInfoData.Ctx, ltngdbenginemodelsv3.GetDataPath(
+			itemInfoData.DBMetaInfo.TemporaryIndexListInfo().Path)); err != nil {
+			s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error deleting temporary indexed list data path", "error", err)
+		}
+
 		return nil
 	}
 
@@ -472,8 +487,8 @@ func (s *deleteIdxOnlySaga) ListenAndTrigger(ctx context.Context) {
 			}
 			itemInfoData.IndexList = indexItemList
 
-			if _, err := s.deleteIndexOnlyItemInfoData(itemInfoData.Ctx, itemInfoData); err != nil {
-				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting item info data on disk")
+			if _, err = s.deleteIndexOnlyItemInfoData(itemInfoData.Ctx, itemInfoData); err != nil {
+				itemInfoData.RespSignal <- errorsx.Wrap(err, "error deleting index only item info data on disk")
 				close(itemInfoData.RespSignal)
 
 				return
