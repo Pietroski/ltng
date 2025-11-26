@@ -169,6 +169,12 @@ func TestQueue_Publish(t *testing.T) {
 		"100 events": {
 			eventCount: 100,
 		},
+		"1_000 events": {
+			eventCount: 1_000,
+		},
+		"10_000 events": {
+			eventCount: 10_000,
+		},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -268,12 +274,18 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 		"10 events": {
 			eventCount: 10,
 		},
-		//"50 events": {
-		//	eventCount: 50,
-		//},
-		//"100 events": {
-		//	eventCount: 100,
-		//},
+		"50 events": {
+			eventCount: 50,
+		},
+		"100 events": {
+			eventCount: 100,
+		},
+		"1_000 events": {
+			eventCount: 1_000,
+		},
+		"10_000 events": {
+			eventCount: 10_000,
+		},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
