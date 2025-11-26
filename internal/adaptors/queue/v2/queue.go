@@ -396,7 +396,7 @@ func (q *Queue) deleteQueuesFromInMemoryMaps(
 }
 
 func (q *Queue) DeleteQueueHistory(
-	ctx context.Context, queue *queuemodels.Queue,
+	_ context.Context, queue *queuemodels.Queue,
 ) error {
 	return errorsx.New("not implemented")
 }
@@ -595,6 +595,10 @@ func (q *Queue) readerPuller(
 	loop.Run(ctx, func() error {
 		bs, err := queuePublisher.FileQueue.Read()
 		if err != nil {
+			if errors.Is(err, io.EOF) || errorsx.Is(err, loop.ErrEnded) {
+				return nil
+			}
+
 			return errorsx.Wrap(err, "error reading from queue")
 		}
 
@@ -734,7 +738,7 @@ func (q *Queue) getQueueNextEvent(
 	queueSignaler *queuemodels.QueueSignaler,
 	eventChan chan *queuemodels.Event,
 ) {
-	bs, err := queueSignaler.FileQueue.ReadLock()
+	bs, err := queueSignaler.FileQueue.ReadWithoutTruncation()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return
@@ -846,7 +850,7 @@ func (q *Queue) handleAck(
 	event *queuemodels.Event,
 	eventIndex []byte,
 ) {
-	if _, err := queueSignaler.FileQueue.DeleteByKeyUnlock(ctx, eventIndex); err != nil {
+	if _, err := queueSignaler.FileQueue.DeleteByKey(ctx, eventIndex); err != nil {
 		q.logger.Debug(ctx, "error popping queue", "error", err)
 	}
 
@@ -859,7 +863,7 @@ func (q *Queue) handleNack(
 	event *queuemodels.Event,
 	eventIndex []byte,
 ) {
-	if _, err := queueSignaler.FileQueue.DeleteByKeyUnlock(ctx, eventIndex); err != nil {
+	if _, err := queueSignaler.FileQueue.DeleteByKey(context.Background(), eventIndex); err != nil {
 		q.logger.Debug(ctx, "error popping queue", "error", err)
 		return
 	}

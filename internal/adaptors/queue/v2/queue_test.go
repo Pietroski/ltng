@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
@@ -394,14 +395,26 @@ func TestQueue_Consume(t *testing.T) {
 			eventCount:         10,
 			consumerCountLimit: 1,
 		},
-		//"50 events": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 1,
-		//},
-		//"100 events": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 1,
-		//},
+		"50 events": {
+			eventCount:         50,
+			consumerCountLimit: 1,
+		},
+		"100 events": {
+			eventCount:         100,
+			consumerCountLimit: 1,
+		},
+		"1_000 events": {
+			eventCount:         1_000,
+			consumerCountLimit: 1,
+		},
+		"5_000 events": {
+			eventCount:         5_000,
+			consumerCountLimit: 1,
+		},
+		"10_000 events": {
+			eventCount:         10_000,
+			consumerCountLimit: 1,
+		},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -463,13 +476,15 @@ func TestQueue_Consume(t *testing.T) {
 				runtime.Gosched()
 			}
 			t.Log(count.Load())
-			t.Log("events")
-			for _, event := range events {
-				t.Log(event)
-			}
-			t.Log("consumedEvents")
-			for _, event := range consumedEvents {
-				t.Log(event)
+			if count.Load() < 50 {
+				t.Log("events")
+				for _, event := range events {
+					t.Log(event)
+				}
+				t.Log("consumedEvents")
+				for _, event := range consumedEvents {
+					t.Log(event)
+				}
 			}
 
 			time.Sleep(time.Millisecond * 5)
@@ -523,16 +538,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    1,
 		},
-		//"50 events - 1 consumer - 1 subscriber": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    1,
-		//},
-		//"100 events - 1 consumer - 1 subscriber": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    1,
-		//},
+		"50 events - 1 consumer - 1 subscriber": {
+			eventCount:         50,
+			consumerCountLimit: 1,
+			subscriberCount:    1,
+		},
+		"100 events - 1 consumer - 1 subscriber": {
+			eventCount:         100,
+			consumerCountLimit: 1,
+			subscriberCount:    1,
+		},
 		"1 event - 5 consumers - 1 subscriber": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -548,16 +563,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    1,
 		},
-		//"50 events - 5 consumers - 1 subscriber": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    1,
-		//},
-		//"100 events - 5 consumers - 1 subscriber": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    1,
-		//},
+		"50 events - 5 consumers - 1 subscriber": {
+			eventCount:         50,
+			consumerCountLimit: 5,
+			subscriberCount:    1,
+		},
+		"100 events - 5 consumers - 1 subscriber": {
+			eventCount:         100,
+			consumerCountLimit: 5,
+			subscriberCount:    1,
+		},
 		"1 event - 5 consumers - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -568,16 +583,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    5,
 		},
-		//"50 events - 5 consumers - 5 subscribers": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    5,
-		//},
-		//"100 events - 5 consumers - 5 subscribers": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    5,
-		//},
+		"50 events - 5 consumers - 5 subscribers": {
+			eventCount:         50,
+			consumerCountLimit: 5,
+			subscriberCount:    5,
+		},
+		"100 events - 5 consumers - 5 subscribers": {
+			eventCount:         100,
+			consumerCountLimit: 5,
+			subscriberCount:    5,
+		},
 		"1 event - 1 consumer - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 1,
@@ -588,16 +603,16 @@ func TestQueue_ConsumeConcurrently(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    5,
 		},
-		//"50 events - 1 consumer - 5 subscribers": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    5,
-		//},
-		//"100 events - 1 consumer - 5 subscribers": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    5,
-		//},
+		"50 events - 1 consumer - 5 subscribers": {
+			eventCount:         50,
+			consumerCountLimit: 1,
+			subscriberCount:    5,
+		},
+		"100 events - 1 consumer - 5 subscribers": {
+			eventCount:         100,
+			consumerCountLimit: 1,
+			subscriberCount:    5,
+		},
 	}
 
 	for testName, testCase := range testCases {
@@ -755,16 +770,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    1,
 		},
-		//"50 events - 1 consumer - 1 subscriber": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    1,
-		//},
-		//"100 events - 1 consumer - 1 subscriber": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    1,
-		//},
+		"50 events - 1 consumer - 1 subscriber": {
+			eventCount:         50,
+			consumerCountLimit: 1,
+			subscriberCount:    1,
+		},
+		"100 events - 1 consumer - 1 subscriber": {
+			eventCount:         100,
+			consumerCountLimit: 1,
+			subscriberCount:    1,
+		},
 		"1 event - 5 consumers - 1 subscriber": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -780,16 +795,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    1,
 		},
-		//"50 events - 5 consumers - 1 subscriber": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    1,
-		//},
-		//"100 events - 5 consumers - 1 subscriber": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    1,
-		//},
+		"50 events - 5 consumers - 1 subscriber": {
+			eventCount:         50,
+			consumerCountLimit: 5,
+			subscriberCount:    1,
+		},
+		"100 events - 5 consumers - 1 subscriber": {
+			eventCount:         100,
+			consumerCountLimit: 5,
+			subscriberCount:    1,
+		},
 		"1 event - 5 consumers - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 5,
@@ -800,16 +815,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 5,
 			subscriberCount:    5,
 		},
-		//"50 events - 5 consumers - 5 subscribers": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    5,
-		//},
-		//"100 events - 5 consumers - 5 subscribers": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 5,
-		//	subscriberCount:    5,
-		//},
+		"50 events - 5 consumers - 5 subscribers": {
+			eventCount:         50,
+			consumerCountLimit: 5,
+			subscriberCount:    5,
+		},
+		"100 events - 5 consumers - 5 subscribers": {
+			eventCount:         100,
+			consumerCountLimit: 5,
+			subscriberCount:    5,
+		},
 		"1 event - 1 consumer - 5 subscribers": {
 			eventCount:         1,
 			consumerCountLimit: 1,
@@ -820,16 +835,16 @@ func TestQueue_RetryBehaviour(t *testing.T) {
 			consumerCountLimit: 1,
 			subscriberCount:    5,
 		},
-		//"50 events - 1 consumer - 5 subscribers": {
-		//	eventCount:         50,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    5,
-		//},
-		//"100 events - 1 consumer - 5 subscribers": {
-		//	eventCount:         100,
-		//	consumerCountLimit: 1,
-		//	subscriberCount:    5,
-		//},
+		"50 events - 1 consumer - 5 subscribers": {
+			eventCount:         50,
+			consumerCountLimit: 1,
+			subscriberCount:    5,
+		},
+		"100 events - 1 consumer - 5 subscribers": {
+			eventCount:         100,
+			consumerCountLimit: 1,
+			subscriberCount:    5,
+		},
 	}
 
 	for testName, testCase := range testCases {

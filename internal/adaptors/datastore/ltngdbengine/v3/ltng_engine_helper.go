@@ -29,7 +29,7 @@ func newLTNGEngine(
 	fq, err := mmap.NewFileQueue(fileiomodels.GetFileQueueFilePath(
 		fileiomodels.FileQueueMmapVersion,
 		fileiomodels.GenericFileQueueFilePath,
-		fileiomodels.FQ,
+		fileiomodels.GenericFileQueueFileName,
 	))
 	if err != nil {
 		cancel()
@@ -95,7 +95,7 @@ func (e *LTNGEngine) buildInitManagerOperations(ctx context.Context) []*saga.Ope
 			if errorsx.Is(err, mmap.ErrFileCannotBeOverWritten) {
 				return nil
 			}
-			
+
 			return errorsx.Wrap(err, "failed creating stats store on disk")
 		}
 

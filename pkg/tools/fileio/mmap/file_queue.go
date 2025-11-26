@@ -173,6 +173,39 @@ func (fq *FileQueue) read() ([]byte, error) {
 	return payload, nil
 }
 
+func (fq *FileQueue) ReadWithoutTruncation() ([]byte, error) {
+	fq.mtx.Lock()
+	defer fq.mtx.Unlock()
+
+	return fq.readWithoutTruncation()
+}
+
+func (fq *FileQueue) readWithoutTruncation() ([]byte, error) {
+	if fq.readOffset >= fq.writeOffset {
+		return nil, io.EOF
+	}
+
+	// Ensure we can read the length header
+	if fq.readOffset+4 > fq.writeOffset {
+		return nil, errorsx.New("corrupted data: incomplete length header")
+	}
+
+	bsLen := bytesx.Uint32(fq.data[fq.readOffset : fq.readOffset+4])
+	fq.readOffset += 4
+
+	// Ensure we can read the full payload
+	if fq.readOffset+uint64(bsLen) > fq.writeOffset {
+		return nil, errorsx.New("corrupted data: incomplete payload")
+	}
+
+	payload := make([]byte, bsLen)
+	copy(payload, fq.data[fq.readOffset:fq.readOffset+uint64(bsLen)])
+	fq.readOffset += uint64(bsLen)
+	fq.readIndex++
+
+	return payload, nil
+}
+
 // Pop pops the first item from the file queue.
 // Returns io.EOF if no more items are available.
 func (fq *FileQueue) Pop() ([]byte, error) {

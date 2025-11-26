@@ -28,7 +28,7 @@ const (
 	FQ           = "fq"
 	FileQueueKey = "file-queue"
 
-	GenericFileQueueFileName = FQ + FileExt
+	GenericFileQueueFileName = FQ // + FileExt
 )
 
 var (
@@ -40,7 +40,7 @@ func GetFileQueuePath(version, path string) string {
 }
 
 func GetFileQueueFilePath(version, path, filename string) string {
-	return filepath.Join(FileQueueBasePath, version, path, filename+FileExt)
+	return filepath.Join(FileQueueBasePath, version, path, filename) + FileExt
 }
 
 func GetTemporaryFileQueuePath(version, path string) string {
@@ -48,7 +48,7 @@ func GetTemporaryFileQueuePath(version, path string) string {
 }
 
 func GetTemporaryFileQueueFilePath(version, path, filename string) string {
-	return filepath.Join(FileQueueBasePath, version, Temporary, path, filename+FileExt)
+	return filepath.Join(FileQueueBasePath, version, Temporary, path, filename) + FileExt
 }
 
 var (
