@@ -163,12 +163,12 @@ func TestQueue_Publish(t *testing.T) {
 		"10 events": {
 			eventCount: 10,
 		},
-		//"50 events": {
-		//	eventCount: 50,
-		//},
-		//"100 events": {
-		//	eventCount: 100,
-		//},
+		"50 events": {
+			eventCount: 50,
+		},
+		"100 events": {
+			eventCount: 100,
+		},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -445,6 +445,7 @@ func TestQueue_Consume(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, event, e)
 			}
+			require.Len(t, events, testCase.eventCount)
 
 			nodeUUID, err := uuid.NewRandom()
 			require.NoError(t, err)
@@ -466,8 +467,7 @@ func TestQueue_Consume(t *testing.T) {
 					_, err := ltngqueue.Ack(ctx, event)
 					assert.NoError(t, err)
 					expectedEvent := events[count.Load()]
-					assert.EqualValues(t, expectedEvent.EventID, event.EventID)
-					assert.EqualValues(t, expectedEvent.Metadata.RetryCount, event.Metadata.RetryCount)
+					assert.EqualValues(t, expectedEvent, event)
 					count.Add(1)
 				}
 			}()

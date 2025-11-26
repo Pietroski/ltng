@@ -211,14 +211,11 @@ func (e *LTNGEngine) closeItems() {
 		runtime.Gosched()
 	}
 
-	//if err := e.fq.Clear(); err != nil {
-	//	e.logger.Error(e.ctx, "error cleaning up file queue", "error", err)
-	//}
-	e.cancelFq()
-
 	if err := e.fq.Clear(); err != nil {
 		e.logger.Error(e.ctx, "error cleaning up file queue", "error", err)
 	}
+
+	e.cancelFq()
 
 	if err := e.fq.Close(); err != nil {
 		e.logger.Error(e.ctx, "error closing file queue", "err", err)
