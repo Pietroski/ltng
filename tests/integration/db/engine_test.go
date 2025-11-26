@@ -1,7 +1,6 @@
 package db_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -11,12 +10,13 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/saga"
 
-	filequeuev1 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/file_queue/v1"
 	models_badgerdb_v4_management "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/management"
 	models_badgerdb_v4_operation "gitlab.com/pietroski-software-company/lightning-db/internal/models/badgerdb/v4/operation"
 	ltngdbmodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/mmap"
+	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
 
@@ -264,21 +264,20 @@ func testBadgerDBEngine(t *testing.T) {
 // --- PASS: TestReadFromFQ (0.23s)
 // PASS
 func TestReadFromFQ(t *testing.T) {
-	ctx := context.Background()
-	fq, err := filequeuev1.New(ctx,
-		filequeuev1.GenericFileQueueFilePath, filequeuev1.GenericFileQueueFileName)
+	fq, err := mmap.NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	var counter int
 	for {
-		_, err = fq.Read(ctx)
+		_, err = fq.Read()
 		if err != nil {
 			t.Log(err)
 			break
 		}
 
-		err = fq.Pop(ctx)
-		assert.NoError(t, err)
+		_, err = fq.Pop()
+		require.NoError(t, err)
 
 		counter++
 	}
