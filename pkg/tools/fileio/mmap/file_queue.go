@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 
 	"golang.org/x/sys/unix"
@@ -378,11 +379,39 @@ func (fq *FileQueue) clear() error {
 	// Only clear the used portion
 	clear(fq.data[:clearSize])
 
+	// Only sync what we cleared, not the entire mmap
+	if err := partialFlushMmap(fq.data, clearSize); err != nil {
+		return errorsx.Wrap(err, "partial flush failed")
+	}
+
 	fq.readOffset = 0
 	fq.writeOffset = 0
 
-	// Only sync what we cleared, not the entire mmap
-	return partialFlushMmap(fq.data, clearSize)
+	return nil
+}
+
+// Clear is called internally after all data is consumed
+func (fq *FileQueue) Clear() error {
+	fq.mtx.Lock()
+	defer fq.mtx.Unlock()
+
+	dataEnd, err := scanForValidDataEnd(fq.data, fq.readOffset)
+	if err != nil {
+		return errorsx.Wrap(err, "scanForValidDataEnd failed")
+	}
+
+	if dataEnd != 0 {
+		return nil
+	}
+
+	if fq.readOffset != 0 {
+
+		if err = fq.clear(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (fq *FileQueue) Sync() error {
@@ -413,13 +442,17 @@ func (fq *FileQueue) Close() error {
 	return fq.file.Close()
 }
 
-// CheckClose unmaps and closes the file queue.
-func (fq *FileQueue) CheckClose() error {
+// CheckClearClose unmaps and closes the file queue.
+func (fq *FileQueue) CheckClearClose() error {
 	fq.mtx.Lock()
 	defer fq.mtx.Unlock()
 
-	if fq.readOffset != fq.writeOffset {
-		return ErrNotEmptyYet
+	for fq.isEmpty() != nil {
+		runtime.Gosched()
+	}
+
+	if err := fq.clear(); err != nil {
+		return errorsx.Wrap(err, "clear failed")
 	}
 
 	if osx.IsFileClosed(fq.file) {
@@ -442,7 +475,20 @@ func (fq *FileQueue) IsEmpty() error {
 	fq.mtx.Lock()
 	defer fq.mtx.Unlock()
 
+	return fq.isEmpty()
+}
+
+func (fq *FileQueue) isEmpty() error {
 	if fq.readOffset >= fq.writeOffset {
+		dataEnd, err := scanForValidDataEnd(fq.data, fq.readOffset)
+		if err != nil {
+			return errorsx.Wrap(err, "scanForValidDataEnd failed")
+		}
+
+		if dataEnd != 0 {
+			return ErrNotEmptyYet
+		}
+
 		return nil // queue is empty
 	}
 

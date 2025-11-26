@@ -999,8 +999,8 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				//err = ts.ltngEngine.Restart(ts.ctx)
-				//require.NoError(t, err)
+				err = ts.ltngEngine.Restart(ts.ctx)
+				require.NoError(t, err)
 
 				{
 					// search by key

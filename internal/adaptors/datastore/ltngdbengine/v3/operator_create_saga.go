@@ -37,7 +37,7 @@ func (s *createSaga) ListenAndTrigger(ctx context.Context) {
 		s.opSaga.crudChannels.CreateChannels.InfoChannel.Ch,
 		func(itemInfoData *ltngdbenginemodelsv3.ItemInfoData) {
 			if _, err := s.createItemInfoData(itemInfoData.Ctx, itemInfoData); err != nil {
-				itemInfoData.RespSignal <- errorsx.Wrap(err, "error creating item info data on disk")
+				itemInfoData.RespSignal <- errorsx.Wrap(err, "error creating item on disk")
 				close(itemInfoData.RespSignal)
 
 				return
@@ -83,7 +83,7 @@ func (s *createSaga) buildCreateItemInfoData(
 			itemInfoData.DBMetaInfo.Path, encodedKey)
 
 		if err := os.Remove(filePath); err != nil {
-			return err
+			return errorsx.Wrapf(err, "error deleting created item from disk: %s", encodedKey)
 		}
 		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey))
 
@@ -93,7 +93,7 @@ func (s *createSaga) buildCreateItemInfoData(
 	createItemOnRelationalFile := func() error {
 		if err := s.opSaga.e.upsertItemOnRelationalFile(
 			itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Item); err != nil {
-			return err
+			return errorsx.Wrapf(err, "error creating item on relational file for: %+v", itemInfoData.DBMetaInfo)
 		}
 
 		return nil

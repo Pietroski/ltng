@@ -71,13 +71,28 @@ func newLTNGEngine(
 }
 
 func (e *LTNGEngine) init(ctx context.Context) error {
-	//engine, err := newLTNGEngine(ctx)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//e = engine
-	//return nil
+	ctx, cancel := context.WithCancel(ctx)
+	fqCtx, cancelFq := context.WithCancel(ctx)
+
+	fq, err := mmap.NewFileQueue(fileiomodels.GetFileQueueFilePath(
+		fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath,
+		fileiomodels.GenericFileQueueFileName,
+	))
+	if err != nil {
+		cancel()
+		cancelFq()
+		return err
+	}
+
+	e.ctx = ctx
+	e.cancel = cancel
+	e.fqCtx = fqCtx
+	e.cancelFq = cancelFq
+
+	e.fq = fq
+
+	e.opSaga = newOpSaga(ctx, e)
 
 	return saga.NewListOperator(e.buildInitManagerOperations(ctx)...).Operate()
 }
@@ -177,6 +192,18 @@ func (e *LTNGEngine) closeStores() {
 
 			return true
 		})
+
+	e.relationalStoreFileMapping.RangeAndDelete(
+		func(relationalStore string, value *ltngdbenginemodelsv3.RelationalFileInfo) bool {
+			if !osx.IsFileClosed(value.File) {
+				if err := value.File.Close(); err != nil {
+					e.logger.Error(e.ctx, "error closing file from relational store",
+						"relational_store", relationalStore, "err", err)
+				}
+			}
+
+			return true
+		})
 }
 
 func (e *LTNGEngine) closeItems() {
@@ -184,7 +211,15 @@ func (e *LTNGEngine) closeItems() {
 		runtime.Gosched()
 	}
 
+	//if err := e.fq.Clear(); err != nil {
+	//	e.logger.Error(e.ctx, "error cleaning up file queue", "error", err)
+	//}
 	e.cancelFq()
+
+	if err := e.fq.Clear(); err != nil {
+		e.logger.Error(e.ctx, "error cleaning up file queue", "error", err)
+	}
+
 	if err := e.fq.Close(); err != nil {
 		e.logger.Error(e.ctx, "error closing file queue", "err", err)
 	}
@@ -201,6 +236,22 @@ func (e *LTNGEngine) closeItems() {
 			}
 		}
 
+		return true
+	})
+
+	e.relationalItemFileMapping.RangeAndDelete(func(relationalItem string,
+		value *ltngdbenginemodelsv3.RelationalFileInfo) bool {
+		if !osx.IsFileClosed(value.File) {
+			if err := value.File.Close(); err != nil {
+				e.logger.Error(e.ctx, "error closing file from relational item store",
+					"relational_item", relationalItem, "err", err)
+			}
+		}
+
+		return true
+	})
+
+	e.markedAsDeletedMapping.RangeAndDelete(func(itemKey string, value struct{}) bool {
 		return true
 	})
 
