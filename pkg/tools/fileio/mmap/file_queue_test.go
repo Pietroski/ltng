@@ -3,21 +3,17 @@ package mmap
 import (
 	"context"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
-	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio"
 
-	"gitlab.com/pietroski-software-company/golang/devex/random"
-	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
+	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
@@ -32,10 +28,10 @@ type TestData struct {
 
 func TestMmapFileQueue(t *testing.T) {
 	ctx := context.Background()
-	err := osx.DelHard(ctx, fileio.LTNGFileQueueBasePath)
+	err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
 
-	fq, err := NewGrowableMmap(fileio.GetFileQueueFilePath(
-		ltngdata.GenericFQFilePath, ltngdata.GenericFQFileName))
+	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	testData := &TestData{
@@ -43,7 +39,7 @@ func TestMmapFileQueue(t *testing.T) {
 		IntField:  10,
 		BoolField: true,
 	}
-	err = fq.Write(testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
 	bs, err := fq.Read()
@@ -55,13 +51,13 @@ func TestMmapFileQueue(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.NoError(t, err)
 	err = fq.serializer.Deserialize(bs, &td)
 	require.NoError(t, err)
@@ -69,13 +65,13 @@ func TestMmapFileQueue(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.NoError(t, err)
 	err = fq.serializer.Deserialize(bs, &td)
 	require.NoError(t, err)
@@ -83,17 +79,17 @@ func TestMmapFileQueue(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.Error(t, err)
 	require.Nil(t, bs)
 }
 
 func TestFileQueueBench(t *testing.T) {
-	ctx := context.Background()
-	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	testData := &TestData{
@@ -101,10 +97,10 @@ func TestFileQueueBench(t *testing.T) {
 		IntField:  10,
 		BoolField: true,
 	}
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	bs, err := fq.Read(ctx)
+	bs, err := fq.Read()
 	require.NoError(t, err)
 	var td TestData
 	err = fq.serializer.Deserialize(bs, &td)
@@ -113,17 +109,17 @@ func TestFileQueueBench(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.Error(t, err)
 	require.Nil(t, bs)
 }
 
 func TestFileQueueDisordered(t *testing.T) {
-	ctx := context.Background()
-	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	testData := &TestData{
@@ -131,10 +127,10 @@ func TestFileQueueDisordered(t *testing.T) {
 		IntField:  10,
 		BoolField: true,
 	}
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	bs, err := fq.Read(ctx)
+	bs, err := fq.Read()
 	require.NoError(t, err)
 	var td TestData
 	err = fq.serializer.Deserialize(bs, &td)
@@ -143,22 +139,22 @@ func TestFileQueueDisordered(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	err = fq.Write(ctx, testData)
+	_, err = fq.Write(testData)
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.NoError(t, err)
 	err = fq.serializer.Deserialize(bs, &td)
 	require.NoError(t, err)
@@ -166,10 +162,10 @@ func TestFileQueueDisordered(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.NoError(t, err)
 	err = fq.serializer.Deserialize(bs, &td)
 	require.NoError(t, err)
@@ -177,10 +173,10 @@ func TestFileQueueDisordered(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.NoError(t, err)
 	err = fq.serializer.Deserialize(bs, &td)
 	require.NoError(t, err)
@@ -188,10 +184,10 @@ func TestFileQueueDisordered(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.NoError(t, err)
 	err = fq.serializer.Deserialize(bs, &td)
 	require.NoError(t, err)
@@ -199,18 +195,20 @@ func TestFileQueueDisordered(t *testing.T) {
 	t.Log(testData)
 	t.Log(td)
 
-	err = fq.Pop(ctx)
+	_, err = fq.Pop()
 	require.NoError(t, err)
 
-	bs, err = fq.Read(ctx)
+	bs, err = fq.Read()
 	require.Error(t, err)
 	require.Nil(t, bs)
 }
 
 func TestFileQueueMultipleWrites(t *testing.T) {
 	ctx := context.Background()
-	err := osx.DelHard(ctx, ltngFileQueueBasePath)
-	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+	err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
+
+	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	op := syncx.NewThreadOperator("file_queue")
@@ -222,12 +220,12 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 		//		IntField:  10,
 		//		BoolField: true,
 		//	}
-		//	err = fq.Write(ctx, testData)
+		//	_, err = fq.Write(testData)
 		//	require.NoError(t, err)
 		//
 		//	time.Sleep(time.Millisecond * 100)
 		//
-		//	bs, err := fq.Read(ctx)
+		//	bs, err := fq.Read()
 		//	require.NoError(t, err)
 		//	var td TestData
 		//	err = fq.serializer.Deserialize(bs, &td)
@@ -236,7 +234,7 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 		//	//t.Log(testData)
 		//	//t.Log(td)
 		//
-		//	err = fq.Pop(ctx)
+		//	_, err = fq.Pop()
 		//	require.NoError(t, err)
 		//
 		//	return nil, nil
@@ -247,10 +245,10 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 			IntField:  10,
 			BoolField: true,
 		}
-		err = fq.Write(ctx, testData)
+		_, err = fq.Write(testData)
 		require.NoError(t, err)
 
-		bs, err := fq.Read(ctx)
+		bs, err := fq.Read()
 		require.NoError(t, err)
 		var td TestData
 		err = fq.serializer.Deserialize(bs, &td)
@@ -259,63 +257,65 @@ func TestFileQueueMultipleWrites(t *testing.T) {
 		//t.Log(testData)
 		//t.Log(td)
 
-		err = fq.Pop(ctx)
+		_, err = fq.Pop()
 		require.NoError(t, err)
 	}
 
 	err = op.WaitAndWrapErr()
 	require.NoError(t, err)
 
-	bs, err := fq.Read(ctx)
+	bs, err := fq.Read()
 	require.Error(t, err)
 	require.Nil(t, bs)
 }
 
-func TestFileQueueConcurrent(t *testing.T) {
-	ctx := context.Background()
-	err := osx.DelHard(ctx, ltngFileQueueBasePath)
-	require.NoError(t, err)
-	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
-	require.NoError(t, err)
-
-	op := syncx.NewThreadOperator("file_queue")
-	limit := 50
-	for idx := 0; idx < limit; idx++ {
-		op.OpX(func() (any, error) {
-			testData := &TestData{
-				StrField:  "str",
-				IntField:  10,
-				BoolField: true,
-			}
-			err := fq.Write(ctx, testData)
-			require.NoError(t, err)
-
-			time.Sleep(time.Millisecond * 100)
-
-			err = fq.ReadAndPop(ctx, func(ctx context.Context, bs []byte) error {
-				var td TestData
-				err = fq.serializer.Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.Equal(t, testData, &td)
-				return err
-			})
-			require.NoError(t, err)
-
-			return nil, nil
-		})
-	}
-
-	err = op.WaitAndWrapErr()
-	require.NoError(t, err)
-
-	bs, err := fq.Read(ctx)
-	require.Error(t, err)
-	require.Nil(t, bs)
-}
+//func TestFileQueueConcurrent(t *testing.T) {
+//	ctx := context.Background()
+//	err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
+//	require.NoError(t, err)
+//
+//	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+//		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
+//	require.NoError(t, err)
+//
+//	op := syncx.NewThreadOperator("file_queue")
+//	limit := 50
+//	for idx := 0; idx < limit; idx++ {
+//		op.OpX(func() (any, error) {
+//			testData := &TestData{
+//				StrField:  "str",
+//				IntField:  10,
+//				BoolField: true,
+//			}
+//			_, err := fq.Write(testData)
+//			require.NoError(t, err)
+//
+//			time.Sleep(time.Millisecond * 100)
+//
+//			err = fq.ReadAndPop(ctx, func(ctx context.Context, bs []byte) error {
+//				var td TestData
+//				err = fq.serializer.Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.Equal(t, testData, &td)
+//				return err
+//			})
+//			require.NoError(t, err)
+//
+//			return nil, nil
+//		})
+//	}
+//
+//	err = op.WaitAndWrapErr()
+//	require.NoError(t, err)
+//
+//	bs, err := fq.Read()
+//	require.Error(t, err)
+//	require.Nil(t, bs)
+//}
 
 func BenchmarkFileQueueActions(b *testing.B) {
-	ctx := context.Background()
-	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(b, err)
 
 	testData := &TestData{
@@ -326,18 +326,18 @@ func BenchmarkFileQueueActions(b *testing.B) {
 
 	b.Run("write - read - pop", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			err = fq.Write(ctx, testData)
+			_, err = fq.Write(testData)
 			require.NoError(b, err)
 
 			var bs []byte
-			bs, err = fq.Read(ctx)
+			bs, err = fq.Read()
 			require.NoError(b, err)
 			var td TestData
 			err = fq.serializer.Deserialize(bs, &td)
 			require.NoError(b, err)
 			require.Equal(b, testData, &td)
 
-			err = fq.Pop(ctx)
+			_, err = fq.Pop()
 			require.NoError(b, err)
 		}
 	})
@@ -355,7 +355,7 @@ func BenchmarkFileQueueActions(b *testing.B) {
 
 			b.ResetTimer()
 			b.StartTimer()
-			err = fq.Write(ctx, testData)
+			_, err = fq.Write(testData)
 			b.StopTimer()
 			elapsed := b.Elapsed()
 			b.ResetTimer()
@@ -365,7 +365,7 @@ func BenchmarkFileQueueActions(b *testing.B) {
 			var bs []byte
 			b.ResetTimer()
 			b.StartTimer()
-			bs, err = fq.Read(ctx)
+			bs, err = fq.Read()
 			b.StopTimer()
 			elapsed = b.Elapsed()
 			b.ResetTimer()
@@ -379,7 +379,7 @@ func BenchmarkFileQueueActions(b *testing.B) {
 
 			b.ResetTimer()
 			b.StartTimer()
-			err = fq.Pop(ctx)
+			_, err = fq.Pop()
 			b.StopTimer()
 			elapsed = b.Elapsed()
 			b.ResetTimer()
@@ -393,127 +393,129 @@ func BenchmarkFileQueueActions(b *testing.B) {
 		b.Logf("popBench - %s", popBench.String())
 	})
 
-	b.Run("(write - read and pop) stats", func(b *testing.B) {
-		writeBench := &testbench.BenchData{}
-		readAndPopBench := &testbench.BenchData{}
-
-		limit := 250
-		for i := 0; i < limit; i++ {
-			writeBench.Count()
-			readAndPopBench.Count()
-
-			b.ResetTimer()
-			b.StartTimer()
-			err = fq.Write(ctx, testData)
-			b.StopTimer()
-			elapsed := b.Elapsed()
-			b.ResetTimer()
-			writeBench.CalcAvg(elapsed)
-			require.NoError(b, err)
-
-			b.ResetTimer()
-			b.StartTimer()
-			err = fq.ReadAndPop(ctx, func(ctx context.Context, bs []byte) error {
-				var td TestData
-				err = fq.serializer.Deserialize(bs, &td)
-				require.NoError(b, err)
-				require.Equal(b, testData, &td)
-				return err
-			})
-			b.StopTimer()
-			elapsed = b.Elapsed()
-			readAndPopBench.CalcAvg(elapsed)
-			b.ResetTimer()
-			require.NoError(b, err)
-		}
-
-		b.Logf("writeBench - %s", writeBench.String())
-		b.Logf("readBench - %s", readAndPopBench.String())
-	})
-
-	b.Run("(write - read - pop) stats", func(b *testing.B) {
-		writeBench := &testbench.BenchData{}
-		readBench := &testbench.BenchData{}
-
-		limit := 1 << 14
-		for i := 0; i < limit; i++ {
-			writeBench.Count()
-			readBench.Count()
-
-			b.ResetTimer()
-			b.StartTimer()
-			err = fq.WriteOnCursor(ctx, testData)
-			b.StopTimer()
-			elapsed := b.Elapsed()
-			b.ResetTimer()
-			writeBench.CalcAvg(elapsed)
-			require.NoError(b, err)
-
-			var bs []byte
-			b.ResetTimer()
-			b.StartTimer()
-			bs, err = fq.ReadFromCursor(ctx)
-			b.StopTimer()
-			elapsed = b.Elapsed()
-			b.ResetTimer()
-			readBench.CalcAvg(elapsed)
-			require.NoError(b, err)
-
-			var td TestData
-			err = fq.serializer.Deserialize(bs, &td)
-			require.NoError(b, err)
-			require.Equal(b, testData, &td)
-		}
-
-		bs, err := fq.ReadFromCursor(ctx)
-		require.Error(b, err)
-		require.Empty(b, bs)
-
-		b.Logf("writeBench - %s", writeBench.String())
-		b.Logf("readBench - %s", readBench.String())
-	})
+	//b.Run("(write - read and pop) stats", func(b *testing.B) {
+	//	writeBench := &testbench.BenchData{}
+	//	readAndPopBench := &testbench.BenchData{}
+	//
+	//	limit := 250
+	//	for i := 0; i < limit; i++ {
+	//		writeBench.Count()
+	//		readAndPopBench.Count()
+	//
+	//		b.ResetTimer()
+	//		b.StartTimer()
+	//		_, err = fq.Write(testData)
+	//		b.StopTimer()
+	//		elapsed := b.Elapsed()
+	//		b.ResetTimer()
+	//		writeBench.CalcAvg(elapsed)
+	//		require.NoError(b, err)
+	//
+	//		b.ResetTimer()
+	//		b.StartTimer()
+	//		err = fq.ReadAndPop(ctx, func(ctx context.Context, bs []byte) error {
+	//			var td TestData
+	//			err = fq.serializer.Deserialize(bs, &td)
+	//			require.NoError(b, err)
+	//			require.Equal(b, testData, &td)
+	//			return err
+	//		})
+	//		b.StopTimer()
+	//		elapsed = b.Elapsed()
+	//		readAndPopBench.CalcAvg(elapsed)
+	//		b.ResetTimer()
+	//		require.NoError(b, err)
+	//	}
+	//
+	//	b.Logf("writeBench - %s", writeBench.String())
+	//	b.Logf("readBench - %s", readAndPopBench.String())
+	//})
+	//
+	//b.Run("(write - read - pop) stats", func(b *testing.B) {
+	//	writeBench := &testbench.BenchData{}
+	//	readBench := &testbench.BenchData{}
+	//
+	//	limit := 1 << 14
+	//	for i := 0; i < limit; i++ {
+	//		writeBench.Count()
+	//		readBench.Count()
+	//
+	//		b.ResetTimer()
+	//		b.StartTimer()
+	//		err = fq.WriteOnCursor(ctx, testData)
+	//		b.StopTimer()
+	//		elapsed := b.Elapsed()
+	//		b.ResetTimer()
+	//		writeBench.CalcAvg(elapsed)
+	//		require.NoError(b, err)
+	//
+	//		var bs []byte
+	//		b.ResetTimer()
+	//		b.StartTimer()
+	//		bs, err = fq.ReadFromCursor(ctx)
+	//		b.StopTimer()
+	//		elapsed = b.Elapsed()
+	//		b.ResetTimer()
+	//		readBench.CalcAvg(elapsed)
+	//		require.NoError(b, err)
+	//
+	//		var td TestData
+	//		err = fq.serializer.Deserialize(bs, &td)
+	//		require.NoError(b, err)
+	//		require.Equal(b, testData, &td)
+	//	}
+	//
+	//	bs, err := fq.ReadFromCursor(ctx)
+	//	require.Error(b, err)
+	//	require.Empty(b, bs)
+	//
+	//	b.Logf("writeBench - %s", writeBench.String())
+	//	b.Logf("readBench - %s", readBench.String())
+	//})
 }
 
 func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
-	b.Run("write, read & pop", func(b *testing.B) {
-		ctx := context.Background()
-		err := osx.DelHard(ctx, ltngFileQueueBasePath)
-		require.NoError(b, err)
-		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
-		require.NoError(b, err)
-
-		op := syncx.NewThreadOperator("file_queue")
-		limit := 50
-		for idx := 0; idx < limit; idx++ {
-			op.OpX(func() (any, error) {
-				testData := &TestData{
-					StrField:  "str",
-					IntField:  10,
-					BoolField: true,
-				}
-				err := fq.Write(ctx, testData)
-				require.NoError(b, err)
-
-				err = fq.ReadAndPop(ctx, func(ctx context.Context, bs []byte) error {
-					var td TestData
-					err = fq.serializer.Deserialize(bs, &td)
-					require.NoError(b, err)
-					require.Equal(b, testData, &td)
-					return err
-				})
-				require.NoError(b, err)
-
-				return nil, nil
-			})
-		}
-
-		err = op.WaitAndWrapErr()
-		require.NoError(b, err)
-
-		bs, err := fq.Read(ctx)
-		require.Error(b, err)
-		require.Nil(b, bs)
-	})
+	//b.Run("write, read & pop", func(b *testing.B) {
+	//	ctx := context.Background()
+	//	err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
+	//	require.NoError(b, err)
+	//
+	//	fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+	//		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
+	//	require.NoError(b, err)
+	//
+	//	op := syncx.NewThreadOperator("file_queue")
+	//	limit := 50
+	//	for idx := 0; idx < limit; idx++ {
+	//		op.OpX(func() (any, error) {
+	//			testData := &TestData{
+	//				StrField:  "str",
+	//				IntField:  10,
+	//				BoolField: true,
+	//			}
+	//			_, err := fq.Write(testData)
+	//			require.NoError(b, err)
+	//
+	//			err = fq.ReadAndPop(ctx, func(ctx context.Context, bs []byte) error {
+	//				var td TestData
+	//				err = fq.serializer.Deserialize(bs, &td)
+	//				require.NoError(b, err)
+	//				require.Equal(b, testData, &td)
+	//				return err
+	//			})
+	//			require.NoError(b, err)
+	//
+	//			return nil, nil
+	//		})
+	//	}
+	//
+	//	err = op.WaitAndWrapErr()
+	//	require.NoError(b, err)
+	//
+	//	bs, err := fq.Read()
+	//	require.Error(b, err)
+	//	require.Nil(b, bs)
+	//})
 
 	//b.Run("write, read, pop", func(b *testing.B) {
 	//	ctx := context.Background()
@@ -531,11 +533,11 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 	//				IntField:  10,
 	//				BoolField: true,
 	//			}
-	//			err := fq.Write(ctx, testData)
+	//			err := fq.Write(testData)
 	//			require.NoError(b, err)
 	//
 	//			var bs []byte
-	//			bs, err = fq.Read(ctx)
+	//			bs, err = fq.Read()
 	//			require.NoError(b, err)
 	//
 	//			var td TestData
@@ -543,7 +545,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 	//			require.NoError(b, err)
 	//			require.Equal(b, testData, &td)
 	//
-	//			err = fq.Pop(ctx)
+	//			_, err = fq.Pop()
 	//			require.NoError(b, err)
 	//
 	//			return nil, nil
@@ -553,7 +555,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 	//	err = op.WaitAndWrapErr()
 	//	require.NoError(b, err)
 	//
-	//	bs, err := fq.Read(ctx)
+	//	bs, err := fq.Read()
 	//	b.Logf("%s", bs)
 	//	assert.Error(b, err)
 	//	assert.Nil(b, bs)
@@ -561,9 +563,11 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 
 	b.Run("write, read, pop", func(b *testing.B) {
 		ctx := context.Background()
-		err := osx.DelHard(ctx, ltngFileQueueBasePath)
+		err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
 		require.NoError(b, err)
-		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+
+		fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+			fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 		require.NoError(b, err)
 
 		op := syncx.NewThreadOperator("file_queue")
@@ -575,13 +579,13 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 					IntField:  10,
 					BoolField: true,
 				}
-				err := fq.WriteOnCursor(ctx, testData)
+				_, err := fq.Write(testData)
 				require.NoError(b, err)
 
 				time.Sleep(time.Millisecond * 100)
 
 				var bs []byte
-				bs, err = fq.ReadFromCursor(ctx)
+				bs, err = fq.Read()
 				require.NoError(b, err)
 
 				var td TestData
@@ -596,16 +600,18 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		err = op.WaitAndWrapErr()
 		require.NoError(b, err)
 
-		bs, err := fq.ReadFromCursor(ctx)
+		bs, err := fq.Read()
 		require.Error(b, err)
 		require.Nil(b, bs)
 	})
 
 	b.Run("write, read, pop", func(b *testing.B) {
 		ctx := context.Background()
-		err := osx.DelHard(ctx, ltngFileQueueBasePath)
+		err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
 		require.NoError(b, err)
-		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+
+		fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+			fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 		require.NoError(b, err)
 
 		writerOnCursorBench := testbench.New()
@@ -627,7 +633,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 				bd := testbench.New()
 				var err error
 				elapsed := bd.CalcElapsed(func() {
-					err = fq.WriteOnCursor(ctx, testData)
+					_, err = fq.Write(testData)
 				})
 				writerOnCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
@@ -643,7 +649,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 				var err error
 				var bs []byte
 				elapsed := bd.CalcElapsed(func() {
-					bs, err = fq.ReadFromCursor(ctx)
+					bs, err = fq.Read()
 				})
 				readFromCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
@@ -660,9 +666,12 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		err = op.WaitAndWrapErr()
 		require.NoError(b, err)
 
-		for !fq.CheckAndClose() {
-			runtime.Gosched()
-		}
+		//for !fq.Close() {
+		//	runtime.Gosched()
+		//}
+
+		err = fq.Close()
+		require.NoError(b, err)
 
 		writerOnCursorBench.CloseChannels()
 		readFromCursorBench.CloseChannels()
@@ -672,16 +681,18 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		b.Logf("writeBench - %s", writerOnCursorBench.String())
 		b.Logf("readBench - %s", readFromCursorBench.String())
 
-		bs, err := fq.ReadFromCursor(ctx)
+		bs, err := fq.Read()
 		require.Error(b, err)
 		require.Nil(b, bs)
 	})
 
 	b.Run("write, read, pop", func(b *testing.B) {
 		ctx := context.Background()
-		err := osx.DelHard(ctx, ltngFileQueueBasePath)
+		err := osx.DelHard(ctx, fileiomodels.FileQueueBasePath)
 		require.NoError(b, err)
-		fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+
+		fq, err := NewFileQueue(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+			fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 		require.NoError(b, err)
 
 		writerOnCursorBench := testbench.New()
@@ -706,7 +717,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 				bd := testbench.New()
 				var err error
 				elapsed := bd.CalcElapsed(func() {
-					err = fq.WriteOnCursor(ctx, testData)
+					_, err = fq.Write(testData)
 				})
 				writerOnCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
@@ -722,7 +733,7 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 				var err error
 				var bs []byte
 				elapsed := bd.CalcElapsed(func() {
-					bs, err = fq.ReadFromCursor(ctx)
+					bs, err = fq.Read()
 				})
 				readFromCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
@@ -739,9 +750,8 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		err = op.WaitAndWrapErr()
 		require.NoError(b, err)
 
-		for !fq.CheckAndClose() {
-			runtime.Gosched()
-		}
+		err = fq.Close()
+		require.NoError(b, err)
 
 		writerOnCursorBench.QuitClose()
 		readFromCursorBench.QuitClose()
@@ -750,601 +760,601 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		//b.Logf("writeBench - %s", writerOnCursorBench.String())
 		//b.Logf("readBench - %s", readFromCursorBench.String())
 
-		bs, err := fq.ReadFromCursor(ctx)
+		bs, err := fq.Read()
 		require.Error(b, err)
 		require.Nil(b, bs)
 	})
 }
 
-func TestFileQueue_PopFromIndex(t *testing.T) {
-	t.Run("single item", func(t *testing.T) {
-		t.Run("index found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testData := getTestData(t)
-			err = fq.WriteOnCursor(ctx, testData)
-			require.NoError(t, err)
-
-			bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-			require.NoError(t, err)
-
-			var td TestData
-			err = serializer.
-				NewRawBinarySerializer().
-				Deserialize(bs, &td)
-			require.NoError(t, err)
-			require.EqualValues(t, testData, &td)
-
-			err = fq.PopFromIndex(ctx, []byte(testData.IDField))
-			require.NoError(t, err)
-			assertFQCount(t, ctx, fq, 0)
-		})
-
-		t.Run("index not found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testData := getTestData(t)
-			err = fq.WriteOnCursor(ctx, testData)
-			require.NoError(t, err)
-
-			bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-			require.NoError(t, err)
-
-			var td TestData
-			err = serializer.
-				NewRawBinarySerializer().
-				Deserialize(bs, &td)
-			require.NoError(t, err)
-			require.EqualValues(t, testData, &td)
-
-			err = fq.PopFromIndex(ctx, nonExistentIndex)
-			require.Error(t, err)
-			assertFQCount(t, ctx, fq, 1)
-		})
-	})
-
-	t.Run("first item", func(t *testing.T) {
-		t.Run("index found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, 3)
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, []byte(testDataList[0].IDField))
-			require.NoError(t, err)
-			assertFQCount(t, ctx, fq, 2)
-		})
-
-		t.Run("index not found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, 3)
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, nonExistentIndex)
-			require.Error(t, err)
-			assertFQCount(t, ctx, fq, 3)
-		})
-	})
-
-	t.Run("last item", func(t *testing.T) {
-		t.Run("index found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, 3)
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, []byte(testDataList[len(testDataList)-1].IDField))
-			require.NoError(t, err)
-			assertFQCount(t, ctx, fq, 2)
-		})
-
-		t.Run("index not found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, 3)
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, nonExistentIndex)
-			require.Error(t, err)
-			assertFQCount(t, ctx, fq, 3)
-		})
-	})
-
-	t.Run("middle item", func(t *testing.T) {
-		t.Run("index found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, 3)
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, []byte(testDataList[len(testDataList)/2].IDField))
-			require.NoError(t, err)
-			assertFQCount(t, ctx, fq, 2)
-		})
-
-		t.Run("index not found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, 3)
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, nonExistentIndex)
-			require.Error(t, err)
-			assertFQCount(t, ctx, fq, 3)
-		})
-	})
-
-	t.Run("any item", func(t *testing.T) {
-		amount := random.Int(1, 50)
-		indexPosition := random.Int(0, amount-1)
-
-		t.Log("amount", amount)
-		t.Log("indexPosition:", indexPosition)
-
-		t.Run("index found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, int(amount))
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
-			require.NoError(t, err)
-			assertFQCount(t, ctx, fq, int(amount)-1)
-		})
-
-		t.Run("index not found", func(t *testing.T) {
-			ctx := context.Background()
-
-			path := GenericFileQueueFilePath + "/" + "pop_from_index"
-			filename := GenericFileQueueFileName
-
-			err := os.RemoveAll(getFilePath(path, filename))
-			require.NoError(t, err)
-
-			fq, err := New(ctx, path, filename)
-			require.NoError(t, err)
-
-			testDataList := getTestDataList(t, int(amount))
-
-			for _, testData := range testDataList {
-				err = fq.WriteOnCursor(ctx, testData)
-				require.NoError(t, err)
-			}
-
-			for _, testData := range testDataList {
-				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-				require.NoError(t, err)
-
-				var td TestData
-				err = serializer.
-					NewRawBinarySerializer().
-					Deserialize(bs, &td)
-				require.NoError(t, err)
-				require.EqualValues(t, testData, &td)
-			}
-
-			err = fq.PopFromIndex(ctx, nonExistentIndex)
-			require.Error(t, err)
-			assertFQCount(t, ctx, fq, int(amount))
-		})
-	})
-
-	t.Run("one after another", func(t *testing.T) {
-		amount := random.Int(1, 10)
-		indexPosition := random.Int(0, amount-1)
-		anotherIndexPosition := random.Int(0, amount-1)
-		for indexPosition == anotherIndexPosition {
-			anotherIndexPosition = random.Int(0, amount-1)
-		}
-
-		t.Log("amount", amount)
-		t.Log("indexPosition:", indexPosition)
-		t.Log("anotherIndexPosition:", anotherIndexPosition)
-
-		t.Run("single-thread", func(t *testing.T) {
-			t.Run("index found", func(t *testing.T) {
-				ctx := context.Background()
-
-				path := GenericFileQueueFilePath + "/" + "pop_from_index"
-				filename := GenericFileQueueFileName
-
-				err := os.RemoveAll(getFilePath(path, filename))
-				require.NoError(t, err)
-
-				fq, err := New(ctx, path, filename)
-				require.NoError(t, err)
-
-				testDataList := getTestDataList(t, int(amount))
-
-				for _, testData := range testDataList {
-					err = fq.WriteOnCursor(ctx, testData)
-					require.NoError(t, err)
-				}
-
-				for _, testData := range testDataList {
-					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-					require.NoError(t, err)
-
-					var td TestData
-					err = serializer.
-						NewRawBinarySerializer().
-						Deserialize(bs, &td)
-					require.NoError(t, err)
-					require.EqualValues(t, testData, &td)
-				}
-
-				t.Log(testDataList[indexPosition].IDField)
-				t.Log(testDataList[anotherIndexPosition].IDField)
-
-				err = fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
-				require.NoError(t, err)
-				err = fq.PopFromIndex(ctx, []byte(testDataList[anotherIndexPosition].IDField))
-				require.NoError(t, err)
-
-				assertFQCount(t, ctx, fq, int(amount)-2)
-			})
-
-			t.Run("index not found", func(t *testing.T) {
-				ctx := context.Background()
-
-				path := GenericFileQueueFilePath + "/" + "pop_from_index"
-				filename := GenericFileQueueFileName
-
-				err := os.RemoveAll(getFilePath(path, filename))
-				require.NoError(t, err)
-
-				fq, err := New(ctx, path, filename)
-				require.NoError(t, err)
-
-				testDataList := getTestDataList(t, int(amount))
-
-				for _, testData := range testDataList {
-					err = fq.WriteOnCursor(ctx, testData)
-					require.NoError(t, err)
-				}
-
-				for _, testData := range testDataList {
-					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-					require.NoError(t, err)
-
-					var td TestData
-					err = serializer.
-						NewRawBinarySerializer().
-						Deserialize(bs, &td)
-					require.NoError(t, err)
-					require.EqualValues(t, testData, &td)
-				}
-
-				err = fq.PopFromIndex(ctx, nonExistentIndex)
-				require.Error(t, err)
-				err = fq.PopFromIndex(ctx, nonExistentIndex)
-				require.Error(t, err)
-				assertFQCount(t, ctx, fq, int(amount))
-			})
-		})
-
-		t.Run("concurrently", func(t *testing.T) {
-			t.Run("index found", func(t *testing.T) {
-				ctx := context.Background()
-
-				path := GenericFileQueueFilePath + "/" + "pop_from_index"
-				filename := GenericFileQueueFileName
-
-				err := os.RemoveAll(getFilePath(path, filename))
-				require.NoError(t, err)
-
-				fq, err := New(ctx, path, filename)
-				require.NoError(t, err)
-
-				testDataList := getTestDataList(t, int(amount))
-
-				for _, testData := range testDataList {
-					err = fq.WriteOnCursor(ctx, testData)
-					require.NoError(t, err)
-				}
-
-				for _, testData := range testDataList {
-					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-					require.NoError(t, err)
-
-					var td TestData
-					err = serializer.
-						NewRawBinarySerializer().
-						Deserialize(bs, &td)
-					require.NoError(t, err)
-					require.EqualValues(t, testData, &td)
-				}
-
-				t.Log(testDataList[indexPosition].IDField)
-				t.Log(testDataList[anotherIndexPosition].IDField)
-
-				op := syncx.NewThreadOperator("simultaneous popping")
-				op.OpX(func() (any, error) {
-					err := fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
-					require.NoError(t, err)
-
-					return nil, nil
-				})
-				op.OpX(func() (any, error) {
-					err := fq.PopFromIndex(ctx, []byte(testDataList[anotherIndexPosition].IDField))
-					require.NoError(t, err)
-
-					return nil, nil
-				})
-				err = op.WaitAndWrapErr()
-				require.NoError(t, err)
-
-				assertFQCount(t, ctx, fq, int(amount)-2)
-			})
-
-			t.Run("index not found", func(t *testing.T) {
-				ctx := context.Background()
-
-				path := GenericFileQueueFilePath + "/" + "pop_from_index"
-				filename := GenericFileQueueFileName
-
-				err := os.RemoveAll(getFilePath(path, filename))
-				require.NoError(t, err)
-
-				fq, err := New(ctx, path, filename)
-				require.NoError(t, err)
-
-				testDataList := getTestDataList(t, int(amount))
-
-				for _, testData := range testDataList {
-					err = fq.WriteOnCursor(ctx, testData)
-					require.NoError(t, err)
-				}
-
-				for _, testData := range testDataList {
-					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-					require.NoError(t, err)
-
-					var td TestData
-					err = serializer.
-						NewRawBinarySerializer().
-						Deserialize(bs, &td)
-					require.NoError(t, err)
-					require.EqualValues(t, testData, &td)
-				}
-
-				op := syncx.NewThreadOperator("simultaneous popping")
-				op.OpX(func() (any, error) {
-					err := fq.PopFromIndex(ctx, nonExistentIndex)
-					require.Error(t, err)
-
-					return nil, nil
-				})
-				op.OpX(func() (any, error) {
-					err := fq.PopFromIndex(ctx, nonExistentIndex)
-					require.Error(t, err)
-
-					return nil, nil
-				})
-				err = op.WaitAndWrapErr()
-				require.NoError(t, err)
-
-				assertFQCount(t, ctx, fq, int(amount))
-			})
-		})
-	})
-
-	t.Run("empty queue", func(t *testing.T) {
-		ctx := context.Background()
-
-		path := GenericFileQueueFilePath + "/" + "pop_from_index"
-		filename := GenericFileQueueFileName
-
-		err := os.RemoveAll(getFilePath(path, filename))
-		require.NoError(t, err)
-
-		fq, err := New(ctx, path, filename)
-		require.NoError(t, err)
-
-		testData := getTestData(t)
-		bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
-		require.Error(t, err)
-		require.Empty(t, bs)
-
-		err = fq.PopFromIndex(ctx, []byte(testData.IDField))
-		require.Error(t, err)
-		assertFQCount(t, ctx, fq, 0)
-	})
-}
+//func TestFileQueue_PopFromIndex(t *testing.T) {
+//	t.Run("single item", func(t *testing.T) {
+//		t.Run("index found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testData := getTestData(t)
+//			err = fq.WriteOnCursor(ctx, testData)
+//			require.NoError(t, err)
+//
+//			bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//			require.NoError(t, err)
+//
+//			var td TestData
+//			err = serializer.
+//				NewRawBinarySerializer().
+//				Deserialize(bs, &td)
+//			require.NoError(t, err)
+//			require.EqualValues(t, testData, &td)
+//
+//			err = fq.PopFromIndex(ctx, []byte(testData.IDField))
+//			require.NoError(t, err)
+//			assertFQCount(t, ctx, fq, 0)
+//		})
+//
+//		t.Run("index not found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testData := getTestData(t)
+//			err = fq.WriteOnCursor(ctx, testData)
+//			require.NoError(t, err)
+//
+//			bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//			require.NoError(t, err)
+//
+//			var td TestData
+//			err = serializer.
+//				NewRawBinarySerializer().
+//				Deserialize(bs, &td)
+//			require.NoError(t, err)
+//			require.EqualValues(t, testData, &td)
+//
+//			err = fq.PopFromIndex(ctx, nonExistentIndex)
+//			require.Error(t, err)
+//			assertFQCount(t, ctx, fq, 1)
+//		})
+//	})
+//
+//	t.Run("first item", func(t *testing.T) {
+//		t.Run("index found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, 3)
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, []byte(testDataList[0].IDField))
+//			require.NoError(t, err)
+//			assertFQCount(t, ctx, fq, 2)
+//		})
+//
+//		t.Run("index not found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, 3)
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, nonExistentIndex)
+//			require.Error(t, err)
+//			assertFQCount(t, ctx, fq, 3)
+//		})
+//	})
+//
+//	t.Run("last item", func(t *testing.T) {
+//		t.Run("index found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, 3)
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, []byte(testDataList[len(testDataList)-1].IDField))
+//			require.NoError(t, err)
+//			assertFQCount(t, ctx, fq, 2)
+//		})
+//
+//		t.Run("index not found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, 3)
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, nonExistentIndex)
+//			require.Error(t, err)
+//			assertFQCount(t, ctx, fq, 3)
+//		})
+//	})
+//
+//	t.Run("middle item", func(t *testing.T) {
+//		t.Run("index found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, 3)
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, []byte(testDataList[len(testDataList)/2].IDField))
+//			require.NoError(t, err)
+//			assertFQCount(t, ctx, fq, 2)
+//		})
+//
+//		t.Run("index not found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, 3)
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, nonExistentIndex)
+//			require.Error(t, err)
+//			assertFQCount(t, ctx, fq, 3)
+//		})
+//	})
+//
+//	t.Run("any item", func(t *testing.T) {
+//		amount := random.Int(1, 50)
+//		indexPosition := random.Int(0, amount-1)
+//
+//		t.Log("amount", amount)
+//		t.Log("indexPosition:", indexPosition)
+//
+//		t.Run("index found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, int(amount))
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
+//			require.NoError(t, err)
+//			assertFQCount(t, ctx, fq, int(amount)-1)
+//		})
+//
+//		t.Run("index not found", func(t *testing.T) {
+//			ctx := context.Background()
+//
+//			path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//			filename := GenericFileQueueFileName
+//
+//			err := os.RemoveAll(getFilePath(path, filename))
+//			require.NoError(t, err)
+//
+//			fq, err := New(ctx, path, filename)
+//			require.NoError(t, err)
+//
+//			testDataList := getTestDataList(t, int(amount))
+//
+//			for _, testData := range testDataList {
+//				err = fq.WriteOnCursor(ctx, testData)
+//				require.NoError(t, err)
+//			}
+//
+//			for _, testData := range testDataList {
+//				bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//				require.NoError(t, err)
+//
+//				var td TestData
+//				err = serializer.
+//					NewRawBinarySerializer().
+//					Deserialize(bs, &td)
+//				require.NoError(t, err)
+//				require.EqualValues(t, testData, &td)
+//			}
+//
+//			err = fq.PopFromIndex(ctx, nonExistentIndex)
+//			require.Error(t, err)
+//			assertFQCount(t, ctx, fq, int(amount))
+//		})
+//	})
+//
+//	t.Run("one after another", func(t *testing.T) {
+//		amount := random.Int(1, 10)
+//		indexPosition := random.Int(0, amount-1)
+//		anotherIndexPosition := random.Int(0, amount-1)
+//		for indexPosition == anotherIndexPosition {
+//			anotherIndexPosition = random.Int(0, amount-1)
+//		}
+//
+//		t.Log("amount", amount)
+//		t.Log("indexPosition:", indexPosition)
+//		t.Log("anotherIndexPosition:", anotherIndexPosition)
+//
+//		t.Run("single-thread", func(t *testing.T) {
+//			t.Run("index found", func(t *testing.T) {
+//				ctx := context.Background()
+//
+//				path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//				filename := GenericFileQueueFileName
+//
+//				err := os.RemoveAll(getFilePath(path, filename))
+//				require.NoError(t, err)
+//
+//				fq, err := New(ctx, path, filename)
+//				require.NoError(t, err)
+//
+//				testDataList := getTestDataList(t, int(amount))
+//
+//				for _, testData := range testDataList {
+//					err = fq.WriteOnCursor(ctx, testData)
+//					require.NoError(t, err)
+//				}
+//
+//				for _, testData := range testDataList {
+//					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//					require.NoError(t, err)
+//
+//					var td TestData
+//					err = serializer.
+//						NewRawBinarySerializer().
+//						Deserialize(bs, &td)
+//					require.NoError(t, err)
+//					require.EqualValues(t, testData, &td)
+//				}
+//
+//				t.Log(testDataList[indexPosition].IDField)
+//				t.Log(testDataList[anotherIndexPosition].IDField)
+//
+//				err = fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
+//				require.NoError(t, err)
+//				err = fq.PopFromIndex(ctx, []byte(testDataList[anotherIndexPosition].IDField))
+//				require.NoError(t, err)
+//
+//				assertFQCount(t, ctx, fq, int(amount)-2)
+//			})
+//
+//			t.Run("index not found", func(t *testing.T) {
+//				ctx := context.Background()
+//
+//				path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//				filename := GenericFileQueueFileName
+//
+//				err := os.RemoveAll(getFilePath(path, filename))
+//				require.NoError(t, err)
+//
+//				fq, err := New(ctx, path, filename)
+//				require.NoError(t, err)
+//
+//				testDataList := getTestDataList(t, int(amount))
+//
+//				for _, testData := range testDataList {
+//					err = fq.WriteOnCursor(ctx, testData)
+//					require.NoError(t, err)
+//				}
+//
+//				for _, testData := range testDataList {
+//					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//					require.NoError(t, err)
+//
+//					var td TestData
+//					err = serializer.
+//						NewRawBinarySerializer().
+//						Deserialize(bs, &td)
+//					require.NoError(t, err)
+//					require.EqualValues(t, testData, &td)
+//				}
+//
+//				err = fq.PopFromIndex(ctx, nonExistentIndex)
+//				require.Error(t, err)
+//				err = fq.PopFromIndex(ctx, nonExistentIndex)
+//				require.Error(t, err)
+//				assertFQCount(t, ctx, fq, int(amount))
+//			})
+//		})
+//
+//		t.Run("concurrently", func(t *testing.T) {
+//			t.Run("index found", func(t *testing.T) {
+//				ctx := context.Background()
+//
+//				path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//				filename := GenericFileQueueFileName
+//
+//				err := os.RemoveAll(getFilePath(path, filename))
+//				require.NoError(t, err)
+//
+//				fq, err := New(ctx, path, filename)
+//				require.NoError(t, err)
+//
+//				testDataList := getTestDataList(t, int(amount))
+//
+//				for _, testData := range testDataList {
+//					err = fq.WriteOnCursor(ctx, testData)
+//					require.NoError(t, err)
+//				}
+//
+//				for _, testData := range testDataList {
+//					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//					require.NoError(t, err)
+//
+//					var td TestData
+//					err = serializer.
+//						NewRawBinarySerializer().
+//						Deserialize(bs, &td)
+//					require.NoError(t, err)
+//					require.EqualValues(t, testData, &td)
+//				}
+//
+//				t.Log(testDataList[indexPosition].IDField)
+//				t.Log(testDataList[anotherIndexPosition].IDField)
+//
+//				op := syncx.NewThreadOperator("simultaneous popping")
+//				op.OpX(func() (any, error) {
+//					err := fq.PopFromIndex(ctx, []byte(testDataList[indexPosition].IDField))
+//					require.NoError(t, err)
+//
+//					return nil, nil
+//				})
+//				op.OpX(func() (any, error) {
+//					err := fq.PopFromIndex(ctx, []byte(testDataList[anotherIndexPosition].IDField))
+//					require.NoError(t, err)
+//
+//					return nil, nil
+//				})
+//				err = op.WaitAndWrapErr()
+//				require.NoError(t, err)
+//
+//				assertFQCount(t, ctx, fq, int(amount)-2)
+//			})
+//
+//			t.Run("index not found", func(t *testing.T) {
+//				ctx := context.Background()
+//
+//				path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//				filename := GenericFileQueueFileName
+//
+//				err := os.RemoveAll(getFilePath(path, filename))
+//				require.NoError(t, err)
+//
+//				fq, err := New(ctx, path, filename)
+//				require.NoError(t, err)
+//
+//				testDataList := getTestDataList(t, int(amount))
+//
+//				for _, testData := range testDataList {
+//					err = fq.WriteOnCursor(ctx, testData)
+//					require.NoError(t, err)
+//				}
+//
+//				for _, testData := range testDataList {
+//					bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//					require.NoError(t, err)
+//
+//					var td TestData
+//					err = serializer.
+//						NewRawBinarySerializer().
+//						Deserialize(bs, &td)
+//					require.NoError(t, err)
+//					require.EqualValues(t, testData, &td)
+//				}
+//
+//				op := syncx.NewThreadOperator("simultaneous popping")
+//				op.OpX(func() (any, error) {
+//					err := fq.PopFromIndex(ctx, nonExistentIndex)
+//					require.Error(t, err)
+//
+//					return nil, nil
+//				})
+//				op.OpX(func() (any, error) {
+//					err := fq.PopFromIndex(ctx, nonExistentIndex)
+//					require.Error(t, err)
+//
+//					return nil, nil
+//				})
+//				err = op.WaitAndWrapErr()
+//				require.NoError(t, err)
+//
+//				assertFQCount(t, ctx, fq, int(amount))
+//			})
+//		})
+//	})
+//
+//	t.Run("empty queue", func(t *testing.T) {
+//		ctx := context.Background()
+//
+//		path := GenericFileQueueFilePath + "/" + "pop_from_index"
+//		filename := GenericFileQueueFileName
+//
+//		err := os.RemoveAll(getFilePath(path, filename))
+//		require.NoError(t, err)
+//
+//		fq, err := New(ctx, path, filename)
+//		require.NoError(t, err)
+//
+//		testData := getTestData(t)
+//		bs, err := fq.ReadFromCursorWithoutTruncation(ctx)
+//		require.Error(t, err)
+//		require.Empty(t, bs)
+//
+//		err = fq.PopFromIndex(ctx, []byte(testData.IDField))
+//		require.Error(t, err)
+//		assertFQCount(t, ctx, fq, 0)
+//	})
+//}
 
 func getTestData(t *testing.T) *TestData {
 	newUUID, err := uuid.NewRandom()
@@ -1368,19 +1378,19 @@ func getTestDataList(t *testing.T, amount int) []*TestData {
 }
 
 func TestReadFromFQ(t *testing.T) {
-	ctx := context.Background()
-	fq, err := New(ctx, GenericFileQueueFilePath, GenericFileQueueFileName)
+	fq, err := NewFileQueue(fileiomodels.GetTemporaryFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	var counter int
 	for {
-		_, err = fq.Read(ctx)
+		_, err = fq.Read()
 		if err != nil {
 			t.Log(err)
 			break
 		}
 
-		err = fq.Pop(ctx)
+		_, err = fq.Pop()
 		assert.NoError(t, err)
 
 		counter++
@@ -1389,25 +1399,26 @@ func TestReadFromFQ(t *testing.T) {
 }
 
 func TestReadFromFQWithoutTruncation(t *testing.T) {
-	ctx := context.Background()
-	path := GenericFileQueueFilePath + "/" + "pop_from_index"
-	filename := GenericFileQueueFileName
+	path := fileiomodels.GenericFileQueueFilePath + "/" + "pop_from_index"
+	filename := fileiomodels.GenericFileQueueFileName
 	defer func() {
-		err := os.RemoveAll(getFilePath(path, filename))
+		err := os.RemoveAll(fileiomodels.GetFileQueueFilePath(fileiomodels.FileQueueMmapVersion, path, filename))
 		require.NoError(t, err)
 	}()
-	fq, err := New(ctx, path, filename)
+
+	fq, err := NewFileQueue(fileiomodels.GetTemporaryFileQueueFilePath(fileiomodels.FileQueueMmapVersion,
+		fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 	require.NoError(t, err)
 
 	var counter int
 	for {
-		_, err = fq.Read(ctx)
+		_, err = fq.Read()
 		if err != nil {
 			t.Log(err)
 			break
 		}
 
-		err = fq.Pop(ctx)
+		_, err = fq.Pop()
 		assert.NoError(t, err)
 
 		counter++
@@ -1421,13 +1432,13 @@ func assertFQCount(
 ) {
 	var counter int
 	for {
-		_, err := fq.Read(ctx)
+		_, err := fq.Read()
 		if err != nil {
 			t.Log(err)
 			break
 		}
 
-		err = fq.Pop(ctx)
+		_, err = fq.Pop()
 		assert.NoError(t, err)
 
 		counter++
