@@ -32,7 +32,7 @@ type BytesValues struct {
 	Item                                               *ltngdbmodelsv3.Item
 }
 
-func GenerateRandomUser[T TestBench](tb T) *User {
+func GenerateRandomUser(tb testing.TB) *User {
 	newUUID, err := uuid.NewUUID()
 	require.NoError(tb, err)
 
@@ -52,7 +52,7 @@ func GenerateRandomUser[T TestBench](tb T) *User {
 	return user
 }
 
-func GenerateRandomUsers[T TestBench](tb T, n int) []*User {
+func GenerateRandomUsers(tb testing.TB, n int) []*User {
 	users := make([]*User, n)
 	for i := 0; i < n; i++ {
 		users[i] = GenerateRandomUser(tb)
@@ -61,7 +61,7 @@ func GenerateRandomUsers[T TestBench](tb T, n int) []*User {
 	return users
 }
 
-func GetUserBytesValues[T TestBench](tb T, ts *TestSuite, userData *User) *BytesValues {
+func GetUserBytesValues(tb testing.TB, ts *TestSuite, userData *User) *BytesValues {
 	bsKey, err := ts.Serializer.Serialize(userData.Email)
 	require.NoError(tb, err)
 	require.NotNil(tb, bsKey)

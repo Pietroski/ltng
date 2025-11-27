@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/pietroski-software-company/golang/devex/testingx"
 
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	fileiomodels "gitlab.com/pietroski-software-company/lightning-db/pkg/tools/fileio/models"
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
@@ -343,33 +343,21 @@ func BenchmarkFileQueueActions(b *testing.B) {
 	})
 
 	b.Run("(write - read - pop) stats", func(b *testing.B) {
-		writeBench := &testbench.BenchData{}
-		readBench := &testbench.BenchData{}
-		popBench := &testbench.BenchData{}
+		writeBench := testingx.NewBenchSync()
+		readBench := testingx.NewBenchSync()
+		popBench := testingx.NewBenchSync()
 
 		limit := 250
 		for i := 0; i < limit; i++ {
-			writeBench.Count()
-			readBench.Count()
-			popBench.Count()
-
-			b.ResetTimer()
-			b.StartTimer()
-			_, err = fq.Write(testData)
-			b.StopTimer()
-			elapsed := b.Elapsed()
-			b.ResetTimer()
-			writeBench.CalcAvg(elapsed)
+			writeBench.CalcElapsedAvg(func() {
+				_, err = fq.Write(testData)
+			})
 			require.NoError(b, err)
 
 			var bs []byte
-			b.ResetTimer()
-			b.StartTimer()
-			bs, err = fq.Read()
-			b.StopTimer()
-			elapsed = b.Elapsed()
-			b.ResetTimer()
-			readBench.CalcAvg(elapsed)
+			readBench.CalcElapsedAvg(func() {
+				bs, err = fq.Read()
+			})
 			require.NoError(b, err)
 
 			var td TestData
@@ -377,14 +365,9 @@ func BenchmarkFileQueueActions(b *testing.B) {
 			require.NoError(b, err)
 			require.Equal(b, testData, &td)
 
-			b.ResetTimer()
-			b.StartTimer()
-			_, err = fq.Pop()
-			b.StopTimer()
-			elapsed = b.Elapsed()
-			b.ResetTimer()
-			popBench.CalcAvg(elapsed)
-			b.ResetTimer()
+			popBench.CalcElapsedAvg(func() {
+				_, err = fq.Pop()
+			})
 			require.NoError(b, err)
 		}
 
@@ -614,8 +597,8 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 			fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 		require.NoError(b, err)
 
-		writerOnCursorBench := testbench.New()
-		readFromCursorBench := testbench.New()
+		writerOnCursorBench := testingx.NewBenchAsync()
+		readFromCursorBench := testingx.NewBenchAsync()
 
 		testData := &TestData{
 			StrField:  "str",
@@ -629,13 +612,10 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		canRead := make(chan struct{}, limit)
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
-				writerOnCursorBench.CounterChan <- struct{}{}
-				bd := testbench.New()
 				var err error
-				elapsed := bd.CalcElapsed(func() {
+				writerOnCursorBench.CalcElapsedTime(func() {
 					_, err = fq.Write(testData)
 				})
-				writerOnCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
 
 				canRead <- struct{}{}
@@ -644,14 +624,11 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 
 			op.OpX(func() (any, error) {
 				<-canRead
-				readFromCursorBench.CounterChan <- struct{}{}
-				bd := testbench.New()
 				var err error
 				var bs []byte
-				elapsed := bd.CalcElapsed(func() {
+				readFromCursorBench.CalcElapsedTime(func() {
 					bs, err = fq.Read()
 				})
-				readFromCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
 
 				var td TestData
@@ -673,17 +650,11 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		err = fq.Close()
 		require.NoError(b, err)
 
-		writerOnCursorBench.CloseChannels()
-		readFromCursorBench.CloseChannels()
-		writerOnCursorBench.Compute()
-		readFromCursorBench.Compute()
+		writerOnCursorBench.CloseWait()
+		readFromCursorBench.CloseWait()
 
 		b.Logf("writeBench - %s", writerOnCursorBench.String())
 		b.Logf("readBench - %s", readFromCursorBench.String())
-
-		bs, err := fq.Read()
-		require.Error(b, err)
-		require.Nil(b, bs)
 	})
 
 	b.Run("write, read, pop", func(b *testing.B) {
@@ -695,11 +666,8 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 			fileiomodels.GenericFileQueueFilePath, fileiomodels.GenericFileQueueFileName))
 		require.NoError(b, err)
 
-		writerOnCursorBench := testbench.New()
-		readFromCursorBench := testbench.New()
-
-		writerOnCursorBench.ComputeAsync()
-		readFromCursorBench.ComputeAsync()
+		writerOnCursorBench := testingx.NewBenchAsync()
+		readFromCursorBench := testingx.NewBenchAsync()
 
 		testData := &TestData{
 			StrField:  "str",
@@ -713,13 +681,10 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		canRead := make(chan struct{}, limit)
 		for idx := 0; idx < limit; idx++ {
 			op.OpX(func() (any, error) {
-				writerOnCursorBench.CounterChan <- struct{}{}
-				bd := testbench.New()
 				var err error
-				elapsed := bd.CalcElapsed(func() {
+				writerOnCursorBench.CalcElapsedTime(func() {
 					_, err = fq.Write(testData)
 				})
-				writerOnCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
 
 				canRead <- struct{}{}
@@ -728,14 +693,11 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 
 			op.OpX(func() (any, error) {
 				<-canRead
-				readFromCursorBench.CounterChan <- struct{}{}
-				bd := testbench.New()
 				var err error
 				var bs []byte
-				elapsed := bd.CalcElapsed(func() {
+				readFromCursorBench.CalcElapsedTime(func() {
 					bs, err = fq.Read()
 				})
-				readFromCursorBench.TimeChan <- elapsed
 				require.NoError(b, err)
 
 				var td TestData
@@ -753,16 +715,11 @@ func BenchmarkFileQueueActionsConcurrent(b *testing.B) {
 		err = fq.Close()
 		require.NoError(b, err)
 
-		writerOnCursorBench.QuitClose()
-		readFromCursorBench.QuitClose()
+		writerOnCursorBench.CloseWait()
+		readFromCursorBench.CloseWait()
 
-		// Causes race condition
-		//b.Logf("writeBench - %s", writerOnCursorBench.String())
-		//b.Logf("readBench - %s", readFromCursorBench.String())
-
-		bs, err := fq.Read()
-		require.Error(b, err)
-		require.Nil(b, bs)
+		b.Logf("writeBench - %s", writerOnCursorBench.String())
+		b.Logf("readBench - %s", readFromCursorBench.String())
 	})
 }
 

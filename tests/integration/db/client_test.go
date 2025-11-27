@@ -11,10 +11,10 @@ import (
 
 	"gitlab.com/pietroski-software-company/golang/devex/servermanager/pprofx"
 	"gitlab.com/pietroski-software-company/golang/devex/syncx"
+	"gitlab.com/pietroski-software-company/golang/devex/testingx"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
-	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/testbench"
 	search "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
@@ -91,7 +91,7 @@ func testLTNGDBClient(t *testing.T) {
 	t.Run("CreateItem", func(t *testing.T) {
 		t.Log("CreateItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			createRequest := &grpc_ltngdb.CreateRequest{
@@ -110,18 +110,18 @@ func testLTNGDBClient(t *testing.T) {
 				},
 				RetrialOpts: ltng_client.DefaultRetrialOpts,
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("ListItems", func(t *testing.T) {
 		t.Log("ListItems")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		listRequest := &grpc_ltngdb.ListRequest{
 			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
 				DatabaseName: getStoreRequest.Name,
@@ -137,17 +137,17 @@ func testLTNGDBClient(t *testing.T) {
 				PageSize: 50,
 			},
 		}
-		tb.CalcAvg(tb.CalcElapsed(func() {
+		bd.CalcElapsedAvg(func() {
 			_, err = cts.LTNGDBClient.List(cts.Ctx, listRequest)
-		}))
+		})
 		assert.NoError(t, err)
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("LoadItem", func(t *testing.T) {
 		t.Log("LoadItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			loadRequest := &grpc_ltngdb.LoadRequest{
@@ -159,19 +159,19 @@ func testLTNGDBClient(t *testing.T) {
 					Key: bvs.BsKey,
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Load(cts.Ctx, loadRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("UpsertItem", func(t *testing.T) {
 		// t.Skip()
 		t.Log("UpsertItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			upsertRequest := &grpc_ltngdb.UpsertRequest{
@@ -189,19 +189,19 @@ func testLTNGDBClient(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Upsert(cts.Ctx, upsertRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("DeleteItem", func(t *testing.T) {
 		// t.Skip()
 		t.Log("DeleteItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			deleteRequest := &grpc_ltngdb.DeleteRequest{
@@ -220,12 +220,12 @@ func testLTNGDBClient(t *testing.T) {
 					},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Delete(cts.Ctx, deleteRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	err = cts.LTNGDBClient.Close()
@@ -287,7 +287,7 @@ func testBadgerDBClient(t *testing.T) {
 	t.Run("CreateItem", func(t *testing.T) {
 		t.Log("CreateItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			createRequest := &grpc_ltngdb.CreateRequest{
@@ -306,18 +306,18 @@ func testBadgerDBClient(t *testing.T) {
 				},
 				RetrialOpts: ltng_client.DefaultRetrialOpts,
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("ListItems", func(t *testing.T) {
 		t.Log("ListItems")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		listRequest := &grpc_ltngdb.ListRequest{
 			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
 				DatabaseName: getStoreRequest.Name,
@@ -333,17 +333,17 @@ func testBadgerDBClient(t *testing.T) {
 				PageSize: 50,
 			},
 		}
-		tb.CalcAvg(tb.CalcElapsed(func() {
+		bd.CalcElapsedAvg(func() {
 			_, err = cts.BadgerDBClient.List(cts.Ctx, listRequest)
-		}))
+		})
 		assert.NoError(t, err)
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("LoadItem", func(t *testing.T) {
 		t.Log("LoadItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			loadRequest := &grpc_ltngdb.LoadRequest{
@@ -355,18 +355,18 @@ func testBadgerDBClient(t *testing.T) {
 					Key: bvs.BsKey,
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Load(cts.Ctx, loadRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("UpsertItem", func(t *testing.T) {
 		t.Log("UpsertItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			upsertRequest := &grpc_ltngdb.UpsertRequest{
@@ -384,18 +384,18 @@ func testBadgerDBClient(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Upsert(cts.Ctx, upsertRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("DeleteItem", func(t *testing.T) {
 		t.Log("DeleteItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			deleteRequest := &grpc_ltngdb.DeleteRequest{
@@ -414,12 +414,12 @@ func testBadgerDBClient(t *testing.T) {
 					},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Delete(cts.Ctx, deleteRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 }
 
@@ -462,7 +462,7 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 	t.Run("CreateItem", func(t *testing.T) {
 		t.Log("CreateItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			createRequest := &grpc_ltngdb.CreateRequest{
@@ -481,18 +481,18 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 				},
 				RetrialOpts: ltng_client.DefaultRetrialOpts,
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Create(cts.Ctx, createRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("ListItems", func(t *testing.T) {
 		t.Log("ListItems")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		listRequest := &grpc_ltngdb.ListRequest{
 			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
 				DatabaseName: getStoreRequest.Name,
@@ -508,17 +508,17 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 				PageSize: 50,
 			},
 		}
-		tb.CalcAvg(tb.CalcElapsed(func() {
+		bd.CalcElapsedAvg(func() {
 			_, err = cts.LTNGDBClient.List(cts.Ctx, listRequest)
-		}))
+		})
 		assert.NoError(t, err)
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("LoadItem", func(t *testing.T) {
 		t.Log("LoadItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			loadRequest := &grpc_ltngdb.LoadRequest{
@@ -530,18 +530,18 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 					Key: bvs.BsKey,
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Load(cts.Ctx, loadRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("UpsertItem", func(t *testing.T) {
 		t.Log("UpsertItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			upsertRequest := &grpc_ltngdb.UpsertRequest{
@@ -559,18 +559,18 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs, bvs.ExtraUpsertIndex},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Upsert(cts.Ctx, upsertRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("DeleteItem", func(t *testing.T) {
 		t.Log("DeleteItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			deleteRequest := &grpc_ltngdb.DeleteRequest{
@@ -589,12 +589,12 @@ func testLTNGDBClientWithinDocker(t *testing.T) {
 					},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.LTNGDBClient.Delete(cts.Ctx, deleteRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 }
 
@@ -622,7 +622,7 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 	t.Run("CreateItem", func(t *testing.T) {
 		t.Log("CreateItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			createRequest := &grpc_ltngdb.CreateRequest{
@@ -641,18 +641,18 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 				},
 				RetrialOpts: ltng_client.DefaultRetrialOpts,
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Create(cts.Ctx, createRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("ListItems", func(t *testing.T) {
 		t.Log("ListItems")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		listRequest := &grpc_ltngdb.ListRequest{
 			DatabaseMetaInfo: &grpc_ltngdb.DatabaseMetaInfo{
 				DatabaseName: getStoreRequest.Name,
@@ -668,17 +668,17 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 				PageSize: 50,
 			},
 		}
-		tb.CalcAvg(tb.CalcElapsed(func() {
+		bd.CalcElapsedAvg(func() {
 			_, err = cts.BadgerDBClient.List(cts.Ctx, listRequest)
-		}))
+		})
 		assert.NoError(t, err)
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("LoadItem", func(t *testing.T) {
 		t.Log("LoadItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			loadRequest := &grpc_ltngdb.LoadRequest{
@@ -690,18 +690,18 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 					Key: bvs.BsKey,
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Load(cts.Ctx, loadRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("UpsertItem", func(t *testing.T) {
 		t.Log("UpsertItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			upsertRequest := &grpc_ltngdb.UpsertRequest{
@@ -719,18 +719,18 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 					IndexingKeys: [][]byte{bvs.BsKey, bvs.SecondaryIndexBs},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Upsert(cts.Ctx, upsertRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 
 	t.Run("DeleteItem", func(t *testing.T) {
 		t.Log("DeleteItem")
 
-		tb := testbench.New()
+		bd := testingx.NewBenchSync()
 		for _, user := range users {
 			bvs := data.GetUserBytesValues(t, cts.TS(), user)
 			deleteRequest := &grpc_ltngdb.DeleteRequest{
@@ -749,11 +749,11 @@ func testBadgerDBClientWithinDocker(t *testing.T) {
 					},
 				},
 			}
-			tb.CalcAvg(tb.CalcElapsed(func() {
+			bd.CalcElapsedAvg(func() {
 				_, err = cts.BadgerDBClient.Delete(cts.Ctx, deleteRequest)
-			}))
+			})
 			assert.NoError(t, err)
 		}
-		t.Log(tb)
+		t.Log(bd)
 	})
 }

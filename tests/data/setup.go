@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
 	serializermodels "gitlab.com/pietroski-software-company/golang/devex/serializer/models"
+	"gitlab.com/pietroski-software-company/golang/devex/tracer"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/badgerdb/v4"
@@ -34,19 +33,7 @@ var (
 	BadgerDBEngineType = fmt.Sprintf("LTNG_ENGINE=%s", common_model.BadgerDBV4EngineVersionType)
 )
 
-type TestBench interface {
-	*testing.T | *testing.B | *require.TestingT | *assert.TestingT
-
-	Cleanup(f func())
-	Errorf(format string, args ...interface{})
-	FailNow()
-	Fatalf(format string, args ...any)
-	Fatal(args ...any)
-	Logf(format string, args ...interface{})
-	Log(args ...interface{})
-}
-
-func DockerComposeUp[T TestBench](tb T) {
+func DockerComposeUp(tb testing.TB) {
 	err := execx.Run("sh", "-c",
 		fmt.Sprintf("docker compose -f %s up -d --build --remove-orphans",
 			relativePath+dockerComposePath),
@@ -63,7 +50,7 @@ func DockerComposeUp[T TestBench](tb T) {
 	require.NoError(tb, err)
 }
 
-func DockerComposeDown[T TestBench](tb T) {
+func DockerComposeDown(tb testing.TB) {
 	tb.Cleanup(func() {
 		err := execx.Run("sh", "-c",
 			fmt.Sprintf("docker compose -f %s down",
@@ -74,7 +61,7 @@ func DockerComposeDown[T TestBench](tb T) {
 }
 
 // Add this helper function to wait for container readiness
-func waitForContainer[T TestBench](tb T, containerName string, timeout time.Duration) error {
+func waitForContainer(tb testing.TB, containerName string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		output, err := execx.RunOutput("sh", "-c",
@@ -154,7 +141,7 @@ const (
 	dbBasePath            = ".db"
 )
 
-func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
+func InitClientTestSuite(tb testing.TB) *ClientTestSuite {
 	DockerComposeUp(tb)
 	DockerComposeDown(tb)
 
@@ -179,7 +166,7 @@ func InitClientTestSuite[T TestBench](tb T) *ClientTestSuite {
 	}
 }
 
-func InitLocalClientTestSuite[T TestBench](tb T, engineType common_model.EngineVersionType) *ClientTestSuite {
+func InitLocalClientTestSuite(tb testing.TB, engineType common_model.EngineVersionType) *ClientTestSuite {
 	ctx := context.Background()
 	clientTestSuite := &ClientTestSuite{
 		Ctx:        ctx,
@@ -206,7 +193,7 @@ func InitLocalClientTestSuite[T TestBench](tb T, engineType common_model.EngineV
 	return clientTestSuite
 }
 
-func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
+func InitEngineTestSuite(tb testing.TB) *EngineTestSuite {
 	ctx, err := tracer.New().Trace(context.Background())
 	require.NoError(tb, err)
 	CleanupDirectories(tb)
@@ -244,7 +231,7 @@ func InitEngineTestSuite[T TestBench](tb T) *EngineTestSuite {
 	}
 }
 
-func CleanupDirectories[T TestBench](tb T) {
+func CleanupDirectories(tb testing.TB) {
 	ctx := context.Background()
 	err := osx.DelHard(ctx, ltngFileQueueBasePath)
 	require.NoError(tb, err)
@@ -254,12 +241,12 @@ func CleanupDirectories[T TestBench](tb T) {
 	require.NoError(tb, err)
 }
 
-func CleanupProcesses[T TestBench](tb T) {
+func CleanupProcesses(tb testing.TB) {
 	err := execx.Run("sh", "-c", "lsof -ti:50000-51000 | xargs kill -9")
 	require.NoError(tb, err)
 }
 
-func SetTestDeadline[T TestBench](tb T) {
+func SetTestDeadline(tb testing.TB) {
 	timeout := time.Second * 5
 	deadline := time.Now().Add(timeout)
 	tb.Cleanup(func() {

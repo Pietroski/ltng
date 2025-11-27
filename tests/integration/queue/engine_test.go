@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/pietroski-software-company/golang/devex/serializer"
+	"gitlab.com/pietroski-software-company/golang/devex/testingx"
 
 	"gitlab.com/pietroski-software-company/golang/devex/options"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
@@ -35,6 +36,213 @@ type (
 	}
 )
 
+func TestBench_Queue_PublishConsume(t *testing.T) {
+	t.Run("single-thread", func(t *testing.T) {
+		testCases := map[string]struct {
+			eventCount         int
+			consumerCountLimit uint32
+		}{
+			"single event": {
+				eventCount:         1,
+				consumerCountLimit: 1,
+			},
+			"10 events": {
+				eventCount:         10,
+				consumerCountLimit: 1,
+			},
+			"50 events": {
+				eventCount:         50,
+				consumerCountLimit: 1,
+			},
+			"100 events": {
+				eventCount:         100,
+				consumerCountLimit: 1,
+			},
+			"500 events": {
+				eventCount:         500,
+				consumerCountLimit: 1,
+			},
+			"1_000 events": {
+				eventCount:         1_000,
+				consumerCountLimit: 1,
+			},
+			"5_000 events": {
+				eventCount:         5_000,
+				consumerCountLimit: 1,
+			},
+			"10_000 events": {
+				eventCount:         10_000,
+				consumerCountLimit: 1,
+			},
+		}
+		for testName, testCase := range testCases {
+			t.Run(testName, func(t *testing.T) {
+				Test_DeleteTestFileQueue(t)
+
+				ctx, cancel := context.WithCancel(context.Background())
+
+				ltngqueue, err := ltngqueue_engine.New(ctx,
+					ltngqueue_engine.WithTimeout(time.Millisecond*100),
+				)
+				require.NoError(t, err)
+
+				queue := &queuemodels.Queue{
+					Name: "test-queue",
+					Path: "test/queue",
+
+					ConsumerCountLimit: testCase.consumerCountLimit,
+				}
+				_, err = ltngqueue.CreateQueue(ctx, queue)
+				require.NoError(t, err)
+
+				publishingBench := testingx.NewBenchAsync()
+
+				// generate & publish events
+				// publishing in single thread mode in order to assert and regress ordering
+				events := generateEventList(t, serializer.NewRawBinarySerializer(), queue, testCase.eventCount)
+				for i := 0; i < testCase.eventCount; i++ {
+					event := events[i]
+					var e *queuemodels.Event
+					var err error
+					publishingBench.CalcElapsedTime(func() {
+						e, err = ltngqueue.Publish(ctx, event)
+					})
+					require.NoError(t, err)
+					require.EqualValues(t, event, e)
+				}
+
+				nodeUUID, err := uuid.NewRandom()
+				require.NoError(t, err)
+				nodeID := queue.GetCompleteLockKey() + "_" + nodeUUID.String()
+
+				receiver := make(chan *queuemodels.Event, 1)
+				publisher := &queuemodels.Publisher{
+					NodeID: nodeID,
+					Sender: receiver,
+				}
+				err = ltngqueue.SubscribeToQueue(ctx, queue, publisher)
+				require.NoError(t, err)
+
+				count := new(atomic.Uint64)
+				var consumedEvents []*queuemodels.Event
+				go func() {
+					for event := range receiver {
+						consumedEvents = append(consumedEvents, event)
+						_, err := ltngqueue.Ack(ctx, event)
+						assert.NoError(t, err)
+						expectedEvent := events[count.Load()]
+						assert.EqualValues(t, expectedEvent.EventID, event.EventID)
+						assert.EqualValues(t, expectedEvent.Metadata.RetryCount, event.Metadata.RetryCount)
+						count.Add(1)
+					}
+				}()
+
+				for count.Load() != uint64(testCase.eventCount) {
+					runtime.Gosched()
+				}
+				t.Log(count.Load())
+				t.Log(publishingBench.String())
+
+				cancel()
+				err = ltngqueue.Close()
+				require.NoError(t, err)
+			})
+		}
+	})
+
+	t.Run("single-thread publishing only", func(t *testing.T) {
+		testCases := map[string]struct {
+			eventCount         int
+			consumerCountLimit uint32
+		}{
+			"single event": {
+				eventCount:         1,
+				consumerCountLimit: 1,
+			},
+			"10 events": {
+				eventCount:         10,
+				consumerCountLimit: 1,
+			},
+			"50 events": {
+				eventCount:         50,
+				consumerCountLimit: 1,
+			},
+			"100 events": {
+				eventCount:         100,
+				consumerCountLimit: 1,
+			},
+			"500 events": {
+				eventCount:         500,
+				consumerCountLimit: 1,
+			},
+			"1_000 events": {
+				eventCount:         1_000,
+				consumerCountLimit: 1,
+			},
+			"5_000 events": {
+				eventCount:         5_000,
+				consumerCountLimit: 1,
+			},
+			"10_000 events": {
+				eventCount:         10_000,
+				consumerCountLimit: 1,
+			},
+			"50_000 events": {
+				eventCount:         50_000,
+				consumerCountLimit: 1,
+			},
+			//"100_000 events": {
+			//	eventCount:         100_000,
+			//	consumerCountLimit: 1,
+			//},
+		}
+		for testName, testCase := range testCases {
+			t.Run(testName, func(t *testing.T) {
+				Test_DeleteTestFileQueue(t)
+
+				ctx, cancel := context.WithCancel(context.Background())
+
+				ltngqueue, err := ltngqueue_engine.New(ctx,
+					ltngqueue_engine.WithTimeout(time.Millisecond*100),
+				)
+				require.NoError(t, err)
+
+				queue := &queuemodels.Queue{
+					Name: "test-queue",
+					Path: "test/queue",
+
+					ConsumerCountLimit: testCase.consumerCountLimit,
+				}
+				_, err = ltngqueue.CreateQueue(ctx, queue)
+				require.NoError(t, err)
+
+				publishingBench := testingx.NewBenchAsync()
+
+				// generate & publish events
+				// publishing in single thread mode in order to assert and regress ordering
+				events := generateEventList(t, serializer.NewRawBinarySerializer(), queue, testCase.eventCount)
+				for i := 0; i < testCase.eventCount; i++ {
+					event := events[i]
+					var e *queuemodels.Event
+					var err error
+					publishingBench.CalcElapsedTime(func() {
+						e, err = ltngqueue.Publish(ctx, event)
+					})
+					require.NoError(t, err)
+					require.EqualValues(t, event, e)
+				}
+
+				publishingBench.CloseWait()
+				t.Log(publishingBench.String())
+
+				cancel()
+				err = ltngqueue.Close()
+				require.NoError(t, err)
+			})
+		}
+	})
+}
+
 func TestQueue_Consume(t *testing.T) {
 	testCases := map[string]struct {
 		eventCount         int
@@ -56,6 +264,22 @@ func TestQueue_Consume(t *testing.T) {
 			eventCount:         100,
 			consumerCountLimit: 1,
 		},
+		"500 events": {
+			eventCount:         500,
+			consumerCountLimit: 1,
+		},
+		"1_000 events": {
+			eventCount:         1_000,
+			consumerCountLimit: 1,
+		},
+		"5_000 events": {
+			eventCount:         5_000,
+			consumerCountLimit: 1,
+		},
+		"10_000 events": {
+			eventCount:         10_000,
+			consumerCountLimit: 1,
+		},
 	}
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
@@ -64,7 +288,7 @@ func TestQueue_Consume(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
 			ltngqueue, err := ltngqueue_engine.New(ctx,
-				ltngqueue_engine.WithTimeout(time.Millisecond),
+				ltngqueue_engine.WithTimeout(time.Millisecond*100),
 			)
 			require.NoError(t, err)
 
@@ -117,16 +341,7 @@ func TestQueue_Consume(t *testing.T) {
 				runtime.Gosched()
 			}
 			t.Log(count.Load())
-			t.Log("events")
-			for _, event := range events {
-				t.Log(event)
-			}
-			t.Log("consumedEvents")
-			for _, event := range consumedEvents {
-				t.Log(event)
-			}
 
-			time.Sleep(time.Millisecond * 100)
 			cancel()
 			err = ltngqueue.Close()
 			require.NoError(t, err)
