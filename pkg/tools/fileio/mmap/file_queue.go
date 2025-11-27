@@ -518,14 +518,14 @@ func (fq *FileQueue) findInFile(
 
 		if bytes.Contains(bs, key) {
 			found = true
-			result.bs = bs
-			result.from = fq.readOffset
-			result.upTo = result.from - uint64(len(bs)+4)
+			result.BS = bs
+			result.From = fq.readOffset
+			result.UpTo = result.From - uint64(len(bs)+4)
 
 			break
 		}
 
-		result.index++
+		result.Index++
 	}
 
 	if !found {
@@ -567,10 +567,10 @@ func (fq *FileQueue) getByIndex(
 
 		if count == index {
 			found = true
-			result.bs = bs
-			result.index = count
-			result.from = fq.readOffset
-			result.upTo = result.from - uint64(len(bs)+4)
+			result.BS = bs
+			result.Index = count
+			result.From = fq.readOffset
+			result.UpTo = result.From - uint64(len(bs)+4)
 
 			break
 		}
@@ -605,8 +605,8 @@ func (fq *FileQueue) deleteByResult(
 ) (DeleteByKeyResult, error) {
 	// delete found result item from data
 	// []byte{...upTo, ..., from...}
-	copy(fq.data[result.upTo:], fq.data[result.from:])
-	deletedDataSize := result.from - result.upTo
+	copy(fq.data[result.UpTo:], fq.data[result.From:])
+	deletedDataSize := result.From - result.UpTo
 
 	newSize := fq.writeOffset - deletedDataSize
 	clear(fq.data[newSize:fq.writeOffset])
@@ -620,10 +620,10 @@ func (fq *FileQueue) deleteByResult(
 	fq.readIndex--
 
 	return DeleteByKeyResult{
-		bs:    result.bs,
-		index: result.index,
-		upTo:  result.upTo,
-		from:  result.from,
+		BS:    result.BS,
+		Index: result.Index,
+		UpTo:  result.UpTo,
+		From:  result.From,
 	}, nil
 }
 
@@ -645,5 +645,5 @@ func (fq *FileQueue) DeleteByIndex(
 		return nil, err
 	}
 
-	return deleteResult.bs, nil
+	return deleteResult.BS, nil
 }

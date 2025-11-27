@@ -25,10 +25,10 @@ const (
 // upTo is the offset until the found record.
 // from is the offset from the from record onwards.
 type DeleteByKeyResult struct {
-	bs    []byte
-	index uint64
-	upTo  uint64
-	from  uint64
+	BS    []byte
+	Index uint64
+	UpTo  uint64
+	From  uint64
 }
 
 func flushMmap(mmap []byte) error {

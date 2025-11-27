@@ -511,7 +511,7 @@ type (
 	Item struct {
 		Key   []byte
 		Value []byte
-		Error error
+		//Error error
 	}
 
 	ListItemsResult struct {

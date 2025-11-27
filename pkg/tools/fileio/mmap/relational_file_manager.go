@@ -353,10 +353,10 @@ func (rfm *RelationalFileManager) Close() error {
 // upTo is the offset until the found record.
 // from is the offset from the from record onwards.
 type FindResult struct {
-	bs    []byte
-	index uint64
-	upTo  uint64
-	from  uint64
+	BS    []byte
+	Index uint64
+	UpTo  uint64
+	From  uint64
 }
 
 func (rfm *RelationalFileManager) Find(
@@ -399,14 +399,14 @@ func (rfm *RelationalFileManager) findInFile(
 
 		if bytes.Contains(bs, key) {
 			found = true
-			result.bs = bs
-			result.from = rfm.readOffset
-			result.upTo = result.from - uint64(len(bs)+4)
+			result.BS = bs
+			result.From = rfm.readOffset
+			result.UpTo = result.From - uint64(len(bs)+4)
 
 			break
 		}
 
-		result.index++
+		result.Index++
 	}
 
 	if !found {
@@ -451,10 +451,10 @@ func (rfm *RelationalFileManager) getByIndex(
 
 		if count == index {
 			found = true
-			result.bs = bs
-			result.index = count
-			result.from = rfm.readOffset
-			result.upTo = result.from - uint64(len(bs)+4)
+			result.BS = bs
+			result.Index = count
+			result.From = rfm.readOffset
+			result.UpTo = result.From - uint64(len(bs)+4)
 
 			break
 		}
@@ -511,7 +511,7 @@ func (rfm *RelationalFileManager) upsertData(
 	}
 
 	newRecordLen := uint64(4 + len(bs))
-	oldRecordLen := result.from - result.upTo
+	oldRecordLen := result.From - result.UpTo
 
 	// Calculate new writeOffset
 	newWriteOffset := rfm.writeOffset - oldRecordLen + newRecordLen
@@ -525,12 +525,12 @@ func (rfm *RelationalFileManager) upsertData(
 
 	// If sizes differ, shift data after the record
 	if newRecordLen != oldRecordLen {
-		copy(rfm.data[result.upTo+newRecordLen:], rfm.data[result.from:rfm.writeOffset])
+		copy(rfm.data[result.UpTo+newRecordLen:], rfm.data[result.From:rfm.writeOffset])
 	}
 
 	// Write new record
-	bytesx.PutUint32(rfm.data[result.upTo:], uint32(len(bs)))
-	copy(rfm.data[result.upTo+4:], bs)
+	bytesx.PutUint32(rfm.data[result.UpTo:], uint32(len(bs)))
+	copy(rfm.data[result.UpTo+4:], bs)
 
 	// If shrinking, clear freed tail
 	if newWriteOffset < rfm.writeOffset {
@@ -573,9 +573,9 @@ func (rfm *RelationalFileManager) deleteByResult(
 ) (DeleteByKeyResult, error) {
 	// delete found result item from data
 	// []byte{...upTo, ..., from...}
-	copy(rfm.data[result.upTo:], rfm.data[result.from:])
+	copy(rfm.data[result.UpTo:], rfm.data[result.From:])
 
-	newSize := rfm.writeOffset - (result.from - result.upTo)
+	newSize := rfm.writeOffset - (result.From - result.UpTo)
 	clear(rfm.data[newSize:rfm.writeOffset])
 	if err := partialFlushMmap(rfm.data, rfm.writeOffset); err != nil {
 		return DeleteByKeyResult{}, err
@@ -585,10 +585,10 @@ func (rfm *RelationalFileManager) deleteByResult(
 	rfm.readOffset = 0
 
 	return DeleteByKeyResult{
-		bs:    result.bs,
-		index: result.index,
-		upTo:  result.upTo,
-		from:  result.from,
+		BS:    result.BS,
+		Index: result.Index,
+		UpTo:  result.UpTo,
+		From:  result.From,
 	}, nil
 }
 
@@ -610,5 +610,5 @@ func (rfm *RelationalFileManager) DeleteByIndex(
 		return nil, err
 	}
 
-	return deleteResult.bs, nil
+	return deleteResult.BS, nil
 }

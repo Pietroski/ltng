@@ -1,6 +1,7 @@
 package ltngdbenginev3
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"gitlab.com/pietroski-software-company/golang/devex/errorsx"
 	"gitlab.com/pietroski-software-company/golang/devex/loop"
 	"gitlab.com/pietroski-software-company/golang/devex/saga"
+	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 
 	ltngdbenginemodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 )
@@ -58,7 +60,7 @@ func (s *createSaga) createItemInfoData(
 }
 
 func (s *createSaga) buildCreateItemInfoData(
-	_ context.Context,
+	ctx context.Context,
 	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
 ) []*saga.Operation {
 	fileData := ltngdbenginemodelsv3.NewFileData(
@@ -147,10 +149,10 @@ func (s *createSaga) buildCreateItemInfoData(
 	}
 	deleteIndexItemOnDisk := func() error {
 		encodedKey := itemInfoData.EncodedKey()
-		filePath := ltngdbenginemodelsv3.GetDataFilepath(
-			itemInfoData.DBMetaInfo.IndexInfo().Path, encodedKey)
+		filePath := ltngdbenginemodelsv3.GetDataPath(
+			itemInfoData.DBMetaInfo.IndexInfo().Path)
 
-		if err := os.Remove(filePath); err != nil {
+		if _, err := osx.DelOnlyFilesFromDirAsync(ctx, filePath); err != nil {
 			return err
 		}
 		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(encodedKey))
@@ -162,6 +164,12 @@ func (s *createSaga) buildCreateItemInfoData(
 		encodedKey := itemInfoData.EncodedKey()
 		filePath := ltngdbenginemodelsv3.GetDataFilepath(
 			itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedKey)
+
+		fileData := ltngdbenginemodelsv3.NewFileData(
+			itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+				Key:   itemInfoData.Item.Key,
+				Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
+			})
 
 		fi, err := s.opSaga.e.createItemOnDisk(itemInfoData.Ctx, filePath, fileData)
 		if err != nil {
@@ -178,7 +186,7 @@ func (s *createSaga) buildCreateItemInfoData(
 			itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedKey)
 
 		if err := os.Remove(filePath); err != nil {
-			return err
+			return errorsx.Wrapf(err, "error deleting created index list item from disk: %s", encodedKey)
 		}
 		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedKey))
 
