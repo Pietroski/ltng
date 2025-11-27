@@ -117,13 +117,12 @@ func (rfm *RelationalFileManager) write(data any) ([]byte, error) {
 	bytesx.PutUint32(rfm.data[rfm.writeOffset:], uint32(bsLen))
 	copy(rfm.data[rfm.writeOffset+4:], bs)
 
-	newOffset := rfm.writeOffset + totalLen
-	if err = partialFlushMmap(rfm.data, newOffset); err != nil {
+	if err = partialFlushMmap(rfm.data, requiredSize); err != nil {
 		return nil, err
 	}
 
 	// Update writeOffset
-	rfm.writeOffset = newOffset
+	rfm.writeOffset = requiredSize
 
 	return bs, nil
 }

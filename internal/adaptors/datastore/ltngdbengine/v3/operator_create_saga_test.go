@@ -67,7 +67,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 			err = saga.NewListOperator(ops...).Operate()
 			assert.NoError(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -95,7 +96,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
 			}
 
-			{ // indexed item files
+			{ // indexed items files
 				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
 					itemStrKey := hex.EncodeToString(indexKey)
 					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -174,6 +175,70 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
 				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
 				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+			}
+
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
+
+				fileInfo, ok := ts.ltngEngine.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.True(t, ok)
+				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: itemInfoData.Opts.ParentKey,
+						})
+
+					fileInfo, ok := ts.ltngEngine.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.True(t, ok)
+					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key:   itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
+					})
+
+				fileInfo, ok := ts.ltngEngine.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.True(t, ok)
+				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+			}
+
+			// TODO: fix relational data item validation
+			// issue seems to be the write function that is not computing the writing offset correctly...
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalInfo().LockStr()
+				rfi, ok := ts.ltngEngine.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ctx, itemInfoData.Item.Key)
+				assert.NoError(t, err)
+
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+
+				var fileData ltngdbenginemodelsv3.FileData
+				err = ts.ltngEngine.serializer.Deserialize(foundResult.BS, &fileData)
+				assert.NoError(t, err)
+				assert.EqualValues(t, expectedFileData, fileData)
 			}
 
 			// close database

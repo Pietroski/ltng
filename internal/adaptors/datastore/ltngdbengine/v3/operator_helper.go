@@ -677,14 +677,12 @@ func (e *LTNGEngine) upsertRelationalData(
 	fileData *ltngdbenginemodelsv3.FileData,
 	rfi *ltngdbenginemodelsv3.RelationalFileInfo,
 ) error {
-	info := rfi.FileData.Header.StoreInfo.RelationalInfo()
-	lockStr := info.LockStr()
+	lockStr := rfi.FileData.Header.StoreInfo.RelationalInfo().LockStr()
 
 	e.kvLock.Lock(lockStr, struct{}{})
 	defer e.kvLock.Unlock(lockStr)
 
-	_, err := rfi.RelationalFileManager.UpsertByKey(ctx, fileData.Key, fileData)
-	if err != nil {
+	if _, err := rfi.RelationalFileManager.UpsertByKey(ctx, fileData.Key, fileData); err != nil {
 		return errorsx.Wrapf(err, "error upserting relational data to %s", rfi.File.Name())
 	}
 
@@ -696,8 +694,7 @@ func (e *LTNGEngine) deleteRelationalData(
 	item *ltngdbenginemodelsv3.Item,
 	rfi *ltngdbenginemodelsv3.RelationalFileInfo,
 ) (err error) {
-	info := rfi.FileData.Header.StoreInfo.RelationalInfo()
-	lockStr := info.LockStr()
+	lockStr := rfi.FileData.Header.StoreInfo.RelationalInfo().LockStr()
 
 	e.kvLock.Lock(lockStr, struct{}{})
 	defer e.kvLock.Unlock(lockStr)
