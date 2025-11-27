@@ -150,6 +150,10 @@ func TestQueue_SubscribeToQueue(t *testing.T) {
 		subscriptionQueueGroup, ok := subscriptionQueue.Get(completeLockKey)
 		assert.True(t, ok)
 		assert.Equal(t, queue, subscriptionQueueGroup.Queue)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 }
 
@@ -181,6 +185,7 @@ func TestQueue_Publish(t *testing.T) {
 			Test_DeleteTestFileQueue(t)
 
 			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
 			ltngqueue, err := New(ctx)
 			require.NoError(t, err)
@@ -292,6 +297,7 @@ func TestQueue_PublishConcurrently(t *testing.T) {
 			Test_DeleteTestFileQueue(t)
 
 			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
 			ltngqueue, err := New(ctx)
 			require.NoError(t, err)
@@ -433,9 +439,10 @@ func TestQueue_Consume(t *testing.T) {
 			Test_DeleteTestFileQueue(t)
 
 			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
 			ltngqueue, err := New(ctx,
-				WithTimeout(time.Millisecond*500),
+				WithTimeout(time.Millisecond*1_000),
 			)
 			require.NoError(t, err)
 
@@ -489,16 +496,6 @@ func TestQueue_Consume(t *testing.T) {
 				runtime.Gosched()
 			}
 			t.Log(count.Load())
-			//if count.Load() < 50 {
-			//	t.Log("events")
-			//	for _, event := range events {
-			//		t.Log(event)
-			//	}
-			//	t.Log("consumedEvents")
-			//	for _, event := range consumedEvents {
-			//		t.Log(event)
-			//	}
-			//}
 
 			cancel()
 			err = ltngqueue.Close()
@@ -665,6 +662,7 @@ func testConsumerConcurrently(
 	Test_DeleteTestFileQueue(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	ltngqueue, err := New(ctx, opts...)
 	require.NoError(t, err)
@@ -745,14 +743,6 @@ func testConsumerConcurrently(
 		runtime.Gosched()
 	}
 	t.Log(count.Load())
-	//t.Log("events")
-	//for _, event := range events {
-	//	t.Log(event)
-	//}
-	//t.Log("consumedEvents")
-	//for _, event := range consumedEvents.Get() {
-	//	t.Log(event)
-	//}
 
 	for _, nodeID := range nodeIdList {
 		err = ltngqueue.UnsubscribeFromQueue(ctx, queue,
@@ -888,6 +878,7 @@ func testNackAndTimeout(
 	Test_DeleteTestFileQueue(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	ltngqueue, err := New(ctx, opts...)
 	require.NoError(t, err)
@@ -969,14 +960,6 @@ func testNackAndTimeout(
 		runtime.Gosched()
 	}
 	t.Log(count.Load())
-	//t.Log("events")
-	//for _, event := range events {
-	//	t.Log(event)
-	//}
-	//t.Log("consumedEvents")
-	//for _, event := range consumedEvents.Get() {
-	//	t.Log(event)
-	//}
 
 	for _, nodeID := range nodeIdList {
 		err = ltngqueue.UnsubscribeFromQueue(ctx, queue,
@@ -1119,6 +1102,10 @@ func TestQueue_Ack(t *testing.T) {
 		es, ok := <-ack
 		assert.True(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("already ack'ed", func(t *testing.T) {
@@ -1170,6 +1157,10 @@ func TestQueue_Ack(t *testing.T) {
 		es, ok := <-ack
 		assert.False(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("event not found in event tracker", func(t *testing.T) {
@@ -1218,6 +1209,10 @@ func TestQueue_Ack(t *testing.T) {
 		es, ok := <-ack
 		assert.False(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("invalid event", func(t *testing.T) {
@@ -1266,6 +1261,10 @@ func TestQueue_Ack(t *testing.T) {
 		es, ok := <-ack
 		assert.False(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 }
 
@@ -1318,6 +1317,10 @@ func TestQueue_Nack(t *testing.T) {
 		es, ok := <-nack
 		assert.True(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("already nack'ed", func(t *testing.T) {
@@ -1369,6 +1372,10 @@ func TestQueue_Nack(t *testing.T) {
 		es, ok := <-nack
 		assert.False(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("event not found in event tracker", func(t *testing.T) {
@@ -1417,6 +1424,10 @@ func TestQueue_Nack(t *testing.T) {
 		es, ok := <-nack
 		assert.False(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("invalid event", func(t *testing.T) {
@@ -1465,6 +1476,10 @@ func TestQueue_Nack(t *testing.T) {
 		es, ok := <-nack
 		assert.False(t, ok)
 		assert.Empty(t, es)
+
+		cancel()
+		err = ltngqueue.Close()
+		require.NoError(t, err)
 	})
 }
 

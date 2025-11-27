@@ -207,19 +207,24 @@ func (e *LTNGEngine) closeStores() {
 }
 
 func (e *LTNGEngine) closeItems() {
-	for e.fq.IsEmpty() != nil {
-		runtime.Gosched()
+	if err := e.fq.CheckClearCancelClose(e.cancelFq); err != nil {
+		e.logger.Error(e.ctx, "error closing fq.clear cancel close", "err", err)
 	}
 
-	if err := e.fq.Clear(); err != nil {
-		e.logger.Error(e.ctx, "error cleaning up file queue", "error", err)
-	}
-
-	e.cancelFq()
-
-	if err := e.fq.Close(); err != nil {
-		e.logger.Error(e.ctx, "error closing file queue", "err", err)
-	}
+	// TODO: validate CheckClearCancelClose and remove this code block
+	//for e.fq.IsEmpty() != nil {
+	//	runtime.Gosched()
+	//}
+	//
+	//if err := e.fq.Clear(); err != nil {
+	//	e.logger.Error(e.ctx, "error cleaning up file queue", "error", err)
+	//}
+	//
+	//e.cancelFq()
+	//
+	//if err := e.fq.Close(); err != nil {
+	//	e.logger.Error(e.ctx, "error closing file queue", "err", err)
+	//}
 
 	for e.opSaga.pidRegister.CountNumber() != 0 {
 		runtime.Gosched()

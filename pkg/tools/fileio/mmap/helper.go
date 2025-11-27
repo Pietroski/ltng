@@ -32,11 +32,11 @@ type DeleteByKeyResult struct {
 }
 
 func flushMmap(mmap []byte) error {
-	return unix.Msync(mmap, unix.MS_SYNC)
+	return unix.Msync(mmap, unix.MS_SYNC) // |unix.MS_INVALIDATE
 }
 
 func partialFlushMmap(mmap []byte, upTo uint64) error {
-	return unix.Msync(mmap[:upTo], unix.MS_SYNC)
+	return unix.Msync(mmap[:upTo], unix.MS_SYNC) // |unix.MS_INVALIDATE
 }
 
 func scanForValidDataEnd(data []byte, maxSize uint64) (uint64, error) {

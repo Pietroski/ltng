@@ -6,7 +6,6 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -30,18 +29,16 @@ import (
 const signalTransmitterBufferSize = 1 << 4
 
 type Queue struct {
-	ctx context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	logger slogx.SLogger
 
 	kvLock *syncx.KVLock
-	mtx    *sync.RWMutex
-	//op    *concurrent.OffThread
 
 	awaitTimeout time.Duration
 
-	serializer  serializer_models.Serializer
-	fileManager *mmap.FileManager
+	serializer serializer_models.Serializer
 
 	// this is the in-memory store information
 	queueInfoStore *ltngdbmodelsv3.StoreInfo
@@ -59,32 +56,22 @@ type Queue struct {
 }
 
 func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
+	ctx, cancel := context.WithCancel(ctx)
 	ltngdbengine, err := ltngdbenginev3.New(ctx)
 	if err != nil {
-		return nil, err
-	}
-
-	fm, err := mmap.NewFileManager(
-		fileiomodels.GetFileQueueFilePath(
-			fileiomodels.FileQueueMmapVersion,
-			fileiomodels.GenericFileQueueFilePath,
-			fileiomodels.GenericFileQueueFileName,
-		))
-	if err != nil {
+		cancel()
 		return nil, err
 	}
 
 	q := &Queue{
-		ctx: ctx,
+		ctx:    ctx,
+		cancel: cancel,
 
 		logger: slogx.New(),
 
 		kvLock: syncx.NewKVLock(),
-		mtx:    &sync.RWMutex{},
-		//op:    concurrent.New("ltng-queue"),
 
-		serializer:  serializer.NewRawBinarySerializer(),
-		fileManager: fm,
+		serializer: serializer.NewRawBinarySerializer(),
 
 		ltngdbengine: ltngdbengine,
 
@@ -118,8 +105,13 @@ func New(ctx context.Context, opts ...options.Option) (*Queue, error) {
 func (q *Queue) Close() error {
 	// give it a delay before shutting down if the service crashes at the beginning
 	time.Sleep(time.Second)
+	q.cancel()
 
 	q.fqMainMapping.Range(func(key string, value *queuemodels.QueuePublisher) bool {
+		if err := value.FileQueue.CheckClearCancelClose(q.cancel); err != nil {
+			q.logger.Error(q.ctx, "error closing fq.clear cancel close", "err", err)
+		}
+
 		//for !value.IsClosed.Load() {
 		//	runtime.Gosched()
 		//}
@@ -137,6 +129,10 @@ func (q *Queue) Close() error {
 
 	q.fqDownstreamMapping.Range(func(key string, value *syncx.GenericMap[*queuemodels.QueueSignaler]) bool {
 		value.Range(func(key string, value *queuemodels.QueueSignaler) bool {
+			if err := value.FileQueue.CheckClearCancelClose(q.cancel); err != nil {
+				q.logger.Error(q.ctx, "error closing fq.clear cancel close", "err", err)
+			}
+
 			//for !value.IsClosed.Load() {
 			//	runtime.Gosched()
 			//}
@@ -161,7 +157,7 @@ func (q *Queue) Close() error {
 }
 
 func (q *Queue) CreateQueue(
-	ctx context.Context,
+	_ context.Context,
 	queue *queuemodels.Queue,
 ) (qp *queuemodels.QueuePublisher, err error) {
 	lockKey := queue.GetLockKey()
@@ -172,11 +168,11 @@ func (q *Queue) CreateQueue(
 		return nil, errorsx.Wrap(err, "error validating queue")
 	}
 
-	if qp, err = q.createQueuePublisher(ctx, queue); err != nil {
+	if qp, err = q.createQueuePublisher(q.ctx, queue); err != nil {
 		return nil, errorsx.Wrap(err, "failed to create queue publisher")
 	}
 
-	if _, err = q.createQueueSignaler(ctx, queue); err != nil {
+	if _, err = q.createQueueSignaler(q.ctx, queue); err != nil {
 		return nil, errorsx.Wrap(err, "error creating queue")
 	}
 
@@ -214,7 +210,7 @@ func (q *Queue) createQueuePublisher(
 		return nil, errorsx.Wrap(err, "error persisting queue")
 	}
 
-	go q.readerPuller(q.ctx, qp)
+	go q.readerPooler(ctx, qp)
 
 	return qp, nil
 }
@@ -252,7 +248,7 @@ func (q *Queue) createQueueSignaler(
 	}
 	fqdm.Set(completeLockKey, qs)
 
-	go q.consumerThread(q.ctx, qs)
+	go q.consumerThread(ctx, qs)
 
 	return qs, nil
 }
@@ -588,7 +584,7 @@ func (q *Queue) publishToSubscribers(
 	}
 }
 
-func (q *Queue) readerPuller(
+func (q *Queue) readerPooler(
 	ctx context.Context,
 	queuePublisher *queuemodels.QueuePublisher,
 ) {

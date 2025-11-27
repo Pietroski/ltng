@@ -80,6 +80,7 @@ func TestBench_Queue_PublishConsume(t *testing.T) {
 				Test_DeleteTestFileQueue(t)
 
 				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
 
 				ltngqueue, err := ltngqueue_engine.New(ctx,
 					ltngqueue_engine.WithTimeout(time.Millisecond*100),
@@ -191,16 +192,13 @@ func TestBench_Queue_PublishConsume(t *testing.T) {
 				eventCount:         50_000,
 				consumerCountLimit: 1,
 			},
-			//"100_000 events": {
-			//	eventCount:         100_000,
-			//	consumerCountLimit: 1,
-			//},
 		}
 		for testName, testCase := range testCases {
 			t.Run(testName, func(t *testing.T) {
 				Test_DeleteTestFileQueue(t)
 
 				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
 
 				ltngqueue, err := ltngqueue_engine.New(ctx,
 					ltngqueue_engine.WithTimeout(time.Millisecond*100),
@@ -234,10 +232,6 @@ func TestBench_Queue_PublishConsume(t *testing.T) {
 
 				publishingBench.CloseWait()
 				t.Log(publishingBench.String())
-
-				cancel()
-				err = ltngqueue.Close()
-				require.NoError(t, err)
 			})
 		}
 	})

@@ -442,33 +442,23 @@ func (fq *FileQueue) Close() error {
 	return fq.file.Close()
 }
 
-// CheckClearClose unmaps and closes the file queue.
-func (fq *FileQueue) CheckClearClose() error {
-	fq.mtx.Lock()
-	defer fq.mtx.Unlock()
-
-	for fq.isEmpty() != nil {
+// CheckClearCancelClose unmaps and closes the file queue.
+func (fq *FileQueue) CheckClearCancelClose(cancel func()) error {
+	for fq.IsEmpty() != nil {
 		runtime.Gosched()
 	}
 
-	if err := fq.clear(); err != nil {
-		return errorsx.Wrap(err, "clear failed")
+	if err := fq.Clear(); err != nil {
+		return err
 	}
 
-	if osx.IsFileClosed(fq.file) {
-		return nil
+	cancel()
+
+	if err := fq.Close(); err != nil {
+		return err
 	}
 
-	if err := flushMmap(fq.data); err != nil {
-		return errorsx.Wrap(err, "flush failed")
-	}
-
-	if err := unix.Munmap(fq.data); err != nil {
-		_ = fq.file.Close()
-		return errorsx.Wrap(err, "unmap failed")
-	}
-
-	return fq.file.Close()
+	return nil
 }
 
 func (fq *FileQueue) IsEmpty() error {
