@@ -13,9 +13,9 @@ import (
 
 	ltngdbenginev3 "gitlab.com/pietroski-software-company/lightning-db/internal/adaptors/datastore/ltngdbengine/v3"
 	ltng_node_config "gitlab.com/pietroski-software-company/lightning-db/internal/config/ltngdb"
-	ltngdbcontrollerv3 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltng-engine/v3"
-	ltngdbfactoryv3 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/gRPC/ltng-engine/v3"
-	httpltngdbfactoryv3 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/http/ltng-engine/v3"
+	ltngdbcontrollerv3 "gitlab.com/pietroski-software-company/lightning-db/internal/controllers/ltngdb/ltngdbengine/v3"
+	ltngdbfactoryv3 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/gRPC/ltngdbengine/v3"
+	httpltngdbfactoryv3 "gitlab.com/pietroski-software-company/lightning-db/internal/factories/ltngdb/http/ltngdbengine/v3"
 )
 
 func StartV3(
