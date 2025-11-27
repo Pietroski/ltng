@@ -411,7 +411,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -451,6 +452,46 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+			}
+
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+				rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.Empty(t, foundResult)
 			}
 
 			// close database
@@ -467,7 +508,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -507,6 +549,46 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+			}
+
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+				rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.Empty(t, foundResult)
 			}
 
 			// close database
@@ -695,6 +777,46 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
 			}
 
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+				rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.Empty(t, foundResult)
+			}
+
 			// close database
 			ts.e.Close()
 		})
@@ -749,6 +871,46 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+			}
+
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+				rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.Empty(t, foundResult)
 			}
 
 			// close database

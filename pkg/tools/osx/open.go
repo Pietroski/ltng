@@ -100,3 +100,8 @@ func IsFileClosed(file *os.File) bool {
 	_, err := file.Stat()
 	return errors.Is(err, os.ErrClosed)
 }
+
+func FileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !errors.Is(err, os.ErrNotExist)
+}

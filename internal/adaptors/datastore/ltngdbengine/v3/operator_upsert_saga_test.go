@@ -23,9 +23,9 @@ func initUpsertSagaTestSuite(t *testing.T) *testSuite {
 	return ts
 }
 
-func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
+func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_creating_items(t *testing.T) {
 	t.Run("buildUpsertItemInfoData - single item", func(t *testing.T) {
-		t.Run("should create item with index", func(t *testing.T) {
+		t.Run("should upsert item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -208,11 +208,11 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+		t.Run("should fail to upsert item with index", func(t *testing.T) {
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-			ops[0].Action.Do = func() error {
+			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
+			ops[1].Action.Do = func() error {
 				return errorsx.New("test error")
 			}
 			err := saga.NewListOperator(ops...).Operate()
@@ -306,10 +306,10 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create indexed items with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-			ops[1].Action.Do = func() error {
+			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
+			ops[2].Action.Do = func() error {
 				return errorsx.New("test error")
 			}
 			err := saga.NewListOperator(ops...).Operate()
@@ -402,65 +402,9 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create index list item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-			ops[2].Action.Do = func() error {
-				return errorsx.New("test error")
-			}
-			err := saga.NewListOperator(ops...).Operate()
-			assert.Error(t, err)
-
-			// verify created things
-			{ // item file
-				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
-				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-					itemInfoData.DBMetaInfo.Path, itemStrKey)
-
-				file, err := osx.OpenFile(itemFilePath)
-				assert.Error(t, err)
-				assert.Nil(t, file)
-			}
-
-			{ // indexed item files
-				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
-					itemStrKey := hex.EncodeToString(indexKey)
-					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-						itemInfoData.DBMetaInfo.IndexInfo().Path, itemStrKey)
-
-					file, err := osx.OpenFile(itemFilePath)
-					assert.Error(t, err)
-					assert.Nil(t, file)
-				}
-			}
-
-			{ // index list file
-				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
-				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-					itemInfoData.DBMetaInfo.IndexListInfo().Path, itemStrKey)
-
-				file, err := osx.OpenFile(itemFilePath)
-				assert.Error(t, err)
-				assert.Nil(t, file)
-			}
-
-			{ // relational data file
-				rfi, err := ts.e.loadRelationalItemStoreFromMemoryOrDisk(ts.ctx, itemInfoData.DBMetaInfo)
-				assert.NoError(t, err)
-
-				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
-				assert.Error(t, err)
-				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
-			}
-
-			// close database
-			ts.e.Close()
-		})
-
-		t.Run("should fail to create relational data item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
-			itemInfoData := generateItemInfoData(t, ts, true)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
 			ops[3].Action.Do = func() error {
 				return errorsx.New("test error")
 			}
@@ -513,10 +457,66 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 			ts.e.Close()
 		})
 
-		t.Run("should create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+		t.Run("should fail to create relational data item with index", func(t *testing.T) {
+			ts := initUpsertSagaTestSuite(t)
+			itemInfoData := generateItemInfoData(t, ts, true)
+			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
+			ops[4].Action.Do = func() error {
+				return errorsx.New("test error")
+			}
+			err := saga.NewListOperator(ops...).Operate()
+			assert.Error(t, err)
+
+			// verify created things
+			{ // item file
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
+					itemInfoData.DBMetaInfo.Path, itemStrKey)
+
+				file, err := osx.OpenFile(itemFilePath)
+				assert.Error(t, err)
+				assert.Nil(t, file)
+			}
+
+			{ // indexed item files
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
+						itemInfoData.DBMetaInfo.IndexInfo().Path, itemStrKey)
+
+					file, err := osx.OpenFile(itemFilePath)
+					assert.Error(t, err)
+					assert.Nil(t, file)
+				}
+			}
+
+			{ // index list file
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
+					itemInfoData.DBMetaInfo.IndexListInfo().Path, itemStrKey)
+
+				file, err := osx.OpenFile(itemFilePath)
+				assert.Error(t, err)
+				assert.Nil(t, file)
+			}
+
+			{ // relational data file
+				rfi, err := ts.e.loadRelationalItemStoreFromMemoryOrDisk(ts.ctx, itemInfoData.DBMetaInfo)
+				assert.NoError(t, err)
+
+				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+			}
+
+			// close database
+			ts.e.Close()
+		})
+
+		t.Run("should upsert item without index", func(t *testing.T) {
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
 			err := saga.NewListOperator(ops...).Operate()
 			assert.NoError(t, err)
 
@@ -644,16 +644,17 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-			ops[0].Action.Do = func() error {
+			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
+			ops[1].Action.Do = func() error {
 				return errorsx.New("test error")
 			}
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -693,6 +694,46 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+			}
+
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+				rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.Empty(t, foundResult)
 			}
 
 			// close database
@@ -700,16 +741,17 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create relational data item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
-			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-			ops[1].Action.Do = func() error {
+			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
+			ops[2].Action.Do = func() error {
 				return errorsx.New("test error")
 			}
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -749,6 +791,46 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 				_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+			}
+
+			// check memory
+
+			{ // item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // indexed items memory
+				for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+					itemStrKey := hex.EncodeToString(indexKey)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+			}
+
+			{ // index list item memory
+				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+				fileInfo, ok := ts.e.itemFileMapping.Get(
+					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+				assert.False(t, ok)
+				assert.Nil(t, fileInfo)
+			}
+
+			{ // relational data item in memory
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+				rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+				assert.True(t, ok)
+
+				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+				assert.Error(t, err)
+				assert.Empty(t, foundResult)
 			}
 
 			// close database
@@ -758,11 +840,11 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 
 	t.Run("buildUpsertItemInfoData - multiple items", func(t *testing.T) {
 		t.Run("should create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+				ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
 				err := saga.NewListOperator(ops...).Operate()
 				assert.NoError(t, err)
 
@@ -944,111 +1026,11 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-				ops[0].Action.Do = func() error {
-					return errorsx.New("test error")
-				}
-				err := saga.NewListOperator(ops...).Operate()
-				assert.Error(t, err)
-
-				// check files
-
-				{ // item file
-					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
-					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-						itemInfoData.DBMetaInfo.Path, itemStrKey)
-
-					file, err := osx.OpenFile(itemFilePath)
-					assert.Error(t, err)
-					assert.Nil(t, file)
-				}
-
-				{ // indexed item files
-					for _, indexKey := range itemInfoData.Opts.IndexingKeys {
-						itemStrKey := hex.EncodeToString(indexKey)
-						itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-							itemInfoData.DBMetaInfo.IndexInfo().Path, itemStrKey)
-
-						file, err := osx.OpenFile(itemFilePath)
-						assert.Error(t, err)
-						assert.Nil(t, file)
-					}
-				}
-
-				{ // index list file
-					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
-					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-						itemInfoData.DBMetaInfo.IndexListInfo().Path, itemStrKey)
-
-					file, err := osx.OpenFile(itemFilePath)
-					assert.Error(t, err)
-					assert.Nil(t, file)
-				}
-
-				{ // relational data file
-					rfi, err := ts.e.loadRelationalItemStoreFromMemoryOrDisk(ts.ctx, itemInfoData.DBMetaInfo)
-					assert.NoError(t, err)
-
-					_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
-					assert.Error(t, err)
-					assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
-				}
-
-				// check memory
-
-				{ // item memory
-					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
-
-					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
-					assert.False(t, ok)
-					assert.Nil(t, fileInfo)
-				}
-
-				{ // indexed items memory
-					for _, indexKey := range itemInfoData.Opts.IndexingKeys {
-						itemStrKey := hex.EncodeToString(indexKey)
-
-						fileInfo, ok := ts.e.itemFileMapping.Get(
-							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
-						assert.False(t, ok)
-						assert.Nil(t, fileInfo)
-					}
-				}
-
-				{ // index list item memory
-					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
-
-					fileInfo, ok := ts.e.itemFileMapping.Get(
-						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
-					assert.False(t, ok)
-					assert.Nil(t, fileInfo)
-				}
-
-				{ // relational data item in memory
-					lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
-					rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
-					assert.True(t, ok)
-
-					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
-					assert.Error(t, err)
-					assert.Empty(t, foundResult)
-				}
-			}
-
-			// close database
-			ts.e.Close()
-		})
-
-		t.Run("should fail to create indexed items with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
-			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
-
-			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+				ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
 				ops[1].Action.Do = func() error {
 					return errorsx.New("test error")
 				}
@@ -1143,12 +1125,12 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create index list item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+		t.Run("should fail to create indexed items with index", func(t *testing.T) {
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+				ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
 				ops[2].Action.Do = func() error {
 					return errorsx.New("test error")
 				}
@@ -1243,12 +1225,12 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+		t.Run("should fail to create index list item with index", func(t *testing.T) {
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+				ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
 				ops[3].Action.Do = func() error {
 					return errorsx.New("test error")
 				}
@@ -1343,12 +1325,112 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 			ts.e.Close()
 		})
 
+		t.Run("should fail to create relational data item with index", func(t *testing.T) {
+			ts := initUpsertSagaTestSuite(t)
+			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
+
+			for _, itemInfoData := range itemInfoDataList {
+				ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
+				ops[4].Action.Do = func() error {
+					return errorsx.New("test error")
+				}
+				err := saga.NewListOperator(ops...).Operate()
+				assert.Error(t, err)
+
+				// check files
+
+				{ // item file
+					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
+						itemInfoData.DBMetaInfo.Path, itemStrKey)
+
+					file, err := osx.OpenFile(itemFilePath)
+					assert.Error(t, err)
+					assert.Nil(t, file)
+				}
+
+				{ // indexed item files
+					for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+						itemStrKey := hex.EncodeToString(indexKey)
+						itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
+							itemInfoData.DBMetaInfo.IndexInfo().Path, itemStrKey)
+
+						file, err := osx.OpenFile(itemFilePath)
+						assert.Error(t, err)
+						assert.Nil(t, file)
+					}
+				}
+
+				{ // index list file
+					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+					itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
+						itemInfoData.DBMetaInfo.IndexListInfo().Path, itemStrKey)
+
+					file, err := osx.OpenFile(itemFilePath)
+					assert.Error(t, err)
+					assert.Nil(t, file)
+				}
+
+				{ // relational data file
+					rfi, err := ts.e.loadRelationalItemStoreFromMemoryOrDisk(ts.ctx, itemInfoData.DBMetaInfo)
+					assert.NoError(t, err)
+
+					_, err = rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+					assert.Error(t, err)
+					assert.ErrorIs(t, err, fileiomodels.KeyNotFoundError)
+				}
+
+				// check memory
+
+				{ // item memory
+					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+
+				{ // indexed items memory
+					for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+						itemStrKey := hex.EncodeToString(indexKey)
+
+						fileInfo, ok := ts.e.itemFileMapping.Get(
+							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
+						assert.False(t, ok)
+						assert.Nil(t, fileInfo)
+					}
+				}
+
+				{ // index list item memory
+					itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
+
+					fileInfo, ok := ts.e.itemFileMapping.Get(
+						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
+					assert.False(t, ok)
+					assert.Nil(t, fileInfo)
+				}
+
+				{ // relational data item in memory
+					lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
+					rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+					assert.True(t, ok)
+
+					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
+					assert.Error(t, err)
+					assert.Empty(t, foundResult)
+				}
+			}
+
+			// close database
+			ts.e.Close()
+		})
+
 		t.Run("should create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
+				ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
 				err := saga.NewListOperator(ops...).Operate()
 				assert.NoError(t, err)
 
@@ -1477,12 +1559,12 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-				ops[0].Action.Do = func() error {
+				ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
+				ops[1].Action.Do = func() error {
 					return errorsx.New("test error")
 				}
 				err := saga.NewListOperator(ops...).Operate()
@@ -1577,12 +1659,12 @@ func TestUpsertSaga_buildUpsertItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create relational data item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t)
+			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
 			for _, itemInfoData := range itemInfoDataList {
-				ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
-				ops[1].Action.Do = func() error {
+				ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
+				ops[2].Action.Do = func() error {
 					return errorsx.New("test error")
 				}
 				err := saga.NewListOperator(ops...).Operate()
