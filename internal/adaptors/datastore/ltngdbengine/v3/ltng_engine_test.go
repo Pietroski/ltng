@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
-	"gitlab.com/pietroski-software-company/golang/devex/saga"
 
 	ltngdbenginemodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
@@ -1667,10 +1667,6 @@ type (
 		cs *createSaga
 		us *upsertSaga
 		ds *deleteSaga
-
-		opsList          [][]*saga.Operation
-		itemInfoDataList []*ltngdbenginemodelsv3.ItemInfoData
-		storeInfo        *ltngdbenginemodelsv3.StoreInfo
 	}
 )
 
@@ -1791,4 +1787,100 @@ func generateTestUsers(t *testing.T, n int) []*user {
 	}
 
 	return users
+}
+
+func generateItemInfoData(
+	t *testing.T,
+	ts *testSuite,
+	hasIndex bool,
+) *ltngdbenginemodelsv3.ItemInfoData {
+	storeInfo := createTestStore(t, ts.ctx, ts)
+
+	testUser := generateTestUser(t)
+	byteValues := getValues(t, ts, testUser)
+
+	traceID, err := uuid.NewV7()
+	require.NoError(t, err)
+	respSignal := make(chan error)
+	itemInfoData := &ltngdbenginemodelsv3.ItemInfoData{
+		Ctx:          ts.ctx,
+		RespSignal:   respSignal,
+		TraceID:      traceID.String(),
+		OpNatureType: ltngdbenginemodelsv3.OpNatureTypeItem,
+		OpType:       ltngdbenginemodelsv3.OpTypeCreate,
+		DBMetaInfo:   storeInfo.ManagerStoreMetaInfo(),
+		Item: &ltngdbenginemodelsv3.Item{
+			Key:   byteValues.bsKey,
+			Value: byteValues.bsValue,
+		},
+		Opts: nil,
+	}
+	if hasIndex {
+		itemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
+			HasIdx:    true,
+			ParentKey: byteValues.bsKey,
+			IndexingKeys: [][]byte{
+				byteValues.bsKey,
+				byteValues.secondaryIndexBs,
+				byteValues.extraUpsertIndex,
+			},
+		}
+	} else {
+		itemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
+			HasIdx: false,
+		}
+	}
+
+	return itemInfoData
+}
+
+func generateItemInfoDataList(
+	t *testing.T,
+	ts *testSuite,
+	itemCount int,
+	hasIndex bool,
+) []*ltngdbenginemodelsv3.ItemInfoData {
+	storeInfo := createTestStore(t, ts.ctx, ts)
+
+	testUsers := generateTestUsers(t, itemCount)
+	itemInfoDataList := make([]*ltngdbenginemodelsv3.ItemInfoData, itemCount)
+	for idx, testUser := range testUsers {
+		byteValues := getValues(t, ts, testUser)
+
+		traceID, err := uuid.NewV7()
+		require.NoError(t, err)
+		respSignal := make(chan error)
+		itemInfoData := &ltngdbenginemodelsv3.ItemInfoData{
+			Ctx:          ts.ctx,
+			RespSignal:   respSignal,
+			TraceID:      traceID.String(),
+			OpNatureType: ltngdbenginemodelsv3.OpNatureTypeItem,
+			OpType:       ltngdbenginemodelsv3.OpTypeCreate,
+			DBMetaInfo:   storeInfo.ManagerStoreMetaInfo(),
+			Item: &ltngdbenginemodelsv3.Item{
+				Key:   byteValues.bsKey,
+				Value: byteValues.bsValue,
+			},
+			Opts: nil,
+		}
+		if hasIndex {
+			itemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
+				HasIdx:    true,
+				ParentKey: byteValues.bsKey,
+				IndexingKeys: [][]byte{
+					byteValues.bsKey,
+					byteValues.secondaryIndexBs,
+					byteValues.extraUpsertIndex,
+				},
+			}
+		} else {
+			itemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
+				HasIdx: false,
+			}
+		}
+
+		itemInfoDataList[idx] = itemInfoData
+	}
+
+	return itemInfoDataList
 }

@@ -148,14 +148,19 @@ func (s *createSaga) buildCreateItemInfoData(
 		return nil
 	}
 	deleteIndexItemOnDisk := func() error {
-		encodedKey := itemInfoData.EncodedKey()
 		filePath := ltngdbenginemodelsv3.GetDataPath(
 			itemInfoData.DBMetaInfo.IndexInfo().Path)
 
 		if _, err := osx.DelOnlyFilesFromDirAsync(ctx, filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(encodedKey))
+
+		for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+			encodedKey := hex.EncodeToString(indexKey)
+			s.opSaga.e.itemFileMapping.Delete(
+				itemInfoData.DBMetaInfo.IndexInfo().
+					LockStrWithKey(encodedKey))
+		}
 
 		return nil
 	}
