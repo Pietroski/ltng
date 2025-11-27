@@ -73,14 +73,14 @@ func (s *upsertSaga) buildUpsertItemInfoDataWithoutIndex(
 	_ context.Context,
 	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
 ) []*saga.Operation {
-	encodedStr := itemInfoData.EncodedKey()
+	encodedKey := itemInfoData.EncodedKey()
 	itemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.Path, encodedStr)
+		itemInfoData.DBMetaInfo.Path, encodedKey)
 	tmpItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.TemporaryInfo().Path, encodedStr)
+		itemInfoData.DBMetaInfo.TemporaryInfo().Path, encodedKey)
 
 	relationalItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.RelationalInfo().Path, encodedStr)
+		itemInfoData.DBMetaInfo.RelationalInfo().Path, encodedKey)
 
 	copyItemsToTemporaryLocations := func() error {
 		if err := osx.CpFile(itemInfoData.Ctx, itemDataFilePath, tmpItemDataFilePath); err != nil {
@@ -134,13 +134,11 @@ func (s *upsertSaga) buildUpsertItemInfoDataWithoutIndex(
 			return errorsx.Wrapf(err, "error upserting item info data on disk, filePath: %s", itemDataFilePath)
 		}
 
-		encodedKey := itemInfoData.EncodedKey()
 		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
 	deleteItemOnDisk := func() error {
-		encodedKey := itemInfoData.EncodedKey()
 		filePath := ltngdbenginemodelsv3.GetDataFilepath(
 			itemInfoData.DBMetaInfo.Path, encodedKey)
 
@@ -200,16 +198,16 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 	_ context.Context,
 	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
 ) []*saga.Operation {
-	encodedStr := itemInfoData.EncodedKey()
+	encodedKey := itemInfoData.EncodedKey()
 	itemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.Path, encodedStr)
+		itemInfoData.DBMetaInfo.Path, encodedKey)
 	tmpItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.TemporaryInfo().Path, encodedStr)
+		itemInfoData.DBMetaInfo.TemporaryInfo().Path, encodedKey)
 
 	indexedListItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedStr)
+		itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedKey)
 	tmpIndexedListItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		itemInfoData.DBMetaInfo.TemporaryIndexListInfo().Path, encodedStr)
+		itemInfoData.DBMetaInfo.TemporaryIndexListInfo().Path, encodedKey)
 
 	relationalItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
 		itemInfoData.DBMetaInfo.RelationalInfo().Path, ltngdbenginemodelsv3.RelationalDataStoreKey)
@@ -302,13 +300,11 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 			return errorsx.Wrapf(err, "failed upserting item on disk - filekey: %s", itemInfoData.Item.Key)
 		}
 
-		encodedKey := itemInfoData.EncodedKey()
 		s.opSaga.e.itemFileMapping.Set(itemInfoData.DBMetaInfo.LockStrWithKey(encodedKey), fi)
 
 		return nil
 	}
 	deleteItemOnDisk := func() error {
-		encodedKey := itemInfoData.EncodedKey()
 		filePath := ltngdbenginemodelsv3.GetDataFilepath(
 			itemInfoData.DBMetaInfo.Path, encodedKey)
 
@@ -324,7 +320,9 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 		indexingList, err := s.opSaga.e.loadIndexingList(
 			itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Opts)
 		if err != nil {
-			return errorsx.Wrap(err, "error loading indexing list")
+			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error loading indexing list",
+				"error", err)
 		}
 
 		keysToSave := bytesop.CalRightDiff(
@@ -428,12 +426,12 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 	}
 	deleteIndexListItemOnDisk := func() error {
 		filePath := ltngdbenginemodelsv3.GetDataFilepath(
-			itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedStr)
+			itemInfoData.DBMetaInfo.IndexListInfo().Path, encodedKey)
 
 		if err := os.Remove(filePath); err != nil {
 			return err
 		}
-		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedStr))
+		s.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedKey))
 
 		return nil
 	}
