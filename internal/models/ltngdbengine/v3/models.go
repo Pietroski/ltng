@@ -441,6 +441,10 @@ func (storeInfo *StoreInfo) LockStr() string {
 	return strings.Join([]string{storeInfo.Path, storeInfo.Name}, InnerSep)
 }
 
+func (storeInfo *StoreInfo) RelationalLockStr() string {
+	return storeInfo.RelationalInfo().LockStr()
+}
+
 type (
 	ManagerStoreMetaInfo struct {
 		Name string
@@ -456,6 +460,10 @@ func (msi *ManagerStoreMetaInfo) LockStrWithKey(key string) string {
 // msi -> managerStoreInfo
 func (msi *ManagerStoreMetaInfo) LockStr() string {
 	return strings.Join([]string{msi.Path, msi.Name}, InnerSep)
+}
+
+func (msi *ManagerStoreMetaInfo) RelationalLockStr() string {
+	return msi.RelationalInfo().LockStr()
 }
 
 func (msi *ManagerStoreMetaInfo) IndexInfo() *ManagerStoreMetaInfo {

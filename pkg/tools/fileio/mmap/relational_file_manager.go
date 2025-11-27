@@ -239,11 +239,19 @@ func (rfm *RelationalFileManager) Sync() error {
 }
 
 // Reset reading position to start
-func (rfm *RelationalFileManager) Reset() {
+func (rfm *RelationalFileManager) Reset() error {
 	rfm.mtx.Lock()
 	defer rfm.mtx.Unlock()
 
+	newWriteOffset, err := scanForValidDataEnd(rfm.data, rfm.size)
+	if err != nil {
+		return errorsx.Wrap(err, "scan for valid data end failed")
+	}
+
+	rfm.writeOffset = newWriteOffset
 	rfm.readOffset = 0
+
+	return nil
 }
 
 // Seek to specific record index

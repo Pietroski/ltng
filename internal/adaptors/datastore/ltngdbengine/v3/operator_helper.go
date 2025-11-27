@@ -159,7 +159,7 @@ func (e *LTNGEngine) loadRelationalItemStoreFromMemoryOrDisk(
 	ctx context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 ) (*ltngdbenginemodelsv3.RelationalFileInfo, error) {
-	relationalLockKey := dbMetaInfo.RelationalInfo().LockStrWithKey(ltngdbenginemodelsv3.RelationalDataStoreKey)
+	relationalLockKey := dbMetaInfo.RelationalLockStr()
 	rfi, ok := e.relationalItemFileMapping.Get(relationalLockKey)
 	if !ok {
 		var err error
@@ -179,8 +179,8 @@ func (e *LTNGEngine) loadRelationalItemStoreFromDisk(
 	_ context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 ) (*ltngdbenginemodelsv3.RelationalFileInfo, error) {
-	file, err := osx.OpenFile(ltngdbenginemodelsv3.GetRelationalDataFilepath(
-		dbMetaInfo.Path, ltngdbenginemodelsv3.RelationalDataStoreKey))
+	file, err := osx.OpenFile(ltngdbenginemodelsv3.GetDataFilepath(
+		dbMetaInfo.RelationalInfo().Path, ltngdbenginemodelsv3.RelationalDataStoreKey))
 	if err != nil {
 		return nil, err
 	}

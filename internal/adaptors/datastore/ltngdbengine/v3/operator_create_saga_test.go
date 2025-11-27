@@ -222,11 +222,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
 			}
 
-			// TODO: fix relational data item validation
-			// issue seems to be the write function that is not computing the writing offset correctly...
-
 			{ // relational data item in memory
-				lockStr := itemInfoData.DBMetaInfo.RelationalInfo().LockStr()
+				lockStr := itemInfoData.DBMetaInfo.RelationalLockStr()
 				rfi, ok := ts.ltngEngine.relationalItemFileMapping.Get(lockStr)
 				assert.True(t, ok)
 
