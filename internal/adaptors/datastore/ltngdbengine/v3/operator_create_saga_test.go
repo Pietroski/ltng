@@ -16,11 +16,7 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
-func TestCreateSaga_ListenAndTrigger(t *testing.T) {
-	//
-}
-
-func initCreateSagaTestSuite(t *testing.T, itemCount int) *testSuite {
+func initCreateSagaTestSuite(t *testing.T) *testSuite {
 	ts := initTestSuite(t)
 	ts.cs = newCreateSaga(ts.ctx, ts.e.opSaga)
 
@@ -30,7 +26,7 @@ func initCreateSagaTestSuite(t *testing.T, itemCount int) *testSuite {
 func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 	t.Run("buildCreateItemInfoData - single item", func(t *testing.T) {
 		t.Run("should create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			err := saga.NewListOperator(ops...).Operate()
@@ -213,7 +209,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			ops[0].Action.Do = func() error {
@@ -310,7 +306,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create indexed items with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			ops[1].Action.Do = func() error {
@@ -406,7 +402,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create index list item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			ops[2].Action.Do = func() error {
@@ -462,7 +458,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create relational data item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			ops[3].Action.Do = func() error {
@@ -518,7 +514,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			err := saga.NewListOperator(ops...).Operate()
@@ -648,7 +644,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			ops[0].Action.Do = func() error {
@@ -704,7 +700,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create relational data item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.cs.buildCreateItemInfoData(ts.ctx, itemInfoData)
 			ops[1].Action.Do = func() error {
@@ -762,7 +758,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 
 	t.Run("buildCreateItemInfoData - multiple items", func(t *testing.T) {
 		t.Run("should create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -948,7 +944,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -1048,7 +1044,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create indexed items with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -1148,7 +1144,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create index list item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -1248,7 +1244,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create relational data item with index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -1348,7 +1344,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -1481,7 +1477,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
 			for _, itemInfoData := range itemInfoDataList {
@@ -1581,7 +1577,7 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 		})
 
 		t.Run("should fail to create relational data item without index", func(t *testing.T) {
-			ts := initCreateSagaTestSuite(t, 1)
+			ts := initCreateSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
 			for _, itemInfoData := range itemInfoDataList {
