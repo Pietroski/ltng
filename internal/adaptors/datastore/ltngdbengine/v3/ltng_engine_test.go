@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
+	"gitlab.com/pietroski-software-company/golang/devex/saga"
 
 	ltngdbenginemodelsv3 "gitlab.com/pietroski-software-company/lightning-db/internal/models/ltngdbengine/v3"
 	"gitlab.com/pietroski-software-company/lightning-db/internal/tools/ltngdata"
@@ -25,10 +25,10 @@ func TestLTNGEngineFlow(t *testing.T) {
 			t.Run("standard", func(t *testing.T) {
 				ctx := prepareTest(t)
 
-				ltngEngine, err := New(ctx)
+				e, err := New(ctx)
 				require.NoError(t, err)
 
-				info, err := ltngEngine.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+				info, err := e.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
@@ -36,20 +36,20 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NotNil(t, info)
 				t.Log(info)
 
-				info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+				info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
 				require.NoError(t, err)
 				t.Log(info)
 
-				err = ltngEngine.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+				err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
 				require.NoError(t, err)
 
-				info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+				info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
@@ -57,18 +57,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.Nil(t, info)
 				t.Log(info)
 
-				ltngEngine.Close()
+				e.Close()
 			})
 
 			t.Run("detect last opened at difference after closing", func(t *testing.T) {
 				t.Run("with close only", func(t *testing.T) {
 					ctx := prepareTest(t)
 
-					ltngEngine, err := New(ctx)
+					e, err := New(ctx)
 					require.NoError(t, err)
 					infoHistory := make([]*ltngdbenginemodelsv3.StoreInfo, 0)
 
-					info, err := ltngEngine.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err := e.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -76,7 +76,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
-					info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -84,10 +84,10 @@ func TestLTNGEngineFlow(t *testing.T) {
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
-					ltngEngine.Close()
+					e.Close()
 					time.Sleep(time.Millisecond * 1_000)
 
-					info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -95,7 +95,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
-					infos, err := ltngEngine.ListStores(ctx, &ltngdata.Pagination{
+					infos, err := e.ListStores(ctx, &ltngdata.Pagination{
 						PageID:   1,
 						PageSize: 5,
 					})
@@ -107,13 +107,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(info)
 					}
 
-					err = ltngEngine.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
 					require.NoError(t, err)
 
-					info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -124,17 +124,17 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					assertLOFromHistory(t, infoHistory)
 
-					ltngEngine.Close()
+					e.Close()
 				})
 
 				t.Run("with restart", func(t *testing.T) {
 					ctx := prepareTest(t)
 
-					ltngEngine, err := New(ctx)
+					e, err := New(ctx)
 					require.NoError(t, err)
 					infoHistory := make([]*ltngdbenginemodelsv3.StoreInfo, 0)
 
-					info, err := ltngEngine.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err := e.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -142,7 +142,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
-					info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -150,11 +150,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
-					err = ltngEngine.Restart(ctx)
+					err = e.Restart(ctx)
 					require.NoError(t, err)
 					time.Sleep(time.Millisecond * 1_000)
 
-					info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -162,7 +162,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					infoHistory = append(infoHistory, info)
 					t.Log(info)
 
-					infos, err := ltngEngine.ListStores(ctx, &ltngdata.Pagination{
+					infos, err := e.ListStores(ctx, &ltngdata.Pagination{
 						PageID:   1,
 						PageSize: 5,
 					})
@@ -174,13 +174,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 						t.Log(info)
 					}
 
-					err = ltngEngine.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
 					require.NoError(t, err)
 
-					info, err = ltngEngine.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
 						Path: "test-path",
 					})
@@ -191,7 +191,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					assertLOFromHistory(t, infoHistory)
 
-					ltngEngine.Close()
+					e.Close()
 				})
 			})
 		})
@@ -199,23 +199,23 @@ func TestLTNGEngineFlow(t *testing.T) {
 		t.Run("for multiple stores", func(t *testing.T) {
 			ctx := prepareTest(t)
 
-			ltngEngine, err := New(ctx)
+			e, err := New(ctx)
 			require.NoError(t, err)
 
-			info, err := ltngEngine.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+			info, err := e.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 				Name: "test-store",
 				Path: "test-path",
 			})
 			require.NoError(t, err)
 			require.NotNil(t, info)
 
-			info, err = ltngEngine.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+			info, err = e.CreateStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 				Name: "test-another-store",
 				Path: "test-another-path",
 			})
 			require.NoError(t, err)
 
-			infos, err := ltngEngine.ListStores(ctx, &ltngdata.Pagination{
+			infos, err := e.ListStores(ctx, &ltngdata.Pagination{
 				PageID:   1,
 				PageSize: 5,
 			})
@@ -229,19 +229,19 @@ func TestLTNGEngineFlow(t *testing.T) {
 				t.Log(info)
 			}
 
-			err = ltngEngine.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+			err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 				Name: "test-store",
 				Path: "test-path",
 			})
 			require.NoError(t, err)
 
-			err = ltngEngine.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+			err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 				Name: "test-another-store",
 				Path: "test-another-path",
 			})
 			require.NoError(t, err)
 
-			infos, err = ltngEngine.ListStores(ctx, &ltngdata.Pagination{
+			infos, err = e.ListStores(ctx, &ltngdata.Pagination{
 				PageID:   1,
 				PageSize: 5,
 			})
@@ -249,27 +249,27 @@ func TestLTNGEngineFlow(t *testing.T) {
 			require.Len(t, infos, 0)
 			t.Log(infos, err)
 
-			info, err = ltngEngine.LoadStore(ctx, ltngdbenginemodelsv3.DBManagerStoreInfo)
+			info, err = e.LoadStore(ctx, ltngdbenginemodelsv3.DBManagerStoreInfo)
 			require.NoError(t, err)
 			require.NotNil(t, info)
 			t.Log(info)
 
-			ltngEngine.Close()
+			e.Close()
 		})
 
 		t.Run("for inexistent store", func(t *testing.T) {
 			ctx := prepareTest(t)
 
-			ltngEngine, err := New(ctx)
+			e, err := New(ctx)
 			require.NoError(t, err)
 
-			err = ltngEngine.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
+			err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 				Name: "delete-inexistent-store",
 				Path: "delete-inexistent-path",
 			})
 			require.Error(t, err)
 
-			ltngEngine.Close()
+			e.Close()
 		})
 	})
 
@@ -293,18 +293,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    item.Key,
 					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs},
 				}
-				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
+				_, err := ts.e.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -313,11 +313,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -327,18 +327,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -354,7 +354,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -377,14 +377,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 							IndexDeletionBehaviour: ltngdbenginemodelsv3.Cascade,
 						},
 					}
-					_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
+					_, err = ts.e.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
 					require.NoError(t, err)
 				}
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -393,7 +393,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -403,14 +403,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -426,7 +426,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -442,7 +442,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				ts.ltngEngine.Close()
+				ts.e.Close()
 			})
 
 			t.Run("delete index only", func(t *testing.T) {
@@ -463,18 +463,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    item.Key,
 					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs},
 				}
-				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
+				_, err := ts.e.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -483,11 +483,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -497,18 +497,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -524,7 +524,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -549,14 +549,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 							IndexDeletionBehaviour: ltngdbenginemodelsv3.IndexOnly,
 						},
 					}
-					_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
+					_, err = ts.e.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
 					require.NoError(t, err)
 				}
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
@@ -565,7 +565,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
@@ -576,14 +576,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 							IndexSearchPattern: ltngdbenginemodelsv3.AndComputational,
 						},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, nil, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, nil, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -599,7 +599,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -615,7 +615,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				ts.ltngEngine.Close()
+				ts.e.Close()
 			})
 
 			t.Run("upsert", func(t *testing.T) {
@@ -636,18 +636,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    item.Key,
 					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs},
 				}
-				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
+				_, err := ts.e.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -656,11 +656,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -670,18 +670,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -697,7 +697,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -722,18 +722,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    item.Key,
 					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs, bsValues.extraUpsertIndex},
 				}
-				_, err = ts.ltngEngine.UpsertItem(ts.ctx, databaseMetaInfo, item, createOpts)
+				_, err = ts.e.UpsertItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -742,11 +742,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -756,11 +756,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.bsKey},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -770,11 +770,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -784,18 +784,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.extraUpsertIndex},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -811,7 +811,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -836,14 +836,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 							IndexDeletionBehaviour: ltngdbenginemodelsv3.Cascade,
 						},
 					}
-					_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
+					_, err = ts.e.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
 					require.NoError(t, err)
 				}
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -852,7 +852,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -862,14 +862,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -885,7 +885,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -901,7 +901,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				ts.ltngEngine.Close()
+				ts.e.Close()
 			})
 
 			t.Run("detect last opened at difference after closing", func(t *testing.T) {
@@ -922,18 +922,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    item.Key,
 					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs},
 				}
-				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
+				_, err := ts.e.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -942,11 +942,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -956,18 +956,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -983,7 +983,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -999,18 +999,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				err = ts.ltngEngine.Restart(ts.ctx)
+				err = ts.e.Restart(ts.ctx)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -1019,11 +1019,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -1033,18 +1033,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1060,7 +1060,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1082,13 +1082,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexDeletionBehaviour: ltngdbenginemodelsv3.Cascade,
 					},
 				}
-				_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
+				_, err = ts.e.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -1097,7 +1097,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -1107,14 +1107,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1130,7 +1130,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1146,7 +1146,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				ts.ltngEngine.Close()
+				ts.e.Close()
 			})
 
 			t.Run("process and close", func(t *testing.T) {
@@ -1167,18 +1167,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    item.Key,
 					IndexingKeys: [][]byte{bsValues.bsKey, bsValues.secondaryIndexBs},
 				}
-				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
+				_, err := ts.e.CreateItem(ts.ctx, databaseMetaInfo, item, createOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
 					var u user
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -1187,11 +1187,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 
@@ -1201,18 +1201,18 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.NoError(t, err)
 					require.NotNil(t, loadedItem)
 
-					err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
 					t.Log(u)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1228,7 +1228,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1250,13 +1250,13 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexDeletionBehaviour: ltngdbenginemodelsv3.Cascade,
 					},
 				}
-				_, err = ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
+				_, err = ts.e.DeleteItem(ts.ctx, databaseMetaInfo, item, deleteOpts)
 				require.NoError(t, err)
 
 				{
 					// search by key
 					searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-					loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -1265,7 +1265,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 						HasIdx:    true,
 						ParentKey: item.Key,
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 
@@ -1275,14 +1275,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 						ParentKey:    item.Key,
 						IndexingKeys: [][]byte{bsValues.secondaryIndexBs},
 					}
-					loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
+					loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, item, searchOpts)
 					require.Error(t, err)
 					require.Nil(t, loadedItem)
 				}
 
 				{
 					// list items - default search
-					items, err := ts.ltngEngine.ListItems(
+					items, err := ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1298,7 +1298,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 
 					// list items - search for all
-					items, err = ts.ltngEngine.ListItems(
+					items, err = ts.e.ListItems(
 						ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 						&ltngdbenginemodelsv3.IndexOpts{
 							IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1314,7 +1314,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					}
 				}
 
-				ts.ltngEngine.Close()
+				ts.e.Close()
 			})
 		})
 
@@ -1337,14 +1337,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    bvs.item.Key,
 					IndexingKeys: [][]byte{bvs.bsKey, bvs.secondaryIndexBs},
 				}
-				_, err := ts.ltngEngine.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
+				_, err := ts.e.CreateItem(ts.ctx, databaseMetaInfo, bvs.item, createOpts)
 				require.NoError(t, err)
 			}
 
 			// list ops
 			{
 				// list items - default search
-				items, err := ts.ltngEngine.ListItems(
+				items, err := ts.e.ListItems(
 					ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 					&ltngdbenginemodelsv3.IndexOpts{
 						IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1360,7 +1360,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 
 				// list items - search for all
-				items, err = ts.ltngEngine.ListItems(
+				items, err = ts.e.ListItems(
 					ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 					&ltngdbenginemodelsv3.IndexOpts{
 						IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1382,12 +1382,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 				// search by key
 				searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.NoError(t, err)
 				require.NotNil(t, loadedItem)
 
 				var u user
-				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+				err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 				require.NoError(t, err)
 				t.Log(u)
 
@@ -1396,11 +1396,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					HasIdx:    true,
 					ParentKey: bvs.item.Key,
 				}
-				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.NoError(t, err)
 				require.NotNil(t, loadedItem)
 
-				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+				err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 				require.NoError(t, err)
 				t.Log(u)
 
@@ -1410,11 +1410,11 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    bvs.item.Key,
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
-				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.NoError(t, err)
 				require.NotNil(t, loadedItem)
 
-				err = ts.ltngEngine.serializer.Deserialize(loadedItem.Value, &u)
+				err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 				require.NoError(t, err)
 				t.Log(u)
 			}
@@ -1429,12 +1429,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 						IndexDeletionBehaviour: ltngdbenginemodelsv3.Cascade,
 					},
 				}
-				_, err := ts.ltngEngine.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
+				_, err := ts.e.DeleteItem(ts.ctx, databaseMetaInfo, bvs.item, deleteOpts)
 				require.NoError(t, err)
 
 				// search by key
 				searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				// t.Logf("key %s - value %s - err: %v", loadedItem.Key, loadedItem.Value, err)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
@@ -1444,7 +1444,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					HasIdx:    true,
 					ParentKey: bvs.item.Key,
 				}
-				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 
@@ -1454,7 +1454,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    bvs.item.Key,
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
-				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 			}
@@ -1462,7 +1462,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 			// list ops
 			{
 				// list items - default search
-				items, err := ts.ltngEngine.ListItems(
+				items, err := ts.e.ListItems(
 					ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 					&ltngdbenginemodelsv3.IndexOpts{
 						IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1478,7 +1478,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 
 				// list items - search for all
-				items, err = ts.ltngEngine.ListItems(
+				items, err = ts.e.ListItems(
 					ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 					&ltngdbenginemodelsv3.IndexOpts{
 						IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1494,7 +1494,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 			}
 
-			ts.ltngEngine.Close()
+			ts.e.Close()
 		})
 
 		t.Run("for inexistent item", func(t *testing.T) {
@@ -1509,7 +1509,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 			{
 				// search by key
 				searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
-				loadedItem, err := ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 
@@ -1518,7 +1518,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					HasIdx:    true,
 					ParentKey: bvs.item.Key,
 				}
-				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 
@@ -1528,14 +1528,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 					ParentKey:    bvs.item.Key,
 					IndexingKeys: [][]byte{bvs.secondaryIndexBs},
 				}
-				loadedItem, err = ts.ltngEngine.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
+				loadedItem, err = ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 			}
 
 			{
 				// list items - default search
-				items, err := ts.ltngEngine.ListItems(
+				items, err := ts.e.ListItems(
 					ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 					&ltngdbenginemodelsv3.IndexOpts{
 						IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1551,7 +1551,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 
 				// list items - search for all
-				items, err = ts.ltngEngine.ListItems(
+				items, err = ts.e.ListItems(
 					ts.ctx, databaseMetaInfo, ltngdata.PageDefault(1),
 					&ltngdbenginemodelsv3.IndexOpts{
 						IndexProperties: ltngdbenginemodelsv3.IndexProperties{
@@ -1567,7 +1567,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				}
 			}
 
-			ts.ltngEngine.Close()
+			ts.e.Close()
 		})
 	})
 
@@ -1577,7 +1577,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 		_ = dbInfo
 		_ = ts
 
-		ts.ltngEngine.Close()
+		ts.e.Close()
 	})
 }
 
@@ -1659,8 +1659,18 @@ type (
 
 type (
 	testSuite struct {
-		ctx        context.Context
-		ltngEngine *LTNGEngine
+		ctx    context.Context
+		cancel context.CancelFunc
+
+		e *LTNGEngine
+
+		cs *createSaga
+		us *upsertSaga
+		ds *deleteSaga
+
+		opsList          [][]*saga.Operation
+		itemInfoDataList []*ltngdbenginemodelsv3.ItemInfoData
+		storeInfo        *ltngdbenginemodelsv3.StoreInfo
 	}
 )
 
@@ -1670,16 +1680,18 @@ type bytesValues struct {
 }
 
 func initTestSuite(t *testing.T) *testSuite {
-	ctx := prepareTest(t)
-	ltngEngine, err := New(ctx)
+	ctx, cancel := context.WithCancel(prepareTest(t))
+	e, err := New(ctx)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		ltngEngine.Close()
+		e.Close()
 	})
 
 	return &testSuite{
-		ctx:        ctx,
-		ltngEngine: ltngEngine,
+		ctx:    ctx,
+		cancel: cancel,
+
+		e: e,
 	}
 }
 
@@ -1692,22 +1704,22 @@ func setUserTime(userData *user) {
 func getValues(t *testing.T, ts *testSuite, userData *user) *bytesValues {
 	setUserTime(userData)
 
-	bsKey, err := ts.ltngEngine.serializer.Serialize(userData.Email)
+	bsKey, err := ts.e.serializer.Serialize(userData.Email)
 	require.NoError(t, err)
 	require.NotNil(t, bsKey)
 	t.Log(string(bsKey))
 
-	bsValue, err := ts.ltngEngine.serializer.Serialize(userData)
+	bsValue, err := ts.e.serializer.Serialize(userData)
 	require.NoError(t, err)
 	require.NotNil(t, bsValue)
 	t.Log(string(bsValue))
 
-	secondaryIndexBs, err := ts.ltngEngine.serializer.Serialize(userData.Username)
+	secondaryIndexBs, err := ts.e.serializer.Serialize(userData.Username)
 	require.NoError(t, err)
 	require.NotNil(t, secondaryIndexBs)
 	t.Log(string(secondaryIndexBs))
 
-	extraUpsertIndexBs, err := ts.ltngEngine.serializer.Serialize(userData.UUID)
+	extraUpsertIndexBs, err := ts.e.serializer.Serialize(userData.UUID)
 	require.NoError(t, err)
 	require.NotNil(t, extraUpsertIndexBs)
 	t.Log(string(extraUpsertIndexBs))
@@ -1729,14 +1741,14 @@ func createTestStore(t *testing.T, ctx context.Context, ts *testSuite) *ltngdben
 		Name: "test-store",
 		Path: "test-path",
 	}
-	info, err := ts.ltngEngine.CreateStore(ctx, dbInfo)
+	info, err := ts.e.CreateStore(ctx, dbInfo)
 	require.NoError(t, err)
 	require.NotNil(t, info)
 
-	info, err = ts.ltngEngine.LoadStore(ctx, dbInfo)
+	info, err = ts.e.LoadStore(ctx, dbInfo)
 	require.NoError(t, err)
 
-	infos, err := ts.ltngEngine.ListStores(ctx, &ltngdata.Pagination{
+	infos, err := ts.e.ListStores(ctx, &ltngdata.Pagination{
 		PageID:   1,
 		PageSize: 5,
 	})
