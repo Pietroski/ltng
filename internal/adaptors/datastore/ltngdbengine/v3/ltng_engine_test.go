@@ -1884,3 +1884,54 @@ func generateItemInfoDataList(
 
 	return itemInfoDataList
 }
+
+func updateItemInfoData(
+	t *testing.T,
+	ts *testSuite,
+	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
+	hasIndex bool,
+) *ltngdbenginemodelsv3.ItemInfoData {
+	var userData user
+	err := ts.e.serializer.Deserialize(itemInfoData.Item.Value, &userData)
+	require.NoError(t, err)
+
+	newUUID, err := uuid.NewV7()
+	require.NoError(t, err)
+	userData.UUID = newUUID.String()
+
+	byteValues := getValues(t, ts, &userData)
+
+	traceID, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	updatedItemInfoData := &ltngdbenginemodelsv3.ItemInfoData{
+		Ctx:          ts.ctx,
+		RespSignal:   itemInfoData.RespSignal,
+		TraceID:      traceID.String(),
+		OpNatureType: itemInfoData.OpNatureType,
+		OpType:       itemInfoData.OpType,
+		DBMetaInfo:   itemInfoData.DBMetaInfo,
+		Item: &ltngdbenginemodelsv3.Item{
+			Key:   byteValues.bsKey,
+			Value: byteValues.bsValue,
+		},
+		Opts: nil,
+	}
+	if hasIndex {
+		updatedItemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
+			HasIdx:    true,
+			ParentKey: byteValues.bsKey,
+			IndexingKeys: [][]byte{
+				byteValues.bsKey,
+				byteValues.secondaryIndexBs,
+				byteValues.extraUpsertIndex,
+			},
+		}
+	} else {
+		updatedItemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
+			HasIdx: false,
+		}
+	}
+
+	return updatedItemInfoData
+}

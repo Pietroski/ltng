@@ -152,7 +152,7 @@ func (s *createSaga) buildCreateItemInfoData(
 			itemInfoData.DBMetaInfo.IndexInfo().Path)
 
 		if _, err := osx.DelOnlyFilesFromDirAsync(ctx, filePath); err != nil {
-			return err
+			return errorsx.Wrap(err, "error deleting created index items from disk")
 		}
 
 		for _, indexKey := range itemInfoData.Opts.IndexingKeys {

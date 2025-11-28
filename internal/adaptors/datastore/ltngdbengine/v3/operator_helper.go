@@ -123,7 +123,6 @@ func (e *LTNGEngine) loadFileInfoFromMemoryOrDisk(
 	return fi, nil
 }
 
-// TODO: we will need to rethink on how we load now data from other directories...
 func (e *LTNGEngine) loadFileInfoFromDisk(
 	_ context.Context,
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
@@ -131,13 +130,31 @@ func (e *LTNGEngine) loadFileInfoFromDisk(
 ) (*ltngdbenginemodelsv3.FileInfo, error) {
 	strItemKey := hex.EncodeToString(item.Key)
 	filepath := ltngdbenginemodelsv3.GetDataFilepath(dbMetaInfo.Path, strItemKey)
+
+	//file, err := osx.OpenFile(filepath)
+	//if err != nil {
+	//	return nil, errorsx.Wrapf(err, "error opening %s file", filepath)
+	//}
+	//
+	//fm, err := mmap.NewFileManagerFromFile(file)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//bs, err := fm.Read()
+	//
+	//var fileData ltngdbenginemodelsv3.FileData
+	//if err = e.serializer.Deserialize(bs[4:], &fileData); err != nil {
+	//	return nil, err
+	//}
+
 	bs, file, err := osx.OpenReadWholeFile(filepath)
 	if err != nil {
 		return nil, errorsx.Wrapf(err, "error openning to read whole file %s", filepath)
 	}
 
 	var fileData ltngdbenginemodelsv3.FileData
-	if err = e.serializer.Deserialize(bs, &fileData); err != nil {
+	if err = e.serializer.Deserialize(bs[4:], &fileData); err != nil {
 		return nil, err
 	}
 
@@ -575,6 +592,15 @@ func indexingListToMap(indexingList []*ltngdbenginemodelsv3.Item) map[string]*lt
 	return indexingMap
 }
 
+func indexingListToByteSlice(indexingList []*ltngdbenginemodelsv3.Item) []byte {
+	var bbs [][]byte
+	for _, item := range indexingList {
+		bbs = append(bbs, item.Value)
+	}
+
+	return bytes.Join(bbs, []byte(ltngdbenginemodelsv3.BsSep))
+}
+
 // #####################################################################################################################
 
 func (e *LTNGEngine) createItemOnDisk(
@@ -677,7 +703,7 @@ func (e *LTNGEngine) upsertRelationalData(
 	fileData *ltngdbenginemodelsv3.FileData,
 	rfi *ltngdbenginemodelsv3.RelationalFileInfo,
 ) error {
-	lockStr := rfi.FileData.Header.StoreInfo.RelationalInfo().LockStr()
+	lockStr := rfi.FileData.Header.StoreInfo.RelationalLockStr()
 
 	e.kvLock.Lock(lockStr, struct{}{})
 	defer e.kvLock.Unlock(lockStr)
@@ -694,7 +720,7 @@ func (e *LTNGEngine) deleteRelationalData(
 	item *ltngdbenginemodelsv3.Item,
 	rfi *ltngdbenginemodelsv3.RelationalFileInfo,
 ) (err error) {
-	lockStr := rfi.FileData.Header.StoreInfo.RelationalInfo().LockStr()
+	lockStr := rfi.FileData.Header.StoreInfo.RelationalLockStr()
 
 	e.kvLock.Lock(lockStr, struct{}{})
 	defer e.kvLock.Unlock(lockStr)
