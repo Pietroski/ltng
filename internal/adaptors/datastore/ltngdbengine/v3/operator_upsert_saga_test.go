@@ -16,6 +16,20 @@ import (
 	"gitlab.com/pietroski-software-company/lightning-db/pkg/tools/osx"
 )
 
+func assertFileData(t *testing.T, expectedFileData, fileData *ltngdbenginemodelsv3.FileData) {
+	assert.EqualValues(t, expectedFileData.Key, fileData.Key)
+	assert.EqualValues(t, expectedFileData.Data, fileData.Data)
+	assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
+	assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+}
+
+func assertNotEqualFileData(t *testing.T, expectedFileData, fileData *ltngdbenginemodelsv3.FileData) {
+	assert.EqualValues(t, expectedFileData.Key, fileData.Key)
+	assert.NotEqualValues(t, expectedFileData.Data, fileData.Data)
+	assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
+	assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+}
+
 func initUpsertSagaTestSuite(t *testing.T) *testSuite {
 	ts := initTestSuite(t)
 	ts.us = newUpsertSaga(ts.ctx, ts.e.opSaga)
@@ -55,10 +69,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed items files
@@ -87,10 +98,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -118,10 +126,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // relational data file
@@ -131,15 +136,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -152,7 +155,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -168,7 +171,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -184,7 +187,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -195,12 +198,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// close database
@@ -542,10 +546,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -577,15 +578,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -598,7 +597,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -629,12 +628,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// close database
@@ -869,10 +869,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -892,19 +889,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}
 
@@ -925,17 +917,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // relational data file
@@ -945,15 +934,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -966,7 +953,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -976,13 +963,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -991,14 +977,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -1009,12 +995,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -1454,10 +1441,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -1489,15 +1473,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -1510,7 +1492,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -1541,12 +1523,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -1788,10 +1771,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed items files
@@ -1820,10 +1800,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -1851,10 +1828,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // relational data file
@@ -1864,15 +1838,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -1885,7 +1857,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -1901,7 +1873,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -1917,7 +1889,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -1928,12 +1900,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -1964,10 +1937,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed items files
@@ -1996,10 +1966,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -2027,10 +1994,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // relational data file
@@ -2045,10 +2009,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -2061,7 +2022,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(newItemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -2077,7 +2038,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						newItemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -2093,7 +2054,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					newItemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -2109,7 +2070,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// close database
@@ -2146,10 +2107,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -2178,10 +2136,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}()
 
@@ -2209,10 +2164,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -2222,15 +2174,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -2243,7 +2193,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -2259,7 +2209,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -2275,7 +2225,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -2286,12 +2236,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -2325,14 +2276,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -2352,8 +2300,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.NoError(t, err)
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
-						itemInfoData.DBMetaInfo,
-						&ltngdbenginemodelsv3.Item{
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
 							Value: itemInfoData.Opts.ParentKey,
 						})
@@ -2361,15 +2308,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey,
+						})
+					assertFileData(t, notExpectedFileData, &fileData)
 				}
 			}()
 
@@ -2397,14 +2343,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key:   newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
+					})
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -2414,19 +2360,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// check memory
@@ -2439,11 +2383,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -2453,17 +2397,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -2472,18 +2417,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key: newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -2494,16 +2442,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, &fileData)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// close database
@@ -2540,10 +2489,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -2572,10 +2518,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}()
 
@@ -2603,10 +2546,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -2616,15 +2556,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -2637,7 +2575,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -2653,7 +2591,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -2669,7 +2607,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -2680,12 +2618,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -2719,14 +2658,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -2746,23 +2682,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.NoError(t, err)
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
-						itemInfoData.DBMetaInfo,
-						&ltngdbenginemodelsv3.Item{
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, &fileData)
 				}
 			}()
 
@@ -2783,21 +2716,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key: newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -2807,19 +2740,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// check memory
@@ -2832,11 +2763,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -2846,17 +2777,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -2865,18 +2797,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key: newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -2887,16 +2822,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, &fileData)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// close database
@@ -2933,10 +2869,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -2956,19 +2889,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.NoError(t, err)
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
-						itemInfoData.DBMetaInfo,
-						&ltngdbenginemodelsv3.Item{
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}()
 
@@ -2989,17 +2917,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -3009,15 +2934,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -3030,7 +2953,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -3046,7 +2969,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -3055,14 +2978,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -3073,12 +2996,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -3112,14 +3036,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -3139,23 +3060,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.NoError(t, err)
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
-						itemInfoData.DBMetaInfo,
-						&ltngdbenginemodelsv3.Item{
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, &fileData)
 				}
 			}()
 
@@ -3176,21 +3094,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key: newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -3200,19 +3118,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// check memory
@@ -3225,11 +3141,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -3239,17 +3155,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -3265,11 +3182,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -3280,17 +3197,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-
-				assert.NotEqualValues(t, notExpectedFileData, &fileData)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// close database
@@ -3327,10 +3244,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -3350,19 +3264,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.NoError(t, err)
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
-						itemInfoData.DBMetaInfo,
-						&ltngdbenginemodelsv3.Item{
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}()
 
@@ -3383,17 +3292,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -3403,15 +3309,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -3424,7 +3328,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -3434,13 +3338,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -3449,14 +3352,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -3467,12 +3370,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -3506,14 +3410,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			func() { // indexed items files
@@ -3533,24 +3434,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.NoError(t, err)
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
-						itemInfoData.DBMetaInfo,
-						&ltngdbenginemodelsv3.Item{
+						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, &fileData)
 				}
 			}()
 
@@ -3571,21 +3468,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key: newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}()
 
 			{ // relational data file
@@ -3595,19 +3492,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// check memory
@@ -3620,11 +3515,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -3634,17 +3529,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 							Key:   indexKey,
-							Value: itemInfoData.Opts.ParentKey,
-						})
+							Value: itemInfoData.Opts.ParentKey})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key:   indexKey,
+							Value: newItemInfoData.Opts.ParentKey})
+					assertFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 			}
 
@@ -3653,18 +3549,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+						Key: newItemInfoData.Item.Key,
+						Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
+				assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 			}
 
 			{ // relational data item in memory
@@ -3675,16 +3574,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData, &fileData)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			// close database
@@ -3721,10 +3621,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -3756,15 +3653,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -3777,7 +3672,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -3808,13 +3703,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				//assert.EqualValues(t, expectedFileData, fileData)
-				_ = expectedFileData
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, false)
@@ -3845,10 +3740,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -3885,10 +3777,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -3901,7 +3790,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(newItemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -3937,7 +3826,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData, &fileData)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// close database
@@ -3974,10 +3863,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -4009,15 +3895,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -4030,7 +3914,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -4061,13 +3945,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				//assert.EqualValues(t, expectedFileData, fileData)
-				_ = expectedFileData
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			newItemInfoData := updateItemInfoData(t, ts, itemInfoData, false)
@@ -4101,14 +3985,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -4140,15 +4021,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -4161,7 +4040,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -4192,13 +4071,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				//assert.EqualValues(t, expectedFileData, fileData)
-				_ = expectedFileData
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// close database
@@ -4235,10 +4114,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -4270,15 +4146,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -4291,7 +4165,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -4322,7 +4196,8 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
@@ -4362,14 +4237,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(bs, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 
 				notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 					newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-				assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+				assertNotEqualFileData(t, notExpectedFileData, &fileData)
 			}
 
 			{ // indexed item files
@@ -4401,15 +4273,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-				assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-				assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// check memory
@@ -4422,7 +4292,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 				assert.True(t, ok)
-				assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+				assertFileData(t, expectedFileData, fileInfo.FileData)
 			}
 
 			{ // indexed items memory
@@ -4453,13 +4323,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 				foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 				assert.NoError(t, err)
 
-				expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+				expectedFileData := ltngdbenginemodelsv3.NewFileData(
+					itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 				var fileData ltngdbenginemodelsv3.FileData
 				err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 				assert.NoError(t, err)
-				//assert.EqualValues(t, expectedFileData, fileData)
-				_ = expectedFileData
+				assertFileData(t, expectedFileData, &fileData)
 			}
 
 			// close database
@@ -4500,10 +4370,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -4523,19 +4390,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}
 
@@ -4556,17 +4418,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // relational data file
@@ -4576,15 +4435,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -4597,7 +4454,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -4607,13 +4464,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -4622,14 +4478,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -4640,13 +4496,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					//assert.EqualValues(t, expectedFileData, fileData)
-					_ = expectedFileData
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -4677,10 +4533,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed items files
@@ -4700,19 +4553,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: newItemInfoData.Opts.ParentKey,
-							})
+								Value: newItemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}
 
@@ -4733,17 +4581,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   newItemInfoData.Item.Key,
-							Value: bytes.Join(newItemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: newItemInfoData.Item.Key,
+							Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // relational data file
@@ -4758,10 +4603,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -4774,7 +4616,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(newItemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -4790,7 +4632,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							newItemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -4806,7 +4648,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						newItemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -4822,7 +4664,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -4862,10 +4704,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -4885,19 +4724,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}()
 
@@ -4918,17 +4752,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -4938,15 +4769,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -4959,7 +4788,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -4969,13 +4798,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -4984,14 +4812,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -5002,12 +4830,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -5041,14 +4870,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -5068,24 +4894,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-
-						assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, &fileData)
 					}
 				}()
 
@@ -5106,21 +4928,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key: newItemInfoData.Item.Key,
+							Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -5130,19 +4952,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				// check memory
@@ -5155,11 +4975,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -5169,17 +4989,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-						assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -5188,18 +5009,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key: newItemInfoData.Item.Key,
+							Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -5210,16 +5034,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, &fileData)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 			}
 
@@ -5259,10 +5084,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -5282,19 +5104,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}()
 
@@ -5315,17 +5132,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -5335,15 +5149,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -5356,7 +5168,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -5366,13 +5178,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -5381,14 +5192,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -5399,12 +5210,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -5438,14 +5250,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -5465,23 +5274,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-						assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, &fileData)
 					}
 				}()
 
@@ -5502,21 +5308,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+						newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+							Key: newItemInfoData.Item.Key,
+							Value: bytes.Join(newItemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -5526,19 +5332,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				// check memory
@@ -5551,11 +5355,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -5565,17 +5369,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-						assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -5584,18 +5389,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -5606,16 +5411,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, &fileData)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 			}
 
@@ -5655,10 +5461,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -5678,19 +5481,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}()
 
@@ -5711,17 +5509,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -5731,15 +5526,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -5752,7 +5545,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -5762,13 +5555,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -5777,14 +5569,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -5795,12 +5587,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -5834,14 +5627,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -5861,23 +5651,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-						assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, &fileData)
 					}
 				}()
 
@@ -5898,21 +5685,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -5922,19 +5706,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				// check memory
@@ -5947,11 +5729,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -5961,17 +5743,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-						assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -5980,18 +5763,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -6002,17 +5785,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-
-					assert.NotEqualValues(t, notExpectedFileData, &fileData)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 			}
 
@@ -6052,10 +5835,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -6075,19 +5855,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 					}
 				}()
 
@@ -6108,17 +5883,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -6128,15 +5900,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -6149,7 +5919,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -6159,13 +5929,12 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -6174,14 +5943,14 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -6192,12 +5961,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, true)
@@ -6231,14 +6001,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				func() { // indexed items files
@@ -6258,24 +6025,20 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						assert.NoError(t, err)
 
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
-							itemInfoData.DBMetaInfo,
-							&ltngdbenginemodelsv3.Item{
+							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						var fileData ltngdbenginemodelsv3.FileData
 						err = ts.e.serializer.Deserialize(bs, &fileData)
 						assert.NoError(t, err)
-						assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-						assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-						assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+						assertFileData(t, expectedFileData, &fileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-
-						assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, &fileData)
 					}
 				}()
 
@@ -6296,21 +6059,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}()
 
 				{ // relational data file
@@ -6320,19 +6080,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				// check memory
@@ -6345,11 +6103,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -6359,17 +6117,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 						expectedFileData := ltngdbenginemodelsv3.NewFileData(
 							itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 								Key:   indexKey,
-								Value: itemInfoData.Opts.ParentKey,
-							})
+								Value: itemInfoData.Opts.ParentKey})
 
 						fileInfo, ok := ts.e.itemFileMapping.Get(
 							itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(itemStrKey))
 						assert.True(t, ok)
-						assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+						assertFileData(t, expectedFileData, fileInfo.FileData)
 
 						notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
-							newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-						assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+							newItemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
+								Key:   indexKey,
+								Value: newItemInfoData.Opts.ParentKey})
+						assertFileData(t, notExpectedFileData, fileInfo.FileData)
 					}
 				}
 
@@ -6378,18 +6137,18 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					expectedFileData := ltngdbenginemodelsv3.NewFileData(
 						itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-							Key:   itemInfoData.Item.Key,
-							Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-						})
+							Key: itemInfoData.Item.Key,
+							Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+								[]byte(ltngdbenginemodelsv3.BsSep))})
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(
 						itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, fileInfo.FileData)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // relational data item in memory
@@ -6400,16 +6159,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData, &fileData)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData, &fileData)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 			}
 
@@ -6449,10 +6209,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -6484,15 +6241,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -6505,7 +6260,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -6536,13 +6291,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					//assert.EqualValues(t, expectedFileData, fileData)
-					_ = expectedFileData
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, false)
@@ -6573,10 +6328,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -6613,10 +6365,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -6629,7 +6378,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(newItemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -6652,6 +6401,21 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					assert.Nil(t, fileInfo)
 				}
 
+				{ // relational data item in memory
+					lockStr := newItemInfoData.DBMetaInfo.RelationalLockStr()
+					rfi, ok := ts.e.relationalItemFileMapping.Get(lockStr)
+					assert.True(t, ok)
+
+					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, newItemInfoData.Item.Key)
+					assert.NoError(t, err)
+
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(newItemInfoData.DBMetaInfo, newItemInfoData.Item)
+
+					var fileData ltngdbenginemodelsv3.FileData
+					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
+					assert.NoError(t, err)
+					assertFileData(t, expectedFileData, &fileData)
+				}
 			}
 
 			// close database
@@ -6690,10 +6454,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -6725,15 +6486,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -6746,7 +6505,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -6777,7 +6536,8 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
@@ -6817,14 +6577,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -6856,15 +6613,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -6877,7 +6632,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -6908,13 +6663,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					//assert.EqualValues(t, expectedFileData, fileData)
-					_ = expectedFileData
+					assertFileData(t, expectedFileData, &fileData)
 				}
 			}
 
@@ -6954,10 +6709,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -6989,15 +6741,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				// check memory
@@ -7010,7 +6760,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -7041,13 +6791,13 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					//assert.EqualValues(t, expectedFileData, fileData)
-					_ = expectedFileData
+					assertFileData(t, expectedFileData, &fileData)
 				}
 
 				newItemInfoData := updateItemInfoData(t, ts, itemInfoData, false)
@@ -7081,14 +6831,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(bs, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
 
 					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
 						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
-					assert.NotEqualValues(t, notExpectedFileData.Data, fileData.Data)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				{ // indexed item files
@@ -7120,15 +6867,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					assert.EqualValues(t, expectedFileData.Key, fileData.Key)
-					assert.EqualValues(t, expectedFileData.Data, fileData.Data)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Path, fileData.Header.StoreInfo.Path)
-					assert.EqualValues(t, expectedFileData.Header.StoreInfo.Name, fileData.Header.StoreInfo.Name)
+					assertFileData(t, expectedFileData, &fileData)
+
+					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
+						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 
 				// check memory
@@ -7141,7 +6890,11 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 					fileInfo, ok := ts.e.itemFileMapping.Get(itemInfoData.DBMetaInfo.LockStrWithKey(itemStrKey))
 					assert.True(t, ok)
-					assert.EqualValues(t, expectedFileData, fileInfo.FileData)
+					assertFileData(t, expectedFileData, fileInfo.FileData)
+
+					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
+						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
+					assertNotEqualFileData(t, notExpectedFileData, fileInfo.FileData)
 				}
 
 				{ // indexed items memory
@@ -7172,13 +6925,17 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 					foundResult, err := rfi.RelationalFileManager.Find(ts.ctx, itemInfoData.Item.Key)
 					assert.NoError(t, err)
 
-					expectedFileData := ltngdbenginemodelsv3.NewFileData(itemInfoData.DBMetaInfo, itemInfoData.Item)
+					expectedFileData := ltngdbenginemodelsv3.NewFileData(
+						itemInfoData.DBMetaInfo, itemInfoData.Item)
 
 					var fileData ltngdbenginemodelsv3.FileData
 					err = ts.e.serializer.Deserialize(foundResult.BS, &fileData)
 					assert.NoError(t, err)
-					//assert.EqualValues(t, expectedFileData, fileData)
-					_ = expectedFileData
+					assertFileData(t, expectedFileData, &fileData)
+
+					notExpectedFileData := ltngdbenginemodelsv3.NewFileData(
+						newItemInfoData.DBMetaInfo, newItemInfoData.Item)
+					assertNotEqualFileData(t, notExpectedFileData, &fileData)
 				}
 			}
 
