@@ -308,7 +308,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create indexed items with index", func(t *testing.T) {
+		t.Run("should fail to upsert indexed items with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -318,7 +318,8 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -404,7 +405,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create index list item with index", func(t *testing.T) {
+		t.Run("should fail to upsert index list item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -414,7 +415,8 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -460,7 +462,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item with index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -470,7 +472,8 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -641,7 +644,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item without index", func(t *testing.T) {
+		t.Run("should fail to upsert item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
@@ -738,7 +741,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item without index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
@@ -837,7 +840,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 	})
 
 	t.Run("buildUpsertItemInfoData - multiple items", func(t *testing.T) {
-		t.Run("should create item with index", func(t *testing.T) {
+		t.Run("should upsert item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -1009,7 +1012,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item with index", func(t *testing.T) {
+		t.Run("should fail to upsert item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -1109,7 +1112,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create indexed items with index", func(t *testing.T) {
+		t.Run("should fail to upsert indexed items with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -1209,7 +1212,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create index list item with index", func(t *testing.T) {
+		t.Run("should fail to upsert index list item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -1309,7 +1312,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item with index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -1409,7 +1412,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should create item without index", func(t *testing.T) {
+		t.Run("should upsert item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
@@ -1537,7 +1540,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item without index", func(t *testing.T) {
+		t.Run("should fail to upsert item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
@@ -1637,7 +1640,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item without index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
@@ -2459,7 +2462,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create indexed items with index", func(t *testing.T) {
+		t.Run("should fail to upsert indexed items with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -2839,7 +2842,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create index list item with index", func(t *testing.T) {
+		t.Run("should fail to upsert index list item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -3214,7 +3217,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item with index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, true)
 			ops := ts.us.buildUpsertItemInfoData(ts.ctx, itemInfoData)
@@ -3833,7 +3836,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item without index", func(t *testing.T) {
+		t.Run("should fail to upsert item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
@@ -4084,7 +4087,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item without index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoData := generateItemInfoData(t, ts, false)
 			ops := ts.us.buildUpsertItemInfoDataWithoutIndex(ts.ctx, itemInfoData)
@@ -4338,7 +4341,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 	})
 
 	t.Run("buildUpsertItemInfoData - multiple items", func(t *testing.T) {
-		t.Run("should create item with index", func(t *testing.T) {
+		t.Run("should upsert item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -4672,7 +4675,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item with index", func(t *testing.T) {
+		t.Run("should fail to upsert item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -5052,7 +5055,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create indexed items with index", func(t *testing.T) {
+		t.Run("should fail to upsert indexed items with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -5429,7 +5432,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create index list item with index", func(t *testing.T) {
+		t.Run("should fail to upsert index list item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -5803,7 +5806,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item with index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item with index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, true)
 
@@ -6177,7 +6180,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should create item without index", func(t *testing.T) {
+		t.Run("should upsert item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
@@ -6422,7 +6425,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create item without index", func(t *testing.T) {
+		t.Run("should fail to upsert item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
@@ -6677,7 +6680,7 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 			ts.e.Close()
 		})
 
-		t.Run("should fail to create relational data item without index", func(t *testing.T) {
+		t.Run("should fail to upsert relational data item without index", func(t *testing.T) {
 			ts := initUpsertSagaTestSuite(t)
 			itemInfoDataList := generateItemInfoDataList(t, ts, 10, false)
 
