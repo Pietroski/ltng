@@ -315,7 +315,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -735,7 +736,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
@@ -831,7 +833,8 @@ func TestCreateSaga_buildCreateItemInfoData(t *testing.T) {
 			err := saga.NewListOperator(ops...).Operate()
 			assert.Error(t, err)
 
-			// verify created things
+			// check files
+
 			{ // item file
 				itemStrKey := hex.EncodeToString(itemInfoData.Item.Key)
 				itemFilePath := ltngdbenginemodelsv3.GetDataFilepath(
