@@ -34,14 +34,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, info)
-				t.Log(info)
+				//t.Log(info)
 
 				info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 					Name: "test-store",
 					Path: "test-path",
 				})
 				require.NoError(t, err)
-				t.Log(info)
+				//t.Log(info)
 
 				err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 					Name: "test-store",
@@ -55,7 +55,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				})
 				require.Error(t, err)
 				require.Nil(t, info)
-				t.Log(info)
+				//t.Log(info)
 
 				e.Close()
 			})
@@ -74,7 +74,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
@@ -82,7 +82,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					e.Close()
 					time.Sleep(time.Millisecond * 1_000)
@@ -93,7 +93,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					infos, err := e.ListStores(ctx, &ltngdata.Pagination{
 						PageID:   1,
@@ -101,10 +101,10 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					require.Len(t, infos, 1)
-					t.Log(infos)
+					//t.Log(infos)
 
 					for _, info = range infos {
-						t.Log(info)
+						//t.Log(info)
 					}
 
 					err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
@@ -120,7 +120,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Error(t, err)
 					require.Nil(t, info)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					assertLOFromHistory(t, infoHistory)
 
@@ -140,7 +140,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					info, err = e.LoadStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
 						Name: "test-store",
@@ -148,7 +148,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					err = e.Restart(ctx)
 					require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					infos, err := e.ListStores(ctx, &ltngdata.Pagination{
 						PageID:   1,
@@ -168,10 +168,10 @@ func TestLTNGEngineFlow(t *testing.T) {
 					})
 					require.NoError(t, err)
 					require.Len(t, infos, 1)
-					t.Log(infos)
+					//t.Log(infos)
 
 					for _, info = range infos {
-						t.Log(info)
+						//t.Log(info)
 					}
 
 					err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
@@ -187,7 +187,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Error(t, err)
 					require.Nil(t, info)
 					infoHistory = append(infoHistory, info)
-					t.Log(info)
+					//t.Log(info)
 
 					assertLOFromHistory(t, infoHistory)
 
@@ -219,14 +219,14 @@ func TestLTNGEngineFlow(t *testing.T) {
 				PageID:   1,
 				PageSize: 5,
 			})
-			t.Logf("infos: %+v", infos[0])
-			t.Logf("infos: %+v", infos[1])
+			//t.Logf("infos: %+v", infos[0])
+			//t.Logf("infos: %+v", infos[1])
 			require.NoError(t, err)
 			require.Len(t, infos, 2)
-			t.Log(infos)
+			//t.Log(infos)
 
 			for _, info = range infos {
-				t.Log(info)
+				//t.Log(info)
 			}
 
 			err = e.DeleteStore(ctx, &ltngdbenginemodelsv3.StoreInfo{
@@ -247,12 +247,12 @@ func TestLTNGEngineFlow(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.Len(t, infos, 0)
-			t.Log(infos, err)
+			//t.Log(infos, err)
 
 			info, err = e.LoadStore(ctx, ltngdbenginemodelsv3.DBManagerStoreInfo)
 			require.NoError(t, err)
 			require.NotNil(t, info)
-			t.Log(info)
+			//t.Log(info)
 
 			e.Close()
 		})
@@ -306,7 +306,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -319,7 +319,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -333,7 +333,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -350,7 +350,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -366,7 +366,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -422,7 +422,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -438,7 +438,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -476,7 +476,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -489,7 +489,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -503,7 +503,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -520,7 +520,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -536,7 +536,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -595,7 +595,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -611,7 +611,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -649,7 +649,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -662,7 +662,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -676,7 +676,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -693,7 +693,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -709,7 +709,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -735,7 +735,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -748,7 +748,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -762,7 +762,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -776,7 +776,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -790,7 +790,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -807,7 +807,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -823,7 +823,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -881,7 +881,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -897,7 +897,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -935,7 +935,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -948,7 +948,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -962,7 +962,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -979,7 +979,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -995,7 +995,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -1012,7 +1012,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -1025,7 +1025,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -1039,7 +1039,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -1056,7 +1056,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -1072,7 +1072,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -1126,7 +1126,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -1142,7 +1142,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -1180,7 +1180,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					var u user
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by key - parent key
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -1193,7 +1193,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 
 					// search by index
 					searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -1207,7 +1207,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 					err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 					require.NoError(t, err)
-					t.Log(u)
+					//t.Log(u)
 				}
 
 				{
@@ -1224,7 +1224,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -1240,7 +1240,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 1)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -1294,7 +1294,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 
 					// list items - search for all
@@ -1310,7 +1310,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 					require.Len(t, items.Items, 0)
 
 					for _, item = range items.Items {
-						t.Log(string(item.Key), string(item.Value))
+						//t.Log(string(item.Key), string(item.Value))
 					}
 				}
 
@@ -1328,7 +1328,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 			// create ops
 			for _, userData := range userList {
 
-				t.Log(userData.Email)
+				//t.Log(userData.Email)
 
 				bvs := getValues(t, ts, userData)
 
@@ -1355,9 +1355,9 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, items.Items, userCount)
 
-				for _, item := range items.Items {
-					t.Log(string(item.Key), string(item.Value))
-				}
+				//for _, item := range items.Items {
+				//	t.Log(string(item.Key), string(item.Value))
+				//}
 
 				// list items - search for all
 				items, err = ts.e.ListItems(
@@ -1371,9 +1371,9 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, items.Items, userCount)
 
-				for _, item := range items.Items {
-					t.Log(string(item.Key), string(item.Value))
-				}
+				//for _, item := range items.Items {
+				//	t.Log(string(item.Key), string(item.Value))
+				//}
 			}
 
 			// search one by one
@@ -1389,7 +1389,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				var u user
 				err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 				require.NoError(t, err)
-				t.Log(u)
+				//t.Log(u)
 
 				// search by key - parent key
 				searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -1402,7 +1402,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 				err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 				require.NoError(t, err)
-				t.Log(u)
+				//t.Log(u)
 
 				// search by index
 				searchOpts = &ltngdbenginemodelsv3.IndexOpts{
@@ -1416,7 +1416,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 
 				err = ts.e.serializer.Deserialize(loadedItem.Value, &u)
 				require.NoError(t, err)
-				t.Log(u)
+				//t.Log(u)
 			}
 
 			// delete and search
@@ -1435,7 +1435,7 @@ func TestLTNGEngineFlow(t *testing.T) {
 				// search by key
 				searchOpts := &ltngdbenginemodelsv3.IndexOpts{}
 				loadedItem, err := ts.e.LoadItem(ts.ctx, databaseMetaInfo, bvs.item, searchOpts)
-				// t.Logf("key %s - value %s - err: %v", loadedItem.Key, loadedItem.Value, err)
+				//// t.Logf("key %s - value %s - err: %v", loadedItem.Key, loadedItem.Value, err)
 				require.Error(t, err)
 				require.Nil(t, loadedItem)
 
@@ -1473,9 +1473,9 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, items.Items, 0)
 
-				for _, item := range items.Items {
-					t.Log(string(item.Key), string(item.Value))
-				}
+				//for _, item := range items.Items {
+				//	t.Log(string(item.Key), string(item.Value))
+				//}
 
 				// list items - search for all
 				items, err = ts.e.ListItems(
@@ -1489,9 +1489,9 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, items.Items, 0)
 
-				for _, item := range items.Items {
-					t.Log(string(item.Key), string(item.Value))
-				}
+				//for _, item := range items.Items {
+				//	t.Log(string(item.Key), string(item.Value))
+				//}
 			}
 
 			ts.e.Close()
@@ -1546,9 +1546,9 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, items.Items, 0)
 
-				for _, item := range items.Items {
-					t.Log(string(item.Key), string(item.Value))
-				}
+				//for _, item := range items.Items {
+				//	t.Log(string(item.Key), string(item.Value))
+				//}
 
 				// list items - search for all
 				items, err = ts.e.ListItems(
@@ -1562,9 +1562,9 @@ func TestLTNGEngineFlow(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, items.Items, 0)
 
-				for _, item := range items.Items {
-					t.Log(string(item.Key), string(item.Value))
-				}
+				//for _, item := range items.Items {
+				//	t.Log(string(item.Key), string(item.Value))
+				//}
 			}
 
 			ts.e.Close()
