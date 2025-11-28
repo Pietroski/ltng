@@ -1703,22 +1703,22 @@ func getValues(t *testing.T, ts *testSuite, userData *user) *bytesValues {
 	bsKey, err := ts.e.serializer.Serialize(userData.Email)
 	require.NoError(t, err)
 	require.NotNil(t, bsKey)
-	t.Log(string(bsKey))
+	//t.Log(string(bsKey))
 
 	bsValue, err := ts.e.serializer.Serialize(userData)
 	require.NoError(t, err)
 	require.NotNil(t, bsValue)
-	t.Log(string(bsValue))
+	//t.Log(string(bsValue))
 
 	secondaryIndexBs, err := ts.e.serializer.Serialize(userData.Username)
 	require.NoError(t, err)
 	require.NotNil(t, secondaryIndexBs)
-	t.Log(string(secondaryIndexBs))
+	//t.Log(string(secondaryIndexBs))
 
 	extraUpsertIndexBs, err := ts.e.serializer.Serialize(userData.UUID)
 	require.NoError(t, err)
 	require.NotNil(t, extraUpsertIndexBs)
-	t.Log(string(extraUpsertIndexBs))
+	//t.Log(string(extraUpsertIndexBs))
 
 	return &bytesValues{
 		bsKey:            bsKey,
@@ -1750,11 +1750,11 @@ func createTestStore(t *testing.T, ctx context.Context, ts *testSuite) *ltngdben
 	})
 	require.NoError(t, err)
 	require.Len(t, infos, 1)
-	t.Log(infos)
+	//t.Log(infos)
 
-	for _, info = range infos {
-		t.Log(info)
-	}
+	//for _, info = range infos {
+	//	t.Log(info)
+	//}
 
 	return info
 }
@@ -1775,7 +1775,7 @@ func generateTestUser(t *testing.T) *user {
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	t.Log(userData.Email)
+	//t.Log(userData.Email)
 
 	return userData
 }
