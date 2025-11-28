@@ -107,35 +107,6 @@ func (s *upsertSaga) buildUpsertItemInfoDataWithoutIndex(
 		_, _ = s.opSaga.e.loadItemFromMemoryOrDisk(itemInfoData.Ctx,
 			itemInfoData.DBMetaInfo, itemInfoData.Item)
 
-		//relationalItemDataFilePath := ltngdbenginemodelsv3.GetDataFilepath(
-		//	itemInfoData.DBMetaInfo.RelationalInfo().Path, encodedKey)
-		//// upsertFromFileToRelationalRow := func() {}
-		//func() { // upsert from file into relational row
-		//	fm, err := mmap.NewFileManager(itemDataFilePath)
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	bs, err := fm.Read()
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	var fileData *ltngdbenginemodelsv3.FileData
-		//	if err = s.opSaga.e.serializer.Deserialize(bs, &fileData); err != nil {
-		//		return
-		//	}
-		//
-		//	rfm, err := mmap.NewRelationalFileManager(relationalItemDataFilePath)
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	if _, err = rfm.UpsertByKey(itemInfoData.Ctx, itemInfoData.Item.Key, fileData); err != nil {
-		//		return
-		//	}
-		//}()
-
 		return nil
 	}
 
@@ -243,7 +214,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 			return nil
 		}
 
-		if err := osx.CpFile(itemInfoData.Ctx,
+		if err = osx.CpFile(itemInfoData.Ctx,
 			itemDataFilePath, tmpItemDataFilePath); err != nil {
 			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
 				"error copying item info data to temporary location on disk",
@@ -251,7 +222,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 				"error", err)
 		}
 
-		if _, err := osx.CpOnlyFilesFromDir(itemInfoData.Ctx,
+		if _, err = osx.CpOnlyFilesFromDir(itemInfoData.Ctx,
 			indexedItemDataPath, tmpIndexedItemDataPath); err != nil {
 			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
 				"error copying indexed item info data to temporary location on disk",
@@ -260,7 +231,7 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 				"error", err)
 		}
 
-		if err := osx.CpFile(itemInfoData.Ctx,
+		if err = osx.CpFile(itemInfoData.Ctx,
 			indexedListItemDataFilePath, tmpIndexedListItemDataFilePath); err != nil {
 			s.opSaga.e.logger.Debug(itemInfoData.Ctx,
 				"error copying indexed list item info data to temporary location on disk",
@@ -308,50 +279,6 @@ func (s *upsertSaga) buildUpsertItemInfoData(
 		}
 		_, _ = s.opSaga.e.loadItemFromMemoryOrDisk(itemInfoData.Ctx,
 			itemInfoData.DBMetaInfo.IndexListInfo(), itemInfoData.Item)
-
-		//// upsertFromFileToRelationalRow := func() {}
-		//func() { // upsert from file into relational row
-		//	fm, err := mmap.NewFileManager(itemDataFilePath)
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	bs, err := fm.Read()
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	var fileData ltngdbenginemodelsv3.FileData
-		//	if err = s.opSaga.e.serializer.Deserialize(bs, &fileData); err != nil {
-		//		return
-		//	}
-		//
-		//	rfi, err := s.opSaga.e.loadRelationalItemStoreFromMemoryOrDisk(itemInfoData.Ctx, itemInfoData.DBMetaInfo)
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	if _, err = rfi.RelationalFileManager.UpsertByKey(itemInfoData.Ctx, itemInfoData.Item.Key, fileData); err != nil {
-		//		return
-		//	}
-		//
-		//	//rfm, err := mmap.NewRelationalFileManager(relationalItemDataFilePath)
-		//	//if err != nil {
-		//	//	return
-		//	//}
-		//	//
-		//	//if _, err = rfm.UpsertByKey(itemInfoData.Ctx, itemInfoData.Item.Key, fileData); err != nil {
-		//	//	return
-		//	//}
-		//
-		//	//if err = s.opSaga.e.upsertItemOnRelationalFile(itemInfoData.Ctx,
-		//	//	fileData.Header.StoreInfo.ManagerStoreMetaInfo(), &ltngdbenginemodelsv3.Item{
-		//	//		Key:   fileData.Key,
-		//	//		Value: fileData.Data,
-		//	//	}); err != nil {
-		//	//	return
-		//	//}
-		//}()
 
 		return nil
 	}
