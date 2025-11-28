@@ -1667,6 +1667,10 @@ type (
 		cs *createSaga
 		us *upsertSaga
 		ds *deleteSaga
+
+		dcs *deleteCascadeSaga
+		dci *deleteCascadeByIdxSaga
+		dio *deleteIdxOnlySaga
 	}
 )
 
@@ -1936,50 +1940,28 @@ func updateItemInfoData(
 	return updatedItemInfoData
 }
 
-func generateDeleteItemInfoData(
+func generateDeleteItemInfoDataFromItemInfoData(
 	t *testing.T,
 	ts *testSuite,
+	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
 	hasIndex bool,
 ) *deleteItemInfoData {
-	storeInfo := createTestStore(t, ts.ctx, ts)
-
-	testUser := generateTestUser(t)
-	byteValues := getValues(t, ts, testUser)
-
-	traceID, err := uuid.NewV7()
-	require.NoError(t, err)
-	respSignal := make(chan error)
-	itemInfoData := &ltngdbenginemodelsv3.ItemInfoData{
-		Ctx:          ts.ctx,
-		RespSignal:   respSignal,
-		TraceID:      traceID.String(),
-		OpNatureType: ltngdbenginemodelsv3.OpNatureTypeItem,
-		OpType:       ltngdbenginemodelsv3.OpTypeCreate,
-		DBMetaInfo:   storeInfo.ManagerStoreMetaInfo(),
-		Item: &ltngdbenginemodelsv3.Item{
-			Key:   byteValues.bsKey,
-			Value: byteValues.bsValue,
-		},
-		Opts: nil,
-	}
 	if hasIndex {
-		itemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
-			HasIdx:    true,
-			ParentKey: byteValues.bsKey,
-			IndexingKeys: [][]byte{
-				byteValues.bsKey,
-				byteValues.secondaryIndexBs,
-				byteValues.extraUpsertIndex,
-			},
+		indexList := make([]*ltngdbenginemodelsv3.Item, len(itemInfoData.Opts.IndexingKeys))
+		for i, item := range itemInfoData.Opts.IndexingKeys {
+			indexList[i] = &ltngdbenginemodelsv3.Item{
+				Key:   itemInfoData.Opts.ParentKey,
+				Value: item,
+			}
 		}
-	} else {
-		itemInfoData.Opts = &ltngdbenginemodelsv3.IndexOpts{
-			HasIdx: false,
+
+		return &deleteItemInfoData{
+			ItemInfoData: itemInfoData,
+			IndexList:    indexList,
 		}
 	}
 
 	return &deleteItemInfoData{
 		ItemInfoData: itemInfoData,
-		IndexList:    nil,
 	}
 }

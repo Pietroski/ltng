@@ -563,9 +563,10 @@ func (e *LTNGEngine) loadIndexingList(
 	dbMetaInfo *ltngdbenginemodelsv3.ManagerStoreMetaInfo,
 	opts *ltngdbenginemodelsv3.IndexOpts,
 ) ([]*ltngdbenginemodelsv3.Item, error) {
-	rawIndexingList, err := e.loadItemFromMemoryOrDisk(ctx, dbMetaInfo.IndexListInfo(), &ltngdbenginemodelsv3.Item{
-		Key: opts.ParentKey,
-	})
+	rawIndexingList, err := e.loadItemFromMemoryOrDisk(ctx,
+		dbMetaInfo.IndexListInfo(), &ltngdbenginemodelsv3.Item{
+			Key: opts.ParentKey,
+		})
 	if err != nil {
 		return nil, err
 	}

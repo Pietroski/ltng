@@ -242,6 +242,7 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 
 	nonIndexedCleanup := func() error {
 		_, _ = osx.DelOnlyFilesFromDirAsync(itemInfoData.Ctx, itemInfoData.DBMetaInfo.TemporaryInfo().Path)
+		s.deleteSaga.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStrWithKey(encodedStr))
 		return nil
 	}
 
@@ -346,6 +347,23 @@ func (s *deleteCascadeSaga) buildDeleteItemInfoData(
 			s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
 				"error deleting temporary indexed list data path", "error", err)
 		}
+
+		itemIndexList, err := s.deleteSaga.opSaga.e.loadIndexingList(
+			itemInfoData.Ctx, itemInfoData.DBMetaInfo, itemInfoData.Opts)
+		if err != nil {
+			s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"error loading indexing list", "error", err)
+		}
+
+		s.deleteSaga.opSaga.e.itemFileMapping.Delete(itemInfoData.DBMetaInfo.LockStrWithKey(encodedStr))
+		for _, item := range itemIndexList {
+			encodedStr := hex.EncodeToString(item.Value)
+
+			s.deleteSaga.opSaga.e.itemFileMapping.Delete(
+				itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(encodedStr))
+		}
+		s.deleteSaga.opSaga.e.itemFileMapping.Delete(
+			itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(encodedStr))
 
 		return nil
 	}
