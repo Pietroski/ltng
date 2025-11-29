@@ -1,77 +1,40 @@
 package db_test
 
 import (
-	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/pietroski-software-company/golang/devex/servermanager/pprofx"
-	"gitlab.com/pietroski-software-company/golang/devex/syncx"
 	"gitlab.com/pietroski-software-company/golang/devex/testingx"
 
 	ltng_client "gitlab.com/pietroski-software-company/lightning-db/client"
-	common_model "gitlab.com/pietroski-software-company/lightning-db/internal/models/common"
 	search "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/common/search"
 	grpc_ltngdb "gitlab.com/pietroski-software-company/lightning-db/schemas/generated/go/ltngdb"
 	"gitlab.com/pietroski-software-company/lightning-db/tests/data"
 )
 
-var (
-	users []*data.User
-	cts   *data.ClientTestSuite
-)
+func TestClientsWithinDocker(t *testing.T) {
+	users = data.GenerateRandomUsers(t, 150)
+	cts = data.InitClientTestSuite(t)
 
-func TestClientsLocally(t *testing.T) {
-	data.CleanupDirectories(t)
-
-	t.Log("TestLTNGDBClient")
-	TestLTNGDBClient(t)
-
-	t.Log("TestBadgerDBClient")
-	TestBadgerDBClient(t)
-}
-
-func TestLTNGDBClient(t *testing.T) {
-	var err error
-	err = os.Setenv("LTNG_DB_ENGINE", common_model.LightningEngineV3EngineVersionType.String())
-	require.NoError(t, err)
-	err = os.Setenv("LTNG_DB_SERVER_PORT", "50050")
-	require.NoError(t, err)
-	err = os.Setenv("LTNG_DB_SERVER_NETWORK", "tcp")
-	require.NoError(t, err)
-	err = os.Setenv("LTNG_DB_UI_ADDR", "7070")
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	offThread := syncx.NewThreadOperator("TestMain")
-	offThread.Op(func() {
-		main(ctx, cancel)
+	t.Run("Test_LTNGDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testLTNGDBClientWithinDocker(t)
 	})
-	defer offThread.Wait()
-	defer func() {
-		time.Sleep(time.Millisecond * 5_000)
-		cancel()
-		time.Sleep(time.Millisecond * 5_000)
-	}()
 
-	time.Sleep(time.Millisecond * 500)
-
-	users = data.GenerateRandomUsers(t, 50)
-	cts = data.InitLocalClientTestSuite(t, common_model.LightningEngineV3EngineVersionType)
-
-	t.Log("Test_LTNG_DB_Client_Engine")
-	testLTNGDBClient(t)
+	t.Run("Test_BadgerDB_Client_Engine_Within_Docker", func(t *testing.T) {
+		testBadgerDBClientWithinDocker(t)
+	})
 }
 
-func testLTNGDBClient(t *testing.T) {
+func testLTNGDBClientWithinDocker(t *testing.T) {
 	startTime := time.Now()
 	defer func() {
 		t.Logf("Total LTNGDB test duration: %v", time.Since(startTime))
 	}()
+
+	// Profiling is now handled at the TestClients level
 
 	createStoreRequest := &grpc_ltngdb.CreateStoreRequest{
 		Name: "user-store",
@@ -168,7 +131,6 @@ func testLTNGDBClient(t *testing.T) {
 	})
 
 	t.Run("UpsertItem", func(t *testing.T) {
-		// t.Skip()
 		t.Log("UpsertItem")
 
 		bd := testingx.NewBenchSync()
@@ -198,7 +160,6 @@ func testLTNGDBClient(t *testing.T) {
 	})
 
 	t.Run("DeleteItem", func(t *testing.T) {
-		// t.Skip()
 		t.Log("DeleteItem")
 
 		bd := testingx.NewBenchSync()
@@ -227,43 +188,9 @@ func testLTNGDBClient(t *testing.T) {
 		}
 		t.Log(bd)
 	})
-
-	err = cts.LTNGDBClient.Close()
-	require.Nil(t, err)
 }
 
-func TestBadgerDBClient(t *testing.T) {
-	var err error
-	err = os.Setenv("LTNG_DB_ENGINE", common_model.BadgerDBV4EngineVersionType.String())
-	require.NoError(t, err)
-	err = os.Setenv("LTNG_DB_SERVER_PORT", "50051")
-	require.NoError(t, err)
-	err = os.Setenv("LTNG_DB_SERVER_NETWORK", "tcp")
-	require.NoError(t, err)
-	err = os.Setenv("LTNG_DB_UI_ADDR", "7071")
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	offThread := syncx.NewThreadOperator("TestMain")
-	offThread.Op(func() {
-		main(ctx, cancel, pprofx.WithPprofPort("7072"))
-	})
-	defer offThread.Wait()
-	defer func() {
-		time.Sleep(time.Millisecond * 5_000)
-		cancel()
-	}()
-
-	time.Sleep(time.Millisecond * 500)
-
-	users = data.GenerateRandomUsers(t, 50)
-	cts = data.InitLocalClientTestSuite(t, common_model.BadgerDBV4EngineVersionType)
-
-	t.Log("Test_BadgerDB_Client_Engine")
-	testBadgerDBClient(t)
-}
-
-func testBadgerDBClient(t *testing.T) {
+func testBadgerDBClientWithinDocker(t *testing.T) {
 	startTime := time.Now()
 	defer func() {
 		t.Logf("Total BadgerDB test duration: %v", time.Since(startTime))
