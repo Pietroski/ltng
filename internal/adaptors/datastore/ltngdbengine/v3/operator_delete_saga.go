@@ -542,17 +542,20 @@ func (s *deleteIdxOnlySaga) buildDeleteItemInfoData(
 				}
 			}
 
-			if err := osx.MvFile(itemInfoData.Ctx,
-				ltngdbenginemodelsv3.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
-				ltngdbenginemodelsv3.GetDataFilepath(itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, strItemKey),
-			); err != nil {
+			itemInfoDataFilepath := ltngdbenginemodelsv3.GetDataFilepath(
+				itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey)
+			temporaryItemInfoDataFilepath := ltngdbenginemodelsv3.GetDataFilepath(
+				itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, strItemKey)
+			if err := osx.MvFile(itemInfoData.Ctx, itemInfoDataFilepath, temporaryItemInfoDataFilepath); err != nil {
 				s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
 					"failed deleting indexed item info data on disk",
 					"key", strItemKey, "error", err)
 				continue
 			}
 
-			s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
+			// item is not removed from itemFileMapping now
+			// because in case of rollback, we don't need to waste time
+			// loading the item into memory again
 		}
 
 		return nil
@@ -560,11 +563,12 @@ func (s *deleteIdxOnlySaga) buildDeleteItemInfoData(
 	recreateIndexItemOnDiskOnThread := func() error {
 		for _, indexKey := range itemInfoData.Opts.IndexingKeys {
 			strItemKey := hex.EncodeToString(indexKey)
+			itemInfoDataFilepath := ltngdbenginemodelsv3.GetDataFilepath(
+				itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey)
+			temporaryItemInfoDataFilepath := ltngdbenginemodelsv3.GetDataFilepath(
+				itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, strItemKey)
 
-			if err := osx.MvFile(itemInfoData.Ctx,
-				ltngdbenginemodelsv3.GetDataFilepath(itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path, strItemKey),
-				ltngdbenginemodelsv3.GetDataFilepath(itemInfoData.DBMetaInfo.IndexInfo().Path, strItemKey),
-			); err != nil {
+			if err := osx.MvFile(itemInfoData.Ctx, temporaryItemInfoDataFilepath, itemInfoDataFilepath); err != nil {
 				s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
 					"failed recreating indexed item info data on disk",
 					"key", strItemKey, "error", err)
@@ -593,20 +597,22 @@ func (s *deleteIdxOnlySaga) buildDeleteItemInfoData(
 
 		indexListBs := bytes.Join(newIndexList, []byte(ltngdbenginemodelsv3.BsSep))
 		fileData := ltngdbenginemodelsv3.NewFileData(
-			itemInfoData.DBMetaInfo,
-			&ltngdbenginemodelsv3.Item{
+			itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
 				Key:   itemInfoData.Opts.ParentKey,
-				Value: indexListBs,
-			})
+				Value: indexListBs})
 
 		strItemKey := hex.EncodeToString(itemInfoData.Opts.ParentKey)
-		if _, err := s.deleteSaga.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
+		fi, err := s.deleteSaga.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
 			ltngdbenginemodelsv3.GetDataFilepath(
 				itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
-			itemInfoData.DBMetaInfo, fileData); err != nil {
+			itemInfoData.DBMetaInfo.IndexListInfo(), fileData)
+		if err != nil {
 
 			return err
 		}
+
+		lockStrKey := itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(strItemKey)
+		s.deleteSaga.opSaga.e.itemFileMapping.Set(lockStrKey, fi)
 
 		return nil
 	}
@@ -625,26 +631,35 @@ func (s *deleteIdxOnlySaga) buildDeleteItemInfoData(
 			})
 
 		strItemKey := hex.EncodeToString(itemInfoData.Opts.ParentKey)
-		if _, err := s.deleteSaga.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
+		fi, err := s.deleteSaga.opSaga.e.upsertItemOnDisk(itemInfoData.Ctx,
 			ltngdbenginemodelsv3.GetDataFilepath(
 				itemInfoData.DBMetaInfo.IndexListInfo().Path, strItemKey),
-			itemInfoData.DBMetaInfo, fileData); err != nil {
+			itemInfoData.DBMetaInfo.IndexListInfo(), fileData)
+		if err != nil {
 
 			return err
 		}
 
+		lockStrKey := itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(strItemKey)
+		s.deleteSaga.opSaga.e.itemFileMapping.Set(lockStrKey, fi)
+
 		return nil
 	}
-
-	// TODO: updateRelationItemStore
 
 	deleteTemporaryRecords := func() error {
 		if _, err := osx.DelOnlyFilesFromDirAsync(itemInfoData.Ctx,
 			ltngdbenginemodelsv3.GetDataPath(
 				itemInfoData.DBMetaInfo.TemporaryIndexInfo().Path)); err != nil {
-			return errorsx.Wrapf(err,
-				"failed to delete temporary records for %s",
-				itemInfoData.Opts.ParentKey)
+			s.deleteSaga.opSaga.e.logger.Debug(itemInfoData.Ctx,
+				"failed to delete temporary records for",
+				"parent_key", itemInfoData.Opts.ParentKey,
+				"error", err)
+		}
+
+		for _, indexKey := range itemInfoData.Opts.IndexingKeys {
+			strItemKey := hex.EncodeToString(indexKey)
+			lockStrKey := itemInfoData.DBMetaInfo.IndexInfo().LockStrWithKey(strItemKey)
+			s.deleteSaga.opSaga.e.itemFileMapping.Delete(lockStrKey)
 		}
 
 		return nil

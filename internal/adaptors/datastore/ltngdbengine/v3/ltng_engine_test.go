@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/pietroski-software-company/golang/devex/slogx"
 
 	"gitlab.com/pietroski-software-company/golang/devex/execx"
 	"gitlab.com/pietroski-software-company/golang/devex/random"
@@ -1681,7 +1683,7 @@ type bytesValues struct {
 
 func initTestSuite(t *testing.T) *testSuite {
 	ctx, cancel := context.WithCancel(prepareTest(t))
-	e, err := New(ctx)
+	e, err := New(ctx, WithLogger(slogx.New()))
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		e.Close()
@@ -1963,5 +1965,68 @@ func generateDeleteItemInfoDataFromItemInfoData(
 
 	return &deleteItemInfoData{
 		ItemInfoData: itemInfoData,
+	}
+}
+
+func generateDeleteItemInfoDataFromItemInfoDataCascadeByIndex(
+	t *testing.T,
+	ts *testSuite,
+	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
+	hasIndex bool,
+) *deleteItemInfoData {
+	delItemInfoData := generateDeleteItemInfoDataFromItemInfoData(t, ts, itemInfoData, hasIndex)
+	delItemInfoData.ItemInfoData.Opts.IndexProperties.IndexDeletionBehaviour = ltngdbenginemodelsv3.CascadeByIdx
+
+	item, err := ts.e.loadItem(ts.ctx, itemInfoData.DBMetaInfo, nil, itemInfoData.Opts)
+	require.NoError(t, err)
+	assert.EqualValues(t, delItemInfoData.ItemInfoData.Item, item)
+
+	return delItemInfoData
+}
+
+func generateDeleteItemInfoDataFromItemInfoDataIndexOnly(
+	t *testing.T,
+	ts *testSuite,
+	itemInfoData *ltngdbenginemodelsv3.ItemInfoData,
+	hasIndex bool,
+) *deleteItemInfoData {
+	//delItemInfoData := generateDeleteItemInfoDataFromItemInfoData(t, ts, itemInfoData, hasIndex)
+	//delItemInfoData.ItemInfoData.Opts.IndexProperties.IndexDeletionBehaviour = ltngdbenginemodelsv3.IndexOnly
+
+	itemInfoDataToDeleteIndex := &ltngdbenginemodelsv3.ItemInfoData{
+		Ctx:          ts.ctx,
+		RespSignal:   itemInfoData.RespSignal,
+		TraceID:      itemInfoData.TraceID,
+		OpNatureType: itemInfoData.OpNatureType,
+		OpType:       itemInfoData.OpType,
+		DBMetaInfo:   itemInfoData.DBMetaInfo,
+		Item: &ltngdbenginemodelsv3.Item{
+			Key:   itemInfoData.Item.Key,
+			Value: itemInfoData.Item.Value,
+		},
+		Opts: &ltngdbenginemodelsv3.IndexOpts{
+			HasIdx:    true,
+			ParentKey: itemInfoData.Item.Key,
+			IndexingKeys: [][]byte{
+				itemInfoData.Opts.IndexingKeys[2],
+			},
+			IndexProperties: ltngdbenginemodelsv3.IndexProperties{
+				IndexDeletionBehaviour: ltngdbenginemodelsv3.IndexOnly,
+			},
+		},
+	}
+
+	indexItemList, err := ts.e.loadIndexingList(
+		itemInfoData.Ctx,
+		itemInfoData.DBMetaInfo,
+		itemInfoData.Opts, // &IndexOpts{ParentKey: itemInfoData.Item.Key},
+	)
+	require.NoError(t, err)
+
+	return &deleteItemInfoData{
+		ItemInfoData: itemInfoDataToDeleteIndex,
+		IndexList:    indexItemList,
+
+		//IndexList:    delItemInfoData.IndexList,
 	}
 }

@@ -602,6 +602,16 @@ func indexingListToByteSlice(indexingList []*ltngdbenginemodelsv3.Item) []byte {
 	return bytes.Join(bbs, []byte(ltngdbenginemodelsv3.BsSep))
 }
 
+func indexingKeysToMap(input [][]byte) map[string][]byte {
+	indexingMap := make(map[string][]byte)
+	for _, item := range input {
+		strKey := hex.EncodeToString(item)
+		indexingMap[strKey] = item
+	}
+
+	return indexingMap
+}
+
 // #####################################################################################################################
 
 func (e *LTNGEngine) createItemOnDisk(
@@ -645,8 +655,7 @@ func (e *LTNGEngine) upsertItemOnDisk(
 			return e.createItemOnDisk(ctx, filePath, fileData)
 		}
 
-		return nil, errorsx.Wrapf(err, "error loading %s item from disk",
-			dbMetaInfo.IndexListInfo().Name)
+		return nil, errorsx.Wrapf(err, "error loading %s item from disk", dbMetaInfo.Name)
 	}
 
 	if _, err = fi.FileManager.Rewrite(fileData); err != nil {

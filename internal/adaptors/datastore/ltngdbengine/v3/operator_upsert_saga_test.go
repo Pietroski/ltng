@@ -2221,9 +2221,9 @@ func TestUpsertSaga_buildUpsertItemInfoData_buildUpsertItemInfoDataWithoutIndex_
 
 				expectedFileData := ltngdbenginemodelsv3.NewFileData(
 					itemInfoData.DBMetaInfo, &ltngdbenginemodelsv3.Item{
-						Key:   itemInfoData.Item.Key,
-						Value: bytes.Join(itemInfoData.Opts.IndexingKeys, []byte(ltngdbenginemodelsv3.BsSep)),
-					})
+						Key: itemInfoData.Item.Key,
+						Value: bytes.Join(itemInfoData.Opts.IndexingKeys,
+							[]byte(ltngdbenginemodelsv3.BsSep))})
 
 				fileInfo, ok := ts.e.itemFileMapping.Get(
 					itemInfoData.DBMetaInfo.IndexListInfo().LockStrWithKey(itemStrKey))
